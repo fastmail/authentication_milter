@@ -99,6 +99,7 @@ sub get_symval {
     # We didn't find it?
     # PMilter::Context fails to get the queue id from postfix as it is
     # not searching symbols for the correct code. Rewrite this here.
+    # Intend to patch PMilter to fix this.
     my $symbols = $ctx->{'symbols'}; ## Internals, here be dragons!
     foreach my $code ( keys $symbols ) {
         $val = $symbols->{$code}->{$key};
@@ -479,6 +480,7 @@ sub add_headers {
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
             ## No support for this in Sendmail::PMilter
             ## so we shall write the packet manually.
+            #  Intend to patch PMilter to fix this
             $ctx->write_packet( 'i',
                     "\0\0\0\0"
                   . $header->{'field'} . "\0"
