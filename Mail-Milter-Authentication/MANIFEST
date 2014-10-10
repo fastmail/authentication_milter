@@ -1,0 +1,11 @@
+Changes
+lib/Mail/Milter/Authentication.pm
+lib/Mail/Milter/Authentication/Handler.pm
+Makefile.PL
+MANIFEST			This list of files
+README
+bin/authentication_milter
+t/00-load.t
+t/manifest.t
+t/pod-coverage.t
+t/pod.t
