@@ -276,6 +276,8 @@ sub envfrom_callback {
                 eval { $dmarc->envelope_from($domain_from) };
                 if ( my $error = $@ ) {
                     log_error( $ctx, 'DMARC Mail From Error ' . $error );
+                    add_auth_header( $ctx, 'dmarc=temperror' );
+                    $priv->{'dmarc_obj'} = undef;
                 }
             }
         }
@@ -304,6 +306,8 @@ sub envrcpt_callback {
                 eval { $dmarc->envelope_to($envelope_to) };
                 if ( my $error = $@ ) {
                     log_error( $ctx, 'DMARC Rcpt To Error ' . $error );
+                    add_auth_header( $ctx, 'dmarc=temperror' );
+                    $priv->{'dmarc_obj'} = undef;
                 }
             }
         }
@@ -328,6 +332,8 @@ sub header_callback {
                     eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
                     if ( my $error = $@ ) {
                         log_error( $ctx, 'DMARC Header From Error ' . $error );
+                        add_auth_header( $ctx, 'dmarc=temperror' );
+                        $priv->{'dmarc_obj'} = undef;
                     }
                 }
             }
