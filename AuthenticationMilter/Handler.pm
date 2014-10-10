@@ -890,7 +890,7 @@ sub dbgoutwrite {
     eval {
         openlog('authentication_milter', 'pid', LOG_MAIL);
         setlogmask(   LOG_MASK(LOG_ERR)
-                    | LOG_MASK(LOG_DEBUG)
+#                    | LOG_MASK(LOG_DEBUG)
                     | LOG_MASK(LOG_INFO)
         );
         my $queue_id = $priv->{'queue_id'} || q{--};
