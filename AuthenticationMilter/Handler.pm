@@ -141,8 +141,19 @@ sub connect_callback {
     $ctx->setpriv($priv);
 
     eval {
-        my ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
-        my $ip_address = inet_ntoa($iaddr);
+        my ( $port, $iaddr, $ip_address );
+        my $ip_length = length( $sockaddr_in );
+        if ( $ip_length eq 16 ) {
+            ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
+            $ip_address = inet_ntoa($iaddr);
+        }
+        elsif ( $ip_length eq 28 ) {
+            ( $port, $iaddr ) = sockaddr_in6($sockaddr_in);
+            $ip_address = Socket::inet_ntop(AF_INET6, $iaddr);
+        }
+        else {
+            die 'Unknown IP address format';
+        }
         $priv->{'ip_address'} = $ip_address;
         dbgout( $ctx, 'ConnectFrom', $ip_address, LOG_DEBUG );
 
@@ -577,7 +588,7 @@ sub dkim_dmarc_check {
                   . format_header_comment( ( $default ? 'default ' : q{} )
                     . "$name policy"
                     . ( $location ? " from $location" : q{} )
-                    . ( $string   ? "; $string"       : q{} )
+#                    . ( $string   ? "; $string"       : q{} )
                   )
                   . ')';
 
