@@ -233,7 +233,7 @@ sub helo_callback {
     # On HELO
     my ( $ctx, $helo_host ) = @_;
     my $priv = $ctx->getpriv();
-
+    $helo_host = q{} if not $helo_host;
     eval {
         $priv->{'helo_name'} = $helo_host;
         dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
@@ -253,9 +253,10 @@ sub envfrom_callback {
     #...
     my ( $ctx, $env_from ) = @_;
     my $priv = $ctx->getpriv();
+    $env_from = q{} if not $env_from;
 
     eval {
-        $priv->{'mail_from'} = $env_from;
+        $priv->{'mail_from'} = $env_from || q{};
         dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
         if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
             my $dmarc       = $priv->{'dmarc_obj'};
@@ -281,7 +282,7 @@ sub envrcpt_callback {
     #...
     my ( $ctx, $env_to ) = @_;
     my $priv = $ctx->getpriv();
-
+    $env_to = q{} if not $env_to;
     eval {
         my $envelope_to = get_domain_from($env_to);
         dbgout( $ctx, 'EnvelopeTo', $env_to, LOG_DEBUG );
@@ -304,7 +305,7 @@ sub header_callback {
     # On Each Header
     my ( $ctx, $header, $value ) = @_;
     my $priv = $ctx->getpriv();
-
+    $value = q{} if not $value;
     eval {
         if ( $header eq 'From' ) {
             $priv->{'from_header'} = $value;
@@ -880,7 +881,7 @@ sub dbgoutwrite {
     eval {
         openlog('authentication_milter', 'pid', LOG_MAIL);
         setlogmask(   LOG_MASK(LOG_ERR)
-#                    | LOG_MASK(LOG_DEBUG)
+                    | LOG_MASK(LOG_DEBUG)
                     | LOG_MASK(LOG_INFO)
         );
         my $queue_id = $priv->{'queue_id'} || q{-----------};
