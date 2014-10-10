@@ -1,4 +1,4 @@
-package AuthenticationMilter::Handler;
+package Mail::Milter::Authentication::Handler;
 
 use strict;
 use warnings;
