@@ -187,6 +187,7 @@ sub connect_callback {
             $ip_address = Socket::inet_ntop(AF_INET6, $iaddr);
         }
         else {
+            ## TODO something better here
             die 'Unknown IP address format';
         }
         $priv->{'ip_address'} = $ip_address;
