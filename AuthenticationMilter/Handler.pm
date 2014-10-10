@@ -38,10 +38,10 @@ if ( $CONFIG->{'check_ptr'} ) {
     if ( not $CONFIG->{'check_iprev'} ) { die 'ptr checks require iprev to be enabled'; } ;
 }
 
-sub get_auth_type {
+sub get_auth_name {
     my ($ctx) = @_;
-    my $type = get_symval( $ctx, '{auth_type}' );
-    return $type;
+    my $name = get_symval( $ctx, '{auth_authen}' );
+    return $name;
 }
 
 sub get_my_hostname {
@@ -170,6 +170,9 @@ sub connect_callback {
     my ( $ctx, $hostname, $sockaddr_in ) = @_;
     my $priv = {};
     $ctx->setpriv($priv);
+    
+    $priv->{ 'is_local_ip_address' } = 0;
+    $priv->{ 'is_authenticated' }    = 0;
 
     eval {
         my ( $port, $iaddr, $ip_address );
@@ -191,9 +194,6 @@ sub connect_callback {
         if ( is_local_ip_address( $ctx, $ip_address ) ) {
             $priv->{ 'is_local_ip_address' } = 1;
         }
-        else {
-            $priv->{ 'is_local_ip_address' } = 0;
-        }
 
         my $dkim;
         if ( $CONFIG->{'check_dkim'} ) {
@@ -202,7 +202,7 @@ sub connect_callback {
         }
 
         my $dmarc;
-        if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
+        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             $dmarc = Mail::DMARC::PurePerl->new();
             eval { $dmarc->source_ip($ip_address) };
             if ( my $error = $@ ) {
@@ -212,13 +212,13 @@ sub connect_callback {
         }
 
         my $spf_server;
-        if ( $CONFIG->{'check_spf'} && $priv->{'is_local_ip_address'} == 0 ) {
+        if ( $CONFIG->{'check_spf'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             $spf_server =
               Mail::SPF::Server->new( 'hostname' => get_my_hostname($ctx) );
             $priv->{'spf_obj'} = $spf_server;
         }
 
-        if ( $CONFIG->{'check_iprev'} && $priv->{'is_local_ip_address'} == 0 ) {
+        if ( $CONFIG->{'check_iprev'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             iprev_check($ctx);
         }
     };
@@ -237,7 +237,7 @@ sub helo_callback {
     eval {
         $priv->{'helo_name'} = $helo_host;
         dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
-        if ( $CONFIG->{'check_ptr'} && $priv->{'is_local_ip_address'} == 0 ) {
+        if ( $CONFIG->{'check_ptr'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             helo_check($ctx);
         }
     };
@@ -256,9 +256,18 @@ sub envfrom_callback {
     $env_from = q{} if not $env_from;
 
     eval {
+        my $auth_name = get_auth_name( $ctx );
+        if ( $auth_name ) {
+            dbgout( $ctx, 'AuthenticatedAs', $auth_name, LOG_INFO );
+            # Clear the current auth headers ( iprev and helo are already added )
+            #$priv->{'pre_headers'} = [];
+            #$priv->{'add_headers'} = [];
+            $priv->{'auth_headers'} = [];
+            add_auth_header( $ctx, 'auth=pass' );
+        }
         $priv->{'mail_from'} = $env_from || q{};
         dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
-        if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
+        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             my $dmarc       = $priv->{'dmarc_obj'};
             my $domain_from = get_domain_from($env_from);
             eval { $dmarc->envelope_from($domain_from) };
@@ -266,7 +275,7 @@ sub envfrom_callback {
                 log_error( $ctx, 'DMARC Mail From Error ' . $error );
             }
         }
-        if ( $CONFIG->{'check_spf'} && $priv->{'is_local_ip_address'} == 0 ) {
+        if ( $CONFIG->{'check_spf'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             spf_check($ctx);
         }
     };
@@ -286,7 +295,7 @@ sub envrcpt_callback {
     eval {
         my $envelope_to = get_domain_from($env_to);
         dbgout( $ctx, 'EnvelopeTo', $env_to, LOG_DEBUG );
-        if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
+        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             my $dmarc = $priv->{'dmarc_obj'};
             eval { $dmarc->envelope_to($envelope_to) };
             if ( my $error = $@ ) {
@@ -309,7 +318,7 @@ sub header_callback {
     eval {
         if ( $header eq 'From' ) {
             $priv->{'from_header'} = $value;
-            if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
+            if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
                 my $dmarc = $priv->{'dmarc_obj'};
                 eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
                 if ( my $error = $@ ) {
@@ -372,7 +381,7 @@ sub eoh_callback {
             my $dkim = $priv->{'dkim_obj'};
             $dkim->PRINT( "\015\012" );
         }
-        if ( $CONFIG->{'check_senderid'} && $priv->{'is_local_ip_address'} == 0 ) {
+        if ( $CONFIG->{'check_senderid'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             senderid_check($ctx);
         }
     };
@@ -417,24 +426,20 @@ sub eom_callback {
     if ( my $error = $@ ) {
         log_error( $ctx, 'EOM callback error ' . $error );
     }
-
-use Data::Dumper;
-print Dumper( $ctx->{'symbols'} );
-
     return SMFIS_ACCEPT;
 }
 
 sub abort_callback {
     # On any out of our control abort
     my ($ctx) = @_;
-    dbgoutwrite($ctx);
-    $ctx->setpriv(undef);
+    dbgout( $ctx, 'ABORT', 'Abort called', LOG_DEBUG );
     return SMFIS_CONTINUE;
 }
 
 sub close_callback {
     # On end of connection
     my ($ctx) = @_;
+    dbgout( $ctx, 'CLOSE', 'Close called', LOG_DEBUG );
     dbgoutwrite($ctx);
     $ctx->setpriv(undef);
     return SMFIS_CONTINUE;
@@ -603,7 +608,7 @@ sub dkim_dmarc_check {
         }
 
         # the alleged author of the email may specify how to handle email
-        if ( $CONFIG->{'check_dkim-adsp'} && $priv->{'is_local_ip_address'} == 0 ) {
+        if ( $CONFIG->{'check_dkim-adsp'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             foreach my $policy ( $dkim->policies ) {
                 my $apply    = $policy->apply($dkim);
                 my $string   = $policy->as_string();
@@ -637,7 +642,7 @@ sub dkim_dmarc_check {
             }
         }
 
-        if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
+        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
 
             $dmarc->dkim($dkim);
             my $dmarc_result = $dmarc->validate();
@@ -693,6 +698,7 @@ sub iprev_check {
               . $resolver->errorstring );
     }
 
+    my $a_error;
     if ($domain) {
         my $packet = $resolver->query( $domain, 'A' );
         if ($packet) {
@@ -707,11 +713,12 @@ sub iprev_check {
             }
         }
         else {
-            log_error( $ctx,
-                    'DNS A query failed for '
+            # Don't log this right now, might be an AAAA only host.
+            $a_error = 
+                  'DNS A query failed for '
                   . $domain
                   . ' with '
-                  . $resolver->errorstring );
+                  . $resolver->errorstring;
         }
     }
 
@@ -729,6 +736,8 @@ sub iprev_check {
             }
         }
         else {
+            # Log A errors now, as they become relevant if AAAA also fails.
+            log_error( $ctx, $a_error ) if $a_error;
             log_error( $ctx,
                     'DNS AAAA query failed for '
                   . $domain
@@ -839,7 +848,7 @@ sub spf_check {
     );
     add_auth_header( $ctx, $auth_header );
 
-    if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
+    if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
         my $dmarc = $priv->{'dmarc_obj'};
         $dmarc->spf(
             'domain' => $domain,
@@ -884,7 +893,7 @@ sub dbgoutwrite {
                     | LOG_MASK(LOG_DEBUG)
                     | LOG_MASK(LOG_INFO)
         );
-        my $queue_id = $priv->{'queue_id'} || q{-----------};
+        my $queue_id = $priv->{'queue_id'} || q{--};
         if ( exists( $priv->{'dbgout'} ) ) {
             foreach my $entry ( @{ $priv->{'dbgout'} } ) {
                 my $key      = $entry->{'key'};
