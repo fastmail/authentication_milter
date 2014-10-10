@@ -208,6 +208,8 @@ sub connect_callback {
             eval { $dmarc->source_ip($ip_address) };
             if ( my $error = $@ ) {
                 log_error( $ctx, 'DMARC IP Error ' . $error );
+                add_auth_header( $ctx, 'dmarc=temperror' );
+                $dmarc = undef;
             }
             $priv->{'dmarc_obj'} = $dmarc;
         }
@@ -269,11 +271,12 @@ sub envfrom_callback {
         $priv->{'mail_from'} = $env_from || q{};
         dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
         if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            my $dmarc       = $priv->{'dmarc_obj'};
-            my $domain_from = get_domain_from($env_from);
-            eval { $dmarc->envelope_from($domain_from) };
-            if ( my $error = $@ ) {
-                log_error( $ctx, 'DMARC Mail From Error ' . $error );
+            if ( my $dmarc = $priv->{'dmarc_obj'} ) {
+                my $domain_from = get_domain_from($env_from);
+                eval { $dmarc->envelope_from($domain_from) };
+                if ( my $error = $@ ) {
+                    log_error( $ctx, 'DMARC Mail From Error ' . $error );
+                }
             }
         }
         if ( $CONFIG->{'check_spf'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
@@ -297,10 +300,11 @@ sub envrcpt_callback {
         my $envelope_to = get_domain_from($env_to);
         dbgout( $ctx, 'EnvelopeTo', $env_to, LOG_DEBUG );
         if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            my $dmarc = $priv->{'dmarc_obj'};
-            eval { $dmarc->envelope_to($envelope_to) };
-            if ( my $error = $@ ) {
-                log_error( $ctx, 'DMARC Rcpt To Error ' . $error );
+            if ( my $dmarc = $priv->{'dmarc_obj'} ) {
+                eval { $dmarc->envelope_to($envelope_to) };
+                if ( my $error = $@ ) {
+                    log_error( $ctx, 'DMARC Rcpt To Error ' . $error );
+                }
             }
         }
     };
@@ -320,10 +324,11 @@ sub header_callback {
         if ( $header eq 'From' ) {
             $priv->{'from_header'} = $value;
             if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-                my $dmarc = $priv->{'dmarc_obj'};
-                eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
-                if ( my $error = $@ ) {
-                    log_error( $ctx, 'DMARC Header From Error ' . $error );
+                if ( my $dmarc = $priv->{'dmarc_obj'} ) {
+                    eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
+                    if ( my $error = $@ ) {
+                        log_error( $ctx, 'DMARC Header From Error ' . $error );
+                    }
                 }
             }
         }
@@ -571,7 +576,6 @@ sub dkim_dmarc_check {
 
     if ( $CONFIG->{'check_dkim'} ) {
         my $dkim  = $priv->{'dkim_obj'};
-        my $dmarc = $priv->{'dmarc_obj'};
 
         $dkim->CLOSE();
 
@@ -645,28 +649,28 @@ sub dkim_dmarc_check {
         }
 
         if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-
-            $dmarc->dkim($dkim);
-            my $dmarc_result = $dmarc->validate();
-            my $dmarc_code   = $dmarc_result->result;
-            dbgout( $ctx, 'DMARCCode', $dmarc_code, LOG_INFO );
-            my $dmarc_policy;
-            if ( $dmarc_code ne 'pass' ) {
-                $dmarc_policy = eval { $dmarc_result->evalated->disposition() };
-                dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_DEBUG );
+            if ( my $dmarc = $priv->{'dmarc_obj'} ) {
+                $dmarc->dkim($dkim);
+                my $dmarc_result = $dmarc->validate();
+                my $dmarc_code   = $dmarc_result->result;
+                dbgout( $ctx, 'DMARCCode', $dmarc_code, LOG_INFO );
+                my $dmarc_policy;
+                if ( $dmarc_code ne 'pass' ) {
+                    $dmarc_policy = eval { $dmarc_result->evalated->disposition() };
+                    dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_DEBUG );
+                }
+                my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
+                if ($dmarc_policy) {
+                    $dmarc_header .= ' ('
+                      . format_header_comment(
+                        format_header_entry( 'p', $dmarc_policy ) )
+                      . ')';
+                }
+                $dmarc_header .= ' '
+                  . format_header_entry( 'header.from',
+                    get_domain_from( $priv->{'from_header'} ) );
+                add_auth_header( $ctx, $dmarc_header );
             }
-            my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
-            if ($dmarc_policy) {
-                $dmarc_header .= ' ('
-                  . format_header_comment(
-                    format_header_entry( 'p', $dmarc_policy ) )
-                  . ')';
-            }
-            $dmarc_header .= ' '
-              . format_header_entry( 'header.from',
-                get_domain_from( $priv->{'from_header'} ) );
-            add_auth_header( $ctx, $dmarc_header );
-
         }
     }
 }
@@ -851,12 +855,13 @@ sub spf_check {
     add_auth_header( $ctx, $auth_header );
 
     if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-        my $dmarc = $priv->{'dmarc_obj'};
-        $dmarc->spf(
-            'domain' => $domain,
-            'scope'  => $scope,
-            'result' => $result_code,
-        );
+        if ( my $dmarc = $priv->{'dmarc_obj'} ) {
+            $dmarc->spf(
+                'domain' => $domain,
+                'scope'  => $scope,
+                'result' => $result_code,
+            );
+        }
     }
 
     dbgout( $ctx, 'SPFCode', $result_code, LOG_INFO );
