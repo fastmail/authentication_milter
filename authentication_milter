@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use AuthenticationMilter::Handler;
+
+use Getopt::Long;
+use Sendmail::PMilter qw { :all };
+
+my $connection = 'inet:12345@localhost';
+
+GetOptions (
+    'connection=s' => \$connection,
+) or die show_usage();
+
+sub show_usage {
+    return join( "\n",
+        'Usage:',
+        'authentication_milter connection=inet:1234@localhost'
+    );
+}
+
+BEGIN: {
+    my $callbacks = {
+      'connect' => \&AuthenticationMilter::Handler::connect_callback,
+      'helo'    => \&AuthenticationMilter::Handler::helo_callback,
+      'envfrom' => \&AuthenticationMilter::Handler::envfrom_callback,
+      'envrcpt' => \&AuthenticationMilter::Handler::envrcpt_callback,
+      'header'  => \&AuthenticationMilter::Handler::header_callback,
+      'eoh'     => \&AuthenticationMilter::Handler::eoh_callback,
+      'body'    => \&AuthenticationMilter::Handler::body_callback,
+      'eom'     => \&AuthenticationMilter::Handler::eom_callback,
+      'abort'   => \&AuthenticationMilter::Handler::abort_callback,
+      'close'   => \&AuthenticationMilter::Handler::close_callback,
+    };
+    #Sendmail::PMilter::setdbg( 9 );
+    my $milter = new Sendmail::PMilter;
+    $milter->setconn( $connection );
+    $milter->register( "authenticationmilter", $callbacks, SMFI_CURR_ACTS );
+    $milter->main();
+    # Never reaches here, callbacks are called from Milter.
+    die 'Something went wrong';
+}
+
