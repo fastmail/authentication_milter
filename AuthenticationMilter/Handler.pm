@@ -8,6 +8,7 @@ use Mail::DKIM::Verifier;
 use Mail::DMARC::PurePerl;
 use Mail::SPF;
 use Net::DNS;
+use Net::IP;
 use Sendmail::PMilter qw { :all };
 use Socket;
 use Sys::Syslog qw{:standard :macros};
@@ -25,6 +26,9 @@ my $CONFIG = {
     'check_iprev'     => 1,
     'check_senderid'  => 1,
 };
+
+# If AUTHENTICATED do not check spf dkim-adsp dmarc ptr iprev or senderid
+# If LOCAL         do not check spf dkim-adsp dmarc ptr iprev or senderid
 
 if ( $CONFIG->{'check_dmarc'} ) {
     if ( not $CONFIG->{'check_dkim'} ) { die 'dmarc checks require dkim to be enabled'; } ;
@@ -46,6 +50,48 @@ sub get_my_hostname {
     return $hostname;
 }
 
+sub is_local_ip_address {
+    my ( $ctx, $ip_address ) = @_;
+    my $ip = new Net::IP( $ip_address );
+    my $ip_type = $ip->iptype();
+    my $type_map = {
+        'PRIVATE'              => 1,
+        'SHARED'               => 1,
+        'LOOPBACK'             => 1,
+        'LINK-LOCAL'           => 1,
+        'RESERVED'             => 1,
+        'TEST-NET'             => 0,
+        '6TO4-RELAY'           => 0,
+        'MULTICAST'            => 0,
+        'BROADCAST'            => 0,
+        'UNSPECIFIED'          => 0,
+        'IPV4MAP'              => 0,
+        'DISCARD'              => 0,
+        'GLOBAL-UNICAST'       => 0,
+        'TEREDO'               => 0,
+        'BMWG'                 => 0,
+        'DOCUMENTATION'        => 0,
+        'ORCHID'               => 0,
+        '6TO4'                 => 0,
+        'UNIQUE-LOCAL-UNICAST' => 1,
+        'LINK-LOCAL-UNICAST'   => 1,
+    };
+    dbgout( $ctx, 'IPAddress', "Address $ip_address detected as type $ip_type", LOG_DEBUG );
+    return $type_map->{ $ip_type } || 0;
+}
+
+sub is_hostname_mine {
+    my ( $ctx, $check_hostname ) = @_;
+    my $hostname = get_my_hostname($ctx);
+    my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
+    if (
+        substr( lc $check_hostname, ( 0 - length($check_for) ) ) eq
+        lc $check_for )
+    {
+        return 1;
+    }
+}
+
 sub get_symval {
     my ( $ctx, $key ) = @_;
     my $val = $ctx->getsymval( $key );
@@ -59,18 +105,6 @@ sub get_symval {
         return $val if defined( $val );
     }
     return undef;
-}
-
-sub is_hostname_mine {
-    my ( $ctx, $check_hostname ) = @_;
-    my $hostname = get_my_hostname($ctx);
-    my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
-    if (
-        substr( lc $check_hostname, ( 0 - length($check_for) ) ) eq
-        lc $check_for )
-    {
-        return 1;
-    }
 }
 
 sub get_domain_from {
@@ -99,7 +133,6 @@ sub get_address_from {
 }
 
 sub format_ctext {
-
     # Return ctext (but with spaces intact)
     my ($text) = @_;
     $text =~ s/\t/ /g;
@@ -120,9 +153,7 @@ sub format_ctext_no_space {
 
 sub format_header_comment {
     my ($comment) = @_;
-
     $comment = format_ctext($comment);
-
     return $comment;
 }
 
@@ -157,6 +188,13 @@ sub connect_callback {
         $priv->{'ip_address'} = $ip_address;
         dbgout( $ctx, 'ConnectFrom', $ip_address, LOG_DEBUG );
 
+        if ( is_local_ip_address( $ctx, $ip_address ) ) {
+            $priv->{ 'is_local_ip_address' } = 1;
+        }
+        else {
+            $priv->{ 'is_local_ip_address' } = 0;
+        }
+
         my $dkim;
         if ( $CONFIG->{'check_dkim'} ) {
             $dkim = Mail::DKIM::Verifier->new();
@@ -164,7 +202,7 @@ sub connect_callback {
         }
 
         my $dmarc;
-        if ( $CONFIG->{'check_dmarc'} ) {
+        if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
             $dmarc = Mail::DMARC::PurePerl->new();
             eval { $dmarc->source_ip($ip_address) };
             if ( my $error = $@ ) {
@@ -174,13 +212,13 @@ sub connect_callback {
         }
 
         my $spf_server;
-        if ( $CONFIG->{'check_spf'} ) {
+        if ( $CONFIG->{'check_spf'} && $priv->{'is_local_ip_address'} == 0 ) {
             $spf_server =
               Mail::SPF::Server->new( 'hostname' => get_my_hostname($ctx) );
             $priv->{'spf_obj'} = $spf_server;
         }
 
-        if ( $CONFIG->{'check_iprev'} ) {
+        if ( $CONFIG->{'check_iprev'} && $priv->{'is_local_ip_address'} == 0 ) {
             iprev_check($ctx);
         }
     };
@@ -199,7 +237,7 @@ sub helo_callback {
     eval {
         $priv->{'helo_name'} = $helo_host;
         dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
-        if ( $CONFIG->{'check_ptr'} ) {
+        if ( $CONFIG->{'check_ptr'} && $priv->{'is_local_ip_address'} == 0 ) {
             helo_check($ctx);
         }
     };
@@ -219,7 +257,7 @@ sub envfrom_callback {
     eval {
         $priv->{'mail_from'} = $env_from;
         dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
-        if ( $CONFIG->{'check_dmarc'} ) {
+        if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
             my $dmarc       = $priv->{'dmarc_obj'};
             my $domain_from = get_domain_from($env_from);
             eval { $dmarc->envelope_from($domain_from) };
@@ -227,7 +265,7 @@ sub envfrom_callback {
                 log_error( $ctx, 'DMARC Mail From Error ' . $error );
             }
         }
-        if ( $CONFIG->{'check_spf'} ) {
+        if ( $CONFIG->{'check_spf'} && $priv->{'is_local_ip_address'} == 0 ) {
             spf_check($ctx);
         }
     };
@@ -247,7 +285,7 @@ sub envrcpt_callback {
     eval {
         my $envelope_to = get_domain_from($env_to);
         dbgout( $ctx, 'EnvelopeTo', $env_to, LOG_DEBUG );
-        if ( $CONFIG->{'check_dmarc'} ) {
+        if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
             my $dmarc = $priv->{'dmarc_obj'};
             eval { $dmarc->envelope_to($envelope_to) };
             if ( my $error = $@ ) {
@@ -270,7 +308,7 @@ sub header_callback {
     eval {
         if ( $header eq 'From' ) {
             $priv->{'from_header'} = $value;
-            if ( $CONFIG->{'check_dmarc'} ) {
+            if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
                 my $dmarc = $priv->{'dmarc_obj'};
                 eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
                 if ( my $error = $@ ) {
@@ -333,7 +371,7 @@ sub eoh_callback {
             my $dkim = $priv->{'dkim_obj'};
             $dkim->PRINT( "\015\012" );
         }
-        if ( $CONFIG->{'check_senderid'} ) {
+        if ( $CONFIG->{'check_senderid'} && $priv->{'is_local_ip_address'} == 0 ) {
             senderid_check($ctx);
         }
     };
@@ -564,7 +602,7 @@ sub dkim_dmarc_check {
         }
 
         # the alleged author of the email may specify how to handle email
-        if ( $CONFIG->{'check_dkim-adsp'} ) {
+        if ( $CONFIG->{'check_dkim-adsp'} && $priv->{'is_local_ip_address'} == 0 ) {
             foreach my $policy ( $dkim->policies ) {
                 my $apply    = $policy->apply($dkim);
                 my $string   = $policy->as_string();
@@ -598,7 +636,7 @@ sub dkim_dmarc_check {
             }
         }
 
-        if ( $CONFIG->{'check_dmarc'} ) {
+        if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
 
             $dmarc->dkim($dkim);
             my $dmarc_result = $dmarc->validate();
@@ -800,7 +838,7 @@ sub spf_check {
     );
     add_auth_header( $ctx, $auth_header );
 
-    if ( $CONFIG->{'check_dmarc'} ) {
+    if ( $CONFIG->{'check_dmarc'} && $priv->{'is_local_ip_address'} == 0 ) {
         my $dmarc = $priv->{'dmarc_obj'};
         $dmarc->spf(
             'domain' => $domain,
