@@ -18,13 +18,16 @@ use Sys::Syslog qw{:standard :macros};
 # Skip some checks if connection is auth
 
 my $CONFIG = {
-    'check_spf'       => 1,
-    'check_dkim'      => 1,
-    'check_dkim-adsp' => 1,
-    'check_dmarc'     => 1,
-    'check_ptr'       => 1,
-    'check_iprev'     => 1,
-    'check_senderid'  => 1,
+    'check_spf'        => 1,
+    'check_dkim'       => 1,
+    'check_dkim-adsp'  => 1,
+    'check_dmarc'      => 1,
+    'check_ptr'        => 1,
+    'check_iprev'      => 1,
+    'check_senderid'   => 1,
+    'check_auth'       => 1,
+    'check_local_ip'   => 1,
+    'check_trusted_ip' => 1,
 };
 
 # If AUTHENTICATED do not check spf dkim-adsp dmarc ptr iprev or senderid
@@ -48,6 +51,12 @@ sub get_my_hostname {
     my ($ctx) = @_;
     my $hostname = get_symval( $ctx, 'j' );
     return $hostname;
+}
+
+sub is_trusted_ip_address {
+    my ( $ctx, $ip_address ) = @_;
+    ## TODO write this!
+    return 0;
 }
 
 sub is_local_ip_address {
@@ -173,6 +182,7 @@ sub connect_callback {
     $ctx->setpriv($priv);
     
     $priv->{ 'is_local_ip_address' } = 0;
+    $priv->{ 'is_trusted_ip_address' } = 0;
     $priv->{ 'is_authenticated' }    = 0;
 
     eval {
@@ -187,26 +197,46 @@ sub connect_callback {
             $ip_address = Socket::inet_ntop(AF_INET6, $iaddr);
         }
         else {
-            ## TODO something better here
-            die 'Unknown IP address format';
+            ## TODO something better here - this should never happen
+            log_error( $ctx, 'Unknown IP address format');
+            $ip_address = q{};
         }
         $priv->{'ip_address'} = $ip_address;
         dbgout( $ctx, 'ConnectFrom', $ip_address, LOG_DEBUG );
 
-        if ( is_local_ip_address( $ctx, $ip_address ) ) {
-            $priv->{ 'is_local_ip_address' } = 1;
+        if ( $CONFIG->{'check_local_ip'} ) {
+            if ( is_local_ip_address( $ctx, $ip_address ) ) {
+                add_auth_header( $ctx, 'x-local-ip=pass' );
+                $priv->{ 'is_local_ip_address' } = 1;
+            }
+        }
+
+        if ( $CONFIG->{'check_trusted_ip'} ) {
+            if ( is_trusted_ip_address( $ctx, $ip_address ) ) {
+                add_auth_header( $ctx, 'x-trusted-ip=pass' );
+                $priv->{ 'is_trusted_ip_address' } = 1;
+            }
         }
 
         my $dkim;
         if ( $CONFIG->{'check_dkim'} ) {
-            $dkim = Mail::DKIM::Verifier->new();
+            eval {
+                $dkim = Mail::DKIM::Verifier->new();
+            };
+            if ( my $error = $@ ) {
+                log_error( $ctx, 'DMKIM Setup Error ' . $error );
+                add_auth_header( $ctx, 'dkim=temperror' );
+                $dkim = undef;
+            }
             $priv->{'dkim_obj'} = $dkim;
         }
 
         my $dmarc;
-        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            $dmarc = Mail::DMARC::PurePerl->new();
-            eval { $dmarc->source_ip($ip_address) };
+        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+            eval {
+                $dmarc = Mail::DMARC::PurePerl->new();
+                $dmarc->source_ip($ip_address)
+            };
             if ( my $error = $@ ) {
                 log_error( $ctx, 'DMARC IP Error ' . $error );
                 add_auth_header( $ctx, 'dmarc=temperror' );
@@ -216,13 +246,20 @@ sub connect_callback {
         }
 
         my $spf_server;
-        if ( $CONFIG->{'check_spf'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            $spf_server =
-              Mail::SPF::Server->new( 'hostname' => get_my_hostname($ctx) );
+        if ( $CONFIG->{'check_spf'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+            eval {
+                $spf_server =
+                  Mail::SPF::Server->new( 'hostname' => get_my_hostname($ctx) );
+            };
+            if ( my $error = $@ ) {
+                log_error( $ctx, 'SPF Setup Error ' . $error );
+                add_auth_header( $ctx, 'dkim=temperror' );
+                $spf_server = undef;
+            }
             $priv->{'spf_obj'} = $spf_server;
         }
 
-        if ( $CONFIG->{'check_iprev'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+        if ( $CONFIG->{'check_iprev'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             iprev_check($ctx);
         }
     };
@@ -241,7 +278,7 @@ sub helo_callback {
     eval {
         $priv->{'helo_name'} = $helo_host;
         dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
-        if ( $CONFIG->{'check_ptr'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+        if ( $CONFIG->{'check_ptr'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             helo_check($ctx);
         }
     };
@@ -260,18 +297,22 @@ sub envfrom_callback {
     $env_from = q{} if not $env_from;
 
     eval {
-        my $auth_name = get_auth_name( $ctx );
-        if ( $auth_name ) {
-            dbgout( $ctx, 'AuthenticatedAs', $auth_name, LOG_INFO );
-            # Clear the current auth headers ( iprev and helo are already added )
-            #$priv->{'pre_headers'} = [];
-            #$priv->{'add_headers'} = [];
-            $priv->{'auth_headers'} = [];
-            add_auth_header( $ctx, 'auth=pass' );
+        if ( $CONFIG->{'check_auth'}} ) {
+            my $auth_name = get_auth_name( $ctx );
+            if ( $auth_name ) {
+                dbgout( $ctx, 'AuthenticatedAs', $auth_name, LOG_INFO );
+                # Clear the current auth headers ( iprev and helo are already added )
+                #$priv->{'pre_headers'} = [];
+                #$priv->{'add_headers'} = [];
+                $priv->{'auth_headers'} = [];
+                $priv->{'is_authenticated'} = 1;
+                add_auth_header( $ctx, 'auth=pass' );
+            }
         }
+
         $priv->{'mail_from'} = $env_from || q{};
         dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
-        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             if ( my $dmarc = $priv->{'dmarc_obj'} ) {
                 my $domain_from = get_domain_from($env_from);
                 eval { $dmarc->envelope_from($domain_from) };
@@ -282,7 +323,7 @@ sub envfrom_callback {
                 }
             }
         }
-        if ( $CONFIG->{'check_spf'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+        if ( $CONFIG->{'check_spf'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             spf_check($ctx);
         }
     };
@@ -302,7 +343,7 @@ sub envrcpt_callback {
     eval {
         my $envelope_to = get_domain_from($env_to);
         dbgout( $ctx, 'EnvelopeTo', $env_to, LOG_DEBUG );
-        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             if ( my $dmarc = $priv->{'dmarc_obj'} ) {
                 eval { $dmarc->envelope_to($envelope_to) };
                 if ( my $error = $@ ) {
@@ -328,7 +369,7 @@ sub header_callback {
     eval {
         if ( $header eq 'From' ) {
             $priv->{'from_header'} = $value;
-            if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+            if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
                 if ( my $dmarc = $priv->{'dmarc_obj'} ) {
                     eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
                     if ( my $error = $@ ) {
@@ -357,21 +398,23 @@ sub header_callback {
             }
         }
 
-        # Check for and remove rogue auth results headers
-        if ( $header eq 'Authentication-Results' ) {
-            if ( !exists $priv->{'auth_result_header_index'} ) {
-                $priv->{'auth_result_header_index'} = 0;
-            }
-            $priv->{'auth_result_header_index'} =
-              $priv->{'auth_result_header_index'} + 1;
-            my ($domain_part) = $value =~ /(.*);/;
-            $domain_part =~ s/ +//g;
-            if ( is_hostname_mine( $ctx, $domain_part ) ) {
-                remove_auth_header( $ctx, $priv->{'auth_result_header_index'} );
-                my $forged_header = '(The following Authentication Results header was removed by ' . get_my_hostname($ctx) . "\n"
-                                  . '    as the supplied domain conflicted with its own)' . "\n"
-                                  . '    ' . $value;
-                append_header( $ctx, 'X-Invalid-Authentication-Results', $forged_header );
+        # Check for and remove rogue auth results headers from untrusted IP Addresses
+        if ( $priv->{'is_trusted_ip_address'} == 0 ) {
+            if ( $header eq 'Authentication-Results' ) {
+                if ( !exists $priv->{'auth_result_header_index'} ) {
+                    $priv->{'auth_result_header_index'} = 0;
+                }
+                $priv->{'auth_result_header_index'} =
+                  $priv->{'auth_result_header_index'} + 1;
+                my ($domain_part) = $value =~ /(.*);/;
+                $domain_part =~ s/ +//g;
+                if ( is_hostname_mine( $ctx, $domain_part ) ) {
+                    remove_auth_header( $ctx, $priv->{'auth_result_header_index'} );
+                    my $forged_header = '(The following Authentication Results header was removed by ' . get_my_hostname($ctx) . "\n"
+                                      . '    as the supplied domain conflicted with its own)' . "\n"
+                                      . '    ' . $value;
+                    append_header( $ctx, 'X-Invalid-Authentication-Results', $forged_header );
+                }
             }
         }
 
@@ -394,7 +437,7 @@ sub eoh_callback {
             my $dkim = $priv->{'dkim_obj'};
             $dkim->PRINT( "\015\012" );
         }
-        if ( $CONFIG->{'check_senderid'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+        if ( $CONFIG->{'check_senderid'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             senderid_check($ctx);
         }
     };
@@ -621,7 +664,7 @@ sub dkim_dmarc_check {
         }
 
         # the alleged author of the email may specify how to handle email
-        if ( $CONFIG->{'check_dkim-adsp'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+        if ( $CONFIG->{'check_dkim-adsp'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             foreach my $policy ( $dkim->policies ) {
                 my $apply    = $policy->apply($dkim);
                 my $string   = $policy->as_string();
@@ -655,7 +698,7 @@ sub dkim_dmarc_check {
             }
         }
 
-        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             if ( my $dmarc = $priv->{'dmarc_obj'} ) {
                 $dmarc->dkim($dkim);
                 my $dmarc_result = $dmarc->validate();
@@ -861,7 +904,7 @@ sub spf_check {
     );
     add_auth_header( $ctx, $auth_header );
 
-    if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+    if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
         if ( my $dmarc = $priv->{'dmarc_obj'} ) {
             $dmarc->spf(
                 'domain' => $domain,
