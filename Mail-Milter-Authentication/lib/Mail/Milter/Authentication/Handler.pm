@@ -297,7 +297,7 @@ sub envfrom_callback {
     $env_from = q{} if not $env_from;
 
     eval {
-        if ( $CONFIG->{'check_auth'}} ) {
+        if ( $CONFIG->{'check_auth'} ) {
             my $auth_name = get_auth_name( $ctx );
             if ( $auth_name ) {
                 dbgout( $ctx, 'AuthenticatedAs', $auth_name, LOG_INFO );
