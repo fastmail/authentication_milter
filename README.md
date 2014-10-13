@@ -25,4 +25,10 @@ Design Decisions
   - It is assumed that this milter runs after DKIM signatures are generated, these are still validated.
 - DMARC reporting should be possible
 
+Trust Model
+-----------
+
+- For Authenticated connections we only check the DKIM signature.
+- For Local IPs we only check the DKIM signature.
+- For Trusted IPs we only check the DKIM signature, additionally, for Trusted IPs we do not remove any Authentication headers already present.
 

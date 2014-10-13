@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Email::Address;
+use JSON;
 use Mail::DKIM::Verifier;
 use Mail::DMARC::PurePerl;
 use Mail::SPF;
@@ -13,32 +14,36 @@ use Sendmail::PMilter qw { :all };
 use Socket;
 use Sys::Syslog qw{:standard :macros};
 
-## TODO
-# Check auth and report
-# Skip some checks if connection is auth
+my $CONFIG = load_config();
 
-my $CONFIG = {
-    'check_spf'        => 1,
-    'check_dkim'       => 1,
-    'check_dkim-adsp'  => 1,
-    'check_dmarc'      => 1,
-    'check_ptr'        => 1,
-    'check_iprev'      => 1,
-    'check_senderid'   => 1,
-    'check_auth'       => 1,
-    'check_local_ip'   => 1,
-    'check_trusted_ip' => 1,
-};
+sub load_config {
 
-# If AUTHENTICATED do not check spf dkim-adsp dmarc ptr iprev or senderid
-# If LOCAL         do not check spf dkim-adsp dmarc ptr iprev or senderid
+    my $file = '/etc/authentication_milter.json';
+    if ( ! -e $file ) {
+        die "Could not find configuration file $file";
+    }
 
-if ( $CONFIG->{'check_dmarc'} ) {
-    if ( not $CONFIG->{'check_dkim'} ) { die 'dmarc checks require dkim to be enabled'; } ;
-    if ( not $CONFIG->{'check_spf'} )  { die 'dmarc checks require spf to be enabled'; } ;
-}
-if ( $CONFIG->{'check_ptr'} ) {
-    if ( not $CONFIG->{'check_iprev'} ) { die 'ptr checks require iprev to be enabled'; } ;
+    my $text;
+    {
+        open my $cf, '<', $file || die "Could not open configuration file $file";
+        my @t = <$cf>;
+        close $cf;
+        $text = join( q{}, @t );
+    }
+
+    my $json = JSON->new();
+    my $CONFIG = $json->decode( $text ) || die "Error parsing config file $file";
+
+    # Samity Checks
+    if ( $CONFIG->{'check_dmarc'} ) {
+        if ( not $CONFIG->{'check_dkim'} ) { die 'dmarc checks require dkim to be enabled'; } ;
+        if ( not $CONFIG->{'check_spf'} )  { die 'dmarc checks require spf to be enabled'; } ;
+    }
+    if ( $CONFIG->{'check_ptr'} ) {
+        if ( not $CONFIG->{'check_iprev'} ) { die 'ptr checks require iprev to be enabled'; } ;
+    }
+    return $CONFIG;
+
 }
 
 sub get_auth_name {
@@ -55,8 +60,21 @@ sub get_my_hostname {
 
 sub is_trusted_ip_address {
     my ( $ctx, $ip_address ) = @_;
-    ## TODO write this!
-    return 0;
+    return 0 if not exists ( $CONFIG->{'trusted_ip_list'} );
+    my $trusted = 0;
+    my $ip_obj = new Net::IP( $ip_address );
+    foreach my $trusted_ip ( @{ $CONFIG->{'trusted_ip_list'} } ) {
+        my $trusted_obj = new Net::IP( $trusted_ip );
+        my $is_overlap = $ip_obj->overlaps( $trusted_obj ) || 0;
+        if ( $is_overlap == $IP_A_IN_B_OVERLAP
+          || $is_overlap == $IP_B_IN_A_OVERLAP # Should never happen
+          || $is_overlap == $IP_PARTIAL_OVERLAP # Should never happen
+          || $is_overlap == $IP_IDENTICAL
+        ) {
+            $trusted = 1;
+        }
+    }
+    return $trusted;;
 }
 
 sub is_local_ip_address {
@@ -91,8 +109,21 @@ sub is_local_ip_address {
 
 sub is_hostname_mine {
     my ( $ctx, $check_hostname ) = @_;
+
     my $hostname = get_my_hostname($ctx);
     my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
+
+    if ( exists ( $CONFIG->{'hosts_to_remove'} ) ) {
+        foreach my $remove_hostname ( @{ $CONFIG->{'hosts_to_remove'} } ) {
+            if (
+                substr( lc $check_hostname, ( 0 - length($remove_hostname) ) ) eq
+                lc $remove_hostname )
+            {
+                return 1;
+            }
+        }
+    }
+
     if (
         substr( lc $check_hostname, ( 0 - length($check_for) ) ) eq
         lc $check_for )
