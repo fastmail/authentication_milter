@@ -1,0 +1,22 @@
+{
+
+    "check_spf"        : "1",
+    "check_dkim"       : "1",
+    "check_dkim-adsp"  : "1",
+    "check_dmarc"      : "1",
+    "check_ptr"        : "1",
+    "check_iprev"      : "1",
+    "check_senderid"   : "1",
+    "check_auth"       : "1",
+    "check_local_ip"   : "1",
+
+    "check_trusted_ip" : "1",
+    "trusted_ip_list" : [
+        "127.0.0.1",
+        "::1"
+    ],
+    "hosts_to_remove" : [
+        "example.com"
+    ]
+
+}
