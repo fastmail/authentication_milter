@@ -567,8 +567,9 @@ sub add_headers {
             ## No support for this in Sendmail::PMilter
             ## so we shall write the packet manually.
             #  Intend to patch PMilter to fix this
+            my $index = 1;
             $ctx->write_packet( 'i',
-                    "\0\0\0\0"
+                    pack( 'N', $index )
                   . $header->{'field'} . "\0"
                   . $header->{'value'}
                   . "\0" );
