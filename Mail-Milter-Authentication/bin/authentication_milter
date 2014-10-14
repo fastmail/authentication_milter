@@ -2,11 +2,28 @@
 
 use strict;
 use warnings;
+use English;
+
+use TwoFiftyEight::Core::Lock;
 
 use Getopt::Long;
 use Mail::Milter::Authentication;
 
+# CONFIG
 my $connection = 'inet:12345@localhost';
+
+# LOCKING
+my $lock = TwoFiftyEight::Core::Lock->new( 'id' => 'authentication_milter' );
+$lock->get_lock_or_die;
+
+# PID
+{
+    my $pid = $PID;
+    my $pid_file = '/run/authentication_milter.pid';
+    open my $pidf, '>', $pid_file;
+    print $pidf $pid;
+    close $pidf;
+}
 
 GetOptions (
     'connection=s' => \$connection,
