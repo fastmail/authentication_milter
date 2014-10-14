@@ -509,7 +509,6 @@ sub close_callback {
 sub log_error {
     my ( $ctx, $error ) = @_;
     dbgout( $ctx, 'ERROR', $error, LOG_ERR );
-    warn $error;
 }
 
 sub add_headers {
