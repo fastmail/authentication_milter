@@ -115,7 +115,7 @@ sub get_symval {
     # not searching symbols for the correct code. Rewrite this here.
     # Intend to patch PMilter to fix this.
     my $symbols = $ctx->{'symbols'}; ## Internals, here be dragons!
-    foreach my $code ( keys $symbols ) {
+    foreach my $code ( keys %{$symbols} ) {
         $val = $symbols->{$code}->{$key};
         return $val if defined( $val );
     }
