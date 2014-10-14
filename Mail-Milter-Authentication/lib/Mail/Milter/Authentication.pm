@@ -30,6 +30,14 @@ sub start {
         }
     }
 
+    # Drop Privs
+    my $runas = $CONFIG->{'runas'} || die "No runas user defined"; 
+    my $uid = getpwnam( $runas ) || die "Could not find user $runas";
+
+    # Daemonise
+    my $daemon = Proc::Daemon->new();
+    $daemon->Init();
+
     my $callbacks = {
       'connect' => \&Mail::Milter::Authentication::Handler::connect_callback,
       'helo'    => \&Mail::Milter::Authentication::Handler::helo_callback,
@@ -42,18 +50,11 @@ sub start {
       'abort'   => \&Mail::Milter::Authentication::Handler::abort_callback,
       'close'   => \&Mail::Milter::Authentication::Handler::close_callback,
     };
+
     #Sendmail::PMilter::setdbg( 9 );
     my $milter = new Sendmail::PMilter;
     $milter->setconn( $connection );
     $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
-
-    # Drop Privs
-    my $runas = $CONFIG->{'runas'} || die "No runas user defined"; 
-    my $uid = getpwnam( $runas ) || die "Could not find user $runas";
-
-    # Daemonise
-    my $daemon = Proc::Daemon->new();
-    $daemon->Init();
 
     # PID
     {
