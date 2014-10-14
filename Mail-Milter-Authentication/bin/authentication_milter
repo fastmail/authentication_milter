@@ -40,3 +40,5 @@ Mail::Milter::Authentication::start({
     'connection' => $connection,
 });
 
+$lock->release_lock();
+
