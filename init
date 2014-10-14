@@ -23,7 +23,7 @@ export TMPDIR=/tmp
 
 test -f /etc/default/authentication_milter && . /etc/default/authentication_milter
 
-DOPTIONS="-d --pidfile=$PIDFILE"
+DOPTIONS="--daemon --pidfile=$PIDFILE"
 
 if [ "$ENABLED" = "0" ]; then
     echo "$DESC: disabled, see /etc/default/authentication_milter"

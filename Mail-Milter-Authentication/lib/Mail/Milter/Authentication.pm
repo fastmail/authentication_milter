@@ -35,8 +35,10 @@ sub start {
     my $uid = getpwnam( $runas ) || die "Could not find user $runas";
 
     # Daemonise
-    my $daemon = Proc::Daemon->new();
-    $daemon->Init();
+    if ( $args->{'daemon'} ) {
+        my $daemon = Proc::Daemon->new();
+        $daemon->Init();
+    }
 
     my $callbacks = {
       'connect' => \&Mail::Milter::Authentication::Handler::connect_callback,

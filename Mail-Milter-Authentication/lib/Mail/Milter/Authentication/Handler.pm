@@ -484,11 +484,11 @@ sub eom_callback {
         my $queue_id = get_symval( $ctx, 'i' );
         $priv->{'queue_id'} = $queue_id || q{--};
         dkim_dmarc_check($ctx);
-        add_headers($ctx);
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'EOM callback error ' . $error );
     }
+    add_headers($ctx);
     return SMFIS_ACCEPT;
 }
 
@@ -496,6 +496,7 @@ sub abort_callback {
     # On any out of our control abort
     my ($ctx) = @_;
     dbgout( $ctx, 'ABORT', 'Abort called', LOG_DEBUG );
+    dbgoutwrite($ctx);
     return SMFIS_CONTINUE;
 }
 
@@ -634,83 +635,93 @@ sub dkim_dmarc_check {
     if ( $CONFIG->{'check_dkim'} ) {
         my $dkim  = $priv->{'dkim_obj'};
 
-        $dkim->CLOSE();
+        eval {
+            $dkim->CLOSE();
 
-        my $dkim_result        = $dkim->result;
-        my $dkim_result_detail = $dkim->result_detail;
+            my $dkim_result        = $dkim->result;
+            my $dkim_result_detail = $dkim->result_detail;
 
-        if ( ! ( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
-            add_auth_header( $ctx,
-                format_header_entry( 'dkim', $dkim_result )
-                  . ' (overall validation result)' );
-        }
-
-        dbgout( $ctx, 'DKIMResult', $dkim_result_detail, LOG_INFO );
-
-        $priv->{'dkim_result_code'} = $dkim_result;
-
-        # there might be multiple signatures, what is the result per signature?
-        foreach my $signature ( $dkim->signatures ) {
-
-            my $key = $signature->get_public_key();
-            dbgout( $ctx, 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
-            dbgout( $ctx, 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
-            my $signature_result = $signature->result();
-
-            if ( ! ( $CONFIG->{'check_dkim'} == 2 && $signature_result eq 'none' ) ) {
-                my $header = join(
-                    q{ },
-                    format_header_entry( 'dkim', $signature_result ),
-                    '('
-                      . format_header_comment(
-                        $key->size() . '-bit ' . $key->type() . ' key'
-                      )
-                      . ')',
-                    format_header_entry( 'header.d', $signature->domain() ),
-                    format_header_entry( 'header.i', $signature->identity() ),
-                );
-
-                add_auth_header( $ctx, $header );
+            if ( ! ( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
+                add_auth_header( $ctx,
+                    format_header_entry( 'dkim', $dkim_result )
+                      . ' (overall validation result)' );
             }
 
-        }
+            dbgout( $ctx, 'DKIMResult', $dkim_result_detail, LOG_INFO );
 
-        # the alleged author of the email may specify how to handle email
-        if ( $CONFIG->{'check_dkim-adsp'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            foreach my $policy ( $dkim->policies ) {
-                my $apply    = $policy->apply($dkim);
-                my $string   = $policy->as_string();
-                my $location = $policy->location() || q{};
-                my $name     = $policy->name();
-                my $default  = $policy->is_implied_default_policy();
+            $priv->{'dkim_result_code'} = $dkim_result;
 
-                dbgout( $ctx, 'DKIMPolicy',         $apply, LOG_DEBUG );
-                dbgout( $ctx, 'DKIMPolicyString',   $string, LOG_DEBUG );
-                dbgout( $ctx, 'DKIMPolicyLocation', $location, LOG_DEBUG  );
-                dbgout( $ctx, 'DKIMPolicyName',     $name, LOG_DEBUG  );
-                dbgout( $ctx, 'DKIMPolicyDefault',  $default ? 'yes' : 'no', LOG_DEBUG );
+            # there might be multiple signatures, what is the result per signature?
+            foreach my $signature ( $dkim->signatures ) {
 
-                my $result =
-                    $apply eq 'accept'  ? 'pass'
-                  : $apply eq 'reject'  ? 'discard'
-                  : $apply eq 'neutral' ? 'unknown'
-                  :                       'unknown';
+                my $key = $signature->get_public_key();
+                dbgout( $ctx, 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
+                dbgout( $ctx, 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
+                my $signature_result = $signature->result();
 
-                if ( ! ( $CONFIG->{'check_dkim-adsp'} == 2 && $result eq 'none' ) ) {
+                if ( ! ( $CONFIG->{'check_dkim'} == 2 && $signature_result eq 'none' ) ) {
+                    my $header = join(
+                        q{ },
+                        format_header_entry( 'dkim', $signature_result ),
+                        '('
+                          . format_header_comment(
+                            $key->size() . '-bit ' . $key->type() . ' key'
+                        )
+                          . ')',
+                        format_header_entry( 'header.d', $signature->domain() ),
+                        format_header_entry( 'header.i', $signature->identity() ),
+                    );
 
-                    my $comment = '('
-                      . format_header_comment( ( $default ? 'default ' : q{} )
-                        . "$name policy"
-                        . ( $location ? " from $location" : q{} )
-#                        . ( $string   ? "; $string"       : q{} )
-                      )
-                      . ')';
-
-                    my $header = join( q{ },
-                        format_header_entry( 'dkim-adsp', $result ), $comment, );
                     add_auth_header( $ctx, $header );
                 }
+
             }
+
+            # the alleged author of the email may specify how to handle email
+            if ( $CONFIG->{'check_dkim-adsp'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+                foreach my $policy ( $dkim->policies ) {
+                    my $apply    = $policy->apply($dkim);
+                    my $string   = $policy->as_string();
+                    my $location = $policy->location() || q{};
+                    my $name     = $policy->name();
+                    my $default  = $policy->is_implied_default_policy();
+
+                    dbgout( $ctx, 'DKIMPolicy',         $apply, LOG_DEBUG );
+                    dbgout( $ctx, 'DKIMPolicyString',   $string, LOG_DEBUG );
+                    dbgout( $ctx, 'DKIMPolicyLocation', $location, LOG_DEBUG  );
+                    dbgout( $ctx, 'DKIMPolicyName',     $name, LOG_DEBUG  );
+                    dbgout( $ctx, 'DKIMPolicyDefault',  $default ? 'yes' : 'no', LOG_DEBUG );
+
+                    my $result =
+                        $apply eq 'accept'  ? 'pass'
+                      : $apply eq 'reject'  ? 'discard'
+                      : $apply eq 'neutral' ? 'unknown'
+                      :                       'unknown';
+
+                    if ( ! ( $CONFIG->{'check_dkim-adsp'} == 2 && $result eq 'none' ) ) {
+
+                        my $comment = '('
+                          . format_header_comment( ( $default ? 'default ' : q{} )
+                            . "$name policy"
+                            . ( $location ? " from $location" : q{} )
+#                            . ( $string   ? "; $string"       : q{} )
+                          )
+                          . ')';
+
+                        my $header = join( q{ },
+                            format_header_entry( 'dkim-adsp', $result ), $comment, );
+                        add_auth_header( $ctx, $header );
+                    }
+                }
+            }
+        };
+        if ( my $error = $@ ) {
+            log_error( $ctx, 'DKIM Error ' . $error );
+            add_auth_header( $ctx, 'dkim=temperror' );
+            if ( $CONFIG->{'check_dmarc'} ) {
+                add_auth_header( $ctx, 'dmarc=temperror' );
+            }
+            return;
         }
 
         if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
@@ -951,7 +962,7 @@ sub spf_check {
 
 sub dbgout {
     my ( $ctx, $key, $value, $priority ) = @_;
-
+    warn "$key: $value\n";
     my $priv = $ctx->getpriv();
     if ( !exists( $priv->{'dbgout'} ) ) {
         $priv->{'dbgout'} = [];
@@ -971,8 +982,8 @@ sub dbgoutwrite {
     eval {
         openlog('authentication_milter', 'pid', LOG_MAIL);
         setlogmask(   LOG_MASK(LOG_ERR)
-#                    | LOG_MASK(LOG_DEBUG)
                     | LOG_MASK(LOG_INFO)
+                    | LOG_MASK(LOG_DEBUG)
         );
         my $queue_id = $priv->{'queue_id'} || q{--};
         if ( exists( $priv->{'dbgout'} ) ) {
@@ -985,6 +996,7 @@ sub dbgoutwrite {
             }
         }
         closelog();
+        $priv->{'dbgout'} = undef;
     };
 }
 

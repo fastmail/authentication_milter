@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 
+use Getopt::Long;
 use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Config;
 
@@ -10,9 +11,15 @@ use Mail::Milter::Authentication::Config;
 my $CONFIG = Mail::Milter::Authentication::Config::get_config();
 my $connection = $CONFIG->{'connection'};
 my $pid_file = '/run/authentication_milter.pid';
+my $daemon = 0;
+
+GetOptions (
+    "daemon" => \$daemon,
+) or die "Error in command line arguments\n";
 
 Mail::Milter::Authentication::start({
     'connection' => $connection,
     'pid_file'   => $pid_file,
+    'daemon'     => $daemon,
 });
 
