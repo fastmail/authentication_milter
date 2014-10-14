@@ -14,7 +14,8 @@ my $pid_file = '/run/authentication_milter.pid';
 my $daemon = 0;
 
 GetOptions (
-    "daemon" => \$daemon,
+    "daemon"    => \$daemon,
+    "pidfile=s" => \$pid_file,
 ) or die "Error in command line arguments\n";
 
 Mail::Milter::Authentication::start({
