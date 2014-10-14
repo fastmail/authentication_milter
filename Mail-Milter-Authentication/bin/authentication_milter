@@ -4,41 +4,35 @@ use strict;
 use warnings;
 use English;
 
-use TwoFiftyEight::Core::Lock;
-
-use Getopt::Long;
 use Mail::Milter::Authentication;
+use Mail::Milter::Authentication::Config;
 
 # CONFIG
-my $connection = 'inet:12345@localhost';
+my $CONFIG = Mail::Milter::Authentication::Config::get_config();
+my $connection = $CONFIG->{'connection'};
+my $pid_file = '/run/authentication_milter.pid';
 
-# LOCKING
-my $lock = TwoFiftyEight::Core::Lock->new( 'id' => 'authentication_milter' );
-$lock->get_lock_or_die;
+# CONCURRENCY CHECKING
+# Cannot use a simple lock due to the way PMilter works.
+if ( -e $pid_file ) {
+    open my $pidf, '<', $pid_file;
+    my $pid = <$pidf>;
+    close $pidf;
+    my $proc = '/proc/' . $pid;
+    if ( -e $proc ) {
+        die "Process already running";
+    }
+}
 
 # PID
 {
     my $pid = $PID;
-    my $pid_file = '/run/authentication_milter.pid';
     open my $pidf, '>', $pid_file;
     print $pidf $pid;
     close $pidf;
 }
 
-GetOptions (
-    'connection=s' => \$connection,
-) or die show_usage();
-
-sub show_usage {
-    return join( "\n",
-        'Usage:',
-        'authentication_milter connection=inet:1234@localhost'
-    );
-}
-
 Mail::Milter::Authentication::start({
     'connection' => $connection,
 });
-
-$lock->release_lock();
 

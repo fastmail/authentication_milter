@@ -9,6 +9,8 @@ use Email::Address;
 use JSON;
 use Mail::DKIM::Verifier;
 use Mail::DMARC::PurePerl;
+use Mail::Milter::Authentication;
+use Mail::Milter::Authentication::Config;
 use Mail::SPF;
 use Net::DNS;
 use Net::IP;
@@ -16,37 +18,9 @@ use Sendmail::PMilter qw { :all };
 use Socket;
 use Sys::Syslog qw{:standard :macros};
 
-my $CONFIG = load_config();
-
-sub load_config {
-
-    my $file = '/etc/authentication_milter.json';
-    if ( ! -e $file ) {
-        die "Could not find configuration file $file";
-    }
-
-    my $text;
-    {
-        open my $cf, '<', $file || die "Could not open configuration file $file";
-        my @t = <$cf>;
-        close $cf;
-        $text = join( q{}, @t );
-    }
-
-    my $json = JSON->new();
-    my $CONFIG = $json->decode( $text ) || die "Error parsing config file $file";
-
-    # Samity Checks
-    if ( $CONFIG->{'check_dmarc'} ) {
-        if ( not $CONFIG->{'check_dkim'} ) { die 'dmarc checks require dkim to be enabled'; } ;
-        if ( not $CONFIG->{'check_spf'} )  { die 'dmarc checks require spf to be enabled'; } ;
-    }
-    if ( $CONFIG->{'check_ptr'} ) {
-        if ( not $CONFIG->{'check_iprev'} ) { die 'ptr checks require iprev to be enabled'; } ;
-    }
-    return $CONFIG;
-
-}
+my $CONFIG = Mail::Milter::Authentication::Config::get_config();
+use Data::Dumper;
+print Dumper($CONFIG);
 
 sub get_auth_name {
     my ($ctx) = @_;

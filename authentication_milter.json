@@ -1,5 +1,8 @@
 {
 
+    "connection"       : "inet:12345@localhost",
+    "runas"            : "nobody",
+
     "check_spf"        : "1",
     "check_dkim"       : "1",
     "check_dkim-adsp"  : "1",

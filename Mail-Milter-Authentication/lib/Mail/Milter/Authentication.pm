@@ -5,8 +5,14 @@ $VERSION = 0.1;
 use strict;
 use warnings;
 
+use Mail::Milter::Authentication::Config;
 use Mail::Milter::Authentication::Handler;
 use Sendmail::PMilter qw { :all };
+
+my $CONFIG = Mail::Milter::Authentication::Config::get_config();
+
+use Data::Dumper;
+print Dumper( $CONFIG );
 
 sub start {
     my ( $args ) = @_;
@@ -28,6 +34,12 @@ sub start {
     my $milter = new Sendmail::PMilter;
     $milter->setconn( $connection );
     $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
+    # Drop Privs
+    {
+        my $runas = $CONFIG->{'runas'} || die "No runas user defined"; 
+        my $uid = getpwnam( $runas ) || die "Could not find user $runas";
+        $> = $uid;
+    }
     $milter->main();
     # Never reaches here, callbacks are called from Milter.
     die 'Something went wrong';
