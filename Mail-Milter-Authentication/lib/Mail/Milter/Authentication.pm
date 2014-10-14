@@ -11,9 +11,6 @@ use Sendmail::PMilter qw { :all };
 
 my $CONFIG = Mail::Milter::Authentication::Config::get_config();
 
-use Data::Dumper;
-print Dumper( $CONFIG );
-
 sub start {
     my ( $args ) = @_;
     my $connection = $args->{ 'connection' };

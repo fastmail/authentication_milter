@@ -19,8 +19,6 @@ use Socket;
 use Sys::Syslog qw{:standard :macros};
 
 my $CONFIG = Mail::Milter::Authentication::Config::get_config();
-use Data::Dumper;
-print Dumper($CONFIG);
 
 sub get_auth_name {
     my ($ctx) = @_;
