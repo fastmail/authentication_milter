@@ -281,10 +281,12 @@ sub helo_callback {
     my $priv = $ctx->getpriv();
     $helo_host = q{} if not $helo_host;
     eval {
-        $priv->{'helo_name'} = $helo_host;
-        dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
-        if ( $CONFIG->{'check_ptr'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            helo_check($ctx);
+        if ( ! exists( $priv->{'helo_name'} ) ) {
+            $priv->{'helo_name'} = $helo_host;
+            dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
+            if ( $CONFIG->{'check_ptr'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+                helo_check($ctx);
+            }
         }
     };
     if ( my $error = $@ ) {
