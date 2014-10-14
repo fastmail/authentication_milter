@@ -9,7 +9,7 @@
     "check_dmarc"      : "1",
     "check_ptr"        : "1",
     "check_iprev"      : "1",
-    "check_senderid"   : "1",
+    "check_senderid"   : "2",
     "check_auth"       : "1",
     "check_local_ip"   : "1",
 

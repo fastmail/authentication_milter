@@ -637,9 +637,11 @@ sub dkim_dmarc_check {
         my $dkim_result        = $dkim->result;
         my $dkim_result_detail = $dkim->result_detail;
 
-        add_auth_header( $ctx,
-            format_header_entry( 'dkim', $dkim_result )
-              . ' (overall validation result)' );
+        if ( ! ( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
+            add_auth_header( $ctx,
+                format_header_entry( 'dkim', $dkim_result )
+                  . ' (overall validation result)' );
+        }
 
         dbgout( $ctx, 'DKIMResult', $dkim_result_detail, LOG_INFO );
 
@@ -651,20 +653,23 @@ sub dkim_dmarc_check {
             my $key = $signature->get_public_key();
             dbgout( $ctx, 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
             dbgout( $ctx, 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
+            my $signature_result = $signature->result();
 
-            my $header = join(
-                q{ },
-                format_header_entry( 'dkim', $dkim_result ),
-                '('
-                  . format_header_comment(
-                    $key->size() . '-bit ' . $key->type() . ' key'
-                  )
-                  . ')',
-                format_header_entry( 'header.d', $signature->domain() ),
-                format_header_entry( 'header.i', $signature->identity() ),
-            );
+            if ( ! ( $CONFIG->{'check_dkim'} == 2 && $signature_result eq 'none' ) ) {
+                my $header = join(
+                    q{ },
+                    format_header_entry( 'dkim', $signature_result ),
+                    '('
+                      . format_header_comment(
+                        $key->size() . '-bit ' . $key->type() . ' key'
+                      )
+                      . ')',
+                    format_header_entry( 'header.d', $signature->domain() ),
+                    format_header_entry( 'header.i', $signature->identity() ),
+                );
 
-            add_auth_header( $ctx, $header );
+                add_auth_header( $ctx, $header );
+            }
 
         }
 
@@ -689,17 +694,20 @@ sub dkim_dmarc_check {
                   : $apply eq 'neutral' ? 'unknown'
                   :                       'unknown';
 
-                my $comment = '('
-                  . format_header_comment( ( $default ? 'default ' : q{} )
-                    . "$name policy"
-                    . ( $location ? " from $location" : q{} )
-#                    . ( $string   ? "; $string"       : q{} )
-                  )
-                  . ')';
+                if ( ! ( $CONFIG->{'check_dkim-adsp'} == 2 && $result eq 'none' ) ) {
 
-                my $header = join( q{ },
-                    format_header_entry( 'dkim-adsp', $result ), $comment, );
-                add_auth_header( $ctx, $header );
+                    my $comment = '('
+                      . format_header_comment( ( $default ? 'default ' : q{} )
+                        . "$name policy"
+                        . ( $location ? " from $location" : q{} )
+#                        . ( $string   ? "; $string"       : q{} )
+                      )
+                      . ')';
+
+                    my $header = join( q{ },
+                        format_header_entry( 'dkim-adsp', $result ), $comment, );
+                    add_auth_header( $ctx, $header );
+                }
             }
         }
 
@@ -709,22 +717,25 @@ sub dkim_dmarc_check {
                 my $dmarc_result = $dmarc->validate();
                 my $dmarc_code   = $dmarc_result->result;
                 dbgout( $ctx, 'DMARCCode', $dmarc_code, LOG_INFO );
-                my $dmarc_policy;
-                if ( $dmarc_code ne 'pass' ) {
-                    $dmarc_policy = eval { $dmarc_result->evalated->disposition() };
-                    dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_DEBUG );
+
+                if ( ! ( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {
+                    my $dmarc_policy;
+                    if ( $dmarc_code ne 'pass' ) {
+                        $dmarc_policy = eval { $dmarc_result->evalated->disposition() };
+                        dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_DEBUG );
+                    }
+                    my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
+                    if ($dmarc_policy) {
+                        $dmarc_header .= ' ('
+                          . format_header_comment(
+                            format_header_entry( 'p', $dmarc_policy ) )
+                          . ')';
+                    }
+                    $dmarc_header .= ' '
+                      . format_header_entry( 'header.from',
+                        get_domain_from( $priv->{'from_header'} ) );
+                    add_auth_header( $ctx, $dmarc_header );
                 }
-                my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
-                if ($dmarc_policy) {
-                    $dmarc_header .= ' ('
-                      . format_header_comment(
-                        format_header_entry( 'p', $dmarc_policy ) )
-                      . ')';
-                }
-                $dmarc_header .= ' '
-                  . format_header_entry( 'header.from',
-                    get_domain_from( $priv->{'from_header'} ) );
-                add_auth_header( $ctx, $dmarc_header );
             }
         }
     }
@@ -853,20 +864,18 @@ sub senderid_check {
 
     my $result_code = $spf_result->code();
     $priv->{'spf_result_code'} = $result_code;
-
-    my $auth_header = format_header_entry( 'senderid', $result_code );
-    add_auth_header( $ctx, $auth_header );
-
     dbgout( $ctx, 'SenderIdCode', $result_code, LOG_INFO );
 
+    if ( ! ( $CONFIG->{'check_senderid'} == 2 && $result_code eq 'none' ) ) {
+        my $auth_header = format_header_entry( 'senderid', $result_code );
+        add_auth_header( $ctx, $auth_header );
 #my $result_local  = $spf_result->local_explanation;
 #my $result_auth   = $spf_result->can( 'authority_explanation' ) ? $spf_result->authority_explanation() : '';
-
-    my $result_header = $spf_result->received_spf_header();
-    my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
-
-    prepend_header( $ctx, $header, $value );
-    dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
+        my $result_header = $spf_result->received_spf_header();
+        my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
+        prepend_header( $ctx, $header, $value );
+        dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
+    }
 
     return;
 }
@@ -907,7 +916,9 @@ sub spf_check {
         format_header_entry( 'smtp.mailfrom', get_address_from( $priv->{'mail_from'} ) ),
         format_header_entry( 'smtp.helo',     $priv->{'helo_name'} ),
     );
-    add_auth_header( $ctx, $auth_header );
+    if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
+        add_auth_header( $ctx, $auth_header );
+    }
 
     if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
         if ( my $dmarc = $priv->{'dmarc_obj'} ) {
@@ -921,11 +932,12 @@ sub spf_check {
 
     dbgout( $ctx, 'SPFCode', $result_code, LOG_INFO );
 
-    my $result_header = $spf_result->received_spf_header();
-    my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
-
-    prepend_header( $ctx, $header, $value );
-    dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
+    if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
+        my $result_header = $spf_result->received_spf_header();
+        my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
+        prepend_header( $ctx, $header, $value );
+        dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
+    }
 
     return;
 }
