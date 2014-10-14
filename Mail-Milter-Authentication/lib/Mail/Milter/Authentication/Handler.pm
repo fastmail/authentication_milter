@@ -747,6 +747,7 @@ sub iprev_check {
     my $priv = $ctx->getpriv();
 
     my $ip_address = $priv->{'ip_address'};
+    my $i1 = new Net::IP( $ip_address );
 
     my $resolver = Net::DNS::Resolver->new;
 
@@ -778,7 +779,9 @@ sub iprev_check {
             foreach my $rr ( $packet->answer ) {
                 next unless $rr->type eq "A";
                 my $address = $rr->rdatastr;
-                if ( $address eq $ip_address ) {
+                my $i2 = new Net::IP( $address );    
+        	my $is_overlap = $i1->overlaps( $i2 ) || 0;
+                if ( $is_overlap == $IP_IDENTICAL ) {
                     $result = 'pass';
                     last APACKET;
                 }
@@ -801,7 +804,9 @@ sub iprev_check {
             foreach my $rr ( $packet->answer ) {
                 next unless $rr->type eq "AAAA";
                 my $address = $rr->rdatastr;
-                if ( $address eq $ip_address ) {
+                my $i2 = new Net::IP( $address );    
+        	my $is_overlap = $i1->overlaps( $i2 ) || 0;
+                if ( $is_overlap == $IP_IDENTICAL ) {
                     $result = 'pass';
                     last APACKET;
                 }
