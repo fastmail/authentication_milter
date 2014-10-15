@@ -24,6 +24,8 @@
         "2a01:7e00::f03c:91ff:fe93:1cd"
     ],
     "hosts_to_remove" : [
+        "electric-dreams.org",
+        "twofiftyeight.ltd.uk"
     ]
 
 }
