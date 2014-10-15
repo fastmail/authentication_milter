@@ -211,6 +211,7 @@ sub connect_callback {
 
         if ( $CONFIG->{'check_local_ip'} ) {
             if ( is_local_ip_address( $ctx, $ip_address ) ) {
+                dbgout( $ctx, 'LocalIP', 'pass', LOG_DEBUG );
                 add_auth_header( $ctx, 'x-local-ip=pass' );
                 $priv->{ 'is_local_ip_address' } = 1;
             }
@@ -218,6 +219,7 @@ sub connect_callback {
 
         if ( $CONFIG->{'check_trusted_ip'} ) {
             if ( is_trusted_ip_address( $ctx, $ip_address ) ) {
+                dbgout( $ctx, 'TrustedIP', 'pass', LOG_DEBUG );
                 add_auth_header( $ctx, 'x-trusted-ip=pass' );
                 $priv->{ 'is_trusted_ip_address' } = 1;
             }
@@ -614,12 +616,14 @@ sub helo_check {
     my $helo_name = $priv->{'helo_name'};
 
     if ( $domain eq $helo_name ) {
+        dbgout( $ctx, 'PTRMatch', 'pass', LOG_DEBUG );
         add_auth_header( $ctx,
                 format_header_entry( 'x-ptr', 'pass' ) . q{ }
               . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
               . format_header_entry( 'x-ptr-lookup', $domain ) );
     }
     else {
+        dbgout( $ctx, 'PTRMatch', 'fail', LOG_DEBUG );
         add_auth_header( $ctx,
                 format_header_entry( 'x-ptr', 'fail' ) . q{ }
               . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
@@ -856,6 +860,7 @@ sub iprev_check {
         $priv->{'verified_ptr'} = $domain;
     }
 
+    dbgout( $ctx, 'IPRevCheck', $result, LOG_DEBUG );
     my $header =
         format_header_entry( 'iprev', $result ) . ' '
       . format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
