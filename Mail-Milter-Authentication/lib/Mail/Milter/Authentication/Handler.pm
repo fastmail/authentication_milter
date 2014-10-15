@@ -634,7 +634,6 @@ sub dkim_dmarc_check {
 
     if ( $CONFIG->{'check_dkim'} ) {
         my $dkim  = $priv->{'dkim_obj'};
-
         eval {
             $dkim->CLOSE();
 
@@ -686,6 +685,12 @@ sub dkim_dmarc_check {
                     my $name     = $policy->name();
                     my $default  = $policy->is_implied_default_policy();
 
+                    my $otype = ref $policy;
+                    my $type = $otype eq 'Mail::DKIM::AuthorDomainPolicy' ? 'dkim-adsp'
+                             : $otype eq 'Mail::DKIM::DkimPolicy'         ? 'x-dkim-ssp'
+                             : $otype eq 'Mail::DKIM::DkPolicy'           ? 'x-dkim-dkssp'
+                             :                                              'x-dkim-policy';
+
                     dbgout( $ctx, 'DKIMPolicy',         $apply, LOG_DEBUG );
                     dbgout( $ctx, 'DKIMPolicyString',   $string, LOG_DEBUG );
                     dbgout( $ctx, 'DKIMPolicyLocation', $location, LOG_DEBUG  );
@@ -709,7 +714,7 @@ sub dkim_dmarc_check {
                           . ')';
 
                         my $header = join( q{ },
-                            format_header_entry( 'dkim-adsp', $result ), $comment, );
+                            format_header_entry( $type, $result ), $comment, );
                         add_auth_header( $ctx, $header );
                     }
                 }
