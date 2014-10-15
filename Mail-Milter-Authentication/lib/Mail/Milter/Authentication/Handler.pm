@@ -640,6 +640,7 @@ sub dkim_dmarc_check {
         my $dkim  = $priv->{'dkim_obj'};
         eval {
             $dkim->CLOSE();
+            $ctx->progress();
 
             my $dkim_result        = $dkim->result;
             my $dkim_result_detail = $dkim->result_detail;
@@ -737,6 +738,7 @@ sub dkim_dmarc_check {
             if ( my $dmarc = $priv->{'dmarc_obj'} ) {
                 $dmarc->dkim($dkim);
                 my $dmarc_result = $dmarc->validate();
+                $ctx->progress();
                 my $dmarc_code   = $dmarc_result->result;
                 dbgout( $ctx, 'DMARCCode', $dmarc_code, LOG_INFO );
 
@@ -779,6 +781,7 @@ sub iprev_check {
     # We do not consider multiple PTR records,
     # as this is not a recomended setup
     my $packet = $resolver->query( $ip_address, 'PTR' );
+    $ctx->progress();
     if ($packet) {
         foreach my $rr ( $packet->answer ) {
             next unless $rr->type eq "PTR";
@@ -796,6 +799,7 @@ sub iprev_check {
     my $a_error;
     if ($domain) {
         my $packet = $resolver->query( $domain, 'A' );
+        $ctx->progress();
         if ($packet) {
           APACKET:
             foreach my $rr ( $packet->answer ) {
@@ -821,6 +825,7 @@ sub iprev_check {
 
     if ( $domain && !$result ) {
         my $packet = $resolver->query( $domain, 'AAAA' );
+        $ctx->progress();
         if ($packet) {
           APACKET:
             foreach my $rr ( $packet->answer ) {
@@ -889,6 +894,7 @@ sub senderid_check {
     );
 
     my $spf_result = $spf_server->process($spf_request);
+    $ctx->progress();
 
     my $result_code = $spf_result->code();
     $priv->{'spf_result_code'} = $result_code;
@@ -935,6 +941,7 @@ sub spf_check {
     );
 
     my $spf_result = $spf_server->process($spf_request);
+    $ctx->progress();
 
     my $result_code = $spf_result->code();
     $priv->{'spf_result_code'} = $result_code;
