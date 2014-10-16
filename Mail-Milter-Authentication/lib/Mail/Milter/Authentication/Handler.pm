@@ -272,7 +272,6 @@ sub envfrom_callback {
     delete $priv->{'mail_from'};
     delete $priv->{'from_header'};
     delete $priv->{'auth_result_header_index'};
-    delete $priv->{'queue_id'};
     delete $priv->{'remove_auth_headers'};
     delete $priv->{'auth_headers'};
     delete $priv->{'pre_headers'};
@@ -505,8 +504,6 @@ sub eom_callback {
     my $priv = $ctx->getpriv();
 
     eval {
-        my $queue_id = get_symval( $ctx, 'i' );
-        $priv->{'queue_id'} = $queue_id || q{--};
         dkim_dmarc_check($ctx);
     };
     if ( my $error = $@ ) {
@@ -1038,7 +1035,7 @@ sub dbgoutwrite {
                     | LOG_MASK(LOG_INFO)
 #                    | LOG_MASK(LOG_DEBUG)
         );
-        my $queue_id = $priv->{'queue_id'} || q{--};
+        my $queue_id = get_symval( $ctx, 'i' ) || q{--};
         if ( exists( $priv->{'dbgout'} ) ) {
             foreach my $entry ( @{ $priv->{'dbgout'} } ) {
                 my $key      = $entry->{'key'};
