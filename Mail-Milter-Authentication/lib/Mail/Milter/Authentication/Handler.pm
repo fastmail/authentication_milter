@@ -213,7 +213,7 @@ sub connect_callback {
         if ( $CONFIG->{'check_local_ip'} ) {
             if ( is_local_ip_address( $ctx, $ip_address ) ) {
                 dbgout( $ctx, 'LocalIP', 'pass', LOG_DEBUG );
-                add_auth_header( $ctx, 'x-local-ip=pass' );
+                add_c_auth_header( $ctx, 'x-local-ip=pass' );
                 $priv->{ 'is_local_ip_address' } = 1;
             }
         }
@@ -221,10 +221,66 @@ sub connect_callback {
         if ( $CONFIG->{'check_trusted_ip'} ) {
             if ( is_trusted_ip_address( $ctx, $ip_address ) ) {
                 dbgout( $ctx, 'TrustedIP', 'pass', LOG_DEBUG );
-                add_auth_header( $ctx, 'x-trusted-ip=pass' );
+                add_c_auth_header( $ctx, 'x-trusted-ip=pass' );
                 $priv->{ 'is_trusted_ip_address' } = 1;
             }
         }
+
+        if ( $CONFIG->{'check_iprev'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+            iprev_check($ctx);
+        }
+    };
+    if ( my $error = $@ ) {
+        log_error( $ctx, 'Connect callback error ' . $error );
+    }
+
+    return SMFIS_CONTINUE;
+}
+
+sub helo_callback {
+    # On HELO
+    my ( $ctx, $helo_host ) = @_;
+    dbgout( $ctx, 'CALLBACK', 'Helo', LOG_DEBUG );
+    my $priv = $ctx->getpriv();
+    $helo_host = q{} if not $helo_host;
+    eval {
+        if ( ! exists( $priv->{'helo_name'} ) ) {
+            # Ignore any further HELOs from this connection
+            $priv->{'helo_name'} = $helo_host;
+            dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
+            if ( $CONFIG->{'check_ptr'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+                helo_check($ctx);
+            }
+        }
+    };
+    if ( my $error = $@ ) {
+        log_error( $ctx, 'HELO callback error ' . $error );
+    }
+
+    return SMFIS_CONTINUE;
+}
+
+sub envfrom_callback {
+    # On MAILFROM
+    #...
+    my ( $ctx, $env_from ) = @_;
+    dbgout( $ctx, 'CALLBACK', 'EnvFrom', LOG_DEBUG );
+    my $priv = $ctx->getpriv();
+
+    # Reset private data for this MAIL transaction
+    delete $priv->{'auth_headers'};
+    delete $priv->{'mail_from'};
+    delete $priv->{'from_header'};
+    delete $priv->{'auth_result_header_index'};
+    delete $priv->{'queue_id'};
+    delete $priv->{'remove_auth_headers'};
+    delete $priv->{'auth_headers'};
+    delete $priv->{'pre_headers'};
+    delete $priv->{'add_headers'};
+
+    $env_from = q{} if not $env_from;
+
+    eval {
 
         my $dkim;
         if ( $CONFIG->{'check_dkim'} ) {
@@ -244,7 +300,7 @@ sub connect_callback {
             eval {
                 $dmarc = Mail::DMARC::PurePerl->new();
                 $dmarc->verbose(1);
-                $dmarc->source_ip($ip_address)
+                $dmarc->source_ip($priv{'ip_address'})
             };
             if ( my $error = $@ ) {
                 log_error( $ctx, 'DMARC IP Error ' . $error );
@@ -268,55 +324,12 @@ sub connect_callback {
             $priv->{'spf_obj'} = $spf_server;
         }
 
-        if ( $CONFIG->{'check_iprev'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            iprev_check($ctx);
-        }
-    };
-    if ( my $error = $@ ) {
-        log_error( $ctx, 'Connect callback error ' . $error );
-    }
-
-    return SMFIS_CONTINUE;
-}
-
-sub helo_callback {
-    # On HELO
-    my ( $ctx, $helo_host ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Helo', LOG_DEBUG );
-    my $priv = $ctx->getpriv();
-    $helo_host = q{} if not $helo_host;
-    eval {
-        if ( ! exists( $priv->{'helo_name'} ) ) {
-            $priv->{'helo_name'} = $helo_host;
-            dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
-            if ( $CONFIG->{'check_ptr'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-                helo_check($ctx);
-            }
-        }
-    };
-    if ( my $error = $@ ) {
-        log_error( $ctx, 'HELO callback error ' . $error );
-    }
-
-    return SMFIS_CONTINUE;
-}
-
-sub envfrom_callback {
-    # On MAILFROM
-    #...
-    my ( $ctx, $env_from ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'EnvFrom', LOG_DEBUG );
-    my $priv = $ctx->getpriv();
-    $env_from = q{} if not $env_from;
-
-    eval {
         if ( $CONFIG->{'check_auth'} ) {
             my $auth_name = get_auth_name( $ctx );
             if ( $auth_name ) {
                 dbgout( $ctx, 'AuthenticatedAs', $auth_name, LOG_INFO );
                 # Clear the current auth headers ( iprev and helo are already added )
-                #$priv->{'pre_headers'} = [];
-                #$priv->{'add_headers'} = [];
+                $priv->{'c_auth_headers'} = [];
                 $priv->{'auth_headers'} = [];
                 $priv->{'is_authenticated'} = 1;
                 add_auth_header( $ctx, 'auth=pass' );
@@ -538,7 +551,14 @@ sub add_headers {
     }
 
     my $header = get_my_hostname($ctx);
+    my @auth_headers;
+    if ( exists( $priv->{'c_auth_headers'} ) ) {
+        $auth_headers = @{$priv->{'c_auth_headers'}};
+    }
     if ( exists( $priv->{'auth_headers'} ) ) {
+        $auth_headers = @{$priv->{'auth_headers'}};
+    }
+    if ( @auth_headers ) {
         $header .= ";\n    ";
         $header .= join( ";\n    ", sort @{ $priv->{'auth_headers'} } );
     }
@@ -604,6 +624,16 @@ sub add_auth_header {
     push @{ $priv->{'auth_headers'} }, $value;
 }
 
+sub add_c_auth_header {
+    # Connection wide auth headers
+    my ( $ctx, $value ) = @_;
+    my $priv = $ctx->getpriv();
+    if ( !exists( $priv->{'c_auth_headers'} ) ) {
+        $priv->{'c_auth_headers'} = [];
+    }
+    push @{ $priv->{'c_auth_headers'} }, $value;
+}
+
 sub append_header {
     my ( $ctx, $field, $value ) = @_;
     my $priv = $ctx->getpriv();
@@ -627,14 +657,14 @@ sub helo_check {
 
     if ( $domain eq $helo_name ) {
         dbgout( $ctx, 'PTRMatch', 'pass', LOG_DEBUG );
-        add_auth_header( $ctx,
+        add_c_auth_header( $ctx,
                 format_header_entry( 'x-ptr', 'pass' ) . q{ }
               . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
               . format_header_entry( 'x-ptr-lookup', $domain ) );
     }
     else {
         dbgout( $ctx, 'PTRMatch', 'fail', LOG_DEBUG );
-        add_auth_header( $ctx,
+        add_c_auth_header( $ctx,
                 format_header_entry( 'x-ptr', 'fail' ) . q{ }
               . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
               . format_header_entry( 'x-ptr-lookup', $domain ) );
@@ -662,8 +692,6 @@ sub dkim_dmarc_check {
             }
 
             dbgout( $ctx, 'DKIMResult', $dkim_result_detail, LOG_INFO );
-
-            $priv->{'dkim_result_code'} = $dkim_result;
 
             # there might be multiple signatures, what is the result per signature?
             foreach my $signature ( $dkim->signatures ) {
@@ -880,7 +908,7 @@ sub iprev_check {
         format_header_entry( 'iprev', $result ) . ' '
       . format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
       . format_header_comment($domain) . ')';
-    add_auth_header( $ctx, $header );
+    add_c_auth_header( $ctx, $header );
 
 }
 
@@ -907,7 +935,6 @@ sub senderid_check {
     $ctx->progress();
 
     my $result_code = $spf_result->code();
-    $priv->{'spf_result_code'} = $result_code;
     dbgout( $ctx, 'SenderIdCode', $result_code, LOG_INFO );
 
     if ( ! ( $CONFIG->{'check_senderid'} == 2 && $result_code eq 'none' ) ) {
@@ -954,7 +981,6 @@ sub spf_check {
     $ctx->progress();
 
     my $result_code = $spf_result->code();
-    $priv->{'spf_result_code'} = $result_code;
 
     my $auth_header = join( q{ },
         format_header_entry( 'spf',           $result_code ),
