@@ -183,7 +183,7 @@ sub format_header_entry {
 sub connect_callback {
     # On Connect
     my ( $ctx, $hostname, $sockaddr_in ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Connect called', LOG_DEBUG );
+    dbgout( $ctx, 'CALLBACK', 'Connect', LOG_DEBUG );
     my $priv = {};
     $ctx->setpriv($priv);
     
@@ -282,7 +282,7 @@ sub connect_callback {
 sub helo_callback {
     # On HELO
     my ( $ctx, $helo_host ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Helo called', LOG_DEBUG );
+    dbgout( $ctx, 'CALLBACK', 'Helo', LOG_DEBUG );
     my $priv = $ctx->getpriv();
     $helo_host = q{} if not $helo_host;
     eval {
@@ -305,7 +305,7 @@ sub envfrom_callback {
     # On MAILFROM
     #...
     my ( $ctx, $env_from ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'EnvFrom called', LOG_DEBUG );
+    dbgout( $ctx, 'CALLBACK', 'EnvFrom', LOG_DEBUG );
     my $priv = $ctx->getpriv();
     $env_from = q{} if not $env_from;
 
@@ -351,7 +351,7 @@ sub envrcpt_callback {
     # On RCPTTO
     #...
     my ( $ctx, $env_to ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'EnvRcpt called', LOG_DEBUG );
+    dbgout( $ctx, 'CALLBACK', 'EnvRcpt', LOG_DEBUG );
     my $priv = $ctx->getpriv();
     $env_to = q{} if not $env_to;
     eval {
@@ -378,7 +378,7 @@ sub envrcpt_callback {
 sub header_callback {
     # On Each Header
     my ( $ctx, $header, $value ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Header called', LOG_DEBUG );
+    dbgout( $ctx, 'CALLBACK', 'Header', LOG_DEBUG );
     my $priv = $ctx->getpriv();
     $value = q{} if not $value;
     eval {
@@ -444,7 +444,7 @@ sub header_callback {
 sub eoh_callback {
     # On End of headers
     my ($ctx) = @_;
-    dbgout( $ctx, 'CALLBACK', 'EOH called', LOG_DEBUG );
+    dbgout( $ctx, 'CALLBACK', 'EOH', LOG_DEBUG );
     my $priv = $ctx->getpriv();
 
     eval {
@@ -466,7 +466,7 @@ sub eoh_callback {
 sub body_callback {
     # On each body chunk
     my ( $ctx, $body_chunk, $len ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Body called', LOG_DEBUG );
+    dbgout( $ctx, 'CALLBACK', 'Body', LOG_DEBUG );
     my $priv = $ctx->getpriv();
 
     eval {
@@ -488,7 +488,7 @@ sub body_callback {
 sub eom_callback {
     # On End of Message
     my ($ctx) = @_;
-    dbgout( $ctx, 'CALLBACK', 'EOM called', LOG_DEBUG );
+    dbgout( $ctx, 'CALLBACK', 'EOM', LOG_DEBUG );
     my $priv = $ctx->getpriv();
 
     eval {
@@ -507,7 +507,7 @@ sub eom_callback {
 sub abort_callback {
     # On any out of our control abort
     my ($ctx) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Abort called', LOG_DEBUG );
+    dbgout( $ctx, 'CALLBACK', 'Abort', LOG_DEBUG );
     dbgoutwrite($ctx);
     return SMFIS_CONTINUE;
 }
@@ -515,7 +515,7 @@ sub abort_callback {
 sub close_callback {
     # On end of connection
     my ($ctx) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Close called', LOG_DEBUG );
+    dbgout( $ctx, 'CALLBACK', 'Close', LOG_DEBUG );
     dbgoutwrite($ctx);
     $ctx->setpriv(undef);
     return SMFIS_CONTINUE;
