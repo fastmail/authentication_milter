@@ -553,14 +553,14 @@ sub add_headers {
     my $header = get_my_hostname($ctx);
     my @auth_headers;
     if ( exists( $priv->{'c_auth_headers'} ) ) {
-        $auth_headers = @{$priv->{'c_auth_headers'}};
+        @auth_headers = @{$priv->{'c_auth_headers'}};
     }
     if ( exists( $priv->{'auth_headers'} ) ) {
-        $auth_headers = @{$priv->{'auth_headers'}};
+        @auth_headers = @{$priv->{'auth_headers'}};
     }
     if ( @auth_headers ) {
         $header .= ";\n    ";
-        $header .= join( ";\n    ", sort @{ $priv->{'auth_headers'} } );
+        $header .= join( ";\n    ", sort @auth_headers );
     }
     else {
         $header .= '; none';
