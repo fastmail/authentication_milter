@@ -438,7 +438,7 @@ sub header_callback {
     if ( my $error = $@ ) {
         log_error( $ctx, 'Header callback error ' . $error );
     }
-
+    dbgoutwrite($ctx);
     return SMFIS_CONTINUE;
 }
 
@@ -460,6 +460,7 @@ sub eoh_callback {
     if ( my $error = $@ ) {
         log_error( $ctx, 'EOH callback error ' . $error );
     }
+    dbgoutwrite($ctx);
     return SMFIS_CONTINUE;
 }
 
@@ -481,7 +482,7 @@ sub body_callback {
     if ( my $error = $@ ) {
         log_error( $ctx, 'Body callback error ' . $error );
     }
-
+    dbgoutwrite($ctx);
     return SMFIS_CONTINUE;
 }
 
@@ -500,6 +501,7 @@ sub eom_callback {
         log_error( $ctx, 'EOM callback error ' . $error );
     }
     add_headers($ctx);
+    dbgoutwrite($ctx);
     return SMFIS_ACCEPT;
 }
 
