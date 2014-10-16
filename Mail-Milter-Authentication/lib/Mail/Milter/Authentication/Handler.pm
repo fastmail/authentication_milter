@@ -438,7 +438,6 @@ sub header_callback {
     if ( my $error = $@ ) {
         log_error( $ctx, 'Header callback error ' . $error );
     }
-    dbgoutwrite($ctx);
     return SMFIS_CONTINUE;
 }
 
