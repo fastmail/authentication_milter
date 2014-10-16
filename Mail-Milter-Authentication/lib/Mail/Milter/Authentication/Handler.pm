@@ -300,7 +300,7 @@ sub envfrom_callback {
             eval {
                 $dmarc = Mail::DMARC::PurePerl->new();
                 $dmarc->verbose(1);
-                $dmarc->source_ip($priv{'ip_address'})
+                $dmarc->source_ip($priv->{'ip_address'})
             };
             if ( my $error = $@ ) {
                 log_error( $ctx, 'DMARC IP Error ' . $error );
