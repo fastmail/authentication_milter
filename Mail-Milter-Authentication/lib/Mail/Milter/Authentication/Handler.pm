@@ -242,6 +242,7 @@ sub connect_callback {
         if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
             eval {
                 $dmarc = Mail::DMARC::PurePerl->new();
+                $dmarc->verbose(1);
                 $dmarc->source_ip($ip_address)
             };
             if ( my $error = $@ ) {
@@ -1000,7 +1001,7 @@ sub dbgoutwrite {
         openlog('authentication_milter', 'pid', LOG_MAIL);
         setlogmask(   LOG_MASK(LOG_ERR)
                     | LOG_MASK(LOG_INFO)
-                    | LOG_MASK(LOG_DEBUG)
+#                    | LOG_MASK(LOG_DEBUG)
         );
         my $queue_id = $priv->{'queue_id'} || q{--};
         if ( exists( $priv->{'dbgout'} ) ) {
