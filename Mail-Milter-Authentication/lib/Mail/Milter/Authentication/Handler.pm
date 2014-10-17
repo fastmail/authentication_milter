@@ -553,7 +553,7 @@ sub add_headers {
         @auth_headers = @{$priv->{'c_auth_headers'}};
     }
     if ( exists( $priv->{'auth_headers'} ) ) {
-        @auth_headers = @{$priv->{'auth_headers'}};
+        @auth_headers = ( @auth_headers, @{$priv->{'auth_headers'}} );
     }
     if ( @auth_headers ) {
         $header .= ";\n    ";
