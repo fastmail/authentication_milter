@@ -56,7 +56,6 @@ sub start {
     #Sendmail::PMilter::setdbg( 9 );
     my $milter = new Sendmail::PMilter;
     $milter->setconn( $connection );
-    $milter->settimeout( 60 );
     $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
 
     # PID
