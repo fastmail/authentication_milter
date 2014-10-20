@@ -776,7 +776,6 @@ sub dkim_dmarc_check {
                 #$ctx->progress();
                 my $dmarc_code   = $dmarc_result->result;
                 dbgout( $ctx, 'DMARCCode', $dmarc_code, LOG_INFO );
-
                 if ( ! ( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {
                     my $dmarc_policy;
                     if ( $dmarc_code ne 'pass' ) {
@@ -795,6 +794,10 @@ sub dkim_dmarc_check {
                         get_domain_from( $priv->{'from_header'} ) );
                     add_auth_header( $ctx, $dmarc_header );
                 }
+                eval{
+                    # Try as best we can to save a report, but don't stress if it fails.
+                    $dmarc->save_aggregate();
+                };
             }
         }
     }
