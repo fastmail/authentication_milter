@@ -709,7 +709,7 @@ sub dkim_dmarc_check {
                           . ')',
                         format_header_entry( 'header.d', $signature->domain() ),
                         format_header_entry( 'header.i', $signature->identity() ),
-                        format_header_entry( 'header.b', $signature->data() ),
+                        format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
                     );
 
                     add_auth_header( $ctx, $header );
