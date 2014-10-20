@@ -16,8 +16,8 @@ resources (
    #homepage   => 'http://yourwebsitehere.com',
    #IRC        => 'irc://irc.perl.org/#Mail-Milter-Authentication',
    license    => 'http://www.perlfoundation.org/artistic_license_2_0',
-   #repository => 'git://github.com/Marc Bradshaw/Mail-Milter-Authentication.git',
-   bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=Mail-Milter-Authentication',
+   repository => 'https://gitlab.com/marcbradshaw/authentication-milter/',
+   bugtracker => 'https://gitlab.com/marcbradshaw/authentication-milter/issues/',
 );
 
 configure_requires (
@@ -30,6 +30,7 @@ build_requires (
 
 requires (
     'Email::Address',
+    'JSON',
     'Mail::DKIM::Verifier',
     'Mail::DMARC::PurePerl',
     'Mail::SPF',
