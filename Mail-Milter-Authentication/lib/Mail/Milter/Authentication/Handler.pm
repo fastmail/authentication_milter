@@ -682,15 +682,14 @@ sub dkim_dmarc_check {
             my $dkim_result        = $dkim->result;
             my $dkim_result_detail = $dkim->result_detail;
 
-            if ( ! ( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
-                add_auth_header( $ctx,
-                    format_header_entry( 'dkim', $dkim_result )
-                      . ' (overall validation result)' );
-            }
+            #if ( ! ( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
+            #    add_auth_header( $ctx,
+            #        format_header_entry( 'dkim', $dkim_result )
+            #          . ' (overall validation result)' );
+            #}
 
             dbgout( $ctx, 'DKIMResult', $dkim_result_detail, LOG_INFO );
 
-            # there might be multiple signatures, what is the result per signature?
             foreach my $signature ( $dkim->signatures ) {
 
                 my $key = $signature->get_public_key();
