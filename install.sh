@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cp init /etc/init.d/authentication_milter
-cp mail-dmarc.ini /etc/
+#cp mail-dmarc.ini /etc/
 cp authentication_milter.json /etc/
 
 cd Mail-Milter-Authentication
