@@ -699,7 +699,7 @@ sub dkim_dmarc_check {
                 
                 if ( ! ( $CONFIG->{'check_dkim'} == 2 && $signature_result eq 'none' ) ) {
                     my $otype = ref $signature;
-                    my $type = $otype eq 'Mail::DKIM::DkSignature' ? 'x-legacy-domainkeys'
+                    my $type = $otype eq 'Mail::DKIM::DkSignature' ? 'domainkeys'
                              : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
                              :                                       'dkim';
                     my $header = join(
@@ -714,7 +714,7 @@ sub dkim_dmarc_check {
                         format_header_entry( 'header.i', $signature->identity() ),
                         format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
                     );
-                    add_auth_header( $ctx, $header );
+                    add_auth_header( $ctx, $header ) if $type ne 'domainkeys';
                 }
 
             }
