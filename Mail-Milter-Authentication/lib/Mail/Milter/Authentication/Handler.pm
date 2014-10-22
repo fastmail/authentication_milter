@@ -696,11 +696,15 @@ sub dkim_dmarc_check {
                 dbgout( $ctx, 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
                 dbgout( $ctx, 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
                 my $signature_result = $signature->result();
-
+                
                 if ( ! ( $CONFIG->{'check_dkim'} == 2 && $signature_result eq 'none' ) ) {
+                    my $otype = ref $signature;
+                    my $type = $otype eq 'Mail::DKIM::DkSignature' ? 'domainkeys'
+                             : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
+                             :                                       'dkim';
                     my $header = join(
                         q{ },
-                        format_header_entry( 'dkim', $signature_result ),
+                        format_header_entry( $type, $signature_result ),
                         '('
                           . format_header_comment(
                             $key->size() . '-bit ' . $key->type() . ' key'
@@ -710,7 +714,6 @@ sub dkim_dmarc_check {
                         format_header_entry( 'header.i', $signature->identity() ),
                         format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
                     );
-
                     add_auth_header( $ctx, $header );
                 }
 
