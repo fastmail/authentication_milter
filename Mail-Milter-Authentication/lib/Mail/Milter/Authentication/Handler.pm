@@ -796,7 +796,11 @@ sub dkim_dmarc_check {
                 }
                 eval{
                     # Try as best we can to save a report, but don't stress if it fails.
-                    $dmarc->save_aggregate();
+                    my $rua = $dmarc_result->published()->rua();
+                    if ( $rua ) {
+                        $dmarc->save_aggregate();
+                        dbgout( $ctx, 'DMARCReportTo', $rua, LOG_INFO );
+                    }
                 };
             }
         }
