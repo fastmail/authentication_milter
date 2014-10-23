@@ -780,38 +780,45 @@ sub dkim_dmarc_check {
         }
 
         if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            if ( my $dmarc = $priv->{'dmarc_obj'} ) {
-                $dmarc->dkim($dkim);
-                my $dmarc_result = $dmarc->validate();
-                #$ctx->progress();
-                my $dmarc_code   = $dmarc_result->result;
-                dbgout( $ctx, 'DMARCCode', $dmarc_code, LOG_INFO );
-                if ( ! ( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {
-                    my $dmarc_policy;
-                    if ( $dmarc_code ne 'pass' ) {
-                        $dmarc_policy = eval { $dmarc_result->evalated->disposition() };
-                        dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_DEBUG );
+            eval {
+                if ( my $dmarc = $priv->{'dmarc_obj'} ) {
+                    $dmarc->dkim($dkim);
+                    my $dmarc_result = $dmarc->validate();
+                    #$ctx->progress();
+                    my $dmarc_code   = $dmarc_result->result;
+                    dbgout( $ctx, 'DMARCCode', $dmarc_code, LOG_INFO );
+                    if ( ! ( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {
+                        my $dmarc_policy;
+                        if ( $dmarc_code ne 'pass' ) {
+                            $dmarc_policy = eval { $dmarc_result->evalated->disposition() };
+                            dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_DEBUG );
+                        }
+                        my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
+                        if ($dmarc_policy) {
+                            $dmarc_header .= ' ('
+                              . format_header_comment(
+                                format_header_entry( 'p', $dmarc_policy ) )
+                              . ')';
+                        }
+                        $dmarc_header .= ' '
+                          . format_header_entry( 'header.from',
+                            get_domain_from( $priv->{'from_header'} ) );
+                        add_auth_header( $ctx, $dmarc_header );
                     }
-                    my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
-                    if ($dmarc_policy) {
-                        $dmarc_header .= ' ('
-                          . format_header_comment(
-                            format_header_entry( 'p', $dmarc_policy ) )
-                          . ')';
-                    }
-                    $dmarc_header .= ' '
-                      . format_header_entry( 'header.from',
-                        get_domain_from( $priv->{'from_header'} ) );
-                    add_auth_header( $ctx, $dmarc_header );
+                    eval{
+                        # Try as best we can to save a report, but don't stress if it fails.
+                        my $rua = $dmarc_result->published()->rua();
+                        if ( $rua ) {
+                            $dmarc->save_aggregate();
+                            dbgout( $ctx, 'DMARCReportTo', $rua, LOG_INFO );
+                        }
+                    };
                 }
-                eval{
-                    # Try as best we can to save a report, but don't stress if it fails.
-                    my $rua = $dmarc_result->published()->rua();
-                    if ( $rua ) {
-                        $dmarc->save_aggregate();
-                        dbgout( $ctx, 'DMARCReportTo', $rua, LOG_INFO );
-                    }
-                };
+            };
+            if ( my $error = $@ ) {
+                log_error( $ctx, 'DMARC Error ' . $error );
+                add_auth_header( $ctx, 'dmarc=temperror' );
+                return;
             }
         }
     }
@@ -937,29 +944,36 @@ sub senderid_check {
 
     my $identity = get_address_from( $priv->{'from_header'} );
 
-    my $spf_request = Mail::SPF::Request->new(
-        'versions'      => [2],
-        'scope'         => $scope,
-        'identity'      => $identity,
-        'ip_address'    => $priv->{'ip_address'},
-        'helo_identity' => $priv->{'helo_name'},
-    );
+    eval {
+        my $spf_request = Mail::SPF::Request->new(
+            'versions'      => [2],
+            'scope'         => $scope,
+            'identity'      => $identity,
+            'ip_address'    => $priv->{'ip_address'},
+            'helo_identity' => $priv->{'helo_name'},
+        );
 
-    my $spf_result = $spf_server->process($spf_request);
-    #$ctx->progress();
+        my $spf_result = $spf_server->process($spf_request);
+        #$ctx->progress();
 
-    my $result_code = $spf_result->code();
-    dbgout( $ctx, 'SenderIdCode', $result_code, LOG_INFO );
+        my $result_code = $spf_result->code();
+        dbgout( $ctx, 'SenderIdCode', $result_code, LOG_INFO );
 
-    if ( ! ( $CONFIG->{'check_senderid'} == 2 && $result_code eq 'none' ) ) {
-        my $auth_header = format_header_entry( 'senderid', $result_code );
-        add_auth_header( $ctx, $auth_header );
+        if ( ! ( $CONFIG->{'check_senderid'} == 2 && $result_code eq 'none' ) ) {
+            my $auth_header = format_header_entry( 'senderid', $result_code );
+            add_auth_header( $ctx, $auth_header );
 #my $result_local  = $spf_result->local_explanation;
 #my $result_auth   = $spf_result->can( 'authority_explanation' ) ? $spf_result->authority_explanation() : '';
-        my $result_header = $spf_result->received_spf_header();
-        my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
-        prepend_header( $ctx, $header, $value );
-        dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
+            my $result_header = $spf_result->received_spf_header();
+            my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
+            prepend_header( $ctx, $header, $value );
+            dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
+        }
+    };
+    if ( my $error = $@ ) {
+        log_error( $ctx, 'SENDERID Error ' . $error );
+        add_auth_header( $ctx, 'senderid=temperror' );
+        return;
     }
 
     return;
@@ -983,45 +997,51 @@ sub spf_check {
         $scope    = 'helo';
     }
 
-    my $spf_request = Mail::SPF::Request->new(
-        'versions'      => [1],
-        'scope'         => $scope,
-        'identity'      => $identity,
-        'ip_address'    => $priv->{'ip_address'},
-        'helo_identity' => $priv->{'helo_name'},
-    );
+    eval {
+        my $spf_request = Mail::SPF::Request->new(
+            'versions'      => [1],
+            'scope'         => $scope,
+            'identity'      => $identity,
+            'ip_address'    => $priv->{'ip_address'},
+            'helo_identity' => $priv->{'helo_name'},
+        );
 
-    my $spf_result = $spf_server->process($spf_request);
-    #$ctx->progress();
+        my $spf_result = $spf_server->process($spf_request);
+        #$ctx->progress();
 
-    my $result_code = $spf_result->code();
+        my $result_code = $spf_result->code();
 
-    my $auth_header = join( q{ },
-        format_header_entry( 'spf',           $result_code ),
-        format_header_entry( 'smtp.mailfrom', get_address_from( $priv->{'mail_from'} ) ),
-        format_header_entry( 'smtp.helo',     $priv->{'helo_name'} ),
-    );
-    if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
-        add_auth_header( $ctx, $auth_header );
-    }
-
-    if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-        if ( my $dmarc = $priv->{'dmarc_obj'} ) {
-            $dmarc->spf(
-                'domain' => $domain,
-                'scope'  => $scope,
-                'result' => $result_code,
-            );
+        my $auth_header = join( q{ },
+            format_header_entry( 'spf',           $result_code ),
+            format_header_entry( 'smtp.mailfrom', get_address_from( $priv->{'mail_from'} ) ),
+            format_header_entry( 'smtp.helo',     $priv->{'helo_name'} ),
+        );
+        if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
+            add_auth_header( $ctx, $auth_header );
         }
-    }
 
-    dbgout( $ctx, 'SPFCode', $result_code, LOG_INFO );
+        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+            if ( my $dmarc = $priv->{'dmarc_obj'} ) {
+                $dmarc->spf(
+                    'domain' => $domain,
+                    'scope'  => $scope,
+                    'result' => $result_code,
+                );
+            }
+        }
 
-    if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
-        my $result_header = $spf_result->received_spf_header();
-        my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
-        prepend_header( $ctx, $header, $value );
-        dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
+        dbgout( $ctx, 'SPFCode', $result_code, LOG_INFO );
+
+        if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
+            my $result_header = $spf_result->received_spf_header();
+            my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
+            prepend_header( $ctx, $header, $value );
+            dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
+        }
+    };
+    if ( my $error = $@ ) {
+        log_error( $ctx, 'SPF Error ' . $error );
+        add_auth_header( $ctx, 'spf=temperror' );
     }
 
     return;
