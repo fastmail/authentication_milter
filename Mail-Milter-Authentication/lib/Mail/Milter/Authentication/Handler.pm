@@ -755,18 +755,19 @@ sub dkim_dmarc_check {
                       :                       'unknown';
 
                     if ( ! ( $CONFIG->{'check_dkim-adsp'} == 2 && $result eq 'none' ) ) {
+                        if ( ! $default ) { # TODO add switch to allow defaults to be shown
+                            my $comment = '('
+                              . format_header_comment( ( $default ? 'default ' : q{} )
+                                . "$name policy"
+                                . ( $location ? " from $location" : q{} )
+#                                . ( $string   ? "; $string"       : q{} )
+                              )
+                              . ')';
 
-                        my $comment = '('
-                          . format_header_comment( ( $default ? 'default ' : q{} )
-                            . "$name policy"
-                            . ( $location ? " from $location" : q{} )
-#                            . ( $string   ? "; $string"       : q{} )
-                          )
-                          . ')';
-
-                        my $header = join( q{ },
-                            format_header_entry( $type, $result ), $comment, );
-                        add_auth_header( $ctx, $header );
+                            my $header = join( q{ },
+                                format_header_entry( $type, $result ), $comment, );
+                            add_auth_header( $ctx, $header );
+                        }
                     }
                 }
             }
