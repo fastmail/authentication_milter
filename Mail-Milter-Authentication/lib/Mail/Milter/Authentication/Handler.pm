@@ -704,23 +704,34 @@ sub dkim_dmarc_check {
                              : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
                              :                                       'dkim';
                     dbgout( $ctx, 'DKIMSignatureType', $type, LOG_DEBUG );
-                    my $header = join(
-                        q{ },
-                        format_header_entry( $type, $signature_result ),
-                        '('
-                          . format_header_comment(
-                            $key->size() . '-bit ' . $key->type() . ' key'
-                        )
-                          . ')',
-                        format_header_entry( 'header.d', $signature->domain() ),
-                        format_header_entry( 'header.i', $signature->identity() ),
-                        format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
-                    );
                     if ( $type eq 'domainkeys' ) {
                         ## DEBUGGING
-                        append_header( $ctx, 'X-Debug-DKResults', $header );
+                        my $header = join(
+                            q{ },
+                            format_header_entry( $type, $signature_result ),
+                            '('
+                              . format_header_comment(
+                                $key->size() . '-bit ' . $key->type() . ' key'
+                            )
+                              . ')',
+                            format_header_entry( 'header.d', $signature->domain() ),
+                            format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
+                        );
+                        add_auth_header( $ctx, $header );
                     }
                     else {
+                        my $header = join(
+                            q{ },
+                            format_header_entry( $type, $signature_result ),
+                            '('
+                              . format_header_comment(
+                                $key->size() . '-bit ' . $key->type() . ' key'
+                            )
+                              . ')',
+                            format_header_entry( 'header.d', $signature->domain() ),
+                            format_header_entry( 'header.i', $signature->identity() ),
+                            format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
+                        );
                         add_auth_header( $ctx, $header );
                     }
                 }

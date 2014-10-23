@@ -10,3 +10,7 @@ make
 make install
 
 /etc/init.d/authentication_milter restart
+
+ps aux|grep authentication_milter
+tail -f /var/log/mail.log
+
