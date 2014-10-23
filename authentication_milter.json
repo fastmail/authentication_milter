@@ -3,6 +3,8 @@
     "connection"       : "inet:12345@localhost",
     "runas"            : "nobody",
 
+    "show_default_adsp" : "0",
+
     "check_spf"        : "1",
     "check_dkim"       : "1",
     "check_dkim-adsp"  : "1",

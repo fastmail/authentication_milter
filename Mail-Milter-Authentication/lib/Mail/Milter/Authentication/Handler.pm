@@ -755,7 +755,7 @@ sub dkim_dmarc_check {
                       :                       'unknown';
 
                     if ( ! ( $CONFIG->{'check_dkim-adsp'} == 2 && $result eq 'none' ) ) {
-                        if ( ! $default ) { # TODO add switch to allow defaults to be shown
+                        if ( ( ! $default ) or $CONFIG->{'show_default_adsp'} ) {
                             my $comment = '('
                               . format_header_comment( ( $default ? 'default ' : q{} )
                                 . "$name policy"
