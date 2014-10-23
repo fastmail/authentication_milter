@@ -652,7 +652,7 @@ sub helo_check {
       exists( $priv->{'verified_ptr'} ) ? $priv->{'verified_ptr'} : q{};
     my $helo_name = $priv->{'helo_name'};
 
-    if ( $domain eq $helo_name ) {
+    if ( lc $domain eq lc $helo_name ) {
         dbgout( $ctx, 'PTRMatch', 'pass', LOG_DEBUG );
         add_c_auth_header( $ctx,
                 format_header_entry( 'x-ptr', 'pass' ) . q{ }
