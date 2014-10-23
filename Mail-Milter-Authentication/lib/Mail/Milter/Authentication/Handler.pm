@@ -702,6 +702,7 @@ sub dkim_dmarc_check {
                     my $type = $otype eq 'Mail::DKIM::DkSignature' ? 'domainkeys'
                              : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
                              :                                       'dkim';
+                    dbgout( $ctx, 'DKIMSignatureType', $type, LOG_DEBUG );
                     my $header = join(
                         q{ },
                         format_header_entry( $type, $signature_result ),
@@ -714,7 +715,13 @@ sub dkim_dmarc_check {
                         format_header_entry( 'header.i', $signature->identity() ),
                         format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
                     );
-                    add_auth_header( $ctx, $header ) if $type ne 'domainkeys';
+                    if ( $type eq 'domainkeys' ) {
+                        ## DEBUGGING
+                        append_header( $ctx, 'X-Debug-DKResults', $header );
+                    }
+                    else {
+                        add_auth_header( $ctx, $header );
+                    }
                 }
 
             }
