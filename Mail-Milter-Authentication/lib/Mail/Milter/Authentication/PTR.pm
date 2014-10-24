@@ -12,9 +12,14 @@ use Sys::Syslog qw{:standard :macros};
 
 my $CONFIG = get_config();
 
-sub helo_check {
-    my ($ctx) = @_;
+sub helo_callback {
+    # On HELO
+    my ( $ctx, $helo_host ) = @_;
     my $priv = $ctx->getpriv();
+    return if ( !$CONFIG->{'check_ptr'} );
+    return if ( $priv->{'is_local_ip_address'} );
+    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $priv->{'is_authenticated'} );
 
     my $domain =
       exists( $priv->{'verified_ptr'} ) ? $priv->{'verified_ptr'} : q{};
@@ -33,16 +38,6 @@ sub helo_check {
                 format_header_entry( 'x-ptr', 'fail' ) . q{ }
               . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
               . format_header_entry( 'x-ptr-lookup', $domain ) );
-    }
-
-}
-
-sub helo_callback {
-    # On HELO
-    my ( $ctx, $helo_host ) = @_;
-    my $priv = $ctx->getpriv();
-    if ( $CONFIG->{'check_ptr'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-        helo_check($ctx);
     }
 }
 

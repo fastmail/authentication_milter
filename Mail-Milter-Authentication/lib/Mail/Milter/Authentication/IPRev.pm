@@ -13,11 +13,14 @@ use Sys::Syslog qw{:standard :macros};
 
 my $CONFIG = get_config();
 
-sub iprev_check {
-    my ($ctx) = @_;
-
+sub connect_callback {
+    my ( $ctx, $hostname, $sockaddr_in ) = @_;
     my $priv = $ctx->getpriv();
-
+    $priv->{ 'is_trusted_ip_address' } = 0;
+    return if ( !$CONFIG->{'check_iprev'} );
+    return if ( $priv->{'is_local_ip_address'} );
+    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $priv->{'is_authenticated'} );
     my $ip_address = $priv->{'ip_address'};
     my $i1 = new Net::IP( $ip_address );
 
@@ -120,15 +123,6 @@ sub iprev_check {
       . format_header_comment($domain) . ')';
     add_c_auth_header( $ctx, $header );
 
-}
-
-sub connect_callback {
-    my ( $ctx, $hostname, $sockaddr_in ) = @_;
-    my $priv = $ctx->getpriv();
-    $priv->{ 'is_trusted_ip_address' } = 0;
-    if ( $CONFIG->{'check_iprev'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-        iprev_check($ctx);
-    }
 }
 
 1;

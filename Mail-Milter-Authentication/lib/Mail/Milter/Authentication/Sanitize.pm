@@ -24,22 +24,21 @@ sub remove_auth_header {
 sub header_callback {
     my ( $ctx, $header, $value ) = @_;
     my $priv = $ctx->getpriv();
-    if ( $priv->{'is_trusted_ip_address'} == 0 ) {
-        if ( $header eq 'Authentication-Results' ) {
-            if ( !exists $priv->{'auth_result_header_index'} ) {
-                $priv->{'auth_result_header_index'} = 0;
-            }
-            $priv->{'auth_result_header_index'} =
-              $priv->{'auth_result_header_index'} + 1;
-            my ($domain_part) = $value =~ /(.*);/;
-            $domain_part =~ s/ +//g;
-            if ( is_hostname_mine( $ctx, $domain_part ) ) {
-                remove_auth_header( $ctx, $priv->{'auth_result_header_index'} );
-                my $forged_header = '(The following Authentication Results header was removed by ' . get_my_hostname($ctx) . "\n"
-                                  . '    as the supplied domain conflicted with its own)' . "\n"
-                                  . '    ' . $value;
-                append_header( $ctx, 'X-Invalid-Authentication-Results', $forged_header );
-            }
+    return if ( $priv->{'is_trusted_ip_address'} ); 
+    if ( $header eq 'Authentication-Results' ) {
+        if ( !exists $priv->{'auth_result_header_index'} ) {
+            $priv->{'auth_result_header_index'} = 0;
+        }
+        $priv->{'auth_result_header_index'} =
+          $priv->{'auth_result_header_index'} + 1;
+        my ($domain_part) = $value =~ /(.*);/;
+        $domain_part =~ s/ +//g;
+        if ( is_hostname_mine( $ctx, $domain_part ) ) {
+            remove_auth_header( $ctx, $priv->{'auth_result_header_index'} );
+            my $forged_header = '(The following Authentication Results header was removed by ' . get_my_hostname($ctx) . "\n"
+                              . '    as the supplied domain conflicted with its own)' . "\n"
+                              . '    ' . $value;
+            append_header( $ctx, 'X-Invalid-Authentication-Results', $forged_header );
         }
     }
 }

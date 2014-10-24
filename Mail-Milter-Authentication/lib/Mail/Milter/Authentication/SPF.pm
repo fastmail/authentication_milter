@@ -134,29 +134,34 @@ sub envfrom_callback {
     my ( $ctx, $env_from ) = @_;
     my $priv = $ctx->getpriv();
     my $spf_server;
-    if ( $CONFIG->{'check_spf'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-        eval {
-            $spf_server =
-              Mail::SPF::Server->new( 'hostname' => get_my_hostname($ctx) );
-        };
-        if ( my $error = $@ ) {
-            log_error( $ctx, 'SPF Setup Error ' . $error );
-            add_auth_header( $ctx, 'spf=temperror' );
-            $spf_server = undef;
-        }
-        $priv->{'spf_obj'} = $spf_server;
-    
-        spf_check($ctx);
+    return if ( !$CONFIG->{'check_spf'} );
+    return if ( $priv->{'is_local_ip_address'} );
+    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $priv->{'is_authenticated'} );
+    eval {
+        $spf_server =
+          Mail::SPF::Server->new( 'hostname' => get_my_hostname($ctx) );
+    };
+    if ( my $error = $@ ) {
+        log_error( $ctx, 'SPF Setup Error ' . $error );
+        add_auth_header( $ctx, 'spf=temperror' );
+        $spf_server = undef;
     }
+    $priv->{'spf_obj'} = $spf_server;
+    
+    spf_check($ctx);
 }
 
 sub eoh_callback {
     my ($ctx) = @_;
     dbgout( $ctx, 'CALLBACK', 'EOH', LOG_DEBUG );
     my $priv = $ctx->getpriv();
-    if ( $CONFIG->{'check_senderid'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-        senderid_check($ctx);
-    }
+    return if ( !$CONFIG->{'check_senderid'} );
+    return if ( $priv->{'is_local_ip_address'} );
+    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $priv->{'is_authenticated'} );
+
+    senderid_check($ctx);
 }
 
 1;

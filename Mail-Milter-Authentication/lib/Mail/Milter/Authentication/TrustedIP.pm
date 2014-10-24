@@ -36,13 +36,12 @@ sub connect_callback {
     my ( $ctx, $hostname, $sockaddr_in ) = @_;
     my $priv = $ctx->getpriv();
     $priv->{ 'is_trusted_ip_address' } = 0;
+    return if ( !$CONFIG->{'check_trusted_ip'} );
     my $ip_address = $priv->{'ip_address'};
-    if ( $CONFIG->{'check_trusted_ip'} ) {
-        if ( is_trusted_ip_address( $ctx, $ip_address ) ) {
-            dbgout( $ctx, 'TrustedIP', 'pass', LOG_DEBUG );
-            add_c_auth_header( $ctx, 'x-trusted-ip=pass' );
-            $priv->{ 'is_trusted_ip_address' } = 1;
-        }
+    if ( is_trusted_ip_address( $ctx, $ip_address ) ) {
+        dbgout( $ctx, 'TrustedIP', 'pass', LOG_DEBUG );
+        add_c_auth_header( $ctx, 'x-trusted-ip=pass' );
+        $priv->{ 'is_trusted_ip_address' } = 1;
     }
 }
 

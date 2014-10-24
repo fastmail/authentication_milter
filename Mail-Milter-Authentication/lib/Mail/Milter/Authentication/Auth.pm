@@ -27,16 +27,15 @@ sub connect_callback {
 sub envfrom_callback {
     my ( $ctx, $env_from ) = @_;
     my $priv = $ctx->getpriv();
-    if ( $CONFIG->{'check_auth'} ) {
-        my $auth_name = get_auth_name( $ctx );
-        if ( $auth_name ) {
-            dbgout( $ctx, 'AuthenticatedAs', $auth_name, LOG_INFO );
-            # Clear the current auth headers ( iprev and helo are already added )
-            $priv->{'c_auth_headers'} = [];
-            $priv->{'auth_headers'} = [];
-            $priv->{'is_authenticated'} = 1;
-            add_auth_header( $ctx, 'auth=pass' );
-        }
+    return if ( !$CONFIG->{'check_auth'} );
+    my $auth_name = get_auth_name( $ctx );
+    if ( $auth_name ) {
+        dbgout( $ctx, 'AuthenticatedAs', $auth_name, LOG_INFO );
+        # Clear the current auth headers ( iprev and helo are already added )
+        $priv->{'c_auth_headers'} = [];
+        $priv->{'auth_headers'} = [];
+        $priv->{'is_authenticated'} = 1;
+        add_auth_header( $ctx, 'auth=pass' );
     }
 }
 
