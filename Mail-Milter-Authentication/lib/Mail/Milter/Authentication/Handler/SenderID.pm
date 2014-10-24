@@ -14,6 +14,18 @@ use Mail::SPF;
 
 my $CONFIG = get_config();
 
+sub header_callback {
+    my ( $ctx, $header, $value ) = @_;
+    my $priv = $ctx->getpriv();
+    return if ( !$CONFIG->{'check_senderid'} );
+    return if ( $priv->{'is_local_ip_address'} );
+    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $priv->{'is_authenticated'} );
+    if ( $header eq 'From' ) {
+        $priv->{'senderid.from_header'} = $value;
+    }
+}
+
 sub eoh_callback {
     my ($ctx) = @_;
     dbgout( $ctx, 'CALLBACK', 'EOH', LOG_DEBUG );
@@ -36,7 +48,7 @@ sub eoh_callback {
 
     my $scope = 'pra';
 
-    my $identity = get_address_from( $priv->{'from_header'} );
+    my $identity = get_address_from( $priv->{'senderid.from_header'} );
 
     eval {
         my $spf_request = Mail::SPF::Request->new(

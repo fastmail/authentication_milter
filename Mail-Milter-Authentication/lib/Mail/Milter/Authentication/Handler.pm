@@ -154,6 +154,7 @@ sub header_callback {
         Mail::Milter::Authentication::Handler::Sanitize::header_callback( $ctx, $header, $value );
         Mail::Milter::Authentication::Handler::DKIM::header_callback( $ctx, $header, $value );
         Mail::Milter::Authentication::Handler::DMARC::header_callback( $ctx, $header, $value );
+        Mail::Milter::Authentication::Handler::SenderID::header_callback( $ctx, $header, $value );
 
     };
     if ( my $error = $@ ) {

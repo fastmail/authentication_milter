@@ -79,7 +79,7 @@ sub header_callback {
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
     if ( $header eq 'From' ) {
-        $priv->{'from_header'} = $value;
+        $priv->{'dmarc.from_header'} = $value;
         if ( my $dmarc = $priv->{'dmarc.obj'} ) {
             eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
             if ( my $error = $@ ) {
@@ -122,7 +122,7 @@ sub eom_callback {
                 }
                 $dmarc_header .= ' '
                   . format_header_entry( 'header.from',
-                    get_domain_from( $priv->{'from_header'} ) );
+                    get_domain_from( $priv->{'dmarc.from_header'} ) );
                 add_auth_header( $ctx, $dmarc_header );
             }
             eval{
