@@ -9,16 +9,16 @@ use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Util;
 use Mail::Milter::Authentication::Config qw{ get_config };
 
-use Mail::Milter::Authentication::Auth;
-use Mail::Milter::Authentication::DKIM;
-use Mail::Milter::Authentication::DMARC;
-use Mail::Milter::Authentication::IPRev;
-use Mail::Milter::Authentication::LocalIP;
-use Mail::Milter::Authentication::PTR;
-use Mail::Milter::Authentication::Sanitize;
-use Mail::Milter::Authentication::SenderID;
-use Mail::Milter::Authentication::SPF;
-use Mail::Milter::Authentication::TrustedIP;
+use Mail::Milter::Authentication::Handler::Auth;
+use Mail::Milter::Authentication::Handler::DKIM;
+use Mail::Milter::Authentication::Handler::DMARC;
+use Mail::Milter::Authentication::Handler::IPRev;
+use Mail::Milter::Authentication::Handler::LocalIP;
+use Mail::Milter::Authentication::Handler::PTR;
+use Mail::Milter::Authentication::Handler::Sanitize;
+use Mail::Milter::Authentication::Handler::SenderID;
+use Mail::Milter::Authentication::Handler::SPF;
+use Mail::Milter::Authentication::Handler::TrustedIP;
 
 use Sys::Syslog qw{:standard :macros};
 use Sendmail::PMilter qw { :all };
@@ -54,10 +54,10 @@ sub connect_callback {
         $priv->{'ip_address'} = $ip_address;
         dbgout( $ctx, 'ConnectFrom', $ip_address, LOG_DEBUG );
 
-        Mail::Milter::Authentication::Auth::connect_callback( $ctx, $hostname, $sockaddr_in );
-        Mail::Milter::Authentication::TrustedIP::connect_callback( $ctx, $hostname, $sockaddr_in );
-        Mail::Milter::Authentication::LocalIP::connect_callback( $ctx, $hostname, $sockaddr_in );
-        Mail::Milter::Authentication::IPRev::connect_callback( $ctx, $hostname, $sockaddr_in );
+        Mail::Milter::Authentication::Handler::Auth::connect_callback( $ctx, $hostname, $sockaddr_in );
+        Mail::Milter::Authentication::Handler::TrustedIP::connect_callback( $ctx, $hostname, $sockaddr_in );
+        Mail::Milter::Authentication::Handler::LocalIP::connect_callback( $ctx, $hostname, $sockaddr_in );
+        Mail::Milter::Authentication::Handler::IPRev::connect_callback( $ctx, $hostname, $sockaddr_in );
 
     };
     if ( my $error = $@ ) {
@@ -79,7 +79,7 @@ sub helo_callback {
             $priv->{'helo_name'} = $helo_host;
             dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
             
-            Mail::Milter::Authentication::PTR::helo_callback( $ctx, $helo_host );
+            Mail::Milter::Authentication::Handler::PTR::helo_callback( $ctx, $helo_host );
 
         }
     };
@@ -113,10 +113,10 @@ sub envfrom_callback {
         $priv->{'mail_from'} = $env_from || q{};
         dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
 
-        Mail::Milter::Authentication::DMARC::envfrom_callback( $ctx, $env_from ); # MUST go before SPF
-        Mail::Milter::Authentication::Auth::envfrom_callback( $ctx, $env_from );
-        Mail::Milter::Authentication::SPF::envfrom_callback( $ctx, $env_from );
-        Mail::Milter::Authentication::DKIM::envfrom_callback( $ctx, $env_from );
+        Mail::Milter::Authentication::Handler::Auth::envfrom_callback( $ctx, $env_from );
+        Mail::Milter::Authentication::Handler::DMARC::envfrom_callback( $ctx, $env_from ); # MUST go before SPF
+        Mail::Milter::Authentication::Handler::SPF::envfrom_callback( $ctx, $env_from );
+        Mail::Milter::Authentication::Handler::DKIM::envfrom_callback( $ctx, $env_from );
 
     };
     if ( my $error = $@ ) {
@@ -134,7 +134,7 @@ sub envrcpt_callback {
     $env_to = q{} if not $env_to;
     dbgout( $ctx, 'EnvelopeTo', $env_to, LOG_DEBUG );
     eval {
-        Mail::Milter::Authentication::DMARC::envrcpt_callback( $ctx, $env_to );
+        Mail::Milter::Authentication::Handler::DMARC::envrcpt_callback( $ctx, $env_to );
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'Rcpt To callback error ' . $error );
@@ -152,9 +152,9 @@ sub header_callback {
     eval {
         dbgout( $ctx, 'Header', $header . ': ' . $value, LOG_DEBUG );
 
-        Mail::Milter::Authentication::Sanitize::header_callback( $ctx, $header, $value );
-        Mail::Milter::Authentication::DKIM::header_callback( $ctx, $header, $value );
-        Mail::Milter::Authentication::DMARC::header_callback( $ctx, $header, $value );
+        Mail::Milter::Authentication::Handler::Sanitize::header_callback( $ctx, $header, $value );
+        Mail::Milter::Authentication::Handler::DKIM::header_callback( $ctx, $header, $value );
+        Mail::Milter::Authentication::Handler::DMARC::header_callback( $ctx, $header, $value );
 
     };
     if ( my $error = $@ ) {
@@ -169,8 +169,8 @@ sub eoh_callback {
     dbgout( $ctx, 'CALLBACK', 'EOH', LOG_DEBUG );
 
     eval {
-        Mail::Milter::Authentication::DKIM::eoh_callback( $ctx );
-        Mail::Milter::Authentication::SenderID::eoh_callback( $ctx );
+        Mail::Milter::Authentication::Handler::DKIM::eoh_callback( $ctx );
+        Mail::Milter::Authentication::Handler::SenderID::eoh_callback( $ctx );
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'EOH callback error ' . $error );
@@ -185,7 +185,7 @@ sub body_callback {
     dbgout( $ctx, 'CALLBACK', 'Body', LOG_DEBUG );
 
     eval {
-        Mail::Milter::Authentication::DKIM::body_callback( $ctx, $body_chunk, $len );
+        Mail::Milter::Authentication::Handler::DKIM::body_callback( $ctx, $body_chunk, $len );
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'Body callback error ' . $error );
@@ -200,9 +200,9 @@ sub eom_callback {
     dbgout( $ctx, 'CALLBACK', 'EOM', LOG_DEBUG );
 
     eval {
-        Mail::Milter::Authentication::DKIM::eom_callback( $ctx );
-        Mail::Milter::Authentication::DMARC::eom_callback( $ctx );
-        Mail::Milter::Authentication::Sanitize::eom_callback( $ctx );
+        Mail::Milter::Authentication::Handler::DKIM::eom_callback( $ctx );
+        Mail::Milter::Authentication::Handler::DMARC::eom_callback( $ctx );
+        Mail::Milter::Authentication::Handler::Sanitize::eom_callback( $ctx );
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'EOM callback error ' . $error );

@@ -1,4 +1,4 @@
-package Mail::Milter::Authentication::Sanitize;
+package Mail::Milter::Authentication::Handler::Sanitize;
 
 $VERSION = 0.1;
 

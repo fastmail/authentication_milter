@@ -1,4 +1,4 @@
-package Mail::Milter::Authentication::DKIM;
+package Mail::Milter::Authentication::Handler::DKIM;
 
 $VERSION = 0.1;
 

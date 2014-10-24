@@ -1,4 +1,4 @@
-package Mail::Milter::Authentication::IPRev;
+package Mail::Milter::Authentication::Handler::IPRev;
 
 $VERSION = 0.1;
 

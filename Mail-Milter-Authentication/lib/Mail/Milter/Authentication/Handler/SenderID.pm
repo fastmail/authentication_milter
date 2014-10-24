@@ -1,4 +1,4 @@
-package Mail::Milter::Authentication::SenderID;
+package Mail::Milter::Authentication::Handler::SenderID;
 
 $VERSION = 0.1;
 

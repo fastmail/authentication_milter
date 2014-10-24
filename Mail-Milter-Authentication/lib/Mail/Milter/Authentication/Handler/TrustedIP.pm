@@ -1,4 +1,4 @@
-package Mail::Milter::Authentication::TrustedIP;
+package Mail::Milter::Authentication::Handler::TrustedIP;
 
 $VERSION = 0.1;
 

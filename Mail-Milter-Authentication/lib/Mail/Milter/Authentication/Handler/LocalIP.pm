@@ -1,4 +1,4 @@
-package Mail::Milter::Authentication::LocalIP;
+package Mail::Milter::Authentication::Handler::LocalIP;
 
 $VERSION = 0.1;
 

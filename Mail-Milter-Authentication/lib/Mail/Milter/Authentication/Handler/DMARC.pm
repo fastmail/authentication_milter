@@ -1,4 +1,4 @@
-package Mail::Milter::Authentication::DMARC;
+package Mail::Milter::Authentication::Handler::DMARC;
 
 $VERSION = 0.1;
 

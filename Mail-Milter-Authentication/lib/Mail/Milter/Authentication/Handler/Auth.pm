@@ -1,4 +1,4 @@
-package Mail::Milter::Authentication::Auth;
+package Mail::Milter::Authentication::Handler::Auth;
 
 $VERSION = 0.1;
 
