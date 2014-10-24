@@ -23,7 +23,7 @@ sub helo_callback {
 
     my $domain =
       exists( $priv->{'verified_ptr'} ) ? $priv->{'verified_ptr'} : q{};
-    my $helo_name = $priv->{'helo_name'};
+    my $helo_name = $priv->{'core.helo_name'};
 
     if ( lc $domain eq lc $helo_name ) {
         dbgout( $ctx, 'PTRMatch', 'pass', LOG_DEBUG );

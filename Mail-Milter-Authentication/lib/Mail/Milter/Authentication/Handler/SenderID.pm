@@ -43,8 +43,8 @@ sub eoh_callback {
             'versions'      => [2],
             'scope'         => $scope,
             'identity'      => $identity,
-            'ip_address'    => $priv->{'ip_address'},
-            'helo_identity' => $priv->{'helo_name'},
+            'ip_address'    => $priv->{'core.ip_address'},
+            'helo_identity' => $priv->{'core.helo_name'},
         );
 
         my $spf_result = $spf_server->process($spf_request);

@@ -20,7 +20,7 @@ sub connect_callback {
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
-    my $ip_address = $priv->{'ip_address'};
+    my $ip_address = $priv->{'core.ip_address'};
     my $i1 = new Net::IP( $ip_address );
 
     my $resolver = Net::DNS::Resolver->new;

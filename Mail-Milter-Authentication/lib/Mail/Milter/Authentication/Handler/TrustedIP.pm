@@ -37,7 +37,7 @@ sub connect_callback {
     my $priv = $ctx->getpriv();
     $priv->{ 'is_trusted_ip_address' } = 0;
     return if ( !$CONFIG->{'check_trusted_ip'} );
-    my $ip_address = $priv->{'ip_address'};
+    my $ip_address = $priv->{'core.ip_address'};
     if ( is_trusted_ip_address( $ctx, $ip_address ) ) {
         dbgout( $ctx, 'TrustedIP', 'pass', LOG_DEBUG );
         add_c_auth_header( $ctx, 'x-trusted-ip=pass' );

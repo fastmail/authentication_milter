@@ -36,11 +36,11 @@ sub envfrom_callback {
 
     my $scope = 'mfrom';
 
-    my $identity = get_address_from( $priv->{'mail_from'} );
+    my $identity = get_address_from( $priv->{'core.mail_from'} );
     my $domain   = get_domain_from($identity);
 
     if ( !$identity ) {
-        $identity = $priv->{'helo_name'};
+        $identity = $priv->{'core.helo_name'};
         $domain   = $identity;
         $scope    = 'helo';
     }
@@ -50,8 +50,8 @@ sub envfrom_callback {
             'versions'      => [1],
             'scope'         => $scope,
             'identity'      => $identity,
-            'ip_address'    => $priv->{'ip_address'},
-            'helo_identity' => $priv->{'helo_name'},
+            'ip_address'    => $priv->{'core.ip_address'},
+            'helo_identity' => $priv->{'core.helo_name'},
         );
 
         my $spf_result = $spf_server->process($spf_request);
@@ -61,8 +61,8 @@ sub envfrom_callback {
 
         my $auth_header = join( q{ },
             format_header_entry( 'spf',           $result_code ),
-            format_header_entry( 'smtp.mailfrom', get_address_from( $priv->{'mail_from'} ) ),
-            format_header_entry( 'smtp.helo',     $priv->{'helo_name'} ),
+            format_header_entry( 'smtp.mailfrom', get_address_from( $priv->{'core.mail_from'} ) ),
+            format_header_entry( 'smtp.helo',     $priv->{'core.helo_name'} ),
         );
         if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
             add_auth_header( $ctx, $auth_header );

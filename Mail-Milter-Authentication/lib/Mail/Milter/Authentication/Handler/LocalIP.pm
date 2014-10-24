@@ -48,7 +48,7 @@ sub connect_callback {
     my $priv = $ctx->getpriv();
     $priv->{ 'is_local_ip_address' } = 0;
     return if ( !$CONFIG->{'check_local_ip'} );
-    my $ip_address = $priv->{'ip_address'};
+    my $ip_address = $priv->{'core.ip_address'};
     if ( is_local_ip_address( $ctx, $ip_address ) ) {
         dbgout( $ctx, 'LocalIP', 'pass', LOG_DEBUG );
         add_c_auth_header( $ctx, 'x-local-ip=pass' );

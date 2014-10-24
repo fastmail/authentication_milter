@@ -51,7 +51,7 @@ sub connect_callback {
             log_error( $ctx, 'Unknown IP address format');
             $ip_address = q{};
         }
-        $priv->{'ip_address'} = $ip_address;
+        $priv->{'core.ip_address'} = $ip_address;
         dbgout( $ctx, 'ConnectFrom', $ip_address, LOG_DEBUG );
 
         Mail::Milter::Authentication::Handler::Auth::connect_callback( $ctx, $hostname, $sockaddr_in );
@@ -74,9 +74,9 @@ sub helo_callback {
     my $priv = $ctx->getpriv();
     $helo_host = q{} if not $helo_host;
     eval {
-        if ( ! exists( $priv->{'helo_name'} ) ) {
+        if ( ! exists( $priv->{'core.helo_name'} ) ) {
             # Ignore any further HELOs from this connection
-            $priv->{'helo_name'} = $helo_host;
+            $priv->{'core.helo_name'} = $helo_host;
             dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
             
             Mail::Milter::Authentication::Handler::PTR::helo_callback( $ctx, $helo_host );
@@ -98,8 +98,8 @@ sub envfrom_callback {
     my $priv = $ctx->getpriv();
 
     # Reset private data for this MAIL transaction
+    delete $priv->{'core.mail_from'};
     delete $priv->{'auth_headers'};
-    delete $priv->{'mail_from'};
     delete $priv->{'from_header'}; # DMARC
     delete $priv->{'auth_result_header_index'};
     delete $priv->{'remove_auth_headers'}; # Sanitize
@@ -110,7 +110,7 @@ sub envfrom_callback {
     $env_from = q{} if not $env_from;
 
     eval {
-        $priv->{'mail_from'} = $env_from || q{};
+        $priv->{'core.mail_from'} = $env_from || q{};
         dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
 
         Mail::Milter::Authentication::Handler::Auth::envfrom_callback( $ctx, $env_from );
