@@ -1,6 +1,8 @@
 Changes
 lib/Mail/Milter/Authentication.pm
 lib/Mail/Milter/Authentication/Config.pm
+lib/Mail/Milter/Authentication/DKIM.pm
+lib/Mail/Milter/Authentication/DMARC.pm
 lib/Mail/Milter/Authentication/Handler.pm
 lib/Mail/Milter/Authentication/Util.pm
 lib/Mail/Milter/Authentication/LocalIP.pm
