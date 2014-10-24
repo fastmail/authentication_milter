@@ -5,12 +5,13 @@ $VERSION = 0.1;
 use strict;
 use warnings;
 
-use Mail::Milter::Authentication::Config;
-
+use Mail::Milter::Authentication::Config qw{ get_config };
+use Mail::Milter::Authentication::Util;
 use Net::DNS;
 use Net::IP;
+use Sys::Syslog qw{:standard :macros};
 
-my $CONFIG = Mail::Milter::Authentication::Config::get_config();
+my $CONFIG = get_config();
 
 sub iprev_check {
     my ($ctx) = @_;

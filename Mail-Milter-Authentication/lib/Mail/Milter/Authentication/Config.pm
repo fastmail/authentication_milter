@@ -5,6 +5,13 @@ $VERSION = 0.1;
 use strict;
 use warnings;
 
+use Exporter qw{ import };
+our @EXPORT_OK = qw{
+    get_config
+};
+
+use JSON;
+
 sub get_config {
 
     my $file = '/etc/authentication_milter.json';

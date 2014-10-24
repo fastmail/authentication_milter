@@ -5,10 +5,10 @@ use warnings;
 
 use Getopt::Long;
 use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Config;
+use Mail::Milter::Authentication::Config qw{ get_config };
 
 # CONFIG
-my $CONFIG = Mail::Milter::Authentication::Config::get_config();
+my $CONFIG = get_config();
 my $connection = $CONFIG->{'connection'};
 my $pid_file = '/run/authentication_milter.pid';
 my $daemon = 0;

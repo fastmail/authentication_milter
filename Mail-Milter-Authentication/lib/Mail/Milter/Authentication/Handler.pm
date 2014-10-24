@@ -6,135 +6,24 @@ use strict;
 use warnings;
 
 use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Config;
+use Mail::Milter::Authentication::Util;
+use Mail::Milter::Authentication::Config qw{ get_config };
 
+use Mail::Milter::Authentication::Auth;
 use Mail::Milter::Authentication::IPRev;
 use Mail::Milter::Authentication::LocalIP;
+use Mail::Milter::Authentication::PTR;
+use Mail::Milter::Authentication::SPF;
 use Mail::Milter::Authentication::TrustedIP;
 
-use Email::Address;
-use JSON;
 use Mail::DKIM::Verifier;
 use Mail::DMARC::PurePerl;
-use Mail::SPF;
-use Net::DNS;
-use Net::IP;
+
+use Sys::Syslog qw{:standard :macros};
 use Sendmail::PMilter qw { :all };
 use Socket;
-use Sys::Syslog qw{:standard :macros};
 
-my $CONFIG = Mail::Milter::Authentication::Config::get_config();
-
-sub get_auth_name {
-    my ($ctx) = @_;
-    my $name = get_symval( $ctx, '{auth_authen}' );
-    return $name;
-}
-
-sub get_my_hostname {
-    my ($ctx) = @_;
-    my $hostname = get_symval( $ctx, 'j' );
-    return $hostname;
-}
-
-sub is_hostname_mine {
-    my ( $ctx, $check_hostname ) = @_;
-
-    my $hostname = get_my_hostname($ctx);
-    my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
-
-    if ( exists ( $CONFIG->{'hosts_to_remove'} ) ) {
-        foreach my $remove_hostname ( @{ $CONFIG->{'hosts_to_remove'} } ) {
-            if (
-                substr( lc $check_hostname, ( 0 - length($remove_hostname) ) ) eq
-                lc $remove_hostname )
-            {
-                return 1;
-            }
-        }
-    }
-
-    if (
-        substr( lc $check_hostname, ( 0 - length($check_for) ) ) eq
-        lc $check_for )
-    {
-        return 1;
-    }
-}
-
-sub get_symval {
-    my ( $ctx, $key ) = @_;
-    my $val = $ctx->getsymval( $key );
-    return $val if defined( $val );
-    # We didn't find it?
-    # PMilter::Context fails to get the queue id from postfix as it is
-    # not searching symbols for the correct code. Rewrite this here.
-    # Intend to patch PMilter to fix this.
-    my $symbols = $ctx->{'symbols'}; ## Internals, here be dragons!
-    foreach my $code ( keys %{$symbols} ) {
-        $val = $symbols->{$code}->{$key};
-        return $val if defined( $val );
-    }
-    return undef;
-}
-
-sub get_domain_from {
-    my ($address) = @_;
-    $address = get_address_from($address);
-    my $domain = 'localhost.localdomain';
-    $address =~ s/<//g;
-    $address =~ s/>//g;
-    if ( $address =~ /\@/ ) {
-        ($domain) = $address =~ /.*\@(.*)/;
-    }
-    return $domain;
-}
-
-sub get_address_from {
-    my ($address) = @_;
-    my @addresses = Email::Address->parse($address);
-    if (@addresses) {
-        my $first = $addresses[0];
-        return $first->address();
-    }
-    else {
-        # We couldn't parse, so just run with it and hope for the best
-        return $address;
-    }
-}
-
-sub format_ctext {
-    # Return ctext (but with spaces intact)
-    my ($text) = @_;
-    $text =~ s/\t/ /g;
-    $text =~ s/\n/ /g;
-    $text =~ s/\r/ /g;
-    $text =~ s/\(/ /g;
-    $text =~ s/\)/ /g;
-    $text =~ s/\\/ /g;
-    return $text;
-}
-
-sub format_ctext_no_space {
-    my ($text) = @_;
-    $text = format_ctext($text);
-    $text =~ s/ //g;
-    return $text;
-}
-
-sub format_header_comment {
-    my ($comment) = @_;
-    $comment = format_ctext($comment);
-    return $comment;
-}
-
-sub format_header_entry {
-    my ( $key, $value ) = @_;
-    $key   = format_ctext_no_space($key);
-    $value = format_ctext_no_space($value);
-    my $string = $key . '=' . $value;
-    return $string;
-}
+my $CONFIG = get_config();
 
 sub connect_callback {
     # On Connect
@@ -148,6 +37,7 @@ sub connect_callback {
     eval {
         my ( $port, $iaddr, $ip_address );
 
+        # Process the connecting IP Address
         my $ip_length = length( $sockaddr_in );
         if ( $ip_length eq 16 ) {
             ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
@@ -188,9 +78,9 @@ sub helo_callback {
             # Ignore any further HELOs from this connection
             $priv->{'helo_name'} = $helo_host;
             dbgout( $ctx, 'HeloFrom', $helo_host, LOG_DEBUG );
-            if ( $CONFIG->{'check_ptr'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-                helo_check($ctx);
-            }
+            
+            Mail::Milter::Authentication::PTR::helo_callback( $ctx, $helo_host );
+
         }
     };
     if ( my $error = $@ ) {
@@ -249,31 +139,8 @@ sub envfrom_callback {
             $priv->{'dmarc_obj'} = $dmarc;
         }
 
-        my $spf_server;
-        if ( $CONFIG->{'check_spf'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            eval {
-                $spf_server =
-                  Mail::SPF::Server->new( 'hostname' => get_my_hostname($ctx) );
-            };
-            if ( my $error = $@ ) {
-                log_error( $ctx, 'SPF Setup Error ' . $error );
-                add_auth_header( $ctx, 'dkim=temperror' );
-                $spf_server = undef;
-            }
-            $priv->{'spf_obj'} = $spf_server;
-        }
-
-        if ( $CONFIG->{'check_auth'} ) {
-            my $auth_name = get_auth_name( $ctx );
-            if ( $auth_name ) {
-                dbgout( $ctx, 'AuthenticatedAs', $auth_name, LOG_INFO );
-                # Clear the current auth headers ( iprev and helo are already added )
-                $priv->{'c_auth_headers'} = [];
-                $priv->{'auth_headers'} = [];
-                $priv->{'is_authenticated'} = 1;
-                add_auth_header( $ctx, 'auth=pass' );
-            }
-        }
+        Mail::Milter::Authentication::SPF::envfrom_callback( $ctx, $env_from );
+        Mail::Milter::Authentication::Auth::envfrom_callback( $ctx, $env_from );
 
         $priv->{'mail_from'} = $env_from || q{};
         dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
@@ -287,9 +154,6 @@ sub envfrom_callback {
                     $priv->{'dmarc_obj'} = undef;
                 }
             }
-        }
-        if ( $CONFIG->{'check_spf'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            spf_check($ctx);
         }
     };
     if ( my $error = $@ ) {
@@ -404,9 +268,8 @@ sub eoh_callback {
             my $dkim = $priv->{'dkim_obj'};
             $dkim->PRINT( "\015\012" );
         }
-        if ( $CONFIG->{'check_senderid'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            senderid_check($ctx);
-        }
+
+        Mail::Milter::Authentication::SPF::eoh_callback( $ctx );
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'EOH callback error ' . $error );
@@ -469,144 +332,6 @@ sub close_callback {
     dbgoutwrite($ctx);
     $ctx->setpriv(undef);
     return SMFIS_CONTINUE;
-}
-
-sub log_error {
-    my ( $ctx, $error ) = @_;
-    dbgout( $ctx, 'ERROR', $error, LOG_ERR );
-}
-
-sub add_headers {
-    my ($ctx) = @_;
-    my $priv = $ctx->getpriv();
-
-    if ( exists( $priv->{'remove_auth_headers'} ) ) {
-        foreach my $header ( reverse @{ $priv->{'remove_auth_headers'} } ) {
-            dbgout( $ctx, 'RemoveAuthHeader', $header, LOG_DEBUG );
-            $ctx->chgheader( 'Authentication-Results', $header, q{} );
-        }
-    }
-
-    my $header = get_my_hostname($ctx);
-    my @auth_headers;
-    if ( exists( $priv->{'c_auth_headers'} ) ) {
-        @auth_headers = @{$priv->{'c_auth_headers'}};
-    }
-    if ( exists( $priv->{'auth_headers'} ) ) {
-        @auth_headers = ( @auth_headers, @{$priv->{'auth_headers'}} );
-    }
-    if ( @auth_headers ) {
-        $header .= ";\n    ";
-        $header .= join( ";\n    ", sort @auth_headers );
-    }
-    else {
-        $header .= '; none';
-    }
-
-    prepend_header( $ctx, 'Authentication-Results', $header );
-
-    if ( exists( $priv->{'pre_headers'} ) ) {
-        foreach my $header ( @{ $priv->{'pre_headers'} } ) {
-            dbgout( $ctx, 'PreHeader',
-                $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
-            ## No support for this in Sendmail::PMilter
-            ## so we shall write the packet manually.
-            #  Intend to patch PMilter to fix this
-            my $index = 1;
-            $ctx->write_packet( 'i',
-                    pack( 'N', $index )
-                  . $header->{'field'} . "\0"
-                  . $header->{'value'}
-                  . "\0" );
-        }
-    }
-
-    if ( exists( $priv->{'add_headers'} ) ) {
-        foreach my $header ( @{ $priv->{'add_headers'} } ) {
-            dbgout( $ctx, 'AddHeader',
-                $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
-            $ctx->addheader( $header->{'field'}, $header->{'value'} );
-        }
-    }
-}
-
-sub prepend_header {
-    my ( $ctx, $field, $value ) = @_;
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'pre_headers'} ) ) {
-        $priv->{'pre_headers'} = [];
-    }
-    push @{ $priv->{'pre_headers'} },
-      {
-        'field' => $field,
-        'value' => $value,
-      };
-}
-
-sub remove_auth_header {
-    my ( $ctx, $value ) = @_;
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'remove_auth_headers'} ) ) {
-        $priv->{'remove_auth_headers'} = [];
-    }
-    push @{ $priv->{'remove_auth_headers'} }, $value;
-}
-
-sub add_auth_header {
-    my ( $ctx, $value ) = @_;
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'auth_headers'} ) ) {
-        $priv->{'auth_headers'} = [];
-    }
-    push @{ $priv->{'auth_headers'} }, $value;
-}
-
-sub add_c_auth_header {
-    # Connection wide auth headers
-    my ( $ctx, $value ) = @_;
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'c_auth_headers'} ) ) {
-        $priv->{'c_auth_headers'} = [];
-    }
-    push @{ $priv->{'c_auth_headers'} }, $value;
-}
-
-sub append_header {
-    my ( $ctx, $field, $value ) = @_;
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'add_headers'} ) ) {
-        $priv->{'add_headers'} = [];
-    }
-    push @{ $priv->{'add_headers'} },
-      {
-        'field' => $field,
-        'value' => $value,
-      };
-}
-
-sub helo_check {
-    my ($ctx) = @_;
-    my $priv = $ctx->getpriv();
-
-    my $domain =
-      exists( $priv->{'verified_ptr'} ) ? $priv->{'verified_ptr'} : q{};
-    my $helo_name = $priv->{'helo_name'};
-
-    if ( lc $domain eq lc $helo_name ) {
-        dbgout( $ctx, 'PTRMatch', 'pass', LOG_DEBUG );
-        add_c_auth_header( $ctx,
-                format_header_entry( 'x-ptr', 'pass' ) . q{ }
-              . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
-              . format_header_entry( 'x-ptr-lookup', $domain ) );
-    }
-    else {
-        dbgout( $ctx, 'PTRMatch', 'fail', LOG_DEBUG );
-        add_c_auth_header( $ctx,
-                format_header_entry( 'x-ptr', 'fail' ) . q{ }
-              . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
-              . format_header_entry( 'x-ptr-lookup', $domain ) );
-    }
-
 }
 
 sub dkim_dmarc_check {
@@ -775,161 +500,6 @@ sub dkim_dmarc_check {
             }
         }
     }
-}
-
-
-sub senderid_check {
-    my ($ctx) = @_;
-
-    my $priv = $ctx->getpriv();
-
-    my $spf_server = $priv->{'spf_obj'};
-
-    my $scope = 'pra';
-
-    my $identity = get_address_from( $priv->{'from_header'} );
-
-    eval {
-        my $spf_request = Mail::SPF::Request->new(
-            'versions'      => [2],
-            'scope'         => $scope,
-            'identity'      => $identity,
-            'ip_address'    => $priv->{'ip_address'},
-            'helo_identity' => $priv->{'helo_name'},
-        );
-
-        my $spf_result = $spf_server->process($spf_request);
-        #$ctx->progress();
-
-        my $result_code = $spf_result->code();
-        dbgout( $ctx, 'SenderIdCode', $result_code, LOG_INFO );
-
-        if ( ! ( $CONFIG->{'check_senderid'} == 2 && $result_code eq 'none' ) ) {
-            my $auth_header = format_header_entry( 'senderid', $result_code );
-            add_auth_header( $ctx, $auth_header );
-#my $result_local  = $spf_result->local_explanation;
-#my $result_auth   = $spf_result->can( 'authority_explanation' ) ? $spf_result->authority_explanation() : '';
-            my $result_header = $spf_result->received_spf_header();
-            my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
-            prepend_header( $ctx, $header, $value );
-            dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
-        }
-    };
-    if ( my $error = $@ ) {
-        log_error( $ctx, 'SENDERID Error ' . $error );
-        add_auth_header( $ctx, 'senderid=temperror' );
-        return;
-    }
-
-    return;
-}
-
-sub spf_check {
-    my ($ctx) = @_;
-
-    my $priv = $ctx->getpriv();
-
-    my $spf_server = $priv->{'spf_obj'};
-
-    my $scope = 'mfrom';
-
-    my $identity = get_address_from( $priv->{'mail_from'} );
-    my $domain   = get_domain_from($identity);
-
-    if ( !$identity ) {
-        $identity = $priv->{'helo_name'};
-        $domain   = $identity;
-        $scope    = 'helo';
-    }
-
-    eval {
-        my $spf_request = Mail::SPF::Request->new(
-            'versions'      => [1],
-            'scope'         => $scope,
-            'identity'      => $identity,
-            'ip_address'    => $priv->{'ip_address'},
-            'helo_identity' => $priv->{'helo_name'},
-        );
-
-        my $spf_result = $spf_server->process($spf_request);
-        #$ctx->progress();
-
-        my $result_code = $spf_result->code();
-
-        my $auth_header = join( q{ },
-            format_header_entry( 'spf',           $result_code ),
-            format_header_entry( 'smtp.mailfrom', get_address_from( $priv->{'mail_from'} ) ),
-            format_header_entry( 'smtp.helo',     $priv->{'helo_name'} ),
-        );
-        if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
-            add_auth_header( $ctx, $auth_header );
-        }
-
-        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            if ( my $dmarc = $priv->{'dmarc_obj'} ) {
-                $dmarc->spf(
-                    'domain' => $domain,
-                    'scope'  => $scope,
-                    'result' => $result_code,
-                );
-            }
-        }
-
-        dbgout( $ctx, 'SPFCode', $result_code, LOG_INFO );
-
-        if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
-            my $result_header = $spf_result->received_spf_header();
-            my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
-            prepend_header( $ctx, $header, $value );
-            dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
-        }
-    };
-    if ( my $error = $@ ) {
-        log_error( $ctx, 'SPF Error ' . $error );
-        add_auth_header( $ctx, 'spf=temperror' );
-    }
-
-    return;
-}
-
-sub dbgout {
-    my ( $ctx, $key, $value, $priority ) = @_;
-    warn "$key: $value\n";
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'dbgout'} ) ) {
-        $priv->{'dbgout'} = [];
-    }
-    push @{ $priv->{'dbgout'} },
-      {
-        'priority'   => $priority || LOG_INFO,
-        'key'        => $key || q{},
-        'value'      => $value || q{},
-      };
-}
-
-sub dbgoutwrite {
-    my ($ctx) = @_;
-    my $priv  = $ctx->getpriv();
-    return if not $priv;
-    eval {
-        openlog('authentication_milter', 'pid', LOG_MAIL);
-        setlogmask(   LOG_MASK(LOG_ERR)
-                    | LOG_MASK(LOG_INFO)
-#                    | LOG_MASK(LOG_DEBUG)
-        );
-        my $queue_id = get_symval( $ctx, 'i' ) || q{--};
-        if ( exists( $priv->{'dbgout'} ) ) {
-            foreach my $entry ( @{ $priv->{'dbgout'} } ) {
-                my $key      = $entry->{'key'};
-                my $value    = $entry->{'value'};
-                my $priority = $entry->{'priority'};
-                my $line = "$queue_id: $key: $value";
-                syslog($priority, $line);
-            }
-        }
-        closelog();
-        $priv->{'dbgout'} = undef;
-    };
 }
 
 1;

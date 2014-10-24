@@ -6,12 +6,12 @@ use strict;
 use warnings;
 
 use English;
-use Mail::Milter::Authentication::Config;
+use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Handler;
 use Proc::Daemon;
 use Sendmail::PMilter qw { :all };
 
-my $CONFIG = Mail::Milter::Authentication::Config::get_config();
+my $CONFIG = get_config();
 
 sub start {
     my ( $args ) = @_;
