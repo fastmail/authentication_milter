@@ -688,7 +688,7 @@ sub dkim_dmarc_check {
                 if ( ! ( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
                     add_auth_header( $ctx,
                         format_header_entry( 'dkim', $dkim_result )
-                          . ' (overall validation result)' );
+                          . ' (no signatures found)' );
                 }
             }
             foreach my $signature ( $dkim->signatures ) {
