@@ -5,12 +5,17 @@ $VERSION = 0.1;
 use strict;
 use warnings;
 
+use Mail::Milter::Authentication;
+use Mail::Milter::Authentication::Config;
+
+use Mail::Milter::Authentication::IPRev;
+use Mail::Milter::Authentication::LocalIP;
+use Mail::Milter::Authentication::TrustedIP;
+
 use Email::Address;
 use JSON;
 use Mail::DKIM::Verifier;
 use Mail::DMARC::PurePerl;
-use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Config;
 use Mail::SPF;
 use Net::DNS;
 use Net::IP;
@@ -30,55 +35,6 @@ sub get_my_hostname {
     my ($ctx) = @_;
     my $hostname = get_symval( $ctx, 'j' );
     return $hostname;
-}
-
-sub is_trusted_ip_address {
-    my ( $ctx, $ip_address ) = @_;
-    return 0 if not exists ( $CONFIG->{'trusted_ip_list'} );
-    my $trusted = 0;
-    my $ip_obj = new Net::IP( $ip_address );
-    foreach my $trusted_ip ( @{ $CONFIG->{'trusted_ip_list'} } ) {
-        my $trusted_obj = new Net::IP( $trusted_ip );
-        my $is_overlap = $ip_obj->overlaps( $trusted_obj ) || 0;
-        if ( $is_overlap == $IP_A_IN_B_OVERLAP
-          || $is_overlap == $IP_B_IN_A_OVERLAP # Should never happen
-          || $is_overlap == $IP_PARTIAL_OVERLAP # Should never happen
-          || $is_overlap == $IP_IDENTICAL
-        ) {
-            $trusted = 1;
-        }
-    }
-    return $trusted;;
-}
-
-sub is_local_ip_address {
-    my ( $ctx, $ip_address ) = @_;
-    my $ip = new Net::IP( $ip_address );
-    my $ip_type = $ip->iptype();
-    my $type_map = {
-        'PRIVATE'              => 1,
-        'SHARED'               => 1,
-        'LOOPBACK'             => 1,
-        'LINK-LOCAL'           => 1,
-        'RESERVED'             => 1,
-        'TEST-NET'             => 0,
-        '6TO4-RELAY'           => 0,
-        'MULTICAST'            => 0,
-        'BROADCAST'            => 0,
-        'UNSPECIFIED'          => 0,
-        'IPV4MAP'              => 0,
-        'DISCARD'              => 0,
-        'GLOBAL-UNICAST'       => 0,
-        'TEREDO'               => 0,
-        'BMWG'                 => 0,
-        'DOCUMENTATION'        => 0,
-        'ORCHID'               => 0,
-        '6TO4'                 => 0,
-        'UNIQUE-LOCAL-UNICAST' => 1,
-        'LINK-LOCAL-UNICAST'   => 1,
-    };
-    dbgout( $ctx, 'IPAddress', "Address $ip_address detected as type $ip_type", LOG_DEBUG );
-    return $type_map->{ $ip_type } || 0;
 }
 
 sub is_hostname_mine {
@@ -187,12 +143,11 @@ sub connect_callback {
     my $priv = {};
     $ctx->setpriv($priv);
     
-    $priv->{ 'is_local_ip_address' } = 0;
-    $priv->{ 'is_trusted_ip_address' } = 0;
     $priv->{ 'is_authenticated' }    = 0;
 
     eval {
         my ( $port, $iaddr, $ip_address );
+
         my $ip_length = length( $sockaddr_in );
         if ( $ip_length eq 16 ) {
             ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
@@ -210,25 +165,10 @@ sub connect_callback {
         $priv->{'ip_address'} = $ip_address;
         dbgout( $ctx, 'ConnectFrom', $ip_address, LOG_DEBUG );
 
-        if ( $CONFIG->{'check_local_ip'} ) {
-            if ( is_local_ip_address( $ctx, $ip_address ) ) {
-                dbgout( $ctx, 'LocalIP', 'pass', LOG_DEBUG );
-                add_c_auth_header( $ctx, 'x-local-ip=pass' );
-                $priv->{ 'is_local_ip_address' } = 1;
-            }
-        }
+        Mail::Milter::Authentication::TrustedIP::connect_callback( $ctx, $hostname, $sockaddr_in );
+        Mail::Milter::Authentication::LocalIP::connect_callback( $ctx, $hostname, $sockaddr_in );
+        Mail::Milter::Authentication::IPRev::connect_callback( $ctx, $hostname, $sockaddr_in );
 
-        if ( $CONFIG->{'check_trusted_ip'} ) {
-            if ( is_trusted_ip_address( $ctx, $ip_address ) ) {
-                dbgout( $ctx, 'TrustedIP', 'pass', LOG_DEBUG );
-                add_c_auth_header( $ctx, 'x-trusted-ip=pass' );
-                $priv->{ 'is_trusted_ip_address' } = 1;
-            }
-        }
-
-        if ( $CONFIG->{'check_iprev'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            iprev_check($ctx);
-        }
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'Connect callback error ' . $error );
@@ -837,114 +777,6 @@ sub dkim_dmarc_check {
     }
 }
 
-sub iprev_check {
-    my ($ctx) = @_;
-
-    my $priv = $ctx->getpriv();
-
-    my $ip_address = $priv->{'ip_address'};
-    my $i1 = new Net::IP( $ip_address );
-
-    my $resolver = Net::DNS::Resolver->new;
-
-    my $domain;
-    my $result;
-
-    # We do not consider multiple PTR records,
-    # as this is not a recomended setup
-    my $packet = $resolver->query( $ip_address, 'PTR' );
-    #$ctx->progress();
-    if ($packet) {
-        foreach my $rr ( $packet->answer ) {
-            next unless $rr->type eq "PTR";
-            $domain = $rr->rdatastr;
-        }
-    }
-    else {
-        log_error( $ctx,
-                'DNS PTR query failed for '
-              . $ip_address
-              . ' with '
-              . $resolver->errorstring );
-    }
-
-    my $a_error;
-    if ($domain) {
-        my $packet = $resolver->query( $domain, 'A' );
-        #$ctx->progress();
-        if ($packet) {
-          APACKET:
-            foreach my $rr ( $packet->answer ) {
-                next unless $rr->type eq "A";
-                my $address = $rr->rdatastr;
-                my $i2 = new Net::IP( $address );    
-        	my $is_overlap = $i1->overlaps( $i2 ) || 0;
-                if ( $is_overlap == $IP_IDENTICAL ) {
-                    $result = 'pass';
-                    last APACKET;
-                }
-            }
-        }
-        else {
-            # Don't log this right now, might be an AAAA only host.
-            $a_error = 
-                  'DNS A query failed for '
-                  . $domain
-                  . ' with '
-                  . $resolver->errorstring;
-        }
-    }
-
-    if ( $domain && !$result ) {
-        my $packet = $resolver->query( $domain, 'AAAA' );
-        #$ctx->progress();
-        if ($packet) {
-          APACKET:
-            foreach my $rr ( $packet->answer ) {
-                next unless $rr->type eq "AAAA";
-                my $address = $rr->rdatastr;
-                my $i2 = new Net::IP( $address );    
-        	my $is_overlap = $i1->overlaps( $i2 ) || 0;
-                if ( $is_overlap == $IP_IDENTICAL ) {
-                    $result = 'pass';
-                    last APACKET;
-                }
-            }
-        }
-        else {
-            # Log A errors now, as they become relevant if AAAA also fails.
-            log_error( $ctx, $a_error ) if $a_error;
-            log_error( $ctx,
-                    'DNS AAAA query failed for '
-                  . $domain
-                  . ' with '
-                  . $resolver->errorstring );
-        }
-    }
-
-    if ( !$result ) {
-        $result = 'fail';
-    }
-
-    if ( !$domain ) {
-        $result = 'fail';
-        $domain = 'NOT FOUND';
-    }
-
-    $domain =~ s/\.$//;
-
-    if ( $result eq 'pass' ) {
-        $priv->{'verified_ptr'} = $domain;
-    }
-
-    dbgout( $ctx, 'IPRevCheck', $result, LOG_DEBUG );
-    my $header =
-        format_header_entry( 'iprev', $result ) . ' '
-      . format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
-      . format_header_comment($domain) . ')';
-    add_c_auth_header( $ctx, $header );
-
-}
 
 sub senderid_check {
     my ($ctx) = @_;

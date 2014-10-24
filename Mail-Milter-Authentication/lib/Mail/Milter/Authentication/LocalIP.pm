@@ -1,0 +1,58 @@
+package Mail::Milter::Authentication::LocalIP;
+
+$VERSION = 0.1;
+
+use strict;
+use warnings;
+
+use Mail::Milter::Authentication::Config;
+
+use Net::IP;
+
+my $CONFIG = Mail::Milter::Authentication::Config::get_config();
+
+sub is_local_ip_address {
+    my ( $ctx, $ip_address ) = @_;
+    my $ip = new Net::IP( $ip_address );
+    my $ip_type = $ip->iptype();
+    my $type_map = {
+        'PRIVATE'              => 1,
+        'SHARED'               => 1,
+        'LOOPBACK'             => 1,
+        'LINK-LOCAL'           => 1,
+        'RESERVED'             => 1,
+        'TEST-NET'             => 0,
+        '6TO4-RELAY'           => 0,
+        'MULTICAST'            => 0,
+        'BROADCAST'            => 0,
+        'UNSPECIFIED'          => 0,
+        'IPV4MAP'              => 0,
+        'DISCARD'              => 0,
+        'GLOBAL-UNICAST'       => 0,
+        'TEREDO'               => 0,
+        'BMWG'                 => 0,
+        'DOCUMENTATION'        => 0,
+        'ORCHID'               => 0,
+        '6TO4'                 => 0,
+        'UNIQUE-LOCAL-UNICAST' => 1,
+        'LINK-LOCAL-UNICAST'   => 1,
+    };
+    dbgout( $ctx, 'IPAddress', "Address $ip_address detected as type $ip_type", LOG_DEBUG );
+    return $type_map->{ $ip_type } || 0;
+}
+
+sub connect_callback {
+    my ( $ctx, $hostname, $sockaddr_in ) = @_;
+    my $priv = $ctx->getpriv();
+    $priv->{ 'is_local_ip_address' } = 0;
+    my $ip_address = $priv->{'ip_address'};
+    if ( $CONFIG->{'check_local_ip'} ) {
+        if ( is_local_ip_address( $ctx, $ip_address ) ) {
+            dbgout( $ctx, 'LocalIP', 'pass', LOG_DEBUG );
+            add_c_auth_header( $ctx, 'x-local-ip=pass' );
+            $priv->{ 'is_local_ip_address' } = 1;
+        }
+    }
+}
+
+1;
