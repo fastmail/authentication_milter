@@ -14,6 +14,16 @@ use Mail::SPF;
 
 my $CONFIG = get_config();
 
+sub envfrom_callback {
+    my ( $ctx, $env_from ) = @_;
+    my $priv = $ctx->getpriv();
+    return if ( !$CONFIG->{'check_senderid'} );
+    return if ( $priv->{'is_local_ip_address'} );
+    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $priv->{'is_authenticated'} );
+    delete $priv->{'senderid.from_header'};
+}
+
 sub header_callback {
     my ( $ctx, $header, $value ) = @_;
     my $priv = $ctx->getpriv();

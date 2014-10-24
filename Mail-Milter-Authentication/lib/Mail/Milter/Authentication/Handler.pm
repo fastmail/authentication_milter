@@ -99,7 +99,6 @@ sub envfrom_callback {
 
     # Reset private data for this MAIL transaction
     delete $priv->{'core.mail_from'};
-    delete $priv->{'from_header'}; # DMARC
     delete $priv->{'auth_headers'};
     delete $priv->{'auth_result_header_index'};
     delete $priv->{'remove_auth_headers'}; # Sanitize

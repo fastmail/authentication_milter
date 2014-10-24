@@ -27,6 +27,7 @@ sub envfrom_callback {
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
+    delete $priv->{'dmarc.from_header'};
     my $domain_from = get_domain_from($env_from);
     my $dmarc;
     eval {
