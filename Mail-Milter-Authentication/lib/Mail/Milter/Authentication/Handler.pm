@@ -15,6 +15,7 @@ use Mail::Milter::Authentication::DMARC;
 use Mail::Milter::Authentication::IPRev;
 use Mail::Milter::Authentication::LocalIP;
 use Mail::Milter::Authentication::PTR;
+use Mail::Milter::Authentication::Sanitize;
 use Mail::Milter::Authentication::SPF;
 use Mail::Milter::Authentication::TrustedIP;
 
@@ -31,8 +32,6 @@ sub connect_callback {
     my $priv = {};
     $ctx->setpriv($priv);
     
-    $priv->{ 'is_authenticated' }    = 0;
-
     eval {
         my ( $port, $iaddr, $ip_address );
 
@@ -54,6 +53,7 @@ sub connect_callback {
         $priv->{'ip_address'} = $ip_address;
         dbgout( $ctx, 'ConnectFrom', $ip_address, LOG_DEBUG );
 
+        Mail::Milter::Authentication::Auth::connect_callback( $ctx, $hostname, $sockaddr_in );
         Mail::Milter::Authentication::TrustedIP::connect_callback( $ctx, $hostname, $sockaddr_in );
         Mail::Milter::Authentication::LocalIP::connect_callback( $ctx, $hostname, $sockaddr_in );
         Mail::Milter::Authentication::IPRev::connect_callback( $ctx, $hostname, $sockaddr_in );
@@ -101,7 +101,7 @@ sub envfrom_callback {
     delete $priv->{'mail_from'};
     delete $priv->{'from_header'}; # DMARC
     delete $priv->{'auth_result_header_index'};
-    delete $priv->{'remove_auth_headers'};
+    delete $priv->{'remove_auth_headers'}; # Sanitize
     delete $priv->{'auth_headers'};
     delete $priv->{'pre_headers'};
     delete $priv->{'add_headers'};
@@ -112,10 +112,10 @@ sub envfrom_callback {
         $priv->{'mail_from'} = $env_from || q{};
         dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
 
+        Mail::Milter::Authentication::Auth::envfrom_callback( $ctx, $env_from );
+        Mail::Milter::Authentication::SPF::envfrom_callback( $ctx, $env_from );
         Mail::Milter::Authentication::DKIM::envfrom_callback( $ctx, $env_from );
         Mail::Milter::Authentication::DMARC::envfrom_callback( $ctx, $env_from );
-        Mail::Milter::Authentication::SPF::envfrom_callback( $ctx, $env_from );
-        Mail::Milter::Authentication::Auth::envfrom_callback( $ctx, $env_from );
 
     };
     if ( my $error = $@ ) {
@@ -130,13 +130,10 @@ sub envrcpt_callback {
     #...
     my ( $ctx, $env_to ) = @_;
     dbgout( $ctx, 'CALLBACK', 'EnvRcpt', LOG_DEBUG );
-    my $priv = $ctx->getpriv();
     $env_to = q{} if not $env_to;
     dbgout( $ctx, 'EnvelopeTo', $env_to, LOG_DEBUG );
     eval {
-        
         Mail::Milter::Authentication::DMARC::envrcpt_callback( $ctx, $env_to );
-
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'Rcpt To callback error ' . $error );
@@ -152,31 +149,12 @@ sub header_callback {
     my $priv = $ctx->getpriv();
     $value = q{} if not $value;
     eval {
+        dbgout( $ctx, 'Header', $header . ': ' . $value, LOG_DEBUG );
 
+        Mail::Milter::Authentication::Sanitize::header_callback( $ctx, $header, $value );
         Mail::Milter::Authentication::DKIM::header_callback( $ctx, $header, $value );
         Mail::Milter::Authentication::DMARC::header_callback( $ctx, $header, $value );
 
-        # Check for and remove rogue auth results headers from untrusted IP Addresses
-        if ( $priv->{'is_trusted_ip_address'} == 0 ) {
-            if ( $header eq 'Authentication-Results' ) {
-                if ( !exists $priv->{'auth_result_header_index'} ) {
-                    $priv->{'auth_result_header_index'} = 0;
-                }
-                $priv->{'auth_result_header_index'} =
-                  $priv->{'auth_result_header_index'} + 1;
-                my ($domain_part) = $value =~ /(.*);/;
-                $domain_part =~ s/ +//g;
-                if ( is_hostname_mine( $ctx, $domain_part ) ) {
-                    remove_auth_header( $ctx, $priv->{'auth_result_header_index'} );
-                    my $forged_header = '(The following Authentication Results header was removed by ' . get_my_hostname($ctx) . "\n"
-                                      . '    as the supplied domain conflicted with its own)' . "\n"
-                                      . '    ' . $value;
-                    append_header( $ctx, 'X-Invalid-Authentication-Results', $forged_header );
-                }
-            }
-        }
-
-        dbgout( $ctx, 'Header', $header . ': ' . $value, LOG_DEBUG );
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'Header callback error ' . $error );
@@ -188,7 +166,6 @@ sub eoh_callback {
     # On End of headers
     my ($ctx) = @_;
     dbgout( $ctx, 'CALLBACK', 'EOH', LOG_DEBUG );
-    my $priv = $ctx->getpriv();
 
     eval {
         Mail::Milter::Authentication::DKIM::eoh_callback( $ctx );
@@ -205,7 +182,6 @@ sub body_callback {
     # On each body chunk
     my ( $ctx, $body_chunk, $len ) = @_;
     dbgout( $ctx, 'CALLBACK', 'Body', LOG_DEBUG );
-    my $priv = $ctx->getpriv();
 
     eval {
         Mail::Milter::Authentication::DKIM::body_callback( $ctx, $body_chunk, $len );
@@ -221,11 +197,11 @@ sub eom_callback {
     # On End of Message
     my ($ctx) = @_;
     dbgout( $ctx, 'CALLBACK', 'EOM', LOG_DEBUG );
-    my $priv = $ctx->getpriv();
 
     eval {
         Mail::Milter::Authentication::DKIM::eom_callback( $ctx );
         Mail::Milter::Authentication::DMARC::eom_callback( $ctx );
+        Mail::Milter::Authentication::Sanitize::eom_callback( $ctx );
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'EOM callback error ' . $error );

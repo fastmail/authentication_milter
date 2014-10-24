@@ -18,6 +18,12 @@ sub get_auth_name {
     return $name;
 }
 
+sub connect_callback {
+    my ( $ctx, $hostname, $sockaddr_in ) = @_;
+    my $priv = $ctx->getpriv();
+    $priv->{ 'is_authenticated' } = 0;
+} 
+
 sub envfrom_callback {
     my ( $ctx, $env_from ) = @_;
     my $priv = $ctx->getpriv();

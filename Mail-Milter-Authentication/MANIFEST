@@ -7,6 +7,7 @@ lib/Mail/Milter/Authentication/Handler.pm
 lib/Mail/Milter/Authentication/Util.pm
 lib/Mail/Milter/Authentication/LocalIP.pm
 lib/Mail/Milter/Authentication/PTR.pm
+lib/Mail/Milter/Authentication/Sanitize.pm
 lib/Mail/Milter/Authentication/SPF.pm
 lib/Mail/Milter/Authentication/TrustedIP.pm
 lib/Mail/Milter/Authentication/IPRev.pm

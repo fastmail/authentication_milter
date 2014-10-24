@@ -20,7 +20,6 @@ our @EXPORT = qw{
     log_error
     add_headers
     prepend_header
-    remove_auth_header
     add_auth_header
     add_c_auth_header
     append_header
@@ -116,13 +115,6 @@ sub add_headers {
     my ($ctx) = @_;
     my $priv = $ctx->getpriv();
 
-    if ( exists( $priv->{'remove_auth_headers'} ) ) {
-        foreach my $header ( reverse @{ $priv->{'remove_auth_headers'} } ) {
-            dbgout( $ctx, 'RemoveAuthHeader', $header, LOG_DEBUG );
-            $ctx->chgheader( 'Authentication-Results', $header, q{} );
-        }
-    }
-
     my $header = get_my_hostname($ctx);
     my @auth_headers;
     if ( exists( $priv->{'c_auth_headers'} ) ) {
@@ -179,14 +171,6 @@ sub prepend_header {
       };
 }
 
-sub remove_auth_header {
-    my ( $ctx, $value ) = @_;
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'remove_auth_headers'} ) ) {
-        $priv->{'remove_auth_headers'} = [];
-    }
-    push @{ $priv->{'remove_auth_headers'} }, $value;
-}
 
 sub add_auth_header {
     my ( $ctx, $value ) = @_;

@@ -12,7 +12,11 @@ our @EXPORT_OK = qw{
 
 use JSON;
 
+my $CONFIG;
+
 sub get_config {
+
+    return $CONFIG if $CONFIG;
 
     my $file = '/etc/authentication_milter.json';
     if ( ! -e $file ) {
