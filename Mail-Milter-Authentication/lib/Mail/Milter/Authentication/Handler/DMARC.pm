@@ -40,14 +40,14 @@ sub envfrom_callback {
         $dmarc = undef;
         return;
     }
-    $priv->{'dmarc_obj'} = $dmarc;
+    $priv->{'dmarc.obj'} = $dmarc;
     eval {
         $dmarc->envelope_from($domain_from);
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'DMARC Mail From Error ' . $error );
         add_auth_header( $ctx, 'dmarc=temperror' );
-        $priv->{'dmarc_obj'} = undef;
+        $priv->{'dmarc.obj'} = undef;
         return;
     }
 }
@@ -59,13 +59,13 @@ sub envrcpt_callback {
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
-    if ( my $dmarc = $priv->{'dmarc_obj'} ) {
+    if ( my $dmarc = $priv->{'dmarc.obj'} ) {
         my $envelope_to = get_domain_from($env_to);
         eval { $dmarc->envelope_to($envelope_to) };
         if ( my $error = $@ ) {
             log_error( $ctx, 'DMARC Rcpt To Error ' . $error );
             add_auth_header( $ctx, 'dmarc=temperror' );
-            $priv->{'dmarc_obj'} = undef;
+            $priv->{'dmarc.obj'} = undef;
             return;
         }
     }
@@ -80,12 +80,12 @@ sub header_callback {
     return if ( $priv->{'is_authenticated'} );
     if ( $header eq 'From' ) {
         $priv->{'from_header'} = $value;
-        if ( my $dmarc = $priv->{'dmarc_obj'} ) {
+        if ( my $dmarc = $priv->{'dmarc.obj'} ) {
             eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
             if ( my $error = $@ ) {
                 log_error( $ctx, 'DMARC Header From Error ' . $error );
                 add_auth_header( $ctx, 'dmarc=temperror' );
-                $priv->{'dmarc_obj'} = undef;
+                $priv->{'dmarc.obj'} = undef;
                 return;
             }
         }
@@ -100,8 +100,8 @@ sub eom_callback {
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
     eval {
-        if ( my $dmarc = $priv->{'dmarc_obj'} ) {
-            my $dkim  = $priv->{'dkim_obj'};
+        if ( my $dmarc = $priv->{'dmarc.obj'} ) {
+            my $dkim  = $priv->{'dkim.obj'};
             $dmarc->dkim($dkim);
             my $dmarc_result = $dmarc->validate();
             #$ctx->progress();

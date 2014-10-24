@@ -27,14 +27,14 @@ sub envfrom_callback {
         add_auth_header( $ctx, 'dkim=temperror' );
         $dkim = undef;
     }
-    $priv->{'dkim_obj'} = $dkim;
+    $priv->{'dkim.obj'} = $dkim;
 }
 
 sub header_callback {
     my ( $ctx, $header, $value ) = @_;
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
-    my $dkim = $priv->{'dkim_obj'};
+    my $dkim = $priv->{'dkim.obj'};
     my $EOL    = "\015\012";
     my $dkim_chunk = $header . ': ' . $value . $EOL;
     $dkim_chunk =~ s/\015?\012/$EOL/g;
@@ -53,7 +53,7 @@ sub eoh_callback {
     my ($ctx) = @_;
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
-    my $dkim = $priv->{'dkim_obj'};
+    my $dkim = $priv->{'dkim.obj'};
     $dkim->PRINT( "\015\012" );
 }
 
@@ -61,7 +61,7 @@ sub body_callback {
     my ( $ctx, $body_chunk, $len ) = @_;
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
-    my $dkim       = $priv->{'dkim_obj'};
+    my $dkim       = $priv->{'dkim.obj'};
     my $dkim_chunk = $body_chunk;
     my $EOL    = "\015\012";
     $dkim_chunk =~ s/\015?\012/$EOL/g;
@@ -72,7 +72,7 @@ sub eom_callback {
     my ($ctx) = @_;
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
-    my $dkim  = $priv->{'dkim_obj'};
+    my $dkim  = $priv->{'dkim.obj'};
     eval {
         $dkim->CLOSE();
         #$ctx->progress();
@@ -185,7 +185,7 @@ sub eom_callback {
         add_auth_header( $ctx, 'dkim=temperror' );
         if ( $CONFIG->{'check_dmarc'} ) {
             add_auth_header( $ctx, 'dmarc=temperror' );
-            $priv->{'dmarc_obj'} = undef;
+            $priv->{'dmarc.obj'} = undef;
         }
     }
 }

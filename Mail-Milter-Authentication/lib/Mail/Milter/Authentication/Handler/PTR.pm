@@ -22,7 +22,7 @@ sub helo_callback {
     return if ( $priv->{'is_authenticated'} );
 
     my $domain =
-      exists( $priv->{'verified_ptr'} ) ? $priv->{'verified_ptr'} : q{};
+      exists( $priv->{'iprev.verified_ptr'} ) ? $priv->{'iprev.verified_ptr'} : q{};
     my $helo_name = $priv->{'core.helo_name'};
 
     if ( lc $domain eq lc $helo_name ) {

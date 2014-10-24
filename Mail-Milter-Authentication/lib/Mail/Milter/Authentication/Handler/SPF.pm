@@ -69,7 +69,7 @@ sub envfrom_callback {
         }
 
         if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
-            if ( my $dmarc = $priv->{'dmarc_obj'} ) {
+            if ( my $dmarc = $priv->{'dmarc.obj'} ) {
                 $dmarc->spf(
                     'domain' => $domain,
                     'scope'  => $scope,

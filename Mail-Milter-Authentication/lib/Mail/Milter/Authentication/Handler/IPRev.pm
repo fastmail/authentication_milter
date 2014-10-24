@@ -112,7 +112,7 @@ sub connect_callback {
     $domain =~ s/\.$//;
 
     if ( $result eq 'pass' ) {
-        $priv->{'verified_ptr'} = $domain;
+        $priv->{'iprev.verified_ptr'} = $domain;
     }
 
     dbgout( $ctx, 'IPRevCheck', $result, LOG_DEBUG );
