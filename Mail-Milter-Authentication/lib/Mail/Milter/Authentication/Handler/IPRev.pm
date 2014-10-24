@@ -16,7 +16,6 @@ my $CONFIG = get_config();
 sub connect_callback {
     my ( $ctx, $hostname, $sockaddr_in ) = @_;
     my $priv = $ctx->getpriv();
-    $priv->{ 'is_trusted_ip_address' } = 0;
     return if ( !$CONFIG->{'check_iprev'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
