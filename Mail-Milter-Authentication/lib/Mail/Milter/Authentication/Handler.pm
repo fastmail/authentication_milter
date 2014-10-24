@@ -112,10 +112,10 @@ sub envfrom_callback {
         $priv->{'mail_from'} = $env_from || q{};
         dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
 
+        Mail::Milter::Authentication::DMARC::envfrom_callback( $ctx, $env_from ); # MUST go before SPF
         Mail::Milter::Authentication::Auth::envfrom_callback( $ctx, $env_from );
         Mail::Milter::Authentication::SPF::envfrom_callback( $ctx, $env_from );
         Mail::Milter::Authentication::DKIM::envfrom_callback( $ctx, $env_from );
-        Mail::Milter::Authentication::DMARC::envfrom_callback( $ctx, $env_from );
 
     };
     if ( my $error = $@ ) {
