@@ -16,6 +16,7 @@ use Mail::Milter::Authentication::IPRev;
 use Mail::Milter::Authentication::LocalIP;
 use Mail::Milter::Authentication::PTR;
 use Mail::Milter::Authentication::Sanitize;
+use Mail::Milter::Authentication::SenderID;
 use Mail::Milter::Authentication::SPF;
 use Mail::Milter::Authentication::TrustedIP;
 
@@ -169,7 +170,7 @@ sub eoh_callback {
 
     eval {
         Mail::Milter::Authentication::DKIM::eoh_callback( $ctx );
-        Mail::Milter::Authentication::SPF::eoh_callback( $ctx );
+        Mail::Milter::Authentication::SenderID::eoh_callback( $ctx );
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'EOH callback error ' . $error );
