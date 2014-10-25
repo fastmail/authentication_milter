@@ -117,11 +117,11 @@ sub add_headers {
 
     my $header = get_my_hostname($ctx);
     my @auth_headers;
-    if ( exists( $priv->{'c_auth_headers'} ) ) {
-        @auth_headers = @{$priv->{'c_auth_headers'}};
+    if ( exists( $priv->{'core.c_auth_headers'} ) ) {
+        @auth_headers = @{$priv->{'core.c_auth_headers'}};
     }
-    if ( exists( $priv->{'auth_headers'} ) ) {
-        @auth_headers = ( @auth_headers, @{$priv->{'auth_headers'}} );
+    if ( exists( $priv->{'core.auth_headers'} ) ) {
+        @auth_headers = ( @auth_headers, @{$priv->{'core.auth_headers'}} );
     }
     if ( @auth_headers ) {
         $header .= ";\n    ";
@@ -133,8 +133,8 @@ sub add_headers {
 
     prepend_header( $ctx, 'Authentication-Results', $header );
 
-    if ( exists( $priv->{'pre_headers'} ) ) {
-        foreach my $header ( @{ $priv->{'pre_headers'} } ) {
+    if ( exists( $priv->{'core.pre_headers'} ) ) {
+        foreach my $header ( @{ $priv->{'core.pre_headers'} } ) {
             dbgout( $ctx, 'PreHeader',
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
             ## No support for this in Sendmail::PMilter
@@ -149,8 +149,8 @@ sub add_headers {
         }
     }
 
-    if ( exists( $priv->{'add_headers'} ) ) {
-        foreach my $header ( @{ $priv->{'add_headers'} } ) {
+    if ( exists( $priv->{'core.add_headers'} ) ) {
+        foreach my $header ( @{ $priv->{'core.add_headers'} } ) {
             dbgout( $ctx, 'AddHeader',
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
             $ctx->addheader( $header->{'field'}, $header->{'value'} );
@@ -161,10 +161,10 @@ sub add_headers {
 sub prepend_header {
     my ( $ctx, $field, $value ) = @_;
     my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'pre_headers'} ) ) {
-        $priv->{'pre_headers'} = [];
+    if ( !exists( $priv->{'core.pre_headers'} ) ) {
+        $priv->{'core.pre_headers'} = [];
     }
-    push @{ $priv->{'pre_headers'} },
+    push @{ $priv->{'core.pre_headers'} },
       {
         'field' => $field,
         'value' => $value,
@@ -175,29 +175,29 @@ sub prepend_header {
 sub add_auth_header {
     my ( $ctx, $value ) = @_;
     my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'auth_headers'} ) ) {
-        $priv->{'auth_headers'} = [];
+    if ( !exists( $priv->{'core.auth_headers'} ) ) {
+        $priv->{'core.auth_headers'} = [];
     }
-    push @{ $priv->{'auth_headers'} }, $value;
+    push @{ $priv->{'core.auth_headers'} }, $value;
 }
 
 sub add_c_auth_header {
     # Connection wide auth headers
     my ( $ctx, $value ) = @_;
     my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'c_auth_headers'} ) ) {
-        $priv->{'c_auth_headers'} = [];
+    if ( !exists( $priv->{'core.c_auth_headers'} ) ) {
+        $priv->{'core.c_auth_headers'} = [];
     }
-    push @{ $priv->{'c_auth_headers'} }, $value;
+    push @{ $priv->{'core.c_auth_headers'} }, $value;
 }
 
 sub append_header {
     my ( $ctx, $field, $value ) = @_;
     my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'add_headers'} ) ) {
-        $priv->{'add_headers'} = [];
+    if ( !exists( $priv->{'core.add_headers'} ) ) {
+        $priv->{'core.add_headers'} = [];
     }
-    push @{ $priv->{'add_headers'} },
+    push @{ $priv->{'core.add_headers'} },
       {
         'field' => $field,
         'value' => $value,
@@ -208,10 +208,10 @@ sub dbgout {
     my ( $ctx, $key, $value, $priority ) = @_;
     warn "$key: $value\n";
     my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'dbgout'} ) ) {
-        $priv->{'dbgout'} = [];
+    if ( !exists( $priv->{'core.dbgout'} ) ) {
+        $priv->{'core.dbgout'} = [];
     }
-    push @{ $priv->{'dbgout'} },
+    push @{ $priv->{'core.dbgout'} },
       {
         'priority'   => $priority || LOG_INFO,
         'key'        => $key || q{},
@@ -230,8 +230,8 @@ sub dbgoutwrite {
 #                    | LOG_MASK(LOG_DEBUG)
         );
         my $queue_id = get_symval( $ctx, 'i' ) || q{--};
-        if ( exists( $priv->{'dbgout'} ) ) {
-            foreach my $entry ( @{ $priv->{'dbgout'} } ) {
+        if ( exists( $priv->{'core.dbgout'} ) ) {
+            foreach my $entry ( @{ $priv->{'core.dbgout'} } ) {
                 my $key      = $entry->{'key'};
                 my $value    = $entry->{'value'};
                 my $priority = $entry->{'priority'};
@@ -240,7 +240,7 @@ sub dbgoutwrite {
             }
         }
         closelog();
-        $priv->{'dbgout'} = undef;
+        $priv->{'core.dbgout'} = undef;
     };
 }
 
