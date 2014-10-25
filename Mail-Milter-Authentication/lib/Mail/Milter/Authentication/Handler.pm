@@ -23,7 +23,6 @@ use Mail::Milter::Authentication::Handler::TrustedIP;
 
 use Sys::Syslog qw{:standard :macros};
 use Sendmail::PMilter qw { :all };
-use Socket;
 
 my $CONFIG = get_config();
 

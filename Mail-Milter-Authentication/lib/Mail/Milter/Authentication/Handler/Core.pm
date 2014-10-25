@@ -8,6 +8,7 @@ use warnings;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
+use Socket;
 use Sys::Syslog qw{:standard :macros};
 
 my $CONFIG = get_config();
