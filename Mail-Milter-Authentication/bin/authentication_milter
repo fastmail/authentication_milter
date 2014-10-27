@@ -65,12 +65,19 @@ The configuration file format is as follows...
                                                       | "2" Include check ONLY if not a fail.
 
     "check_spf"        : "1",                         | Check SPF
+                                                      | Skipped for authenticated, local, and trusted connections.
     "check_dkim"       : "1",                         | Check DKIM
     "check_dkim-adsp"  : "1",                         | Check ADSP
     "check_dmarc"      : "1",                         | Check DMARC
+                                                      | Requires DKIM and SPF to be enabled
+                                                      | Skipped for authenticated, local, and trusted connections.
     "check_ptr"        : "1",                         | Check PTR records against HELO domain
+                                                      | Requires IPREV to be enabled
+                                                      | Skipped for authenticated, local, and trusted connections.
     "check_iprev"      : "1",                         | Check IP Reverse
+                                                      | Skipped for authenticated, local, and trusted connections.
     "check_senderid"   : "2",                         | Check SenderID
+                                                      | Skipped for authenticated, local, and trusted connections.
     "check_auth"       : "1",                         | Check for authenticated connections
     "check_local_ip"   : "1",                         | Check for LOCAL IP connections
 
@@ -80,6 +87,7 @@ The configuration file format is as follows...
         "2001:44c2:3881:aa00::/56",
         "2001:44b8:3021:123:dead:beef:abcd:1234"
     ],
+
     "hosts_to_remove" : [                             | Hostnames (including subdomains thereof) for which we
         "example.com",                                | want to remove existing authentication results headers.
         "example.net"
@@ -89,7 +97,7 @@ The configuration file format is as follows...
                                                       | "no" : do not remove
                                                       | "yes" : remove and add a header for each one
                                                       | "silent" : remove silently
-
+                                                      | Does not run for trusted IP address connections
 }
 
 
