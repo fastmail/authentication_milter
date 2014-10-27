@@ -83,7 +83,12 @@ The configuration file format is as follows...
     "hosts_to_remove" : [                             | Hostnames (including subdomains thereof) for which we
         "example.com",                                | want to remove existing authentication results headers.
         "example.net"
-    ]
+    ],
+
+    "remove_headers" : "yes"                          | Remove headers with conflicting host names (as defined above)
+                                                      | "no" : do not remove
+                                                      | "yes" : remove and add a header for each one
+                                                      | "silent" : remove silently
 
 }
 

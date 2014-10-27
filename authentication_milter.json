@@ -28,6 +28,8 @@
     "hosts_to_remove" : [
         "electric-dreams.org",
         "twofiftyeight.ltd.uk"
-    ]
+    ],
+
+    "remove_headers" : "yes"
 
 }

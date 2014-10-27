@@ -32,6 +32,7 @@ sub header_callback {
     my ( $ctx, $header, $value ) = @_;
     my $priv = $ctx->getpriv();
     return if ( $priv->{'is_trusted_ip_address'} ); 
+    return if ( lc $CONFIG->{'remove_headers'} eq 'no' ) ;
     if ( $header eq 'Authentication-Results' ) {
         if ( !exists $priv->{'sanitize.auth_result_header_index'} ) {
             $priv->{'sanitize.auth_result_header_index'} = 0;
@@ -42,10 +43,12 @@ sub header_callback {
         $domain_part =~ s/ +//g;
         if ( is_hostname_mine( $ctx, $domain_part ) ) {
             remove_auth_header( $ctx, $priv->{'sanitize.auth_result_header_index'} );
-            my $forged_header = '(The following Authentication Results header was removed by ' . get_my_hostname($ctx) . "\n"
-                              . '    as the supplied domain conflicted with its own)' . "\n"
-                              . '    ' . $value;
-            append_header( $ctx, 'X-Invalid-Authentication-Results', $forged_header );
+            if ( lc $CONFIG->{'remove_headers'} ne 'silent' ) {
+                my $forged_header = '(The following Authentication Results header was removed by ' . get_my_hostname($ctx) . "\n"
+                                  . '    as the supplied domain conflicted with its own)' . "\n"
+                                  . '    ' . $value;
+                append_header( $ctx, 'X-Invalid-Authentication-Results', $forged_header );
+            }
         }
     }
 }
@@ -53,6 +56,7 @@ sub header_callback {
 sub eom_callback {
     my ( $ctx ) = @_;
     my $priv = $ctx->getpriv();
+    return if ( lc $CONFIG->{'remove_headers'} eq 'no' ) ;
     if ( exists( $priv->{'sanitize.remove_auth_headers'} ) ) {
         foreach my $header ( reverse @{ $priv->{'sanitize.remove_auth_headers'} } ) {
             dbgout( $ctx, 'RemoveAuthHeader', $header, LOG_DEBUG );
