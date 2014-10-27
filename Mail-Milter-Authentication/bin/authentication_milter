@@ -44,7 +44,68 @@ sub usage {
     Write the process PID to the given file.
     defaults to /run/authentication_milter.pid
 
-Reads configuration from /etc/authentication_milter.json
+
+
+Configuration
+-------------
+
+The milter reads configuration from /etc/authentication_milter.json
+
+The configuration file format is as follows...
+
+{
+    "connection"       : "inet:12345\@localhost",     | The connection to use 
+    "runas"            : "nobody",                    | Drop privs and run as this user
+
+    "show_default_adsp" : "0",                        | Boolean, include default adsp results?
+
+                                                      | Checks to include.
+                                                      | "0" Do not include check.
+                                                      | "1" Include check.
+                                                      | "2" Include check ONLY if not a fail.
+
+    "check_spf"        : "1",                         | Check SPF
+    "check_dkim"       : "1",                         | Check DKIM
+    "check_dkim-adsp"  : "1",                         | Check ADSP
+    "check_dmarc"      : "1",                         | Check DMARC
+    "check_ptr"        : "1",                         | Check PTR records against HELO domain
+    "check_iprev"      : "1",                         | Check IP Reverse
+    "check_senderid"   : "2",                         | Check SenderID
+    "check_auth"       : "1",                         | Check for authenticated connections
+    "check_local_ip"   : "1",                         | Check for LOCAL IP connections
+
+    "check_trusted_ip" : "1",                         | Check for a truseed IP Address
+    "trusted_ip_list" : [                             | List of IP Addresses considered to be trusted
+        "100.200.100.2",                              | CIDR Ranges are valid syntax
+        "2001:44c2:3881:aa00::/56",
+        "2001:44b8:3021:123:dead:beef:abcd:1234"
+    ],
+    "hosts_to_remove" : [                             | Hostnames (including subdomains thereof) for which we
+        "example.com",                                | want to remove existing authentication results headers.
+        "example.net"
+    ]
+
+}
+
+
+
+DMARC
+-----
+
+This milter uses Mail::DMARC as a backend for DMARC checks, this module requires that a configuration
+file is setup.
+
+You should create and populate /etc/mail-dmarc.ini
+
+For DMARC reporting you are also required to setup a datastore, including creating a basic table
+structure.  The detauls of this are to be found in the Mail::DMARC documentation, or in the
+share/schema.sql file included with the source code to this milter.
+
+At this time forensic reports are not supported by Mail::DMARC or this milter. Only aggregate reports will
+be generated.
+
+To check reports please use the dmarc_view_reports command, to send reports please use the dmarc_send_reports
+command. These are included with the Mail::DMARC module.
 
 };
 }
