@@ -21,7 +21,7 @@ sub connect_callback {
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
     my $ip_address = $priv->{'core.ip_address'};
-    my $i1 = new Net::IP( $ip_address );
+    my $i1 = Net::IP->new( $ip_address );
 
     my $resolver = Net::DNS::Resolver->new;
 
@@ -55,7 +55,7 @@ sub connect_callback {
             foreach my $rr ( $packet->answer ) {
                 next unless $rr->type eq "A";
                 my $address = $rr->rdatastr;
-                my $i2 = new Net::IP( $address );    
+                my $i2 = Net::IP->new( $address );    
         	my $is_overlap = $i1->overlaps( $i2 ) || 0;
                 if ( $is_overlap == $IP_IDENTICAL ) {
                     $result = 'pass';
@@ -81,7 +81,7 @@ sub connect_callback {
             foreach my $rr ( $packet->answer ) {
                 next unless $rr->type eq "AAAA";
                 my $address = $rr->rdatastr;
-                my $i2 = new Net::IP( $address );    
+                my $i2 = Net::IP->new( $address );    
         	my $is_overlap = $i1->overlaps( $i2 ) || 0;
                 if ( $is_overlap == $IP_IDENTICAL ) {
                     $result = 'pass';

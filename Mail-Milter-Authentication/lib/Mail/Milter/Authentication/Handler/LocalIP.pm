@@ -15,7 +15,7 @@ my $CONFIG = get_config();
 
 sub is_local_ip_address {
     my ( $ctx, $ip_address ) = @_;
-    my $ip = new Net::IP( $ip_address );
+    my $ip = Net::IP->new( $ip_address );
     my $ip_type = $ip->iptype();
     my $type_map = {
         'PRIVATE'              => 1,

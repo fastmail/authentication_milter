@@ -17,9 +17,9 @@ sub is_trusted_ip_address {
     my ( $ctx, $ip_address ) = @_;
     return 0 if not exists ( $CONFIG->{'trusted_ip_list'} );
     my $trusted = 0;
-    my $ip_obj = new Net::IP( $ip_address );
+    my $ip_obj = Net::IP->new( $ip_address );
     foreach my $trusted_ip ( @{ $CONFIG->{'trusted_ip_list'} } ) {
-        my $trusted_obj = new Net::IP( $trusted_ip );
+        my $trusted_obj = Net::IP->new( $trusted_ip );
         my $is_overlap = $ip_obj->overlaps( $trusted_obj ) || 0;
         if ( $is_overlap == $IP_A_IN_B_OVERLAP
           || $is_overlap == $IP_B_IN_A_OVERLAP # Should never happen

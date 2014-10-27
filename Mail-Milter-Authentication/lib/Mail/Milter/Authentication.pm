@@ -54,7 +54,7 @@ sub start {
     };
 
     #Sendmail::PMilter::setdbg( 9 );
-    my $milter = new Sendmail::PMilter;
+    my $milter = Sendmail::PMilter->new();
     $milter->setconn( $connection ) || die "Could not open connection $connection\n";
     $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
 
