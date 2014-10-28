@@ -112,7 +112,10 @@ sub eom_callback {
                 my $dmarc_policy;
                 if ( $dmarc_code ne 'pass' ) {
                     $dmarc_policy = eval { $dmarc_result->evalated->disposition() };
-                    dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_DEBUG );
+                    if ( my $error = $@ ) {
+                        log_error( $ctx, 'DMARCPolicyError ' . $error );
+                    }
+                    dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_INFO );
                 }
                 my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
                 if ($dmarc_policy) {

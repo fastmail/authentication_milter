@@ -38,7 +38,6 @@ sub header_callback {
 
 sub eoh_callback {
     my ($ctx) = @_;
-    dbgout( $ctx, 'CALLBACK', 'EOH', LOG_DEBUG );
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_senderid'} );
     return if ( $priv->{'is_local_ip_address'} );

@@ -15,7 +15,7 @@ my $CONFIG = get_config();
 
 sub start {
     my ( $args ) = @_;
-    my $connection = $args->{ 'connection' };
+    my $connection = $args->{ 'connection' } || die ('No connection details given');
     my $pid_file   = $args->{ 'pid_file' };
 
     # CONCURRENCY CHECKING
@@ -33,6 +33,10 @@ sub start {
     # Drop Privs
     my $runas = $CONFIG->{'runas'} || die "No runas user defined"; 
     my $uid = getpwnam( $runas ) || die "Could not find user $runas";
+
+    # Open PID File
+    my $pidf;
+    open $pidf, '>', $pid_file or die 'Could not open PID file';
 
     # Daemonise
     if ( $args->{'daemon'} ) {
@@ -53,18 +57,18 @@ sub start {
       'close'   => \&Mail::Milter::Authentication::Handler::close_callback,
     };
 
-    #Sendmail::PMilter::setdbg( 9 );
-    my $milter = Sendmail::PMilter->new();
-    $milter->setconn( $connection ) || die "Could not open connection $connection\n";
-    $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
-
     # PID
     {
         my $pid = $PID;
-        open my $pidf, '>', $pid_file;
         print $pidf $pid;
         close $pidf;
     }
+
+    #Sendmail::PMilter::setdbg( 9 );
+    my $milter = Sendmail::PMilter->new();
+    $milter->setconn( $connection ) or die "Could not open connection $connection\n";
+    $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
+
 
     # Drop Privs
     $> = $uid;
