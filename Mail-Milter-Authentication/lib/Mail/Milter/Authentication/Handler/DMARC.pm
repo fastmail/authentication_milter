@@ -111,7 +111,7 @@ sub eom_callback {
             if ( ! ( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {
                 my $dmarc_policy;
                 if ( $dmarc_code ne 'pass' ) {
-                    $dmarc_policy = eval { $dmarc_result->evalated->disposition() };
+                    $dmarc_policy = eval { $dmarc_result->disposition() };
                     if ( my $error = $@ ) {
                         log_error( $ctx, 'DMARCPolicyError ' . $error );
                     }
