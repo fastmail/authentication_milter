@@ -24,9 +24,11 @@ sub start {
         open my $pidf, '<', $pid_file;
         my $pid = <$pidf>;
         close $pidf;
-        my $proc = '/proc/' . $pid;
-        if ( -e $proc ) {
-            die "Process already running";
+        if ( $pid ne q{} ) {
+            my $proc = '/proc/' . $pid;
+            if ( -e $proc ) {
+                die "Process already running";
+            }
         }
     }
 
@@ -35,8 +37,12 @@ sub start {
     my $uid = getpwnam( $runas ) || die "Could not find user $runas";
 
     # Open PID File
-    my $pidf;
-    open $pidf, '>', $pid_file or die 'Could not open PID file';
+    {
+        # Check we can before we daemonize
+        my $pidf;
+        open $pidf, '>>', $pid_file or die 'Could not open PID file';
+        close $pidf;
+    }
 
     # Daemonise
     if ( $args->{'daemon'} ) {
@@ -59,6 +65,8 @@ sub start {
 
     # PID
     {
+        my $pidf;
+        open $pidf, '>', $pid_file or die 'Could not open PID file';
         my $pid = $PID;
         print $pidf $pid;
         close $pidf;
