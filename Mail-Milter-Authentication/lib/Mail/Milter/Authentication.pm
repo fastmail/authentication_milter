@@ -24,6 +24,7 @@ sub start {
         open my $pidf, '<', $pid_file;
         my $pid = <$pidf>;
         close $pidf;
+        $pid += 0;
         if ( $pid ne q{} ) {
             my $proc = '/proc/' . $pid;
             if ( -e $proc ) {
