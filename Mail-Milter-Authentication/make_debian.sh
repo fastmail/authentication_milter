@@ -1,3 +1,3 @@
 #!/bin/bash
 
-dh-make-perl --build --vcs none --core-ok
+dh-make-perl --build --recursive --vcs none --core-ok

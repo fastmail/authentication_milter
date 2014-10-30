@@ -1,0 +1,76 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:       authentication_milter
+# Required-Start: $remote_fs
+# Required-Stop:  $remote_fs
+# Should-Start:   $network $syslog
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+### END INIT INFO
+
+#PATH=/usr/local/bin:/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/local/bin/authentication_milter
+NAME=authentication_milter
+SNAME=authentication_milter
+DESC="Authentication Mail Filter Daemon"
+PIDFILE="/run/$NAME.pid"
+XNAME=/usr/bin/perl
+
+export TMPDIR=/tmp
+
+. /lib/lsb/init-functions
+
+test -f /etc/default/authentication_milter && . /etc/default/authentication_milter
+
+DOPTIONS="--daemon --pidfile=$PIDFILE"
+
+if [ "$ENABLED" = "0" ]; then
+    echo "$DESC: disabled, see /etc/default/authentication_milter"
+    exit 0
+fi
+
+test -f $DAEMON || exit 0
+
+set -e
+
+case "$1" in
+  start)
+	echo -n "Starting $DESC: "
+	start-stop-daemon --start --pidfile $PIDFILE --exec $XNAME \
+	    $NICE --oknodo --startas $DAEMON -- $OPTIONS $DOPTIONS
+	echo "$NAME."
+	;;
+
+  stop)
+	echo -n "Stopping $DESC: "
+	start-stop-daemon --stop --pidfile $PIDFILE --exec $XNAME --oknodo
+	echo "$NAME."
+	;;
+
+  reload|force-reload)
+	echo -n "Reloading $DESC: "
+	start-stop-daemon --stop --pidfile $PIDFILE --signal HUP --exec $XNAME
+	echo "$NAME."
+	;;
+
+  restart)
+	echo -n "Restarting $DESC: "
+	start-stop-daemon --stop --pidfile $PIDFILE --exec $XNAME \
+	    --retry 5 --oknodo
+	start-stop-daemon --start --pidfile $PIDFILE --exec $XNAME \
+	    $NICE --oknodo --startas $DAEMON -- $OPTIONS $DOPTIONS
+
+	echo "$NAME."
+	;;
+  status)
+        status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
+        ;;
+  *)
+	N=/etc/init.d/$SNAME
+	echo "Usage: $N {start|stop|restart|reload|force-reload|status}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

@@ -46,6 +46,8 @@ install_script (
     'bin/authentication_milter',
 );
 
+install_share ();
+
 install_as_cpan;
 auto_install;
 WriteAll;

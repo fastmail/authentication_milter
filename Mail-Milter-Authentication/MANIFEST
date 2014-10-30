@@ -13,6 +13,10 @@ lib/Mail/Milter/Authentication/Handler/SPF.pm
 lib/Mail/Milter/Authentication/Handler/TrustedIP.pm
 lib/Mail/Milter/Authentication/Handler/IPRev.pm
 lib/Mail/Milter/Authentication/Util.pm
+share/authentication_milter.json
+share/authentication_milter.init
+share/mail-dmarc.ini
+share/schema.sql
 Makefile.PL
 MANIFEST			This list of files
 README
