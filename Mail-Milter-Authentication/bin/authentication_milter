@@ -111,8 +111,7 @@ file is setup.
 You should create and populate /etc/mail-dmarc.ini
 
 For DMARC reporting you are also required to setup a datastore, including creating a basic table
-structure.  The detauls of this are to be found in the Mail::DMARC documentation, or in the
-share/schema.sql file included with the source code to this milter.
+structure.  The detauls of this are to be found in the Mail::DMARC documentation.
 
 At this time forensic reports are not supported by Mail::DMARC or this milter. Only aggregate reports will
 be generated.
