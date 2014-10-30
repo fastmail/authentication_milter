@@ -89,3 +89,14 @@ sub start {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Mail::Milter::Authentication - A PERL Mail Authentication Milter
+
+=head1 DESCRIPTION
+
+A PERL implemtation of email authentication standards rolled up into a single easy to use milter.
+
