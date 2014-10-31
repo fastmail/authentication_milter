@@ -14,12 +14,6 @@ use Mail::DMARC::PurePerl;
 
 my $CONFIG = get_config();
 
-sub get_auth_name {
-    my ($ctx) = @_;
-    my $name = get_symval( $ctx, '{auth_authen}' );
-    return $name;
-}
-
 sub envfrom_callback {
     my ( $ctx, $env_from ) = @_;
     my $priv = $ctx->getpriv();
@@ -80,6 +74,15 @@ sub header_callback {
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
     if ( $header eq 'From' ) {
+        if ( exists $priv->{'dmarc.from_header'} ) {
+            dbgout( $ctx, 'DMARCFail', 'Multiple RFC5322 from fields', LOG_INFO );
+            # ToDo handle this by eveluating DMARC for each field in turn as
+            # suggested in the DMARC spec part 5.6.1
+            # Currently this does not give reporting feedback to the author domain, this should be changed.
+            add_auth_header( $ctx, 'dmarc=fail (multiple RFC5322 from fields in message)' );
+            $priv->{'dmarc.obj'} = undef;
+            return;
+        }
         $priv->{'dmarc.from_header'} = $value;
         if ( my $dmarc = $priv->{'dmarc.obj'} ) {
             eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
