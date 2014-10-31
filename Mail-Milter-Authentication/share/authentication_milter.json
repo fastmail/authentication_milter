@@ -17,17 +17,14 @@
 
     "check_trusted_ip" : "1",
     "trusted_ip_list" : [
-        "59.167.198.153",
-        "2001:44b8:4162:bb00::/56",
-        "2001:44b8:4030:fef:3631:c4ff:fe4f:add7",
-        "106.187.51.197",
-        "2400:8900::f03c:91ff:fe6e:84c7",
-        "178.79.176.97",
-        "2a01:7e00::f03c:91ff:fe93:1cd"
+        "123.123.123.123",
+        "2001:dead:deef:aa00::/56",
+        "2001:abcd:1234:121:4332:cfee:1231:abcd",
+        "106.117.31.76"
     ],
     "hosts_to_remove" : [
-        "electric-dreams.org",
-        "twofiftyeight.ltd.uk"
+        "example.com",
+        "example.net"
     ],
 
     "remove_headers" : "yes"
