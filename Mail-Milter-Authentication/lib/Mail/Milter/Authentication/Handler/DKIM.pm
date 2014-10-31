@@ -94,8 +94,14 @@ sub eom_callback {
             my $key = $signature->get_public_key();
             dbgout( $ctx, 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
             dbgout( $ctx, 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
-            my $signature_result = $signature->result();
-            
+            my $signature_result        = $signature->result();
+            my $signature_result_detail = $signature->result_detail();
+           
+            my $result_comment = q{};
+            if ( $signature_result ne 'pass' and $signature_result ne 'none' ) {
+              $signature_result_detail =~ /$signature_result \((.*)\)/;
+              $result_comment = $1 . '; ';
+            }
             if ( ! ( $CONFIG->{'check_dkim'} == 2 && $signature_result eq 'none' ) ) {
                 my $otype = ref $signature;
                 my $type = $otype eq 'Mail::DKIM::DkSignature' ? 'domainkeys'
@@ -109,8 +115,9 @@ sub eom_callback {
                         format_header_entry( $type, $signature_result ),
                         '('
                           . format_header_comment(
-                            $key->size() . '-bit ' . $key->type() . ' key'
-                        )
+                              $result_comment
+                              . $key->size() . '-bit ' . $key->type() . ' key'
+                            )
                           . ')',
                         format_header_entry( 'header.d', $signature->domain() ),
                         format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
@@ -123,8 +130,9 @@ sub eom_callback {
                         format_header_entry( $type, $signature_result ),
                         '('
                           . format_header_comment(
-                            $key->size() . '-bit ' . $key->type() . ' key'
-                        )
+                            $result_comment
+                            . $key->size() . '-bit ' . $key->type() . ' key'
+                          )
                           . ')',
                         format_header_entry( 'header.d', $signature->domain() ),
                         format_header_entry( 'header.i', $signature->identity() ),
