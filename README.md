@@ -32,3 +32,14 @@ Trust Model
 - For Local IPs we only check the DKIM signature.
 - For Trusted IPs we only check the DKIM signature, additionally, for Trusted IPs we do not remove any Authentication headers already present.
 
+Installation
+------------
+
+To install this module, run the following commands:
+
+ - perl Makefile.PL
+ - make
+ - make test
+ - make install
+
+
