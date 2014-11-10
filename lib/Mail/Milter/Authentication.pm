@@ -1,6 +1,6 @@
 package Mail::Milter::Authentication;
 
-$VERSION = 0.1;
+$VERSION = 0.2;
 
 use strict;
 use warnings;
