@@ -54,7 +54,7 @@ The milter reads configuration from /etc/authentication_milter.json
 The configuration file format is as follows...
 
 {
-    "connection"       : "inet:12345\@localhost",     | The connection to use 
+    "connection"       : "inet:12345\@localhost",      | The connection to use 
     "runas"            : "nobody",                    | Drop privs and run as this user
 
     "show_default_adsp" : "0",                        | Boolean, include default adsp results?
