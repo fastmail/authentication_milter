@@ -27,6 +27,8 @@
         "example.net"
     ],
 
+    "dmarc_detect_list_id" : "1",
+
     "remove_headers" : "yes"
 
 }

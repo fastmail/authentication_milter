@@ -35,7 +35,8 @@ sub envfrom_callback {
         $dmarc = undef;
         return;
     }
-    $priv->{'dmarc.obj'} = $dmarc;
+    $priv->{'dmarc.is_list'} = 0;
+    $priv->{'dmarc.obj'}     = $dmarc;
     eval {
         $dmarc->envelope_from($domain_from);
     };
@@ -73,6 +74,9 @@ sub header_callback {
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
+    if ( lc $header eq 'list-id' ) {
+        $priv->{'dmarc.is_list'} = 1;
+    }
     if ( $header eq 'From' ) {
         if ( exists $priv->{'dmarc.from_header'} ) {
             dbgout( $ctx, 'DMARCFail', 'Multiple RFC5322 from fields', LOG_INFO );
@@ -121,11 +125,16 @@ sub eom_callback {
                     dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_INFO );
                 }
                 my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
+                my $is_list_entry = q{};
+                if ( $CONFIG->{'dmarc_detect_list_id'} && $priv->{'dmarc.is_list'} ) {
+                    $is_list_entry = ';has-list-id=yes';
+                }
                 if ($dmarc_policy) {
                     $dmarc_header .= ' ('
                       . format_header_comment(
                         format_header_entry( 'p', $dmarc_policy ) )
-                      . ')';
+                      . $is_list_entry
+                    . ')';
                 }
                 $dmarc_header .= ' '
                   . format_header_entry( 'header.from',
