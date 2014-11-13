@@ -1,6 +1,6 @@
 package Mail::Milter::Authentication::Handler::DKIM;
 
-$VERSION = 0.2;
+$VERSION = 0.3;
 
 use strict;
 use warnings;

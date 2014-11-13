@@ -1,6 +1,6 @@
 package Mail::Milter::Authentication::Handler::LocalIP;
 
-$VERSION = 0.2;
+$VERSION = 0.3;
 
 use strict;
 use warnings;
