@@ -149,6 +149,9 @@ sub eom_callback {
                     dbgout( $ctx, 'DMARCReportTo', $rua, LOG_INFO );
                 }
             };
+            if ( my $error = $@ ) {
+                log_error( $ctx, 'DMARC Report Error ' . $error );
+            }
         }
     };
     if ( my $error = $@ ) {
