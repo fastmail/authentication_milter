@@ -38,7 +38,7 @@ sub envfrom_callback {
 
     my $identity;
     my $domain;
-    if ( $priv->{'core.mail_from'} eq q{} ) {
+    if ( ! $priv->{'core.mail_from'} ) {
         $identity = $priv->{'core.helo_name'};
         $domain   = $identity;
         $scope    = 'helo';
@@ -48,7 +48,7 @@ sub envfrom_callback {
         $domain   = get_domain_from($identity);
     }
 
-    if ( !$identity ) {
+    if ( ! $identity ) {
         $identity = $priv->{'core.helo_name'};
         $domain   = $identity;
         $scope    = 'helo';

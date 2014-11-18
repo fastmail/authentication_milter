@@ -24,7 +24,7 @@ sub envfrom_callback {
     delete $priv->{'dmarc.from_header'};
 
     my $domain_from;
-    if ( $env_from eq q{} ) {
+    if ( ! $env_from ) {
         $domain_from = $priv->{'core.helo_name'};
     }
     else {
