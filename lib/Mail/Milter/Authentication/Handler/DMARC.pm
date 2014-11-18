@@ -22,7 +22,15 @@ sub envfrom_callback {
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
     delete $priv->{'dmarc.from_header'};
-    my $domain_from = get_domain_from($env_from);
+
+    my $domain_from;
+    if ( $env_from eq q{} ) {
+        $domain_from = $priv->{'core.helo_name'};
+    }
+    else {
+        $domain_from = get_domain_from($env_from);
+    }
+
     my $dmarc;
     eval {
         $dmarc = Mail::DMARC::PurePerl->new();

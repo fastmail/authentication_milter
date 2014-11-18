@@ -36,8 +36,17 @@ sub envfrom_callback {
 
     my $scope = 'mfrom';
 
-    my $identity = get_address_from( $priv->{'core.mail_from'} );
-    my $domain   = get_domain_from($identity);
+    my $identity;
+    my $domain;
+    if ( $priv->{'core.mail_from'} eq q{} ) {
+        $identity = $priv->{'core.helo_name'};
+        $domain   = $identity;
+        $scope    = 'helo';
+    }
+    else {
+        $identity = get_address_from( $priv->{'core.mail_from'} );
+        $domain   = get_domain_from($identity);
+    }
 
     if ( !$identity ) {
         $identity = $priv->{'core.helo_name'};
