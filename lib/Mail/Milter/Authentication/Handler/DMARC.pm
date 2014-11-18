@@ -141,16 +141,16 @@ sub eom_callback {
                     get_domain_from( $priv->{'dmarc.from_header'} ) );
                 add_auth_header( $ctx, $dmarc_header );
             }
-            eval{
                 # Try as best we can to save a report, but don't stress if it fails.
-                my $rua = $dmarc_result->published()->rua();
-                if ( $rua ) {
-                    $dmarc->save_aggregate();
+            my $rua = eval{ $dmarc_result->published()->rua(); };
+            if ( $rua ) {
+                eval{
                     dbgout( $ctx, 'DMARCReportTo', $rua, LOG_INFO );
+                    $dmarc->save_aggregate();
+                };
+                if ( my $error = $@ ) {
+                    log_error( $ctx, 'DMARC Report Error ' . $error );
                 }
-            };
-            if ( my $error = $@ ) {
-                log_error( $ctx, 'DMARC Report Error ' . $error );
             }
         }
     };
