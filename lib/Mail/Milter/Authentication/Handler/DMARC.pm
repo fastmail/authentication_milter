@@ -41,7 +41,7 @@ sub envfrom_callback {
         $dmarc->envelope_from($domain_from);
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'DMARC Mail From Error ' . $error );
+        log_error( $ctx, 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
         add_auth_header( $ctx, 'dmarc=temperror' );
         $priv->{'dmarc.obj'} = undef;
         return;
@@ -75,6 +75,7 @@ sub header_callback {
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
     if ( lc $header eq 'list-id' ) {
+        dbgout( $ctx, 'DMARCListId', 'List detected: ' . $value , LOG_INFO );
         $priv->{'dmarc.is_list'} = 1;
     }
     if ( $header eq 'From' ) {
