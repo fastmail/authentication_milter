@@ -75,6 +75,12 @@ sub start {
 
     #Sendmail::PMilter::setdbg( 9 );
     my $milter = Sendmail::PMilter->new();
+    $milter->set_dispatcher( 
+        Sendmail::PMilter::prefork_dispatcher(
+            'max_children'           => 20,
+            'max_requests_per_child' => 200,
+        )
+    );
     $milter->setconn( $connection ) or die "Could not open connection $connection\n";
     $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
 
