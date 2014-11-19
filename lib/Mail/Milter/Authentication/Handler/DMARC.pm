@@ -50,6 +50,8 @@ sub envfrom_callback {
     };
     if ( my $error = $@ ) {
         log_error( $ctx, 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
+        log_error( $ctx, 'DMARC Debug Helo: ' . $priv->{'core.helo_name'} );
+        log_error( $ctx, 'DMARC Debug Envfrom: ' . $env_from );
         add_auth_header( $ctx, 'dmarc=temperror' );
         $priv->{'dmarc.obj'} = undef;
         return;
