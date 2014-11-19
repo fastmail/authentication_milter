@@ -54,8 +54,10 @@ The milter reads configuration from /etc/authentication_milter.json
 The configuration file format is as follows...
 
 {
-    "connection"       : "inet:12345\@localhost",      | The connection to use 
-    "runas"            : "nobody",                    | Drop privs and run as this user
+    "connection"             : "inet:12345\@localhost",  | The connection to use 
+    "runas"                  : "nobody",                | Drop privs and run as this user
+    "max_children"           : 20,                      | Max number of children to pre fork
+    "max_requests_per_child" : 200,                     | Max number of requests per child process
 
     "show_default_adsp" : "0",                        | Boolean, include default adsp results?
 

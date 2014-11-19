@@ -73,12 +73,15 @@ sub start {
         close $pidf;
     }
 
+    my $max_children           = $CONFIG->{'max_children'}           || 20;
+    my $max_requests_per_child = $CONFIG->{'max_requests_per_child'} || 200;
+
     #Sendmail::PMilter::setdbg( 9 );
     my $milter = Sendmail::PMilter->new();
     $milter->set_dispatcher( 
         Sendmail::PMilter::prefork_dispatcher(
-            'max_children'           => 20,
-            'max_requests_per_child' => 200,
+            'max_children'           => $max_children,
+            'max_requests_per_child' => $max_requests_per_child,
         )
     );
     $milter->setconn( $connection ) or die "Could not open connection $connection\n";
