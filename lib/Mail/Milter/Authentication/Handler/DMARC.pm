@@ -23,6 +23,8 @@ sub envfrom_callback {
     return if ( $priv->{'is_authenticated'} );
     delete $priv->{'dmarc.from_header'};
 
+    $env_from = q{} if $env_from eq '<>';
+
     my $domain_from;
     if ( ! $env_from ) {
         $domain_from = $priv->{'core.helo_name'};

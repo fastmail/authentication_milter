@@ -36,15 +36,17 @@ sub envfrom_callback {
 
     my $scope = 'mfrom';
 
+    $env_from = q{} if $env_from eq '<>';
+
     my $identity;
     my $domain;
-    if ( ! $priv->{'core.mail_from'} ) {
+    if ( ! $env_from ) {
         $identity = $priv->{'core.helo_name'};
         $domain   = $identity;
         $scope    = 'helo';
     }
     else {
-        $identity = get_address_from( $priv->{'core.mail_from'} );
+        $identity = get_address_from( $env_from );
         $domain   = get_domain_from($identity);
     }
 
@@ -70,7 +72,7 @@ sub envfrom_callback {
 
         my $auth_header = join( q{ },
             format_header_entry( 'spf',           $result_code ),
-            format_header_entry( 'smtp.mailfrom', get_address_from( $priv->{'core.mail_from'} ) ),
+            format_header_entry( 'smtp.mailfrom', get_address_from( $env_from ) ),
             format_header_entry( 'smtp.helo',     $priv->{'core.helo_name'} ),
         );
         if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
