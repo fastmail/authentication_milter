@@ -108,6 +108,13 @@ sub eom_callback {
                          : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
                          :                                       'dkim';
                 dbgout( $ctx, 'DKIMSignatureType', $type, LOG_DEBUG );
+
+                my $key_data = q{};
+                eval {
+                    my $key = $signature->get_public_key();
+                    $key_data = $key->size() . '-bit ' . $key->type() . ' key';
+                };
+
                 if ( $type eq 'domainkeys' ) {
                     ## DEBUGGING
                     my $header = join(
@@ -116,7 +123,7 @@ sub eom_callback {
                         '('
                           . format_header_comment(
                               $result_comment
-                              . $key->size() . '-bit ' . $key->type() . ' key'
+                              . $key_data
                             )
                           . ')',
                         format_header_entry( 'header.d', $signature->domain() ),
@@ -131,7 +138,7 @@ sub eom_callback {
                         '('
                           . format_header_comment(
                             $result_comment
-                            . $key->size() . '-bit ' . $key->type() . ' key'
+                            . $key_data
                           )
                           . ')',
                         format_header_entry( 'header.d', $signature->domain() ),
