@@ -178,7 +178,6 @@ sub close_callback {
     my ($ctx) = @_;
     dbgout( $ctx, 'CALLBACK', 'Close', LOG_DEBUG );
     dbgoutwrite($ctx);
-    $ctx->setpriv(undef);
     return SMFIS_CONTINUE;
 }
 
