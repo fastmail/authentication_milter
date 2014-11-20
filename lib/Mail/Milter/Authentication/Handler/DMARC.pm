@@ -22,6 +22,7 @@ sub envfrom_callback {
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
     delete $priv->{'dmarc.from_header'};
+    $priv->{'dmarc.failmode'} = 0;
 
     $env_from = q{} if $env_from eq '<>';
 
@@ -42,7 +43,7 @@ sub envfrom_callback {
     if ( my $error = $@ ) {
         log_error( $ctx, 'DMARC IP Error ' . $error );
         add_auth_header( $ctx, 'dmarc=temperror' );
-        $dmarc = undef;
+        $priv->{'dmarc.failmode'} = 1;
         return;
     }
     $priv->{'dmarc.is_list'} = 0;
@@ -55,7 +56,7 @@ sub envfrom_callback {
         log_error( $ctx, 'DMARC Debug Helo: ' . $priv->{'core.helo_name'} );
         log_error( $ctx, 'DMARC Debug Envfrom: ' . $env_from );
         add_auth_header( $ctx, 'dmarc=temperror' );
-        $priv->{'dmarc.obj'} = undef;
+        $priv->{'dmarc.failmode'} = 1;
         return;
     }
 }
@@ -67,15 +68,15 @@ sub envrcpt_callback {
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
-    if ( my $dmarc = $priv->{'dmarc.obj'} ) {
-        my $envelope_to = get_domain_from($env_to);
-        eval { $dmarc->envelope_to($envelope_to) };
-        if ( my $error = $@ ) {
-            log_error( $ctx, 'DMARC Rcpt To Error ' . $error );
-            add_auth_header( $ctx, 'dmarc=temperror' );
-            $priv->{'dmarc.obj'} = undef;
-            return;
-        }
+    return if ( $priv->{'dmarc.failmode'} );
+    my $dmarc = $priv->{'dmarc.obj'};
+    my $envelope_to = get_domain_from($env_to);
+    eval { $dmarc->envelope_to($envelope_to) };
+    if ( my $error = $@ ) {
+        log_error( $ctx, 'DMARC Rcpt To Error ' . $error );
+        add_auth_header( $ctx, 'dmarc=temperror' );
+        $priv->{'dmarc.failmode'} = 1;
+        return;
     }
 }
 
@@ -86,6 +87,7 @@ sub header_callback {
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
+    return if ( $priv->{'dmarc.failmode'} );
     if ( lc $header eq 'list-id' ) {
         dbgout( $ctx, 'DMARCListId', 'List detected: ' . $value , LOG_INFO );
         $priv->{'dmarc.is_list'} = 1;
@@ -97,18 +99,17 @@ sub header_callback {
             # suggested in the DMARC spec part 5.6.1
             # Currently this does not give reporting feedback to the author domain, this should be changed.
             add_auth_header( $ctx, 'dmarc=fail (multiple RFC5322 from fields in message)' );
-            $priv->{'dmarc.obj'} = undef;
+            $priv->{'dmarc.failmode'} = 1;
             return;
         }
         $priv->{'dmarc.from_header'} = $value;
-        if ( my $dmarc = $priv->{'dmarc.obj'} ) {
-            eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
-            if ( my $error = $@ ) {
-                log_error( $ctx, 'DMARC Header From Error ' . $error );
-                add_auth_header( $ctx, 'dmarc=temperror' );
-                $priv->{'dmarc.obj'} = undef;
-                return;
-            }
+        my $dmarc = $priv->{'dmarc.obj'};
+        eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
+        if ( my $error = $@ ) {
+            log_error( $ctx, 'DMARC Header From Error ' . $error );
+            add_auth_header( $ctx, 'dmarc=temperror' );
+            $priv->{'dmarc.failmode'} = 1;
+            return;
         }
     }
 }
@@ -120,50 +121,56 @@ sub eom_callback {
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
     return if ( $priv->{'is_authenticated'} );
+    return if ( $priv->{'dmarc.failmode'} );
     eval {
-        if ( my $dmarc = $priv->{'dmarc.obj'} ) {
-            my $dkim  = $priv->{'dkim.obj'};
-            $dmarc->dkim($dkim);
-            my $dmarc_result = $dmarc->validate();
-            #$ctx->progress();
-            my $dmarc_code   = $dmarc_result->result;
-            dbgout( $ctx, 'DMARCCode', $dmarc_code, LOG_INFO );
-            if ( ! ( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {
-                my $dmarc_policy;
-                if ( $dmarc_code ne 'pass' ) {
-                    $dmarc_policy = eval { $dmarc_result->disposition() };
-                    if ( my $error = $@ ) {
-                        log_error( $ctx, 'DMARCPolicyError ' . $error );
-                    }
-                    dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_INFO );
-                }
-                my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
-                my $is_list_entry = q{};
-                if ( $CONFIG->{'dmarc_detect_list_id'} && $priv->{'dmarc.is_list'} ) {
-                    $is_list_entry = ';has-list-id=yes';
-                }
-                if ($dmarc_policy) {
-                    $dmarc_header .= ' ('
-                      . format_header_comment(
-                        format_header_entry( 'p', $dmarc_policy ) )
-                      . $is_list_entry
-                    . ')';
-                }
-                $dmarc_header .= ' '
-                  . format_header_entry( 'header.from',
-                    get_domain_from( $priv->{'dmarc.from_header'} ) );
-                add_auth_header( $ctx, $dmarc_header );
-            }
-                # Try as best we can to save a report, but don't stress if it fails.
-            my $rua = eval{ $dmarc_result->published()->rua(); };
-            if ( $rua ) {
-                eval{
-                    dbgout( $ctx, 'DMARCReportTo', $rua, LOG_INFO );
-                    $dmarc->save_aggregate();
-                };
+        my $dmarc = $priv->{'dmarc.obj'};
+        if ( $priv->{'dkim.failmode'} ) {
+            log_error( $ctx, 'DKIM is in failmode, Skipping DMARC' );
+            add_auth_header( $ctx, 'dmarc=temperror' );
+            $priv->{'dmarc.failmode'} = 1;
+            return;
+        }
+        my $dkim  = $priv->{'dkim.obj'};
+        $dmarc->dkim($dkim);
+        my $dmarc_result = $dmarc->validate();
+        #$ctx->progress();
+        my $dmarc_code   = $dmarc_result->result;
+        dbgout( $ctx, 'DMARCCode', $dmarc_code, LOG_INFO );
+        if ( ! ( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {
+            my $dmarc_policy;
+            if ( $dmarc_code ne 'pass' ) {
+                $dmarc_policy = eval { $dmarc_result->disposition() };
                 if ( my $error = $@ ) {
-                    log_error( $ctx, 'DMARC Report Error ' . $error );
+                    log_error( $ctx, 'DMARCPolicyError ' . $error );
                 }
+                dbgout( $ctx, 'DMARCPolicy', $dmarc_policy, LOG_INFO );
+            }
+            my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
+            my $is_list_entry = q{};
+            if ( $CONFIG->{'dmarc_detect_list_id'} && $priv->{'dmarc.is_list'} ) {
+                $is_list_entry = ';has-list-id=yes';
+            }
+            if ($dmarc_policy) {
+                $dmarc_header .= ' ('
+                  . format_header_comment(
+                    format_header_entry( 'p', $dmarc_policy ) )
+                  . $is_list_entry
+                . ')';
+            }
+            $dmarc_header .= ' '
+              . format_header_entry( 'header.from',
+                get_domain_from( $priv->{'dmarc.from_header'} ) );
+            add_auth_header( $ctx, $dmarc_header );
+        }
+            # Try as best we can to save a report, but don't stress if it fails.
+        my $rua = eval{ $dmarc_result->published()->rua(); };
+        if ( $rua ) {
+            eval{
+                dbgout( $ctx, 'DMARCReportTo', $rua, LOG_INFO );
+                $dmarc->save_aggregate();
+            };
+            if ( my $error = $@ ) {
+                log_error( $ctx, 'DMARC Report Error ' . $error );
             }
         }
     };

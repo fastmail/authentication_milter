@@ -18,6 +18,7 @@ sub envfrom_callback {
     my ( $ctx, $env_from ) = @_;
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
+    $priv->{'dkim.failmode'} = 0;
     my $dkim;
     eval {
         $dkim = Mail::DKIM::Verifier->new();
@@ -25,7 +26,7 @@ sub envfrom_callback {
     if ( my $error = $@ ) {
         log_error( $ctx, 'DMKIM Setup Error ' . $error );
         add_auth_header( $ctx, 'dkim=temperror' );
-        $dkim = undef;
+        $priv->{'dkim.failmode'} = 1;
     }
     $priv->{'dkim.obj'} = $dkim;
 }
@@ -34,6 +35,7 @@ sub header_callback {
     my ( $ctx, $header, $value ) = @_;
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
+    return if ( $priv->{'dkim.failmode'} );
     my $dkim = $priv->{'dkim.obj'};
     my $EOL    = "\015\012";
     my $dkim_chunk = $header . ': ' . $value . $EOL;
@@ -53,6 +55,7 @@ sub eoh_callback {
     my ($ctx) = @_;
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
+    return if ( $priv->{'dkim.failmode'} );
     my $dkim = $priv->{'dkim.obj'};
     $dkim->PRINT( "\015\012" );
 }
@@ -61,6 +64,7 @@ sub body_callback {
     my ( $ctx, $body_chunk, $len ) = @_;
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
+    return if ( $priv->{'dkim.failmode'} );
     my $dkim       = $priv->{'dkim.obj'};
     my $dkim_chunk = $body_chunk;
     my $EOL    = "\015\012";
@@ -72,6 +76,7 @@ sub eom_callback {
     my ($ctx) = @_;
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
+    return if ( $priv->{'dkim.failmode'} );
     my $dkim  = $priv->{'dkim.obj'};
     eval {
         $dkim->CLOSE();
@@ -199,7 +204,7 @@ sub eom_callback {
         add_auth_header( $ctx, 'dkim=temperror' );
         if ( $CONFIG->{'check_dmarc'} ) {
             add_auth_header( $ctx, 'dmarc=temperror' );
-            $priv->{'dmarc.obj'} = undef;
+            $priv->{'dkim.failmode'} = 1;
         }
     }
 }
