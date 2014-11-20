@@ -91,7 +91,6 @@ sub eom_callback {
         }
         foreach my $signature ( $dkim->signatures ) {
 
-            my $key = $signature->get_public_key();
             dbgout( $ctx, 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
             dbgout( $ctx, 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
             my $signature_result        = $signature->result();
