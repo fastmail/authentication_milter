@@ -1,9 +1,9 @@
 package Mail::Milter::Authentication::Config;
 
-$VERSION = 0.3;
-
 use strict;
 use warnings;
+
+our $VERSION = 0.3;
 
 use Exporter qw{ import };
 our @EXPORT_OK = qw{

@@ -1,9 +1,9 @@
 package Mail::Milter::Authentication;
 
-$VERSION = 0.3;
-
 use strict;
 use warnings;
+
+our $VERSION = 0.3;
 
 use English;
 use Mail::Milter::Authentication::Config qw{ get_config };

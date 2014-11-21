@@ -1,9 +1,9 @@
 package Mail::Milter::Authentication::Handler::IPRev;
 
-$VERSION = 0.3;
-
 use strict;
 use warnings;
+
+our $VERSION = 0.3;
 
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;

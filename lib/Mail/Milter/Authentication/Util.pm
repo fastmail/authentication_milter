@@ -1,9 +1,9 @@
 package Mail::Milter::Authentication::Util;
 
-$VERSION = 0.3;
-
 use strict;
 use warnings;
+
+our $VERSION = 0.3;
 
 use Sys::Syslog qw{:standard :macros};
 use Email::Address;
