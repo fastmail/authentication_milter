@@ -11,10 +11,9 @@ use Mail::Milter::Authentication::Handler;
 use Proc::Daemon;
 use Sendmail::PMilter qw { :all };
 
-my $CONFIG = get_config();
-
 sub start {
     my ( $args ) = @_;
+    my $CONFIG = get_config();
     my $connection = $args->{ 'connection' } || die ('No connection details given');
     my $pid_file   = $args->{ 'pid_file' };
 
