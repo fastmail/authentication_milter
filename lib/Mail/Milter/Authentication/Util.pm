@@ -44,7 +44,7 @@ sub get_symval {
         $val = $symbols->{$code}->{$key};
         return $val if defined( $val );
     }
-    return undef;
+    return;
 }
 
 sub get_domain_from {
