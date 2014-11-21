@@ -12,12 +12,11 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
-my $CONFIG = get_config();
-
 sub envfrom_callback {
     # On MAILFROM
     #...
     my ( $ctx, $env_from ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_spf'} );
     return if ( $priv->{'is_local_ip_address'} );

@@ -10,8 +10,6 @@ use Mail::Milter::Authentication::Util;
 
 use Sys::Syslog qw{:standard :macros};
 
-my $CONFIG = get_config();
-
 sub get_auth_name {
     my ($ctx) = @_;
     my $name = get_symval( $ctx, '{auth_authen}' );
@@ -26,6 +24,7 @@ sub connect_callback {
 
 sub envfrom_callback {
     my ( $ctx, $env_from ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_auth'} );
     my $auth_name = get_auth_name( $ctx );

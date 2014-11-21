@@ -11,10 +11,9 @@ use Net::DNS;
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
-my $CONFIG = get_config();
-
 sub connect_callback {
     my ( $ctx, $hostname, $sockaddr_in ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_iprev'} );
     return if ( $priv->{'is_local_ip_address'} );

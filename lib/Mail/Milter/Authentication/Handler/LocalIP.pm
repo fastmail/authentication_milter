@@ -11,8 +11,6 @@ use Mail::Milter::Authentication::Util;
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
-my $CONFIG = get_config();
-
 sub is_local_ip_address {
     my ( $ctx, $ip_address ) = @_;
     my $ip = Net::IP->new( $ip_address );
@@ -45,6 +43,7 @@ sub is_local_ip_address {
 
 sub connect_callback {
     my ( $ctx, $hostname, $sockaddr_in ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     $priv->{ 'is_local_ip_address' } = 0;
     return if ( !$CONFIG->{'check_local_ip'} );

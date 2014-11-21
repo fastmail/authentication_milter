@@ -12,10 +12,9 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::DMARC::PurePerl;
 
-my $CONFIG = get_config();
-
 sub envfrom_callback {
     my ( $ctx, $env_from ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );
@@ -63,6 +62,7 @@ sub envfrom_callback {
 
 sub envrcpt_callback {
     my ( $ctx, $env_to ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );
@@ -82,6 +82,7 @@ sub envrcpt_callback {
 
 sub header_callback {
     my ( $ctx, $header, $value ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );
@@ -116,6 +117,7 @@ sub header_callback {
 
 sub eom_callback {
     my ( $ctx ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );

@@ -12,10 +12,9 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
-my $CONFIG = get_config();
-
 sub envfrom_callback {
     my ( $ctx, $env_from ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_senderid'} );
     return if ( $priv->{'is_local_ip_address'} );
@@ -26,6 +25,7 @@ sub envfrom_callback {
 
 sub header_callback {
     my ( $ctx, $header, $value ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_senderid'} );
     return if ( $priv->{'is_local_ip_address'} );
@@ -38,6 +38,7 @@ sub header_callback {
 
 sub eoh_callback {
     my ($ctx) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_senderid'} );
     return if ( $priv->{'is_local_ip_address'} );

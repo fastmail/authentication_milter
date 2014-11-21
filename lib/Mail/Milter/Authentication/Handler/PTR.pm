@@ -10,11 +10,10 @@ use Mail::Milter::Authentication::Util;
 
 use Sys::Syslog qw{:standard :macros};
 
-my $CONFIG = get_config();
-
 sub helo_callback {
     # On HELO
     my ( $ctx, $helo_host ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_ptr'} );
     return if ( $priv->{'is_local_ip_address'} );

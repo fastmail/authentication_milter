@@ -11,8 +11,6 @@ use Mail::Milter::Authentication::Util;
 use Socket;
 use Sys::Syslog qw{:standard :macros};
 
-my $CONFIG = get_config();
-
 sub connect_callback {
     my ( $ctx, $hostname, $sockaddr_in ) = @_;
     my $priv = $ctx->getpriv();

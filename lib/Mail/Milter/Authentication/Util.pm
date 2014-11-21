@@ -30,7 +30,6 @@ our @EXPORT = qw{
 };
 
 use Mail::Milter::Authentication::Config qw{ get_config };
-my $CONFIG = get_config();
 
 sub get_symval {
     my ( $ctx, $key ) = @_;
@@ -252,6 +251,7 @@ sub get_my_hostname {
 
 sub is_hostname_mine {
     my ( $ctx, $check_hostname ) = @_;
+    my $CONFIG = get_config();
 
     my $hostname = get_my_hostname($ctx);
     my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;

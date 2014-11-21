@@ -12,10 +12,9 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::DKIM::Verifier;
 
-my $CONFIG = get_config();
-
 sub envfrom_callback {
     my ( $ctx, $env_from ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     $priv->{'dkim.failmode'} = 0;
@@ -33,6 +32,7 @@ sub envfrom_callback {
 
 sub header_callback {
     my ( $ctx, $header, $value ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );
@@ -53,6 +53,7 @@ sub header_callback {
 
 sub eoh_callback {
     my ($ctx) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );
@@ -62,6 +63,7 @@ sub eoh_callback {
 
 sub body_callback {
     my ( $ctx, $body_chunk, $len ) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );
@@ -74,6 +76,7 @@ sub body_callback {
 
 sub eom_callback {
     my ($ctx) = @_;
+    my $CONFIG = get_config();
     my $priv = $ctx->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );

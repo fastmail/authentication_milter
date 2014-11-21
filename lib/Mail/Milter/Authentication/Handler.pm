@@ -24,8 +24,6 @@ use Mail::Milter::Authentication::Handler::TrustedIP;
 use Sys::Syslog qw{:standard :macros};
 use Sendmail::PMilter qw { :all };
 
-my $CONFIG = get_config();
-
 sub connect_callback {
     # On Connect
     my ( $ctx, $hostname, $sockaddr_in ) = @_;
