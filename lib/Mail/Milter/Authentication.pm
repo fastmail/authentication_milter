@@ -75,13 +75,33 @@ sub start {
     my $max_children           = $CONFIG->{'max_children'}           || 20;
     my $max_requests_per_child = $CONFIG->{'max_requests_per_child'} || 200;
 
-    #Sendmail::PMilter::setdbg( 9 );
-    my $milter = Sendmail::PMilter->new();
-    $milter->set_dispatcher( 
-        Sendmail::PMilter::prefork_dispatcher(
+    my $dispatcher = $CONFIG->{'dispatcher'} || 'postfork';
+
+    my $dispatcher_method;
+
+    if ( $dispatcher eq 'prefork' ) {
+        $dispatcher_method = Sendmail::PMilter::prefork_dispatcher(
             'max_children'           => $max_children,
             'max_requests_per_child' => $max_requests_per_child,
-        )
+        );
+    }
+    elsif ( $dispatcher eq 'postfork' ) { 
+        $dispatcher_method = Sendmail::PMilter::postfork_dispatcher();
+    }
+    elsif ( $dispatcher eq 'ithread' ) { 
+        $dispatcher_method = Sendmail::PMilter::ithread_dispatcher();
+    }
+    elsif ( $dispatcher eq 'sequential' ) { 
+        $dispatcher_method = Sendmail::PMilter::sequential_dispatcher();
+    }
+    else {
+       die 'Unknown dispatcher method';
+    } 
+
+    #Sendmail::PMilter::setdbg( 9 );
+    my $milter = Sendmail::PMilter->new();
+    $milter->set_dispatcher(
+        $dispatcher_method
     );
     $milter->setconn( $connection ) or die "Could not open connection $connection\n";
     $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
