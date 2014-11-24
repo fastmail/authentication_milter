@@ -25,6 +25,7 @@ our @EXPORT = qw{
     append_header
     dbgout
     dbgoutwrite
+    loginfo
     get_my_hostname
     is_hostname_mine
 };
@@ -216,6 +217,16 @@ sub dbgout {
         'key'        => $key || q{},
         'value'      => $value || q{},
       };
+}
+
+sub loginfo {
+    my ( $line ) = @_;
+    openlog('authentication_milter', 'pid', LOG_MAIL);
+    setlogmask(   LOG_MASK(LOG_ERR)
+                | LOG_MASK(LOG_INFO)
+    );
+    syslog( LOG_INFO, $line);
+    closelog();
 }
 
 sub dbgoutwrite {

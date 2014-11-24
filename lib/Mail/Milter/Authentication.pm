@@ -7,7 +7,9 @@ our $VERSION = 0.3;
 
 use English;
 use Mail::Milter::Authentication::Config qw{ get_config };
+use Mail::Milter::Authentication::Dispatcher;
 use Mail::Milter::Authentication::Handler;
+use Mail::Milter::Authentication::Util qw{ loginfo };
 use Proc::Daemon;
 use Sendmail::PMilter qw { :all };
 
@@ -46,6 +48,7 @@ sub start {
 
     # Daemonise
     if ( $args->{'daemon'} ) {
+        loginfo( 'daemonizing' );
         my $daemon = Proc::Daemon->new();
         $daemon->Init();
     }
@@ -73,49 +76,28 @@ sub start {
     }
 
     my $listen_backlog         = $CONFIG->{'listen_backlog'}         || 20;
-    my $max_children           = $CONFIG->{'max_children'}           || 20;
-    my $max_requests_per_child = $CONFIG->{'max_requests_per_child'} || 200;
-
-    my $dispatcher = $CONFIG->{'dispatcher'} || 'postfork';
-
-    my $dispatcher_method;
-
-    if ( $dispatcher eq 'prefork' ) {
-        $dispatcher_method = Sendmail::PMilter::prefork_dispatcher(
-            'max_children'           => $max_children,
-            'max_requests_per_child' => $max_requests_per_child,
-        );
-    }
-    elsif ( $dispatcher eq 'postfork' ) { 
-        $dispatcher_method = Sendmail::PMilter::postfork_dispatcher();
-    }
-    elsif ( $dispatcher eq 'ithread' ) { 
-        $dispatcher_method = Sendmail::PMilter::ithread_dispatcher();
-    }
-    elsif ( $dispatcher eq 'sequential' ) { 
-        $dispatcher_method = Sendmail::PMilter::sequential_dispatcher();
-    }
-    else {
-       die 'Unknown dispatcher method';
-    } 
 
     #Sendmail::PMilter::setdbg( 9 );
     my $milter = Sendmail::PMilter->new();
     $milter->set_dispatcher(
-        $dispatcher_method
+        Mail::Milter::Authentication::Dispatcher::get_dispatcher()
     );
+    loginfo( 'setting connection backlog to ' . $listen_backlog );
     $milter->set_listen( $listen_backlog );
     $milter->setconn( $connection ) or die "Could not open connection $connection\n";
     $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
 
+    loginfo( 'listening on ' . $connection );
 
     # Drop Privs
     $> = $uid;
+    loginfo( 'privs dropped - starting up' );
 
     $milter->main();
 
     # Never reaches here, callbacks are called from Milter.
-    die 'Something went wrong';
+    loginfo( 'something went horribly wrong' );
+    die 'Something went horribly wrong';
 }
 
 1;
