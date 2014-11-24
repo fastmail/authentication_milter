@@ -205,10 +205,7 @@ sub eom_callback {
     if ( my $error = $@ ) {
         log_error( $ctx, 'DKIM Error - ' . $error );
         add_auth_header( $ctx, 'dkim=temperror' );
-        if ( $CONFIG->{'check_dmarc'} ) {
-            add_auth_header( $ctx, 'dmarc=temperror' );
-            $priv->{'dkim.failmode'} = 1;
-        }
+        $priv->{'dkim.failmode'} = 1;
     }
 }
 
