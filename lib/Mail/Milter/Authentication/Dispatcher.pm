@@ -28,9 +28,8 @@ sub get_dispatcher {
         $dispatcher_method = Sendmail::PMilter::postfork_dispatcher();
     }
     elsif ( $dispatcher eq 'ithread' ) { 
-        #$dispatcher_method = Sendmail::PMilter::ithread_dispatcher();
         loginfo( 'Using ithread dispatcher' );
-        $dispatcher_method = ithread_dispatcher();
+        $dispatcher_method = Sendmail::PMilter::ithread_dispatcher();
     }
     elsif ( $dispatcher eq 'sequential' ) { 
         loginfo( 'Using sequential dispatcher' );
@@ -42,74 +41,6 @@ sub get_dispatcher {
     } 
 
     return $dispatcher_method;
-}
-
-sub ithread_dispatcher {
-	require threads;
-	require threads::shared;
-
-	my $nchildren = 0;
-
-	threads::shared::share(\$nchildren);
-
-	sub {
-		my $this = shift;
-		my $lsocket = shift;
-		my $handler = shift;
-		my $maxchildren = $this->get_max_interpreters();
-
-		my $siginfo = exists($SIG{INFO}) ? 'INFO' : 'USR1';
-		local $SIG{$siginfo} = sub {
-			warn "Number of active children: $nchildren\n";
-		};
-
-		my $child_sub = sub {
-			my $socket = shift;
-
-			eval {
-				&$handler($socket);
-				$socket->close();
-			};
-			my $died = $@;
-
-			lock($nchildren);
-			$nchildren--;
-			warn $died if $died;
-		};
-
-		while (1) {
-			my $socket = $lsocket->accept();
-			next if $!{EINTR};
-
-			warn "$$: incoming connection\n" if ($Sendmail::PMilter::DEBUG > 0);
-
-			# If the load's too high, fail and go back to top of loop.
-			if ($maxchildren) {
-				my $cnchildren = $nchildren; # make constant
-
-				if ($cnchildren >= $maxchildren) {
-					warn "load too high: children $cnchildren >= max $maxchildren";
-
-					$socket->autoflush(1);
-					$socket->print(pack('N/a*', 't')); # SMFIR_TEMPFAIL
-					$socket->close();
-					next;
-				}
-			}
-
-			# scoping block for lock()
-			{
-				lock($nchildren);
-
-				die "thread creation failed: $!\n"
-					unless (threads->create($child_sub, $socket));
-
-				threads->yield();
-				$nchildren++;
-			}
-		}
-	};
-
 }
 
 1;
