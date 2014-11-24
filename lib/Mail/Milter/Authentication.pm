@@ -72,6 +72,7 @@ sub start {
         close $pidf;
     }
 
+    my $listen_backlog         = $CONFIG->{'listen_backlog'}         || 20;
     my $max_children           = $CONFIG->{'max_children'}           || 20;
     my $max_requests_per_child = $CONFIG->{'max_requests_per_child'} || 200;
 
@@ -103,6 +104,7 @@ sub start {
     $milter->set_dispatcher(
         $dispatcher_method
     );
+    $milter->set_listen( $listen_backlog );
     $milter->setconn( $connection ) or die "Could not open connection $connection\n";
     $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
 

@@ -58,9 +58,10 @@ The configuration file format is as follows...
     "runas"                  : "nobody",                | Drop privs and run as this user
     "dispatcher"             : "postfork"               | Dispatcher model to use
                                                         | prefork
-                                                        | postfork
+                                                        | postfork (default)
                                                         | ithread
                                                         | sequential
+    "listen_backlog"         : 20,                      | socket listen backlog limit (default 20)
     "max_children"           : 20,                      | Max number of children to pre fork (prefork)
     "max_requests_per_child" : 200,                     | Max number of requests per child process (prefork)
 
