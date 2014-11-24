@@ -91,6 +91,10 @@ sub start {
 
     # Drop Privs
     $> = $uid;
+    if ( $> != $uid ) {
+        loginfo( 'could not drop privs - bailing' );
+        exit 1;
+    }
     loginfo( 'privs dropped - starting up' );
 
     $milter->main();
