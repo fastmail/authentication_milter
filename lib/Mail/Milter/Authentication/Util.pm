@@ -221,6 +221,7 @@ sub dbgout {
 
 sub loginfo {
     my ( $line ) = @_;
+    warn "$line\n";
     openlog('authentication_milter', 'pid', LOG_MAIL);
     setlogmask(   LOG_MASK(LOG_ERR)
                 | LOG_MASK(LOG_INFO)
