@@ -51,10 +51,18 @@ sub envfrom_callback {
         $dmarc->envelope_from($domain_from);
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
-        log_error( $ctx, 'DMARC Debug Helo: ' . $priv->{'core.helo_name'} );
-        log_error( $ctx, 'DMARC Debug Envfrom: ' . $env_from );
-        add_auth_header( $ctx, 'dmarc=temperror' );
+        if ( $error =~ / invalid envelope_from at / ) {
+            log_error( $ctx, 'DMARC Invalid envelope from <' . $domain_from . '>' );
+            log_error( $ctx, 'DMARC Debug Helo: ' . $priv->{'core.helo_name'} );
+            log_error( $ctx, 'DMARC Debug Envfrom: ' . $env_from );
+            add_auth_header( $ctx, 'dmarc=permerror' );
+        }
+        else {
+            log_error( $ctx, 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
+            log_error( $ctx, 'DMARC Debug Helo: ' . $priv->{'core.helo_name'} );
+            log_error( $ctx, 'DMARC Debug Envfrom: ' . $env_from );
+            add_auth_header( $ctx, 'dmarc=temperror' );
+        }
         $priv->{'dmarc.failmode'} = 1;
         return;
     }
