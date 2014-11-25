@@ -36,7 +36,7 @@ requires (
     'Mail::SPF',
     'Net::DNS',
     'Net::IP',
-    'Proc::Daemon',
+    'Net::Server::Daemonize',
     'Sendmail::PMilter',
     'Socket',
     'Sys::Syslog', 

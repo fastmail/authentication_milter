@@ -10,7 +10,7 @@ use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Dispatcher;
 use Mail::Milter::Authentication::Handler;
 use Mail::Milter::Authentication::Util qw{ loginfo };
-use Proc::Daemon;
+use Net::Server::Daemonize qw{ daemonize check_pid_file };
 use Sendmail::PMilter qw { :all };
 
 sub start {
@@ -19,39 +19,7 @@ sub start {
     my $connection = $args->{ 'connection' } || die ('No connection details given');
     my $pid_file   = $args->{ 'pid_file' };
 
-    # CONCURRENCY CHECKING
-    # Cannot use a simple lock due to the way PMilter works.
-    if ( -e $pid_file ) {
-        open my $pidf, '<', $pid_file;
-        my $pid = <$pidf>;
-        close $pidf;
-        $pid += 0;
-        if ( $pid ne q{} ) {
-            my $proc = '/proc/' . $pid;
-            if ( -e $proc ) {
-                die "Process already running";
-            }
-        }
-    }
-
-    # Drop Privs
-    my $runas = $CONFIG->{'runas'} || die "No runas user defined"; 
-    my $uid = getpwnam( $runas ) || die "Could not find user $runas";
-
-    # Open PID File
-    {
-        # Check we can before we daemonize
-        my $pidf;
-        open $pidf, '>>', $pid_file or die 'Could not open PID file';
-        close $pidf;
-    }
-
-    # Daemonise
-    if ( $args->{'daemon'} ) {
-        loginfo( 'daemonizing' );
-        my $daemon = Proc::Daemon->new();
-        $daemon->Init();
-    }
+    check_pid_file( $pid_file );
 
     my $callbacks = {
       'connect' => \&Mail::Milter::Authentication::Handler::connect_callback,
@@ -65,15 +33,6 @@ sub start {
       'abort'   => \&Mail::Milter::Authentication::Handler::abort_callback,
       'close'   => \&Mail::Milter::Authentication::Handler::close_callback,
     };
-
-    # PID
-    {
-        my $pidf;
-        open $pidf, '>', $pid_file or die 'Could not open PID file';
-        my $pid = $PID;
-        print $pidf $pid;
-        close $pidf;
-    }
 
     my $listen_backlog         = $CONFIG->{'listen_backlog'}         || 20;
 
@@ -89,13 +48,33 @@ sub start {
 
     loginfo( 'listening on ' . $connection );
 
-    # Drop Privs
-    $> = $uid;
-    if ( $> != $uid ) {
-        loginfo( 'could not drop privs - bailing' );
-        exit 1;
+    # Daemonise
+    if ( $args->{'daemon'} ) {
+        my $runas    = $CONFIG->{'runas'}    || 'nobody';
+        my $rungroup = $CONFIG->{'rungroup'} || 'nogroup';
+        loginfo( 'daemonizing' );
+        daemonize(
+            $runas,
+            $rungroup,
+            $pid_file,
+        );
     }
-    loginfo( 'privs dropped - starting up' );
+    else {
+        # Drop Privs
+        my $runas = $CONFIG->{'runas'};
+        if ( $runas ) {
+            my $uid = getpwnam( $runas ) || die "Could not find user $runas";
+            $> = $uid;
+            if ( $> != $uid ) {
+                loginfo( 'could not drop privs - bailing' );
+                exit 1;
+            }
+            loginfo( 'privs dropped - starting up' );
+        }
+        else {
+            loginfo( 'running as logged in user - please be careful' );
+        }
+    }
 
     $milter->main();
 
