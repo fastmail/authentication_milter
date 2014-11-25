@@ -48,6 +48,19 @@ sub start {
 
     loginfo( 'listening on ' . $connection );
 
+    {
+        $connection =~ /^([^:]+):([^:@]+)(?:@([^:@]+|\[[0-9a-f:\.]+\]))?$/;
+        my $type = $1;
+        my $path = $2;
+        if ( $type eq 'unix' ) {
+            my $socketperms = $CONFIG->{'socketperms'};
+            if ( $socketperms ) {
+                chmod oct($socketperms), $path;
+                loginfo( 'setting socket permissions to ' . $socketperms );
+            }
+        }
+    }
+
     # Daemonise
     if ( $args->{'daemon'} ) {
         my $runas    = $CONFIG->{'runas'}    || 'nobody';

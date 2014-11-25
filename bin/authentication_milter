@@ -55,6 +55,7 @@ The configuration file format is as follows...
 
 {
     "connection"             : "inet:12345\@localhost",  | The connection to use 
+    "socketperms"            : "0777",                  | Permissions for socket
     "runas"                  : "nobody",                | Drop privs and run as this user
     "rungroup"               : "nogroup",               | Drop privs and run as this group (daemon only)
     "dispatcher"             : "postfork"               | Dispatcher model to use
