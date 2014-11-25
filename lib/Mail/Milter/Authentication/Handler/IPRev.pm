@@ -7,7 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Util;
 use Net::DNS;
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
@@ -117,10 +116,10 @@ sub connect_callback {
 
     $self->dbgout( 'IPRevCheck', $result, LOG_DEBUG );
     my $header =
-        format_header_entry( 'iprev', $result ) . ' '
-      . format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
-      . format_header_comment($domain) . ')';
-    add_c_auth_header( $self->{'ctx'}, $header );
+        $self->format_header_entry( 'iprev', $result ) . ' '
+      . $self->format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
+      . $self->format_header_comment($domain) . ')';
+    $self->add_c_auth_header( $header );
 
 }
 

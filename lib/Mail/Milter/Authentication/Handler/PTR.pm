@@ -7,8 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Util;
-
 use Sys::Syslog qw{:standard :macros};
 
 sub helo_callback {
@@ -27,17 +25,17 @@ sub helo_callback {
 
     if ( lc $domain eq lc $helo_name ) {
         $self->dbgout( 'PTRMatch', 'pass', LOG_DEBUG );
-        add_c_auth_header( $self->{'ctx'},
-                format_header_entry( 'x-ptr', 'pass' ) . q{ }
-              . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
-              . format_header_entry( 'x-ptr-lookup', $domain ) );
+        $self->add_c_auth_header(
+                $self->format_header_entry( 'x-ptr', 'pass' ) . q{ }
+              . $self->format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
+              . $self->format_header_entry( 'x-ptr-lookup', $domain ) );
     }
     else {
         $self->dbgout( 'PTRMatch', 'fail', LOG_DEBUG );
-        add_c_auth_header( $self->{'ctx'},
-                format_header_entry( 'x-ptr', 'fail' ) . q{ }
-              . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
-              . format_header_entry( 'x-ptr-lookup', $domain ) );
+        $self->add_c_auth_header(
+                $self->format_header_entry( 'x-ptr', 'fail' ) . q{ }
+              . $self->format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
+              . $self->format_header_entry( 'x-ptr-lookup', $domain ) );
     }
 }
 

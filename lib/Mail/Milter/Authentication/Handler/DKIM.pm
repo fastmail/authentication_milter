@@ -7,8 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Util;
-
 use Sys::Syslog qw{:standard :macros};
 
 use Mail::DKIM::Verifier;
@@ -25,7 +23,7 @@ sub envfrom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMKIM Setup Error ' . $error );
-        add_auth_header( $self->{'ctx'}, 'dkim=temperror' );
+        $self->add_auth_header( 'dkim=temperror' );
         $priv->{'dkim.failmode'} = 1;
     }
     $priv->{'dkim.obj'} = $dkim;
@@ -93,8 +91,8 @@ sub eom_callback {
 
         if ( ! $dkim->signatures ) {
             if ( ! ( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
-                add_auth_header( $self->{'ctx'},
-                    format_header_entry( 'dkim', $dkim_result )
+                $self->add_auth_header(
+                    $self->format_header_entry( 'dkim', $dkim_result )
                       . ' (no signatures found)' );
             }
         }
@@ -127,33 +125,33 @@ sub eom_callback {
                     ## DEBUGGING
                     my $header = join(
                         q{ },
-                        format_header_entry( $type, $signature_result ),
+                        $self->format_header_entry( $type, $signature_result ),
                         '('
-                          . format_header_comment(
+                          . $self->format_header_comment(
                               $result_comment
                               . $key_data
                             )
                           . ')',
-                        format_header_entry( 'header.d', $signature->domain() ),
-                        format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
+                        $self->format_header_entry( 'header.d', $signature->domain() ),
+                        $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
                     );
-                    add_auth_header( $self->{'ctx'}, $header );
+                    $self->add_auth_header( $header );
                 }
                 else {
                     my $header = join(
                         q{ },
-                        format_header_entry( $type, $signature_result ),
+                        $self->format_header_entry( $type, $signature_result ),
                         '('
-                          . format_header_comment(
+                          . $self->format_header_comment(
                             $result_comment
                             . $key_data
                           )
                           . ')',
-                        format_header_entry( 'header.d', $signature->domain() ),
-                        format_header_entry( 'header.i', $signature->identity() ),
-                        format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
+                        $self->format_header_entry( 'header.d', $signature->domain() ),
+                        $self->format_header_entry( 'header.i', $signature->identity() ),
+                        $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
                     );
-                    add_auth_header( $self->{'ctx'}, $header );
+                    $self->add_auth_header( $header );
                 }
             }
         }
@@ -188,7 +186,7 @@ sub eom_callback {
                 if ( ! ( $CONFIG->{'check_dkim-adsp'} == 2 && $result eq 'none' ) ) {
                     if ( ( ! $default ) or $CONFIG->{'show_default_adsp'} ) {
                         my $comment = '('
-                          . format_header_comment( ( $default ? 'default ' : q{} )
+                          . $self->format_header_comment( ( $default ? 'default ' : q{} )
                             . "$name policy"
                             . ( $location ? " from $location" : q{} )
 #                            . ( $string   ? "; $string"       : q{} )
@@ -196,8 +194,8 @@ sub eom_callback {
                           . ')';
 
                         my $header = join( q{ },
-                            format_header_entry( $type, $result ), $comment, );
-                        add_auth_header( $self->{'ctx'}, $header );
+                            $self->format_header_entry( $type, $result ), $comment, );
+                        $self->add_auth_header( $header );
                     }
                 }
             }
@@ -205,7 +203,7 @@ sub eom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DKIM Error - ' . $error );
-        add_auth_header( $self->{'ctx'}, 'dkim=temperror' );
+        $self->add_auth_header( 'dkim=temperror' );
         $priv->{'dkim.failmode'} = 1;
     }
 }

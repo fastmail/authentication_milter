@@ -7,8 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Util;
-
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
@@ -41,7 +39,7 @@ sub connect_callback {
     my $ip_address = $priv->{'core.ip_address'};
     if ( $self->is_trusted_ip_address( $ip_address ) ) {
         $self->dbgout( 'TrustedIP', 'pass', LOG_DEBUG );
-        add_c_auth_header( $self->{'ctx'}, 'x-trusted-ip=pass' );
+        $self->add_c_auth_header( 'x-trusted-ip=pass' );
         $priv->{ 'is_trusted_ip_address' } = 1;
     }
 }

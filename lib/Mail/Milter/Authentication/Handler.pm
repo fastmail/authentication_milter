@@ -6,7 +6,6 @@ use warnings;
 our $VERSION = 0.3;
 
 use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Util;
 
 use Mail::Milter::Authentication::Handler::Generic;
 use Mail::Milter::Authentication::Handler::Auth;
@@ -140,7 +139,7 @@ sub eoh_callback {
     if ( my $error = $@ ) {
         $priv->{'handler'}->{'generic'}->log_error( 'EOH callback error ' . $error );
     }
-    dbgoutwrite($ctx);
+    $priv->{'handler'}->{'generic'}->dbgoutwrite();
     return SMFIS_CONTINUE;
 }
 
@@ -155,7 +154,7 @@ sub body_callback {
     if ( my $error = $@ ) {
         $priv->{'handler'}->{'generic'}->log_error( 'Body callback error ' . $error );
     }
-    dbgoutwrite($ctx);
+    $priv->{'handler'}->{'generic'}->dbgoutwrite();
     return SMFIS_CONTINUE;
 }
 
@@ -172,8 +171,8 @@ sub eom_callback {
     if ( my $error = $@ ) {
         $priv->{'handler'}->{'generic'}->log_error( 'EOM callback error ' . $error );
     }
-    add_headers($ctx);
-    dbgoutwrite($ctx);
+    $priv->{'handler'}->{'generic'}->add_headers();
+    $priv->{'handler'}->{'generic'}->dbgoutwrite();
     return SMFIS_ACCEPT;
 }
 
@@ -182,7 +181,7 @@ sub abort_callback {
     my ($ctx) = @_;
     my $priv = $ctx->getpriv();
     $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'Abort', LOG_DEBUG );
-    dbgoutwrite($ctx);
+    $priv->{'handler'}->{'generic'}->dbgoutwrite();
     return SMFIS_CONTINUE;
 }
 
@@ -191,7 +190,7 @@ sub close_callback {
     my ($ctx) = @_;
     my $priv = $ctx->getpriv();
     $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'Close', LOG_DEBUG );
-    dbgoutwrite($ctx);
+    $priv->{'handler'}->{'generic'}->dbgoutwrite();
     return SMFIS_CONTINUE;
 }
 

@@ -7,8 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Util;
-
 use Socket;
 use Sys::Syslog qw{:standard :macros};
 

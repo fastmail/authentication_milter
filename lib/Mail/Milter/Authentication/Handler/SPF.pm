@@ -7,8 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Util;
-
 use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
@@ -26,11 +24,11 @@ sub envfrom_callback {
     my $spf_server;
     eval {
         $spf_server =
-          Mail::SPF::Server->new( 'hostname' => get_my_hostname($self->{'ctx'}) );
+          Mail::SPF::Server->new( 'hostname' => $self->get_my_hostname() );
     };
     if ( my $error = $@ ) {
         $self->log_error( 'SPF Setup Error ' . $error );
-        add_auth_header( $self->{'ctx'}, 'spf=temperror' );
+        $self->add_auth_header( 'spf=temperror' );
         return;
     }
 
@@ -46,8 +44,8 @@ sub envfrom_callback {
         $scope    = 'helo';
     }
     else {
-        $identity = get_address_from( $env_from );
-        $domain   = get_domain_from($identity);
+        $identity = $self->get_address_from( $env_from );
+        $domain   = $self->get_domain_from($identity);
     }
 
     if ( ! $identity ) {
@@ -71,12 +69,12 @@ sub envfrom_callback {
         my $result_code = $spf_result->code();
 
         my $auth_header = join( q{ },
-            format_header_entry( 'spf',           $result_code ),
-            format_header_entry( 'smtp.mailfrom', get_address_from( $env_from ) ),
-            format_header_entry( 'smtp.helo',     $priv->{'core.helo_name'} ),
+            $self->format_header_entry( 'spf',           $result_code ),
+            $self->format_header_entry( 'smtp.mailfrom', $self->get_address_from( $env_from ) ),
+            $self->format_header_entry( 'smtp.helo',     $priv->{'core.helo_name'} ),
         );
         if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
-            add_auth_header( $self->{'ctx'}, $auth_header );
+            $self->add_auth_header( $auth_header );
         }
 
         if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
@@ -94,13 +92,13 @@ sub envfrom_callback {
         if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
             my $result_header = $spf_result->received_spf_header();
             my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
-            prepend_header( $self->{'ctx'}, $header, $value );
+            $self->prepend_header( $header, $value );
             $self->dbgout( 'SPFHeader', $result_header, LOG_DEBUG );
         }
     };
     if ( my $error = $@ ) {
         $self->log_error( 'SPF Error ' . $error );
-        add_auth_header( $self->{'ctx'}, 'spf=temperror' );
+        $self->add_auth_header( 'spf=temperror' );
     }
 
 }

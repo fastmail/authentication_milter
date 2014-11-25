@@ -7,8 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Util;
-
 use Sys::Syslog qw{:standard :macros};
 
 sub remove_auth_header {
@@ -41,13 +39,13 @@ sub header_callback {
           $priv->{'sanitize.auth_result_header_index'} + 1;
         my ($domain_part) = $value =~ /(.*);/;
         $domain_part =~ s/ +//g;
-        if ( is_hostname_mine( $self->{'ctx'}, $domain_part ) ) {
+        if ( $self->is_hostname_mine( $domain_part ) ) {
             $self->remove_auth_header( $priv->{'sanitize.auth_result_header_index'} );
             if ( lc $CONFIG->{'remove_headers'} ne 'silent' ) {
-                my $forged_header = '(The following Authentication Results header was removed by ' . get_my_hostname($self->{'ctx'}) . "\n"
+                my $forged_header = '(The following Authentication Results header was removed by ' . $self->get_my_hostname() . "\n"
                                   . '    as the supplied domain conflicted with its own)' . "\n"
                                   . '    ' . $value;
-                append_header( $self->{'ctx'}, 'X-Invalid-Authentication-Results', $forged_header );
+                $self->append_header( 'X-Invalid-Authentication-Results', $forged_header );
             }
         }
     }

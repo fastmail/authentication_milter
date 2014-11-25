@@ -7,8 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Util;
-
 use Sys::Syslog qw{:standard :macros};
 
 use Mail::DMARC::PurePerl;
@@ -31,7 +29,7 @@ sub envfrom_callback {
         $domain_from = $priv->{'core.helo_name'};
     }
     else {
-        $domain_from = get_domain_from($env_from);
+        $domain_from = $self->get_domain_from($env_from);
     }
 
     my $dmarc;
@@ -42,7 +40,7 @@ sub envfrom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC IP Error ' . $error );
-        add_auth_header( $self->{'ctx'}, 'dmarc=temperror' );
+        $self->add_auth_header( 'dmarc=temperror' );
         $priv->{'dmarc.failmode'} = 1;
         return;
     }
@@ -56,13 +54,13 @@ sub envfrom_callback {
             $self->log_error( 'DMARC Invalid envelope from <' . $domain_from . '>' );
             $self->log_error( 'DMARC Debug Helo: ' . $priv->{'core.helo_name'} );
             $self->log_error( 'DMARC Debug Envfrom: ' . $env_from );
-            add_auth_header( $self->{'ctx'}, 'dmarc=permerror' );
+            $self->add_auth_header( 'dmarc=permerror' );
         }
         else {
             $self->log_error( 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
             $self->log_error( 'DMARC Debug Helo: ' . $priv->{'core.helo_name'} );
             $self->log_error( 'DMARC Debug Envfrom: ' . $env_from );
-            add_auth_header( $self->{'ctx'}, 'dmarc=temperror' );
+            $self->add_auth_header( 'dmarc=temperror' );
         }
         $priv->{'dmarc.failmode'} = 1;
         return;
@@ -79,11 +77,11 @@ sub envrcpt_callback {
     return if ( $priv->{'is_authenticated'} );
     return if ( $priv->{'dmarc.failmode'} );
     my $dmarc = $priv->{'dmarc.obj'};
-    my $envelope_to = get_domain_from($env_to);
+    my $envelope_to = $self->get_domain_from($env_to);
     eval { $dmarc->envelope_to($envelope_to) };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Rcpt To Error ' . $error );
-        add_auth_header( $self->{'ctx'}, 'dmarc=temperror' );
+        $self->add_auth_header( 'dmarc=temperror' );
         $priv->{'dmarc.failmode'} = 1;
         return;
     }
@@ -108,7 +106,7 @@ sub header_callback {
             # ToDo handle this by eveluating DMARC for each field in turn as
             # suggested in the DMARC spec part 5.6.1
             # Currently this does not give reporting feedback to the author domain, this should be changed.
-            add_auth_header( $self->{'ctx'}, 'dmarc=fail (multiple RFC5322 from fields in message)' );
+            $self->add_auth_header( 'dmarc=fail (multiple RFC5322 from fields in message)' );
             $priv->{'dmarc.failmode'} = 1;
             return;
         }
@@ -117,7 +115,7 @@ sub header_callback {
         eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
         if ( my $error = $@ ) {
             $self->log_error( 'DMARC Header From Error ' . $error );
-            add_auth_header( $self->{'ctx'}, 'dmarc=temperror' );
+            $self->add_auth_header( 'dmarc=temperror' );
             $priv->{'dmarc.failmode'} = 1;
             return;
         }
@@ -137,7 +135,7 @@ sub eom_callback {
         my $dmarc = $priv->{'dmarc.obj'};
         if ( $priv->{'dkim.failmode'} ) {
             $self->log_error( 'DKIM is in failmode, Skipping DMARC' );
-            add_auth_header( $self->{'ctx'}, 'dmarc=temperror' );
+            $self->add_auth_header( 'dmarc=temperror' );
             $priv->{'dmarc.failmode'} = 1;
             return;
         }
@@ -156,22 +154,22 @@ sub eom_callback {
                 }
                 $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
             }
-            my $dmarc_header = format_header_entry( 'dmarc', $dmarc_code );
+            my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
             my $is_list_entry = q{};
             if ( $CONFIG->{'dmarc_detect_list_id'} && $priv->{'dmarc.is_list'} ) {
                 $is_list_entry = ';has-list-id=yes';
             }
             if ($dmarc_policy) {
                 $dmarc_header .= ' ('
-                  . format_header_comment(
-                    format_header_entry( 'p', $dmarc_policy ) )
+                  . $self->format_header_comment(
+                    $self->format_header_entry( 'p', $dmarc_policy ) )
                   . $is_list_entry
                 . ')';
             }
             $dmarc_header .= ' '
-              . format_header_entry( 'header.from',
-                get_domain_from( $priv->{'dmarc.from_header'} ) );
-            add_auth_header( $self->{'ctx'}, $dmarc_header );
+              . $self->format_header_entry( 'header.from',
+                $self->get_domain_from( $priv->{'dmarc.from_header'} ) );
+            $self->add_auth_header( $dmarc_header );
         }
             # Try as best we can to save a report, but don't stress if it fails.
         my $rua = eval{ $dmarc_result->published()->rua(); };
@@ -187,7 +185,7 @@ sub eom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Error ' . $error );
-        add_auth_header( $self->{'ctx'}, 'dmarc=temperror' );
+        $self->add_auth_header( 'dmarc=temperror' );
         return;
     }
 }

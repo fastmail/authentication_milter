@@ -7,8 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Util;
-
 use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
@@ -49,17 +47,17 @@ sub eoh_callback {
     my $spf_server;
     eval {
         $spf_server =
-          Mail::SPF::Server->new( 'hostname' => get_my_hostname($self->{'ctx'}) );
+          Mail::SPF::Server->new( 'hostname' => $self->get_my_hostname() );
     };
     if ( my $error = $@ ) {
         $self->log_error( 'SenderID Setup Error ' . $error );
-        add_auth_header( $self->{'ctx'}, 'senderid=temperror' );
+        $self->add_auth_header( 'senderid=temperror' );
         return;
     }
 
     my $scope = 'pra';
 
-    my $identity = get_address_from( $priv->{'senderid.from_header'} );
+    my $identity = $self->get_address_from( $priv->{'senderid.from_header'} );
 
     eval {
         my $spf_request = Mail::SPF::Request->new(
@@ -77,19 +75,19 @@ sub eoh_callback {
         $self->dbgout( 'SenderIdCode', $result_code, LOG_INFO );
 
         if ( ! ( $CONFIG->{'check_senderid'} == 2 && $result_code eq 'none' ) ) {
-            my $auth_header = format_header_entry( 'senderid', $result_code );
-            add_auth_header( $self->{'ctx'}, $auth_header );
+            my $auth_header = $self->format_header_entry( 'senderid', $result_code );
+            $self->add_auth_header( $auth_header );
 #my $result_local  = $spf_result->local_explanation;
 #my $result_auth   = $spf_result->can( 'authority_explanation' ) ? $spf_result->authority_explanation() : '';
             my $result_header = $spf_result->received_spf_header();
             my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
-            prepend_header( $self->{'ctx'}, $header, $value );
+            $self->prepend_header( $header, $value );
             $self->dbgout( 'SPFHeader', $result_header, LOG_DEBUG );
         }
     };
     if ( my $error = $@ ) {
         $self->log_error( 'SENDERID Error ' . $error );
-        add_auth_header( $self->{'ctx'}, 'senderid=temperror' );
+        $self->add_auth_header( 'senderid=temperror' );
         return;
     }
 }

@@ -7,13 +7,11 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Util;
-
 use Sys::Syslog qw{:standard :macros};
 
 sub get_auth_name {
     my ($self) = @_;
-    my $name = get_symval( $self->{'ctx'}, '{auth_authen}' );
+    my $name = $self->get_symval( '{auth_authen}' );
     return $name;
 }
 
@@ -35,7 +33,7 @@ sub envfrom_callback {
         $priv->{'core.c_auth_headers'} = [];
         $priv->{'core.auth_headers'} = [];
         $priv->{'is_authenticated'} = 1;
-        add_auth_header( $self->{'ctx'}, 'auth=pass' );
+        $self->add_auth_header( 'auth=pass' );
     }
 }
 
