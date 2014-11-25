@@ -18,8 +18,8 @@ sub envfrom_callback {
     return if ( !$CONFIG->{'check_senderid'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
-    return if ( $priv->{'is_authenticated'} );
-    delete $priv->{'senderid.from_header'};
+    return if ( $self->is_authenticated() );
+    delete $self->{'from_header'};
 }
 
 sub header_callback {
@@ -29,9 +29,9 @@ sub header_callback {
     return if ( !$CONFIG->{'check_senderid'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
-    return if ( $priv->{'is_authenticated'} );
+    return if ( $self->is_authenticated() );
     if ( $header eq 'From' ) {
-        $priv->{'senderid.from_header'} = $value;
+        $self->{'from_header'} = $value;
     }
 }
 
@@ -42,7 +42,7 @@ sub eoh_callback {
     return if ( !$CONFIG->{'check_senderid'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
-    return if ( $priv->{'is_authenticated'} );
+    return if ( $self->is_authenticated() );
 
     my $spf_server;
     eval {
@@ -57,15 +57,16 @@ sub eoh_callback {
 
     my $scope = 'pra';
 
-    my $identity = $self->get_address_from( $priv->{'senderid.from_header'} );
+    my $identity = $self->get_address_from( $self->{'from_header'} );
+
 
     eval {
         my $spf_request = Mail::SPF::Request->new(
             'versions'      => [2],
             'scope'         => $scope,
             'identity'      => $identity,
-            'ip_address'    => $priv->{'core.ip_address'},
-            'helo_identity' => $priv->{'core.helo_name'},
+            'ip_address'    => $self->ip_address(),
+            'helo_identity' => $self->helo_name(),
         );
 
         my $spf_result = $spf_server->process($spf_request);

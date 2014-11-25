@@ -18,15 +18,15 @@ sub envfrom_callback {
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
-    return if ( $priv->{'is_authenticated'} );
-    delete $priv->{'dmarc.from_header'};
-    $priv->{'dmarc.failmode'} = 0;
+    return if ( $self->is_authenticated() );
+    delete $self->{'from_header'};
+    $self->{'failmode'} = 0;
 
     $env_from = q{} if $env_from eq '<>';
 
     my $domain_from;
     if ( ! $env_from ) {
-        $domain_from = $priv->{'core.helo_name'};
+        $domain_from = $self->helo_name();
     }
     else {
         $domain_from = $self->get_domain_from($env_from);
@@ -36,33 +36,33 @@ sub envfrom_callback {
     eval {
         $dmarc = Mail::DMARC::PurePerl->new();
         $dmarc->verbose(1);
-        $dmarc->source_ip($priv->{'core.ip_address'})
+        $dmarc->source_ip($self->ip_address())
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC IP Error ' . $error );
         $self->add_auth_header( 'dmarc=temperror' );
-        $priv->{'dmarc.failmode'} = 1;
+        $self->{'failmode'} = 1;
         return;
     }
-    $priv->{'dmarc.is_list'} = 0;
-    $priv->{'dmarc.obj'}     = $dmarc;
+    $self->{'is_list'} = 0;
+    $self->{'obj'}     = $dmarc;
     eval {
         $dmarc->envelope_from($domain_from);
     };
     if ( my $error = $@ ) {
         if ( $error =~ / invalid envelope_from at / ) {
             $self->log_error( 'DMARC Invalid envelope from <' . $domain_from . '>' );
-            $self->log_error( 'DMARC Debug Helo: ' . $priv->{'core.helo_name'} );
+            $self->log_error( 'DMARC Debug Helo: ' . $self->helo_name() );
             $self->log_error( 'DMARC Debug Envfrom: ' . $env_from );
             $self->add_auth_header( 'dmarc=permerror' );
         }
         else {
             $self->log_error( 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
-            $self->log_error( 'DMARC Debug Helo: ' . $priv->{'core.helo_name'} );
+            $self->log_error( 'DMARC Debug Helo: ' . $self->helo_name() );
             $self->log_error( 'DMARC Debug Envfrom: ' . $env_from );
             $self->add_auth_header( 'dmarc=temperror' );
         }
-        $priv->{'dmarc.failmode'} = 1;
+        $self->{'failmode'} = 1;
         return;
     }
 }
@@ -74,15 +74,15 @@ sub envrcpt_callback {
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
-    return if ( $priv->{'is_authenticated'} );
-    return if ( $priv->{'dmarc.failmode'} );
-    my $dmarc = $priv->{'dmarc.obj'};
+    return if ( $self->is_authenticated() );
+    return if ( $self->{'failmode'} );
+    my $dmarc = $self->{'obj'};
     my $envelope_to = $self->get_domain_from($env_to);
     eval { $dmarc->envelope_to($envelope_to) };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Rcpt To Error ' . $error );
         $self->add_auth_header( 'dmarc=temperror' );
-        $priv->{'dmarc.failmode'} = 1;
+        $self->{'failmode'} = 1;
         return;
     }
 }
@@ -94,29 +94,29 @@ sub header_callback {
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
-    return if ( $priv->{'is_authenticated'} );
-    return if ( $priv->{'dmarc.failmode'} );
+    return if ( $self->is_authenticated() );
+    return if ( $self->{'failmode'} );
     if ( lc $header eq 'list-id' ) {
         $self->dbgout( 'DMARCListId', 'List detected: ' . $value , LOG_INFO );
-        $priv->{'dmarc.is_list'} = 1;
+        $self->{'is_list'} = 1;
     }
     if ( $header eq 'From' ) {
-        if ( exists $priv->{'dmarc.from_header'} ) {
+        if ( exists $self->{'from_header'} ) {
             $self->dbgout( 'DMARCFail', 'Multiple RFC5322 from fields', LOG_INFO );
             # ToDo handle this by eveluating DMARC for each field in turn as
             # suggested in the DMARC spec part 5.6.1
             # Currently this does not give reporting feedback to the author domain, this should be changed.
             $self->add_auth_header( 'dmarc=fail (multiple RFC5322 from fields in message)' );
-            $priv->{'dmarc.failmode'} = 1;
+            $self->{'failmode'} = 1;
             return;
         }
-        $priv->{'dmarc.from_header'} = $value;
-        my $dmarc = $priv->{'dmarc.obj'};
+        $self->{'from_header'} = $value;
+        my $dmarc = $self->{'obj'};
         eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
         if ( my $error = $@ ) {
             $self->log_error( 'DMARC Header From Error ' . $error );
             $self->add_auth_header( 'dmarc=temperror' );
-            $priv->{'dmarc.failmode'} = 1;
+            $self->{'failmode'} = 1;
             return;
         }
     }
@@ -129,17 +129,18 @@ sub eom_callback {
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
-    return if ( $priv->{'is_authenticated'} );
-    return if ( $priv->{'dmarc.failmode'} );
+    return if ( $self->is_authenticated() );
+    return if ( $self->{'failmode'} );
     eval {
-        my $dmarc = $priv->{'dmarc.obj'};
-        if ( $priv->{'dkim.failmode'} ) {
+        my $dmarc = $self->{'obj'};
+        my $dkim_handler  = $self->get_handler('dkim');
+        if ( $dkim_handler->{'failmode'} ) {
             $self->log_error( 'DKIM is in failmode, Skipping DMARC' );
             $self->add_auth_header( 'dmarc=temperror' );
-            $priv->{'dmarc.failmode'} = 1;
+            $self->{'failmode'} = 1;
             return;
         }
-        my $dkim  = $priv->{'dkim.obj'};
+        my $dkim  = $dkim_handler->{'obj'};
         $dmarc->dkim($dkim);
         my $dmarc_result = $dmarc->validate();
         #$self->{'ctx'}->progress();
@@ -156,7 +157,7 @@ sub eom_callback {
             }
             my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
             my $is_list_entry = q{};
-            if ( $CONFIG->{'dmarc_detect_list_id'} && $priv->{'dmarc.is_list'} ) {
+            if ( $CONFIG->{'dmarc_detect_list_id'} && $self->{'is_list'} ) {
                 $is_list_entry = ';has-list-id=yes';
             }
             if ($dmarc_policy) {
@@ -168,7 +169,7 @@ sub eom_callback {
             }
             $dmarc_header .= ' '
               . $self->format_header_entry( 'header.from',
-                $self->get_domain_from( $priv->{'dmarc.from_header'} ) );
+                $self->get_domain_from( $self->{'from_header'} ) );
             $self->add_auth_header( $dmarc_header );
         }
             # Try as best we can to save a report, but don't stress if it fails.

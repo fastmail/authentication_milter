@@ -18,8 +18,8 @@ sub connect_callback {
     return if ( !$CONFIG->{'check_iprev'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
-    return if ( $priv->{'is_authenticated'} );
-    my $ip_address = $priv->{'core.ip_address'};
+    return if ( $self->is_authenticated() );
+    my $ip_address = $self->ip_address();
     my $i1 = Net::IP->new( $ip_address );
 
     my $resolver = Net::DNS::Resolver->new;
@@ -111,7 +111,7 @@ sub connect_callback {
     $domain =~ s/\.$//;
 
     if ( $result eq 'pass' ) {
-        $priv->{'iprev.verified_ptr'} = $domain;
+        $self->{'verified_ptr'} = $domain;
     }
 
     $self->dbgout( 'IPRevCheck', $result, LOG_DEBUG );

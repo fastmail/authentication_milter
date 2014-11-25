@@ -20,7 +20,7 @@ sub envfrom_callback {
     return if ( !$CONFIG->{'check_spf'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
-    return if ( $priv->{'is_authenticated'} );
+    return if ( $self->is_authenticated() );
     my $spf_server;
     eval {
         $spf_server =
@@ -39,7 +39,7 @@ sub envfrom_callback {
     my $identity;
     my $domain;
     if ( ! $env_from ) {
-        $identity = $priv->{'core.helo_name'};
+        $identity = $self->helo_name();
         $domain   = $identity;
         $scope    = 'helo';
     }
@@ -49,7 +49,7 @@ sub envfrom_callback {
     }
 
     if ( ! $identity ) {
-        $identity = $priv->{'core.helo_name'};
+        $identity = $self->helo_name();
         $domain   = $identity;
         $scope    = 'helo';
     }
@@ -59,8 +59,8 @@ sub envfrom_callback {
             'versions'      => [1],
             'scope'         => $scope,
             'identity'      => $identity,
-            'ip_address'    => $priv->{'core.ip_address'},
-            'helo_identity' => $priv->{'core.helo_name'},
+            'ip_address'    => $self->ip_address(),
+            'helo_identity' => $self->helo_name(),
         );
 
         my $spf_result = $spf_server->process($spf_request);
@@ -71,13 +71,13 @@ sub envfrom_callback {
         my $auth_header = join( q{ },
             $self->format_header_entry( 'spf',           $result_code ),
             $self->format_header_entry( 'smtp.mailfrom', $self->get_address_from( $env_from ) ),
-            $self->format_header_entry( 'smtp.helo',     $priv->{'core.helo_name'} ),
+            $self->format_header_entry( 'smtp.helo',     $self->helo_name() ),
         );
         if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
             $self->add_auth_header( $auth_header );
         }
 
-        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $self->is_authenticated() == 0 ) ) {
             if ( my $dmarc = $priv->{'dmarc.obj'} ) {
                 $dmarc->spf(
                     'domain' => $domain,

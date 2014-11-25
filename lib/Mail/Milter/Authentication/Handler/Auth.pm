@@ -18,7 +18,7 @@ sub get_auth_name {
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     my $priv = $self->{'ctx'}->getpriv();
-    $priv->{ 'is_authenticated' } = 0;
+    $self->{ 'is_authenticated' } = 0;
 } 
 
 sub envfrom_callback {
@@ -32,7 +32,7 @@ sub envfrom_callback {
         # Clear the current auth headers ( iprev and helo are already added )
         $priv->{'core.c_auth_headers'} = [];
         $priv->{'core.auth_headers'} = [];
-        $priv->{'is_authenticated'} = 1;
+        $self->{'is_authenticated'} = 1;
         $self->add_auth_header( 'auth=pass' );
     }
 }

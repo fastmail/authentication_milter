@@ -30,7 +30,7 @@ sub connect_callback {
             $self->log_error( 'Unknown IP address format');
             $ip_address = q{};
         }
-        $priv->{'core.ip_address'} = $ip_address;
+        $self->{'ip_address'} = $ip_address;
         $self->dbgout( 'ConnectFrom', $ip_address, LOG_DEBUG );
     }
 }
@@ -38,7 +38,7 @@ sub connect_callback {
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
     my $priv = $self->{'ctx'}->getpriv();
-    $priv->{'core.helo_name'} = $helo_host;
+    $self->{'helo_name'} = $helo_host;
 }
 
 sub envfrom_callback {
@@ -46,12 +46,12 @@ sub envfrom_callback {
     my $priv = $self->{'ctx'}->getpriv();
 
     # Reset private data for this MAIL transaction
-    delete $priv->{'core.mail_from'};
+    delete $self->{'mail_from'};
     delete $priv->{'core.auth_headers'};
     delete $priv->{'core.pre_headers'};
     delete $priv->{'core.add_headers'};
 
-    $priv->{'core.mail_from'} = $env_from || q{};
+    $self->{'mail_from'} = $env_from || q{};
     $self->dbgout( 'EnvelopeFrom', $env_from, LOG_DEBUG );
 }
 

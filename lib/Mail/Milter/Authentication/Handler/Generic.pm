@@ -25,6 +25,38 @@ sub config {
     return $self->{'config'};
 }
 
+sub get_handler {
+    my ( $self, $handler ) = @_;
+    my $ctx = $self->{'ctx'};
+    my $priv = $ctx->getpriv();
+    my $object = $priv->{'handler'}->{ $handler };
+    return $object;
+}
+
+sub is_authenticated {
+    my ( $self ) = @_;
+    my $auth_handler = $self->get_handler('auth');
+    return $auth_handler->{'is_authenticated'};
+}
+
+sub ip_address {
+    my ( $self ) = @_;
+    my $core_handler = $self->get_handler('core');
+    return $core_handler->{'ip_address'};
+}
+
+sub helo_name {
+    my ( $self ) = @_;
+    my $core_handler = $self->get_handler('core');
+    return $core_handler->{'helo_name'};
+}
+
+sub mail_from {
+    my ( $self ) = @_;
+    my $core_handler = $self->get_handler('core');
+    return $core_handler->{'mail_from'};
+}
+
 sub format_ctext {
     # Return ctext (but with spaces intact)
     my ($self,$text) = @_;

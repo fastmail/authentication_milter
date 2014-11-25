@@ -16,7 +16,7 @@ sub envfrom_callback {
     my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
-    $priv->{'dkim.failmode'} = 0;
+    $self->{'failmode'} = 0;
     my $dkim;
     eval {
         $dkim = Mail::DKIM::Verifier->new();
@@ -24,9 +24,9 @@ sub envfrom_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'DMKIM Setup Error ' . $error );
         $self->add_auth_header( 'dkim=temperror' );
-        $priv->{'dkim.failmode'} = 1;
+        $self->{'failmode'} = 1;
     }
-    $priv->{'dkim.obj'} = $dkim;
+    $self->{'obj'} = $dkim;
 }
 
 sub header_callback {
@@ -34,8 +34,8 @@ sub header_callback {
     my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
-    return if ( $priv->{'dkim.failmode'} );
-    my $dkim = $priv->{'dkim.obj'};
+    return if ( $self->{'failmode'} );
+    my $dkim = $self->{'obj'};
     my $EOL    = "\015\012";
     my $dkim_chunk = $header . ': ' . $value . $EOL;
     $dkim_chunk =~ s/\015?\012/$EOL/g;
@@ -55,8 +55,8 @@ sub eoh_callback {
     my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
-    return if ( $priv->{'dkim.failmode'} );
-    my $dkim = $priv->{'dkim.obj'};
+    return if ( $self->{'failmode'} );
+    my $dkim = $self->{'obj'};
     $dkim->PRINT( "\015\012" );
 }
 
@@ -65,8 +65,8 @@ sub body_callback {
     my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
-    return if ( $priv->{'dkim.failmode'} );
-    my $dkim       = $priv->{'dkim.obj'};
+    return if ( $self->{'failmode'} );
+    my $dkim       = $self->{'obj'};
     my $dkim_chunk = $body_chunk;
     my $EOL    = "\015\012";
     $dkim_chunk =~ s/\015?\012/$EOL/g;
@@ -78,8 +78,8 @@ sub eom_callback {
     my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
-    return if ( $priv->{'dkim.failmode'} );
-    my $dkim  = $priv->{'dkim.obj'};
+    return if ( $self->{'failmode'} );
+    my $dkim  = $self->{'obj'};
     eval {
         $dkim->CLOSE();
         #$ctx->progress();
@@ -157,7 +157,7 @@ sub eom_callback {
         }
 
         # the alleged author of the email may specify how to handle email
-        if ( $CONFIG->{'check_dkim-adsp'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
+        if ( $CONFIG->{'check_dkim-adsp'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $self->is_authenticated() == 0 ) ) {
             foreach my $policy ( $dkim->policies ) {
                 my $apply    = $policy->apply($dkim);
                 my $string   = $policy->as_string();
@@ -204,7 +204,7 @@ sub eom_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'DKIM Error - ' . $error );
         $self->add_auth_header( 'dkim=temperror' );
-        $priv->{'dkim.failmode'} = 1;
+        $self->{'failmode'} = 1;
     }
 }
 

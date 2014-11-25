@@ -17,11 +17,12 @@ sub helo_callback {
     return if ( !$CONFIG->{'check_ptr'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
-    return if ( $priv->{'is_authenticated'} );
+    return if ( $self->is_authenticated() );
 
+    my $iprev_handler = $self->get_handler('iprev');
     my $domain =
-      exists( $priv->{'iprev.verified_ptr'} ) ? $priv->{'iprev.verified_ptr'} : q{};
-    my $helo_name = $priv->{'core.helo_name'};
+      exists( $iprev_handler->{'verified_ptr'} ) ? $iprev_handler->{'verified_ptr'} : q{};
+    my $helo_name = $self->helo_name();
 
     if ( lc $domain eq lc $helo_name ) {
         $self->dbgout( 'PTRMatch', 'pass', LOG_DEBUG );

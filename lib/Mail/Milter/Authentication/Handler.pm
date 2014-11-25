@@ -61,7 +61,7 @@ sub helo_callback {
     $helo_host = q{} if not $helo_host;
     eval {
         # Take only the first HELO from a connection
-        if ( ! exists( $priv->{'core.helo_name'} ) ) {
+        if ( ! ( $priv->{'handler'}->{'generic'}->helo_name() ) ) {
             foreach my $handler (qw{ core ptr }) { 
                 $priv->{'handler'}->{$handler}->helo_callback( $helo_host );
            }
