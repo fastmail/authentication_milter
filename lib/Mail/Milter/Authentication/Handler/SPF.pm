@@ -5,6 +5,8 @@ use warnings;
 
 our $VERSION = 0.3;
 
+use base 'Mail::Milter::Authentication::Handler::Generic';
+
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
@@ -15,9 +17,9 @@ use Mail::SPF;
 sub envfrom_callback {
     # On MAILFROM
     #...
-    my ( $ctx, $env_from ) = @_;
+    my ( $self, $env_from ) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_spf'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
@@ -25,11 +27,11 @@ sub envfrom_callback {
     my $spf_server;
     eval {
         $spf_server =
-          Mail::SPF::Server->new( 'hostname' => get_my_hostname($ctx) );
+          Mail::SPF::Server->new( 'hostname' => get_my_hostname($self->{'ctx'}) );
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'SPF Setup Error ' . $error );
-        add_auth_header( $ctx, 'spf=temperror' );
+        $self->log_error( 'SPF Setup Error ' . $error );
+        add_auth_header( $self->{'ctx'}, 'spf=temperror' );
         return;
     }
 
@@ -65,7 +67,7 @@ sub envfrom_callback {
         );
 
         my $spf_result = $spf_server->process($spf_request);
-        #$ctx->progress();
+        #$self->{'ctx'}->progress();
 
         my $result_code = $spf_result->code();
 
@@ -75,7 +77,7 @@ sub envfrom_callback {
             format_header_entry( 'smtp.helo',     $priv->{'core.helo_name'} ),
         );
         if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
-            add_auth_header( $ctx, $auth_header );
+            add_auth_header( $self->{'ctx'}, $auth_header );
         }
 
         if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $priv->{'is_authenticated'} == 0 ) ) {
@@ -88,18 +90,18 @@ sub envfrom_callback {
             }
         }
 
-        dbgout( $ctx, 'SPFCode', $result_code, LOG_INFO );
+        $self->dbgout( 'SPFCode', $result_code, LOG_INFO );
 
         if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
             my $result_header = $spf_result->received_spf_header();
             my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
-            prepend_header( $ctx, $header, $value );
-            dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
+            prepend_header( $self->{'ctx'}, $header, $value );
+            $self->dbgout( 'SPFHeader', $result_header, LOG_DEBUG );
         }
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'SPF Error ' . $error );
-        add_auth_header( $ctx, 'spf=temperror' );
+        $self->log_error( 'SPF Error ' . $error );
+        add_auth_header( $self->{'ctx'}, 'spf=temperror' );
     }
 
 }

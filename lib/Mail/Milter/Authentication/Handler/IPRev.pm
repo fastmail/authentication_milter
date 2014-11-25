@@ -5,6 +5,8 @@ use warnings;
 
 our $VERSION = 0.3;
 
+use base 'Mail::Milter::Authentication::Handler::Generic';
+
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 use Net::DNS;
@@ -12,9 +14,9 @@ use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
 sub connect_callback {
-    my ( $ctx, $hostname, $sockaddr_in ) = @_;
+    my ( $self, $hostname, $sockaddr_in ) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_iprev'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
@@ -30,7 +32,7 @@ sub connect_callback {
     # We do not consider multiple PTR records,
     # as this is not a recomended setup
     my $packet = $resolver->query( $ip_address, 'PTR' );
-    #$ctx->progress();
+    #$self->{'ctx'}->progress();
     if ($packet) {
         foreach my $rr ( $packet->answer ) {
             next unless $rr->type eq "PTR";
@@ -38,7 +40,7 @@ sub connect_callback {
         }
     }
     else {
-        log_error( $ctx,
+        $self->log_error(
                 'DNS PTR query failed for '
               . $ip_address
               . ' with '
@@ -48,7 +50,7 @@ sub connect_callback {
     my $a_error;
     if ($domain) {
         my $packet = $resolver->query( $domain, 'A' );
-        #$ctx->progress();
+        #$self->{'ctx'}->progress();
         if ($packet) {
           APACKET:
             foreach my $rr ( $packet->answer ) {
@@ -74,7 +76,7 @@ sub connect_callback {
 
     if ( $domain && !$result ) {
         my $packet = $resolver->query( $domain, 'AAAA' );
-        #$ctx->progress();
+        #$self->{'ctx'}->progress();
         if ($packet) {
           APACKET:
             foreach my $rr ( $packet->answer ) {
@@ -90,8 +92,8 @@ sub connect_callback {
         }
         else {
             # Log A errors now, as they become relevant if AAAA also fails.
-            log_error( $ctx, $a_error ) if $a_error;
-            log_error( $ctx,
+            $self->log_error( $a_error ) if $a_error;
+            $self->log_error(
                     'DNS AAAA query failed for '
                   . $domain
                   . ' with '
@@ -114,12 +116,12 @@ sub connect_callback {
         $priv->{'iprev.verified_ptr'} = $domain;
     }
 
-    dbgout( $ctx, 'IPRevCheck', $result, LOG_DEBUG );
+    $self->dbgout( 'IPRevCheck', $result, LOG_DEBUG );
     my $header =
         format_header_entry( 'iprev', $result ) . ' '
       . format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
       . format_header_comment($domain) . ')';
-    add_c_auth_header( $ctx, $header );
+    add_c_auth_header( $self->{'ctx'}, $header );
 
 }
 

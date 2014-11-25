@@ -5,6 +5,8 @@ use warnings;
 
 our $VERSION = 0.3;
 
+use base 'Mail::Milter::Authentication::Handler::Generic';
+
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
@@ -13,9 +15,9 @@ use Sys::Syslog qw{:standard :macros};
 use Mail::DKIM::Verifier;
 
 sub envfrom_callback {
-    my ( $ctx, $env_from ) = @_;
+    my ( $self, $env_from ) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     $priv->{'dkim.failmode'} = 0;
     my $dkim;
@@ -23,17 +25,17 @@ sub envfrom_callback {
         $dkim = Mail::DKIM::Verifier->new();
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'DMKIM Setup Error ' . $error );
-        add_auth_header( $ctx, 'dkim=temperror' );
+        $self->log_error( 'DMKIM Setup Error ' . $error );
+        add_auth_header( $self->{'ctx'}, 'dkim=temperror' );
         $priv->{'dkim.failmode'} = 1;
     }
     $priv->{'dkim.obj'} = $dkim;
 }
 
 sub header_callback {
-    my ( $ctx, $header, $value ) = @_;
+    my ( $self, $header, $value ) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );
     my $dkim = $priv->{'dkim.obj'};
@@ -52,9 +54,9 @@ sub header_callback {
 }
 
 sub eoh_callback {
-    my ($ctx) = @_;
+    my ($self) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );
     my $dkim = $priv->{'dkim.obj'};
@@ -62,9 +64,9 @@ sub eoh_callback {
 }
 
 sub body_callback {
-    my ( $ctx, $body_chunk, $len ) = @_;
+    my ( $self, $body_chunk, $len ) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );
     my $dkim       = $priv->{'dkim.obj'};
@@ -75,9 +77,9 @@ sub body_callback {
 }
 
 sub eom_callback {
-    my ($ctx) = @_;
+    my ($self) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );
     my $dkim  = $priv->{'dkim.obj'};
@@ -88,19 +90,19 @@ sub eom_callback {
         my $dkim_result        = $dkim->result;
         my $dkim_result_detail = $dkim->result_detail;
 
-        dbgout( $ctx, 'DKIMResult', $dkim_result_detail, LOG_INFO );
+        $self->dbgout( 'DKIMResult', $dkim_result_detail, LOG_INFO );
 
         if ( ! $dkim->signatures ) {
             if ( ! ( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
-                add_auth_header( $ctx,
+                add_auth_header( $self->{'ctx'},
                     format_header_entry( 'dkim', $dkim_result )
                       . ' (no signatures found)' );
             }
         }
         foreach my $signature ( $dkim->signatures ) {
 
-            dbgout( $ctx, 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
-            dbgout( $ctx, 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
+            $self->dbgout( 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
+            $self->dbgout( 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
             my $signature_result        = $signature->result();
             my $signature_result_detail = $signature->result_detail();
            
@@ -114,7 +116,7 @@ sub eom_callback {
                 my $type = $otype eq 'Mail::DKIM::DkSignature' ? 'domainkeys'
                          : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
                          :                                       'dkim';
-                dbgout( $ctx, 'DKIMSignatureType', $type, LOG_DEBUG );
+                $self->dbgout( 'DKIMSignatureType', $type, LOG_DEBUG );
 
                 my $key_data = q{};
                 eval {
@@ -136,7 +138,7 @@ sub eom_callback {
                         format_header_entry( 'header.d', $signature->domain() ),
                         format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
                     );
-                    add_auth_header( $ctx, $header );
+                    add_auth_header( $self->{'ctx'}, $header );
                 }
                 else {
                     my $header = join(
@@ -152,7 +154,7 @@ sub eom_callback {
                         format_header_entry( 'header.i', $signature->identity() ),
                         format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
                     );
-                    add_auth_header( $ctx, $header );
+                    add_auth_header( $self->{'ctx'}, $header );
                 }
             }
         }
@@ -172,11 +174,11 @@ sub eom_callback {
                          : $otype eq 'Mail::DKIM::DkPolicy'           ? 'x-dkim-dkssp'
                          :                                              'x-dkim-policy';
 
-                dbgout( $ctx, 'DKIMPolicy',         $apply, LOG_DEBUG );
-                dbgout( $ctx, 'DKIMPolicyString',   $string, LOG_DEBUG );
-                dbgout( $ctx, 'DKIMPolicyLocation', $location, LOG_DEBUG  );
-                dbgout( $ctx, 'DKIMPolicyName',     $name, LOG_DEBUG  );
-                dbgout( $ctx, 'DKIMPolicyDefault',  $default ? 'yes' : 'no', LOG_DEBUG );
+                $self->dbgout( 'DKIMPolicy',         $apply, LOG_DEBUG );
+                $self->dbgout( 'DKIMPolicyString',   $string, LOG_DEBUG );
+                $self->dbgout( 'DKIMPolicyLocation', $location, LOG_DEBUG  );
+                $self->dbgout( 'DKIMPolicyName',     $name, LOG_DEBUG  );
+                $self->dbgout( 'DKIMPolicyDefault',  $default ? 'yes' : 'no', LOG_DEBUG );
 
                 my $result =
                     $apply eq 'accept'  ? 'pass'
@@ -196,15 +198,15 @@ sub eom_callback {
 
                         my $header = join( q{ },
                             format_header_entry( $type, $result ), $comment, );
-                        add_auth_header( $ctx, $header );
+                        add_auth_header( $self->{'ctx'}, $header );
                     }
                 }
             }
         }
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'DKIM Error - ' . $error );
-        add_auth_header( $ctx, 'dkim=temperror' );
+        $self->log_error( 'DKIM Error - ' . $error );
+        add_auth_header( $self->{'ctx'}, 'dkim=temperror' );
         $priv->{'dkim.failmode'} = 1;
     }
 }

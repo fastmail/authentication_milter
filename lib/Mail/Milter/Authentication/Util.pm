@@ -17,13 +17,11 @@ our @EXPORT = qw{
     format_ctext_no_space
     format_header_comment
     format_header_entry
-    log_error
     add_headers
     prepend_header
     add_auth_header
     add_c_auth_header
     append_header
-    dbgout
     dbgoutwrite
     loginfo
     get_my_hostname

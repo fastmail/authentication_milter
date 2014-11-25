@@ -6,9 +6,10 @@ use warnings;
 our $VERSION = 0.3;
 
 use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Util;
 use Mail::Milter::Authentication::Config qw{ get_config };
+use Mail::Milter::Authentication::Util;
 
+use Mail::Milter::Authentication::Handler::Generic;
 use Mail::Milter::Authentication::Handler::Auth;
 use Mail::Milter::Authentication::Handler::Core;
 use Mail::Milter::Authentication::Handler::DKIM;
@@ -27,18 +28,29 @@ use Sendmail::PMilter qw { :all };
 sub connect_callback {
     # On Connect
     my ( $ctx, $hostname, $sockaddr_in ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Connect', LOG_DEBUG );
     my $priv = {};
+    $priv->{'handler'}->{'generic'} = Mail::Milter::Authentication::Handler::Generic->new( $ctx );
     $ctx->setpriv($priv);
+    $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'Connect', LOG_DEBUG );
     eval {
-        Mail::Milter::Authentication::Handler::Core::connect_callback( $ctx, $hostname, $sockaddr_in );
-        Mail::Milter::Authentication::Handler::Auth::connect_callback( $ctx, $hostname, $sockaddr_in );
-        Mail::Milter::Authentication::Handler::TrustedIP::connect_callback( $ctx, $hostname, $sockaddr_in );
-        Mail::Milter::Authentication::Handler::LocalIP::connect_callback( $ctx, $hostname, $sockaddr_in );
-        Mail::Milter::Authentication::Handler::IPRev::connect_callback( $ctx, $hostname, $sockaddr_in );
+        $priv->{'handler'}->{'auth'}      = Mail::Milter::Authentication::Handler::Auth->new( $ctx );
+        $priv->{'handler'}->{'core'}      = Mail::Milter::Authentication::Handler::Core->new( $ctx );
+        $priv->{'handler'}->{'dkim'}      = Mail::Milter::Authentication::Handler::DKIM->new( $ctx );
+        $priv->{'handler'}->{'dmarc'}     = Mail::Milter::Authentication::Handler::DMARC->new( $ctx );
+        $priv->{'handler'}->{'iprev'}     = Mail::Milter::Authentication::Handler::IPRev->new( $ctx );
+        $priv->{'handler'}->{'localip'}   = Mail::Milter::Authentication::Handler::LocalIP->new( $ctx );
+        $priv->{'handler'}->{'ptr'}       = Mail::Milter::Authentication::Handler::PTR->new( $ctx );
+        $priv->{'handler'}->{'sanitize'}  = Mail::Milter::Authentication::Handler::Sanitize->new( $ctx );
+        $priv->{'handler'}->{'senderid'}  = Mail::Milter::Authentication::Handler::SenderID->new( $ctx );
+        $priv->{'handler'}->{'spf'}       = Mail::Milter::Authentication::Handler::SPF->new( $ctx );
+        $priv->{'handler'}->{'trustedip'} = Mail::Milter::Authentication::Handler::TrustedIP->new( $ctx );
+
+        foreach my $handler (qw{ core auth trustedip localip iprev }) { 
+            $priv->{'handler'}->{$handler}->connect_callback( $hostname, $sockaddr_in );
+        }
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'Connect callback error ' . $error );
+        $priv->{'handler'}->{'generic'}->log_error( 'Connect callback error ' . $error );
     }
     return SMFIS_CONTINUE;
 }
@@ -46,18 +58,19 @@ sub connect_callback {
 sub helo_callback {
     # On HELO
     my ( $ctx, $helo_host ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Helo', LOG_DEBUG );
     my $priv = $ctx->getpriv();
+    $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'Helo', LOG_DEBUG );
     $helo_host = q{} if not $helo_host;
     eval {
         # Take only the first HELO from a connection
         if ( ! exists( $priv->{'core.helo_name'} ) ) {
-            Mail::Milter::Authentication::Handler::Core::helo_callback( $ctx, $helo_host );
-            Mail::Milter::Authentication::Handler::PTR::helo_callback( $ctx, $helo_host );
+            foreach my $handler (qw{ core ptr }) { 
+                $priv->{'handler'}->{$handler}->helo_callback( $helo_host );
+           }
         }
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'HELO callback error ' . $error );
+        $priv->{'handler'}->{'generic'}->log_error( 'HELO callback error ' . $error );
     }
     return SMFIS_CONTINUE;
 }
@@ -66,18 +79,16 @@ sub envfrom_callback {
     # On MAILFROM
     #...
     my ( $ctx, $env_from ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'EnvFrom', LOG_DEBUG );
+    my $priv = $ctx->getpriv();
+    $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'EnvFrom', LOG_DEBUG );
     $env_from = q{} if not $env_from;
     eval {
-        Mail::Milter::Authentication::Handler::Core::envfrom_callback( $ctx, $env_from );
-        Mail::Milter::Authentication::Handler::Sanitize::envfrom_callback( $ctx, $env_from );
-        Mail::Milter::Authentication::Handler::Auth::envfrom_callback( $ctx, $env_from );
-        Mail::Milter::Authentication::Handler::DMARC::envfrom_callback( $ctx, $env_from ); # DMARC MUST go before SPF
-        Mail::Milter::Authentication::Handler::SPF::envfrom_callback( $ctx, $env_from );
-        Mail::Milter::Authentication::Handler::DKIM::envfrom_callback( $ctx, $env_from );
+        foreach my $handler (qw{ core sanitize auth dmarc spf dkim }) { 
+            $priv->{'handler'}->{$handler}->envfrom_callback( $env_from );
+        }
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'Env From callback error ' . $error );
+        $priv->{'handler'}->{'generic'}->log_error( 'Env From callback error ' . $error );
     }
     return SMFIS_CONTINUE;
 }
@@ -86,14 +97,16 @@ sub envrcpt_callback {
     # On RCPTTO
     #...
     my ( $ctx, $env_to ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'EnvRcpt', LOG_DEBUG );
+    my $priv = $ctx->getpriv();
+    $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'EnvRcpt', LOG_DEBUG );
     $env_to = q{} if not $env_to;
     eval {
-        Mail::Milter::Authentication::Handler::Core::envrcpt_callback( $ctx, $env_to );
-        Mail::Milter::Authentication::Handler::DMARC::envrcpt_callback( $ctx, $env_to );
+        foreach my $handler (qw{ core dmarc }) { 
+            $priv->{'handler'}->{$handler}->envrcpt_callback( $env_to );
+        }
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'Rcpt To callback error ' . $error );
+        $priv->{'handler'}->{'generic'}->log_error( 'Rcpt To callback error ' . $error );
     }
     return SMFIS_CONTINUE;
 }
@@ -101,18 +114,16 @@ sub envrcpt_callback {
 sub header_callback {
     # On Each Header
     my ( $ctx, $header, $value ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Header', LOG_DEBUG );
     my $priv = $ctx->getpriv();
+    $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'Header', LOG_DEBUG );
     $value = q{} if not $value;
     eval {
-        Mail::Milter::Authentication::Handler::Core::header_callback( $ctx, $header, $value );
-        Mail::Milter::Authentication::Handler::Sanitize::header_callback( $ctx, $header, $value );
-        Mail::Milter::Authentication::Handler::DKIM::header_callback( $ctx, $header, $value );
-        Mail::Milter::Authentication::Handler::DMARC::header_callback( $ctx, $header, $value );
-        Mail::Milter::Authentication::Handler::SenderID::header_callback( $ctx, $header, $value );
+        foreach my $handler (qw{ core sanitize dkim dmarc senderid }) { 
+            $priv->{'handler'}->{$handler}->header_callback( $header, $value );
+        }
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'Header callback error ' . $error );
+        $priv->{'handler'}->{'generic'}->log_error( 'Header callback error ' . $error );
     }
     return SMFIS_CONTINUE;
 }
@@ -120,13 +131,15 @@ sub header_callback {
 sub eoh_callback {
     # On End of headers
     my ($ctx) = @_;
-    dbgout( $ctx, 'CALLBACK', 'EOH', LOG_DEBUG );
+    my $priv = $ctx->getpriv();
+    $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'EOH', LOG_DEBUG );
     eval {
-        Mail::Milter::Authentication::Handler::DKIM::eoh_callback( $ctx );
-        Mail::Milter::Authentication::Handler::SenderID::eoh_callback( $ctx );
+        foreach my $handler (qw{ dkim senderid }) { 
+            $priv->{'handler'}->{$handler}->eoh_callback();
+        }
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'EOH callback error ' . $error );
+        $priv->{'handler'}->{'generic'}->log_error( 'EOH callback error ' . $error );
     }
     dbgoutwrite($ctx);
     return SMFIS_CONTINUE;
@@ -135,12 +148,13 @@ sub eoh_callback {
 sub body_callback {
     # On each body chunk
     my ( $ctx, $body_chunk, $len ) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Body', LOG_DEBUG );
+    my $priv = $ctx->getpriv();
+    $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'Body', LOG_DEBUG );
     eval {
-        Mail::Milter::Authentication::Handler::DKIM::body_callback( $ctx, $body_chunk, $len );
+        $priv->{'handler'}->{'dkim'}->body_callback( $body_chunk, $len );
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'Body callback error ' . $error );
+        $priv->{'handler'}->{'generic'}->log_error( 'Body callback error ' . $error );
     }
     dbgoutwrite($ctx);
     return SMFIS_CONTINUE;
@@ -149,14 +163,15 @@ sub body_callback {
 sub eom_callback {
     # On End of Message
     my ($ctx) = @_;
-    dbgout( $ctx, 'CALLBACK', 'EOM', LOG_DEBUG );
+    my $priv = $ctx->getpriv();
+    $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'EOM', LOG_DEBUG );
     eval {
-        Mail::Milter::Authentication::Handler::DKIM::eom_callback( $ctx );
-        Mail::Milter::Authentication::Handler::DMARC::eom_callback( $ctx );
-        Mail::Milter::Authentication::Handler::Sanitize::eom_callback( $ctx );
+        foreach my $handler (qw{ dkim dmarc sanitize }) { 
+            $priv->{'handler'}->{$handler}->eom_callback();
+        }
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'EOM callback error ' . $error );
+        $priv->{'handler'}->{'generic'}->log_error( 'EOM callback error ' . $error );
     }
     add_headers($ctx);
     dbgoutwrite($ctx);
@@ -166,7 +181,8 @@ sub eom_callback {
 sub abort_callback {
     # On any out of our control abort
     my ($ctx) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Abort', LOG_DEBUG );
+    my $priv = $ctx->getpriv();
+    $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'Abort', LOG_DEBUG );
     dbgoutwrite($ctx);
     return SMFIS_CONTINUE;
 }
@@ -174,7 +190,8 @@ sub abort_callback {
 sub close_callback {
     # On end of connection
     my ($ctx) = @_;
-    dbgout( $ctx, 'CALLBACK', 'Close', LOG_DEBUG );
+    my $priv = $ctx->getpriv();
+    $priv->{'handler'}->{'generic'}->dbgout( 'CALLBACK', 'Close', LOG_DEBUG );
     dbgoutwrite($ctx);
     return SMFIS_CONTINUE;
 }

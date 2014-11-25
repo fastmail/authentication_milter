@@ -5,6 +5,8 @@ use warnings;
 
 our $VERSION = 0.3;
 
+use base 'Mail::Milter::Authentication::Handler::Generic';
+
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
@@ -13,9 +15,9 @@ use Sys::Syslog qw{:standard :macros};
 use Mail::SPF;
 
 sub envfrom_callback {
-    my ( $ctx, $env_from ) = @_;
+    my ( $self, $env_from ) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_senderid'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
@@ -24,9 +26,9 @@ sub envfrom_callback {
 }
 
 sub header_callback {
-    my ( $ctx, $header, $value ) = @_;
+    my ( $self, $header, $value ) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_senderid'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
@@ -37,9 +39,9 @@ sub header_callback {
 }
 
 sub eoh_callback {
-    my ($ctx) = @_;
+    my ($self) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_senderid'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
@@ -48,11 +50,11 @@ sub eoh_callback {
     my $spf_server;
     eval {
         $spf_server =
-          Mail::SPF::Server->new( 'hostname' => get_my_hostname($ctx) );
+          Mail::SPF::Server->new( 'hostname' => get_my_hostname($self->{'ctx'}) );
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'SenderID Setup Error ' . $error );
-        add_auth_header( $ctx, 'senderid=temperror' );
+        $self->log_error( 'SenderID Setup Error ' . $error );
+        add_auth_header( $self->{'ctx'}, 'senderid=temperror' );
         return;
     }
 
@@ -70,25 +72,25 @@ sub eoh_callback {
         );
 
         my $spf_result = $spf_server->process($spf_request);
-        #$ctx->progress();
+        #$self->{'ctx'}->progress();
 
         my $result_code = $spf_result->code();
-        dbgout( $ctx, 'SenderIdCode', $result_code, LOG_INFO );
+        $self->dbgout( 'SenderIdCode', $result_code, LOG_INFO );
 
         if ( ! ( $CONFIG->{'check_senderid'} == 2 && $result_code eq 'none' ) ) {
             my $auth_header = format_header_entry( 'senderid', $result_code );
-            add_auth_header( $ctx, $auth_header );
+            add_auth_header( $self->{'ctx'}, $auth_header );
 #my $result_local  = $spf_result->local_explanation;
 #my $result_auth   = $spf_result->can( 'authority_explanation' ) ? $spf_result->authority_explanation() : '';
             my $result_header = $spf_result->received_spf_header();
             my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
-            prepend_header( $ctx, $header, $value );
-            dbgout( $ctx, 'SPFHeader', $result_header, LOG_DEBUG );
+            prepend_header( $self->{'ctx'}, $header, $value );
+            $self->dbgout( 'SPFHeader', $result_header, LOG_DEBUG );
         }
     };
     if ( my $error = $@ ) {
-        log_error( $ctx, 'SENDERID Error ' . $error );
-        add_auth_header( $ctx, 'senderid=temperror' );
+        $self->log_error( 'SENDERID Error ' . $error );
+        add_auth_header( $self->{'ctx'}, 'senderid=temperror' );
         return;
     }
 }

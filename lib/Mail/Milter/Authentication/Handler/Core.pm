@@ -5,6 +5,8 @@ use warnings;
 
 our $VERSION = 0.3;
 
+use base 'Mail::Milter::Authentication::Handler::Generic';
+
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
@@ -12,8 +14,8 @@ use Socket;
 use Sys::Syslog qw{:standard :macros};
 
 sub connect_callback {
-    my ( $ctx, $hostname, $sockaddr_in ) = @_;
-    my $priv = $ctx->getpriv();
+    my ( $self, $hostname, $sockaddr_in ) = @_;
+    my $priv = $self->{'ctx'}->getpriv();
     eval {
         my ( $port, $iaddr, $ip_address );
         # Process the connecting IP Address
@@ -28,23 +30,23 @@ sub connect_callback {
         }
         else {
             ## TODO something better here - this should never happen
-            log_error( $ctx, 'Unknown IP address format');
+            $self->log_error( 'Unknown IP address format');
             $ip_address = q{};
         }
         $priv->{'core.ip_address'} = $ip_address;
-        dbgout( $ctx, 'ConnectFrom', $ip_address, LOG_DEBUG );
+        $self->dbgout( 'ConnectFrom', $ip_address, LOG_DEBUG );
     }
 }
 
 sub helo_callback {
-    my ( $ctx, $helo_host ) = @_;
-    my $priv = $ctx->getpriv();
+    my ( $self, $helo_host ) = @_;
+    my $priv = $self->{'ctx'}->getpriv();
     $priv->{'core.helo_name'} = $helo_host;
 }
 
 sub envfrom_callback {
-    my ( $ctx, $env_from ) = @_;
-    my $priv = $ctx->getpriv();
+    my ( $self, $env_from ) = @_;
+    my $priv = $self->{'ctx'}->getpriv();
 
     # Reset private data for this MAIL transaction
     delete $priv->{'core.mail_from'};
@@ -53,19 +55,19 @@ sub envfrom_callback {
     delete $priv->{'core.add_headers'};
 
     $priv->{'core.mail_from'} = $env_from || q{};
-    dbgout( $ctx, 'EnvelopeFrom', $env_from, LOG_DEBUG );
+    $self->dbgout( 'EnvelopeFrom', $env_from, LOG_DEBUG );
 }
 
 sub envrcpt_callback {
-    my ( $ctx, $env_to ) = @_;
-    dbgout( $ctx, 'EnvelopeTo', $env_to, LOG_DEBUG );
+    my ( $self, $env_to ) = @_;
+    $self->dbgout( 'EnvelopeTo', $env_to, LOG_DEBUG );
 }
 
 sub header_callback {
     # On Each Header
-    my ( $ctx, $header, $value ) = @_;
-    my $priv = $ctx->getpriv();
-    dbgout( $ctx, 'Header', $header . ': ' . $value, LOG_DEBUG );
+    my ( $self, $header, $value ) = @_;
+    my $priv = $self->{'ctx'}->getpriv();
+    $self->dbgout( 'Header', $header . ': ' . $value, LOG_DEBUG );
 }
 
 1;

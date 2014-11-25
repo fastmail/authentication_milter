@@ -5,6 +5,8 @@ use warnings;
 
 our $VERSION = 0.3;
 
+use base 'Mail::Milter::Authentication::Handler::Generic';
+
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
@@ -12,9 +14,9 @@ use Sys::Syslog qw{:standard :macros};
 
 sub helo_callback {
     # On HELO
-    my ( $ctx, $helo_host ) = @_;
+    my ( $self, $helo_host ) = @_;
     my $CONFIG = get_config();
-    my $priv = $ctx->getpriv();
+    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_ptr'} );
     return if ( $priv->{'is_local_ip_address'} );
     return if ( $priv->{'is_trusted_ip_address'} );
@@ -25,15 +27,15 @@ sub helo_callback {
     my $helo_name = $priv->{'core.helo_name'};
 
     if ( lc $domain eq lc $helo_name ) {
-        dbgout( $ctx, 'PTRMatch', 'pass', LOG_DEBUG );
-        add_c_auth_header( $ctx,
+        $self->dbgout( 'PTRMatch', 'pass', LOG_DEBUG );
+        add_c_auth_header( $self->{'ctx'},
                 format_header_entry( 'x-ptr', 'pass' ) . q{ }
               . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
               . format_header_entry( 'x-ptr-lookup', $domain ) );
     }
     else {
-        dbgout( $ctx, 'PTRMatch', 'fail', LOG_DEBUG );
-        add_c_auth_header( $ctx,
+        $self->dbgout( 'PTRMatch', 'fail', LOG_DEBUG );
+        add_c_auth_header( $self->{'ctx'},
                 format_header_entry( 'x-ptr', 'fail' ) . q{ }
               . format_header_entry( 'x-ptr-helo',   $helo_name ) . q{ }
               . format_header_entry( 'x-ptr-lookup', $domain ) );
