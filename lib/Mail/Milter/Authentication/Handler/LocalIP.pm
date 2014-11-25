@@ -7,7 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
 use Net::IP;
@@ -45,7 +44,7 @@ sub is_local_ip_address {
 
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     $priv->{ 'is_local_ip_address' } = 0;
     return if ( !$CONFIG->{'check_local_ip'} );

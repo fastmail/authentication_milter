@@ -7,7 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
 use Sys::Syslog qw{:standard :macros};
@@ -16,7 +15,7 @@ use Mail::DMARC::PurePerl;
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );
@@ -72,7 +71,7 @@ sub envfrom_callback {
 
 sub envrcpt_callback {
     my ( $self, $env_to ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );
@@ -92,7 +91,7 @@ sub envrcpt_callback {
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );
@@ -127,7 +126,7 @@ sub header_callback {
 
 sub eom_callback {
     my ( $self ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $priv->{'is_local_ip_address'} );

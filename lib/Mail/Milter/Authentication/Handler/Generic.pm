@@ -13,10 +13,16 @@ use Sys::Syslog qw{:standard :macros};
 sub new {
     my ( $class, $ctx ) = @_;
     my $self = {
-        'ctx' => $ctx,
+        'ctx'    => $ctx,
+        'config' => get_config(),
     };
     bless $self, $class;
     return $self;
+}
+
+sub config {
+    my ( $self ) = @_;
+    return $self->{'config'};
 }
 
 sub dbgout {

@@ -7,7 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
 use Sys::Syslog qw{:standard :macros};
@@ -16,7 +15,7 @@ use Mail::DKIM::Verifier;
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     $priv->{'dkim.failmode'} = 0;
@@ -34,7 +33,7 @@ sub envfrom_callback {
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );
@@ -55,7 +54,7 @@ sub header_callback {
 
 sub eoh_callback {
     my ($self) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );
@@ -65,7 +64,7 @@ sub eoh_callback {
 
 sub body_callback {
     my ( $self, $body_chunk, $len ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );
@@ -78,7 +77,7 @@ sub body_callback {
 
 sub eom_callback {
     my ($self) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $priv->{'dkim.failmode'} );

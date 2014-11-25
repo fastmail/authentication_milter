@@ -7,7 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
 use Sys::Syslog qw{:standard :macros};
@@ -30,7 +29,7 @@ sub envfrom_callback {
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( $priv->{'is_trusted_ip_address'} ); 
     return if ( lc $CONFIG->{'remove_headers'} eq 'no' ) ;
@@ -56,7 +55,7 @@ sub header_callback {
 
 sub eom_callback {
     my ( $self ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( lc $CONFIG->{'remove_headers'} eq 'no' ) ;
     if ( exists( $priv->{'sanitize.remove_auth_headers'} ) ) {

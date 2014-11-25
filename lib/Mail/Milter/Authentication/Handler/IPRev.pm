@@ -7,7 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 use Net::DNS;
 use Net::IP;
@@ -15,7 +14,7 @@ use Sys::Syslog qw{:standard :macros};
 
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_iprev'} );
     return if ( $priv->{'is_local_ip_address'} );

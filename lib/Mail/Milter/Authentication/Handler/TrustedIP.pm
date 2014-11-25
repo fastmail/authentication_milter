@@ -7,7 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
 use Net::IP;
@@ -15,7 +14,7 @@ use Sys::Syslog qw{:standard :macros};
 
 sub is_trusted_ip_address {
     my ( $self, $ip_address ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     return 0 if not exists ( $CONFIG->{'trusted_ip_list'} );
     my $trusted = 0;
     my $ip_obj = Net::IP->new( $ip_address );
@@ -35,7 +34,7 @@ sub is_trusted_ip_address {
 
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     $priv->{ 'is_trusted_ip_address' } = 0;
     return if ( !$CONFIG->{'check_trusted_ip'} );

@@ -6,7 +6,6 @@ use warnings;
 our $VERSION = 0.3;
 
 use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
 use Mail::Milter::Authentication::Handler::Generic;

@@ -7,7 +7,6 @@ our $VERSION = 0.3;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util;
 
 use Sys::Syslog qw{:standard :macros};
@@ -26,7 +25,7 @@ sub connect_callback {
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_auth'} );
     my $auth_name = $self->get_auth_name();
