@@ -14,10 +14,9 @@ use Mail::SPF;
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_senderid'} );
-    return if ( $priv->{'is_local_ip_address'} );
-    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $self->is_local_ip_address() );
+    return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     delete $self->{'from_header'};
 }
@@ -25,10 +24,9 @@ sub envfrom_callback {
 sub header_callback {
     my ( $self, $header, $value ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_senderid'} );
-    return if ( $priv->{'is_local_ip_address'} );
-    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $self->is_local_ip_address() );
+    return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     if ( $header eq 'From' ) {
         $self->{'from_header'} = $value;
@@ -38,10 +36,9 @@ sub header_callback {
 sub eoh_callback {
     my ($self) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_senderid'} );
-    return if ( $priv->{'is_local_ip_address'} );
-    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $self->is_local_ip_address() );
+    return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
 
     my $spf_server;

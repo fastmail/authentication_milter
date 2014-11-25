@@ -11,7 +11,6 @@ use Sys::Syslog qw{:standard :macros};
 
 sub remove_auth_header {
     my ( $self, $value ) = @_;
-    my $priv = $self->{'ctx'}->getpriv();
     if ( !exists( $self->{'emove_auth_headers'} ) ) {
         $self->{'remove_auth_headers'} = [];
     }
@@ -20,7 +19,6 @@ sub remove_auth_header {
     
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    my $priv = $self->{'ctx'}->getpriv();
     delete $self->{'auth_result_header_index'};
     delete $self->{'remove_auth_headers'};
 }
@@ -28,8 +26,7 @@ sub envfrom_callback {
 sub header_callback {
     my ( $self, $header, $value ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
-    return if ( $priv->{'is_trusted_ip_address'} ); 
+    return if ( $self->is_trusted_ip_address() ); 
     return if ( lc $CONFIG->{'remove_headers'} eq 'no' ) ;
     if ( $header eq 'Authentication-Results' ) {
         if ( !exists $self->{'auth_result_header_index'} ) {
@@ -54,7 +51,6 @@ sub header_callback {
 sub eom_callback {
     my ( $self ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( lc $CONFIG->{'remove_headers'} eq 'no' ) ;
     if ( exists( $self->{'remove_auth_headers'} ) ) {
         foreach my $header ( reverse @{ $self->{'remove_auth_headers'} } ) {

@@ -12,7 +12,6 @@ use Sys::Syslog qw{:standard :macros};
 
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
-    my $priv = $self->{'ctx'}->getpriv();
     eval {
         my ( $port, $iaddr, $ip_address );
         # Process the connecting IP Address
@@ -37,19 +36,17 @@ sub connect_callback {
 
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
-    my $priv = $self->{'ctx'}->getpriv();
     $self->{'helo_name'} = $helo_host;
 }
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    my $priv = $self->{'ctx'}->getpriv();
 
     # Reset private data for this MAIL transaction
     delete $self->{'mail_from'};
-    delete $priv->{'core.auth_headers'};
-    delete $priv->{'core.pre_headers'};
-    delete $priv->{'core.add_headers'};
+    delete $self->{'auth_headers'};
+    delete $self->{'pre_headers'};
+    delete $self->{'add_headers'};
 
     $self->{'mail_from'} = $env_from || q{};
     $self->dbgout( 'EnvelopeFrom', $env_from, LOG_DEBUG );
@@ -63,7 +60,6 @@ sub envrcpt_callback {
 sub header_callback {
     # On Each Header
     my ( $self, $header, $value ) = @_;
-    my $priv = $self->{'ctx'}->getpriv();
     $self->dbgout( 'Header', $header . ': ' . $value, LOG_DEBUG );
 }
 

@@ -43,14 +43,13 @@ sub is_local_ip_address {
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
-    $priv->{ 'is_local_ip_address' } = 0;
+    $self->{ 'is_local_ip_address' } = 0;
     return if ( !$CONFIG->{'check_local_ip'} );
     my $ip_address = $self->ip_address();
     if ( $self->is_local_ip_address( $ip_address ) ) {
         $self->dbgout( 'LocalIP', 'pass', LOG_DEBUG );
         $self->add_c_auth_header( 'x-local-ip=pass' );
-        $priv->{ 'is_local_ip_address' } = 1;
+        $self->{ 'is_local_ip_address' } = 1;
     }
 }
 

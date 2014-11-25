@@ -14,7 +14,6 @@ use Mail::DKIM::Verifier;
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     $self->{'failmode'} = 0;
     my $dkim;
@@ -32,7 +31,6 @@ sub envfrom_callback {
 sub header_callback {
     my ( $self, $header, $value ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
     my $dkim = $self->{'obj'};
@@ -53,7 +51,6 @@ sub header_callback {
 sub eoh_callback {
     my ($self) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
     my $dkim = $self->{'obj'};
@@ -63,7 +60,6 @@ sub eoh_callback {
 sub body_callback {
     my ( $self, $body_chunk, $len ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
     my $dkim       = $self->{'obj'};
@@ -76,7 +72,6 @@ sub body_callback {
 sub eom_callback {
     my ($self) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
     my $dkim  = $self->{'obj'};
@@ -157,7 +152,7 @@ sub eom_callback {
         }
 
         # the alleged author of the email may specify how to handle email
-        if ( $CONFIG->{'check_dkim-adsp'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $self->is_authenticated() == 0 ) ) {
+        if ( $CONFIG->{'check_dkim-adsp'} && ( $self->is_local_ip_address() == 0 ) && ( $self->is_trusted_ip_address() == 0 ) && ( $self->is_authenticated() == 0 ) ) {
             foreach my $policy ( $dkim->policies ) {
                 my $apply    = $policy->apply($dkim);
                 my $string   = $policy->as_string();

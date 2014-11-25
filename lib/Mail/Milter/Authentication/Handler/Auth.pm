@@ -17,21 +17,20 @@ sub get_auth_name {
 
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
-    my $priv = $self->{'ctx'}->getpriv();
     $self->{ 'is_authenticated' } = 0;
 } 
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_auth'} );
     my $auth_name = $self->get_auth_name();
     if ( $auth_name ) {
         $self->dbgout( 'AuthenticatedAs', $auth_name, LOG_INFO );
         # Clear the current auth headers ( iprev and helo are already added )
-        $priv->{'core.c_auth_headers'} = [];
-        $priv->{'core.auth_headers'} = [];
+        my $core_handler = $self->get_handler('core');
+        $core_handler->{'c_auth_headers'} = [];
+        $core_handler->{'auth_headers'} = [];
         $self->{'is_authenticated'} = 1;
         $self->add_auth_header( 'auth=pass' );
     }

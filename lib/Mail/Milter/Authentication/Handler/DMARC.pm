@@ -14,10 +14,9 @@ use Mail::DMARC::PurePerl;
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
-    return if ( $priv->{'is_local_ip_address'} );
-    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $self->is_local_ip_address() );
+    return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     delete $self->{'from_header'};
     $self->{'failmode'} = 0;
@@ -70,10 +69,9 @@ sub envfrom_callback {
 sub envrcpt_callback {
     my ( $self, $env_to ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
-    return if ( $priv->{'is_local_ip_address'} );
-    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $self->is_local_ip_address() );
+    return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
     my $dmarc = $self->{'obj'};
@@ -90,10 +88,9 @@ sub envrcpt_callback {
 sub header_callback {
     my ( $self, $header, $value ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
-    return if ( $priv->{'is_local_ip_address'} );
-    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $self->is_local_ip_address() );
+    return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
     if ( lc $header eq 'list-id' ) {
@@ -125,10 +122,9 @@ sub header_callback {
 sub eom_callback {
     my ( $self ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_dmarc'} );
-    return if ( $priv->{'is_local_ip_address'} );
-    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $self->is_local_ip_address() );
+    return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
     eval {

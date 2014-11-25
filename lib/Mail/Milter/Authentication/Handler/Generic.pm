@@ -33,6 +33,18 @@ sub get_handler {
     return $object;
 }
 
+sub is_local_ip_address {
+    my ( $self ) = @_;
+    my $local_handler = $self->get_handler('localip');
+    return $local_handler->{'is_local_ip_address'};
+}
+
+sub is_trusted_ip_address {
+    my ( $self ) = @_;
+    my $trusted_handler = $self->get_handler('trustedip');
+    return $trusted_handler->{'is_trusted_ip_address'};
+}
+
 sub is_authenticated {
     my ( $self ) = @_;
     my $auth_handler = $self->get_handler('auth');
@@ -169,11 +181,11 @@ sub dbgout {
     my ( $self, $key, $value, $priority ) = @_;
     my $ctx = $self->{'ctx'};
     warn "$key: $value\n";
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'core.dbgout'} ) ) {
-        $priv->{'core.dbgout'} = [];
+    my $core_handler = $self->get_handler('core');
+    if ( !exists( $core_handler->{'dbgout'} ) ) {
+        $core_handler->{'dbgout'} = [];
     }
-    push @{ $priv->{'core.dbgout'} },
+    push @{ $core_handler->{'dbgout'} },
       {
         'priority'   => $priority || LOG_INFO,
         'key'        => $key || q{},
@@ -197,9 +209,10 @@ sub dbgoutwrite {
                     | LOG_MASK(LOG_INFO)
 #                    | LOG_MASK(LOG_DEBUG)
         );
-        my $queue_id = $self->get_symval( $ctx, 'i' ) || q{--};
-        if ( exists( $priv->{'core.dbgout'} ) ) {
-            foreach my $entry ( @{ $priv->{'core.dbgout'} } ) {
+        my $queue_id = $self->get_symval( 'i' ) || q{--};
+        my $core_handler = $self->get_handler('core');
+        if ( exists( $core_handler->{'dbgout'} ) ) {
+            foreach my $entry ( @{ $core_handler->{'dbgout'} } ) {
                 my $key      = $entry->{'key'};
                 my $value    = $entry->{'value'};
                 my $priority = $entry->{'priority'};
@@ -208,22 +221,22 @@ sub dbgoutwrite {
             }
         }
         closelog();
-        $priv->{'core.dbgout'} = undef;
+        delete $core_handler->{'dbgout'};
     };
 }
 
 sub add_headers {
     my ($self) = @_;
     my $ctx = $self->{'ctx'};
-    my $priv = $ctx->getpriv();
 
     my $header = $self->get_my_hostname();
     my @auth_headers;
-    if ( exists( $priv->{'core.c_auth_headers'} ) ) {
-        @auth_headers = @{$priv->{'core.c_auth_headers'}};
+    my $core_handler = $self->get_handler('core');
+    if ( exists( $core_handler->{ 'c_auth_headers'} ) ) {
+        @auth_headers = @{$core_handler->{'c_auth_headers'}};
     }
-    if ( exists( $priv->{'core.auth_headers'} ) ) {
-        @auth_headers = ( @auth_headers, @{$priv->{'core.auth_headers'}} );
+    if ( exists( $core_handler->{'auth_headers'} ) ) {
+        @auth_headers = ( @auth_headers, @{$core_handler->{'auth_headers'}} );
     }
     if ( @auth_headers ) {
         $header .= ";\n    ";
@@ -235,8 +248,8 @@ sub add_headers {
 
     $self->prepend_header( 'Authentication-Results', $header );
 
-    if ( exists( $priv->{'core.pre_headers'} ) ) {
-        foreach my $header ( @{ $priv->{'core.pre_headers'} } ) {
+    if ( exists( $core_handler->{'pre_headers'} ) ) {
+        foreach my $header ( @{ $core_handler->{'pre_headers'} } ) {
             $self->dbgout('PreHeader',
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
             ## No support for this in Sendmail::PMilter
@@ -251,8 +264,8 @@ sub add_headers {
         }
     }
 
-    if ( exists( $priv->{'core.add_headers'} ) ) {
-        foreach my $header ( @{ $priv->{'core.add_headers'} } ) {
+    if ( exists( $core_handler->{'add_headers'} ) ) {
+        foreach my $header ( @{ $core_handler->{'add_headers'} } ) {
             $self->dbgout( 'AddHeader',
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
             $ctx->addheader( $header->{'field'}, $header->{'value'} );
@@ -263,11 +276,11 @@ sub add_headers {
 sub prepend_header {
     my ( $self, $field, $value ) = @_;
     my $ctx = $self->{'ctx'};
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'core.pre_headers'} ) ) {
-        $priv->{'core.pre_headers'} = [];
+    my $core_handler = $self->get_handler('core');
+    if ( !exists( $core_handler->{'pre_headers'} ) ) {
+        $core_handler->{'pre_headers'} = [];
     }
-    push @{ $priv->{'core.pre_headers'} },
+    push @{ $core_handler->{'pre_headers'} },
       {
         'field' => $field,
         'value' => $value,
@@ -278,32 +291,32 @@ sub prepend_header {
 sub add_auth_header {
     my ( $self, $value ) = @_;
     my $ctx = $self->{'ctx'};
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'core.auth_headers'} ) ) {
-        $priv->{'core.auth_headers'} = [];
+    my $core_handler = $self->get_handler('core');
+    if ( !exists( $core_handler->{'auth_headers'} ) ) {
+        $core_handler->{'auth_headers'} = [];
     }
-    push @{ $priv->{'core.auth_headers'} }, $value;
+    push @{ $core_handler->{'auth_headers'} }, $value;
 }
 
 sub add_c_auth_header {
     # Connection wide auth headers
     my ( $self, $value ) = @_;
     my $ctx = $self->{'ctx'};
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'core.c_auth_headers'} ) ) {
-        $priv->{'core.c_auth_headers'} = [];
+    my $core_handler = $self->get_handler('core');
+    if ( !exists( $core_handler->{'x_auth_headers'} ) ) {
+        $core_handler->{'c_auth_headers'} = [];
     }
-    push @{ $priv->{'core.c_auth_headers'} }, $value;
+    push @{ $core_handler->{'c_auth_headers'} }, $value;
 }
 
 sub append_header {
     my ( $self, $field, $value ) = @_;
     my $ctx = $self->{'ctx'};
-    my $priv = $ctx->getpriv();
-    if ( !exists( $priv->{'core.add_headers'} ) ) {
-        $priv->{'core.add_headers'} = [];
+    my $core_handler = $self->get_handler('core');
+    if ( !exists( $core_handler->{'add_headers'} ) ) {
+        $core_handler->{'add_headers'} = [];
     }
-    push @{ $priv->{'core.add_headers'} },
+    push @{ $core_handler->{'add_headers'} },
       {
         'field' => $field,
         'value' => $value,

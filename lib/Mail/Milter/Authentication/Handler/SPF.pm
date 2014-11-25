@@ -16,10 +16,9 @@ sub envfrom_callback {
     #...
     my ( $self, $env_from ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_spf'} );
-    return if ( $priv->{'is_local_ip_address'} );
-    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $self->is_local_ip_address() );
+    return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     my $spf_server;
     eval {
@@ -77,8 +76,9 @@ sub envfrom_callback {
             $self->add_auth_header( $auth_header );
         }
 
-        if ( $CONFIG->{'check_dmarc'} && ( $priv->{'is_local_ip_address'} == 0 ) && ( $priv->{'is_trusted_ip_address'} == 0 ) && ( $self->is_authenticated() == 0 ) ) {
-            if ( my $dmarc = $priv->{'dmarc.obj'} ) {
+        if ( $CONFIG->{'check_dmarc'} && ( $self->is_local_ip_address() == 0 ) && ( $self->is_trusted_ip_address() == 0 ) && ( $self->is_authenticated() == 0 ) ) {
+            my $dmarc_handler = $self->get_handler('dmarc');
+            if ( my $dmarc = $dmarc_handler->{'obj'} ) {
                 $dmarc->spf(
                     'domain' => $domain,
                     'scope'  => $scope,

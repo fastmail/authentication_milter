@@ -14,10 +14,9 @@ use Sys::Syslog qw{:standard :macros};
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_iprev'} );
-    return if ( $priv->{'is_local_ip_address'} );
-    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $self->is_local_ip_address() );
+    return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     my $ip_address = $self->ip_address();
     my $i1 = Net::IP->new( $ip_address );

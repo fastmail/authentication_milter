@@ -13,10 +13,9 @@ sub helo_callback {
     # On HELO
     my ( $self, $helo_host ) = @_;
     my $CONFIG = $self->config();
-    my $priv = $self->{'ctx'}->getpriv();
     return if ( !$CONFIG->{'check_ptr'} );
-    return if ( $priv->{'is_local_ip_address'} );
-    return if ( $priv->{'is_trusted_ip_address'} );
+    return if ( $self->is_local_ip_address() );
+    return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
 
     my $iprev_handler = $self->get_handler('iprev');
