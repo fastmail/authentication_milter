@@ -3,7 +3,7 @@ package Mail::Milter::Authentication::Dispatcher;
 use strict;
 use warnings;
 
-our $VERSION = 0.3;
+our $VERSION = 0.4;
 
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Util qw{ loginfo };

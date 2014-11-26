@@ -3,7 +3,7 @@ package Mail::Milter::Authentication::ObjectBroker;
 use strict;
 use warnings;
 
-our $VERSION = 0.3;
+our $VERSION = 0.4;
 
 use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Handler;

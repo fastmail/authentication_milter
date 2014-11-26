@@ -3,7 +3,7 @@ package Mail::Milter::Authentication;
 use strict;
 use warnings;
 
-our $VERSION = 0.3;
+our $VERSION = 0.4;
 
 use English;
 use Mail::Milter::Authentication::Config qw{ get_config };
