@@ -36,6 +36,7 @@ sub envfrom_callback {
         $dmarc = Mail::DMARC::PurePerl->new();
         $dmarc->verbose(1);
         $dmarc->source_ip( $self->ip_address() );
+        $self->{'obj'} = $dmarc;
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC IP Error ' . $error );
@@ -44,7 +45,6 @@ sub envfrom_callback {
         return;
     }
     $self->{'is_list'} = 0;
-    $self->{'obj'}     = $dmarc;
     eval {
         $dmarc->envelope_from($domain_from);
     };
@@ -62,6 +62,7 @@ sub envfrom_callback {
             $self->add_auth_header('dmarc=temperror');
         }
         $self->{'failmode'} = 1;
+        delete $self->{'obj'};
         return;
     }
 }
@@ -82,6 +83,7 @@ sub envrcpt_callback {
         $self->log_error( 'DMARC Rcpt To Error ' . $error );
         $self->add_auth_header('dmarc=temperror');
         $self->{'failmode'} = 1;
+        delete $self->{'obj'};
         return;
     }
 }
@@ -106,6 +108,7 @@ sub header_callback {
             # Currently this does not give reporting feedback to the author domain, this should be changed.
             $self->add_auth_header( 'dmarc=fail (multiple RFC5322 from fields in message)' );
             $self->{'failmode'} = 1;
+            delete $self->{'obj'};
             return;
         }
         $self->{'from_header'} = $value;
@@ -115,6 +118,7 @@ sub header_callback {
             $self->log_error( 'DMARC Header From Error ' . $error );
             $self->add_auth_header('dmarc=temperror');
             $self->{'failmode'} = 1;
+            delete $self->{'obj'};
             return;
         }
     }
@@ -135,6 +139,7 @@ sub eom_callback {
             $self->log_error('DKIM is in failmode, Skipping DMARC');
             $self->add_auth_header('dmarc=temperror');
             $self->{'failmode'} = 1;
+            delete $self->{'obj'};
             return;
         }
         my $dkim = $dkim_handler->{'obj'};

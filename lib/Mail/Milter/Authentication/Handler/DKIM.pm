@@ -19,13 +19,13 @@ sub envfrom_callback {
     my $dkim;
     eval {
         $dkim = Mail::DKIM::Verifier->new();
+        $self->{'obj'} = $dkim;
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMKIM Setup Error ' . $error );
         $self->add_auth_header('dkim=temperror');
         $self->{'failmode'} = 1;
     }
-    $self->{'obj'} = $dkim;
 }
 
 sub header_callback {
@@ -211,6 +211,7 @@ sub eom_callback {
         $self->log_error( 'DKIM Error - ' . $error );
         $self->add_auth_header('dkim=temperror');
         $self->{'failmode'} = 1;
+        delete $self->{'obj'};
     }
 }
 

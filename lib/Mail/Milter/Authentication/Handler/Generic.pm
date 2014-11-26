@@ -49,6 +49,12 @@ sub set_handler {
     $top_handler->{'handler'}->{$handler} = $object;
 }
 
+sub destroy_handler {
+    my ( $self, $handler ) = @_;
+    my $top_handler = $self->get_top_handler();
+    delete $top_handler->{'handler'}->{$handler};
+}
+
 sub write_packet {
     my ( $self, $type, $data ) = @_;
     my $ctx = $self->{'ctx'};

@@ -112,7 +112,24 @@ sub close_callback {
     my $ctx     = shift @args;
     my $priv    = $ctx->getpriv();
     my $handler = $priv->{'handler_object'};
-    return $handler->close_callback(@args);
+    my $return_value = $handler->close_callback(@args);
+
+    # Destroy handlers
+    $handler->destroy_handler( 'generic' );
+    $handler->destroy_handler( 'auth' );
+    $handler->destroy_handler( 'core' );
+    $handler->destroy_handler( 'dkim' );
+    $handler->destroy_handler( 'dmarc' );
+    $handler->destroy_handler( 'iprev' );
+    $handler->destroy_handler( 'localip' );
+    $handler->destroy_handler( 'ptr' );
+    $handler->destroy_handler( 'sanitize' );
+    $handler->destroy_handler( 'senderid' );
+    $handler->destroy_handler( 'spf' );
+    $handler->destroy_handler( 'trustedip' );
+    delete $priv->{'handler_object'}; 
+
+    return $return_value;
 }
 
 1;
