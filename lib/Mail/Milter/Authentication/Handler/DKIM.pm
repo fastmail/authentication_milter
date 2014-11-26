@@ -22,7 +22,7 @@ sub envfrom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMKIM Setup Error ' . $error );
-        $self->add_auth_header( 'dkim=temperror' );
+        $self->add_auth_header('dkim=temperror');
         $self->{'failmode'} = 1;
     }
     $self->{'obj'} = $dkim;
@@ -33,8 +33,8 @@ sub header_callback {
     my $CONFIG = $self->config();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
-    my $dkim = $self->{'obj'};
-    my $EOL    = "\015\012";
+    my $dkim       = $self->{'obj'};
+    my $EOL        = "\015\012";
     my $dkim_chunk = $header . ': ' . $value . $EOL;
     $dkim_chunk =~ s/\015?\012/$EOL/g;
     $dkim->PRINT($dkim_chunk);
@@ -54,7 +54,7 @@ sub eoh_callback {
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
     my $dkim = $self->{'obj'};
-    $dkim->PRINT( "\015\012" );
+    $dkim->PRINT("\015\012");
 }
 
 sub body_callback {
@@ -64,7 +64,7 @@ sub body_callback {
     return if ( $self->{'failmode'} );
     my $dkim       = $self->{'obj'};
     my $dkim_chunk = $body_chunk;
-    my $EOL    = "\015\012";
+    my $EOL        = "\015\012";
     $dkim_chunk =~ s/\015?\012/$EOL/g;
     $dkim->PRINT($dkim_chunk);
 }
@@ -74,7 +74,7 @@ sub eom_callback {
     my $CONFIG = $self->config();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
-    my $dkim  = $self->{'obj'};
+    my $dkim = $self->{'obj'};
     eval {
         $dkim->CLOSE();
 
@@ -83,8 +83,8 @@ sub eom_callback {
 
         $self->dbgout( 'DKIMResult', $dkim_result_detail, LOG_INFO );
 
-        if ( ! $dkim->signatures ) {
-            if ( ! ( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
+        if ( !$dkim->signatures ) {
+            if ( !( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
                 $self->add_auth_header(
                     $self->format_header_entry( 'dkim', $dkim_result )
                       . ' (no signatures found)' );
@@ -96,17 +96,23 @@ sub eom_callback {
             $self->dbgout( 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
             my $signature_result        = $signature->result();
             my $signature_result_detail = $signature->result_detail();
-           
+
             my $result_comment = q{};
             if ( $signature_result ne 'pass' and $signature_result ne 'none' ) {
-              $signature_result_detail =~ /$signature_result \((.*)\)/;
-              $result_comment = $1 . '; ';
+                $signature_result_detail =~ /$signature_result \((.*)\)/;
+                $result_comment = $1 . '; ';
             }
-            if ( ! ( $CONFIG->{'check_dkim'} == 2 && $signature_result eq 'none' ) ) {
+            if (
+                !(
+                    $CONFIG->{'check_dkim'} == 2 && $signature_result eq 'none'
+                )
+              )
+            {
                 my $otype = ref $signature;
-                my $type = $otype eq 'Mail::DKIM::DkSignature' ? 'domainkeys'
-                         : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
-                         :                                       'dkim';
+                my $type =
+                    $otype eq 'Mail::DKIM::DkSignature' ? 'domainkeys'
+                  : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
+                  :                                       'dkim';
                 $self->dbgout( 'DKIMSignatureType', $type, LOG_DEBUG );
 
                 my $key_data = q{};
@@ -129,7 +135,7 @@ sub eom_callback {
                         $self->format_header_entry( 'header.d', $signature->domain() ),
                         $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
                     );
-                    $self->add_auth_header( $header );
+                    $self->add_auth_header($header);
                 }
                 else {
                     my $header = join(
@@ -145,13 +151,17 @@ sub eom_callback {
                         $self->format_header_entry( 'header.i', $signature->identity() ),
                         $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
                     );
-                    $self->add_auth_header( $header );
+                    $self->add_auth_header($header);
                 }
             }
         }
 
         # the alleged author of the email may specify how to handle email
-        if ( $CONFIG->{'check_dkim-adsp'} && ( $self->is_local_ip_address() == 0 ) && ( $self->is_trusted_ip_address() == 0 ) && ( $self->is_authenticated() == 0 ) ) {
+        if (   $CONFIG->{'check_dkim-adsp'}
+            && ( $self->is_local_ip_address() == 0 )
+            && ( $self->is_trusted_ip_address() == 0 )
+            && ( $self->is_authenticated() == 0 ) )
+        {
             foreach my $policy ( $dkim->policies ) {
                 my $apply    = $policy->apply($dkim);
                 my $string   = $policy->as_string();
@@ -160,16 +170,18 @@ sub eom_callback {
                 my $default  = $policy->is_implied_default_policy();
 
                 my $otype = ref $policy;
-                my $type = $otype eq 'Mail::DKIM::AuthorDomainPolicy' ? 'dkim-adsp'
-                         : $otype eq 'Mail::DKIM::DkimPolicy'         ? 'x-dkim-ssp'
-                         : $otype eq 'Mail::DKIM::DkPolicy'           ? 'x-dkim-dkssp'
-                         :                                              'x-dkim-policy';
+                my $type =
+                    $otype eq 'Mail::DKIM::AuthorDomainPolicy' ? 'dkim-adsp'
+                  : $otype eq 'Mail::DKIM::DkimPolicy'         ? 'x-dkim-ssp'
+                  : $otype eq 'Mail::DKIM::DkPolicy'           ? 'x-dkim-dkssp'
+                  :   'x-dkim-policy';
 
-                $self->dbgout( 'DKIMPolicy',         $apply, LOG_DEBUG );
-                $self->dbgout( 'DKIMPolicyString',   $string, LOG_DEBUG );
-                $self->dbgout( 'DKIMPolicyLocation', $location, LOG_DEBUG  );
-                $self->dbgout( 'DKIMPolicyName',     $name, LOG_DEBUG  );
-                $self->dbgout( 'DKIMPolicyDefault',  $default ? 'yes' : 'no', LOG_DEBUG );
+                $self->dbgout( 'DKIMPolicy',         $apply,    LOG_DEBUG );
+                $self->dbgout( 'DKIMPolicyString',   $string,   LOG_DEBUG );
+                $self->dbgout( 'DKIMPolicyLocation', $location, LOG_DEBUG );
+                $self->dbgout( 'DKIMPolicyName',     $name,     LOG_DEBUG );
+                $self->dbgout( 'DKIMPolicyDefault', $default ? 'yes' : 'no',
+                    LOG_DEBUG );
 
                 my $result =
                     $apply eq 'accept'  ? 'pass'
@@ -197,7 +209,7 @@ sub eom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DKIM Error - ' . $error );
-        $self->add_auth_header( 'dkim=temperror' );
+        $self->add_auth_header('dkim=temperror');
         $self->{'failmode'} = 1;
     }
 }

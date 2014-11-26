@@ -21,15 +21,16 @@ sub new {
 }
 
 sub config {
-    my ( $self ) = @_;
+    my ($self) = @_;
     return $self->{'config'};
 }
 
 sub get_top_handler {
-    my ( $self ) = @_;
-    my $ctx = $self->{'ctx'};
-    my $priv = $ctx->getpriv();
+    my ($self) = @_;
+    my $ctx    = $self->{'ctx'};
+    my $priv   = $ctx->getpriv();
     my $object = $priv->{'handler_object'};
+
     #weaken $object;
     return $object;
 
@@ -37,74 +38,75 @@ sub get_top_handler {
 
 sub get_handler {
     my ( $self, $handler ) = @_;
-    my $top_handler = $self->get_top_handler();    
-    my $object = $top_handler->{'handler'}->{ $handler };
+    my $top_handler = $self->get_top_handler();
+    my $object      = $top_handler->{'handler'}->{$handler};
     return $object;
 }
 
 sub set_handler {
     my ( $self, $handler, $object ) = @_;
-    my $top_handler = $self->get_top_handler();    
-    $top_handler->{'handler'}->{ $handler } = $object;
+    my $top_handler = $self->get_top_handler();
+    $top_handler->{'handler'}->{$handler} = $object;
 }
 
 sub write_packet {
-        my ( $self, $type, $data ) = @_;
-        my $ctx = $self->{'ctx'};
-        $ctx->write_packet( $type, $data );
+    my ( $self, $type, $data ) = @_;
+    my $ctx = $self->{'ctx'};
+    $ctx->write_packet( $type, $data );
 }
 
 sub add_header {
-        my ( $self, $key, $value ) = @_;
-        my $ctx = $self->{'ctx'};
-        $ctx->addheader( $key, $value );
+    my ( $self, $key, $value ) = @_;
+    my $ctx = $self->{'ctx'};
+    $ctx->addheader( $key, $value );
 }
 
 sub chgheader {
-        my ( $self, $key, $index, $value ) = @_;
-        my $ctx = $self->{'ctx'};
-        $ctx->chgheader( $key, $index, $value );
+    my ( $self, $key, $index, $value ) = @_;
+    my $ctx = $self->{'ctx'};
+    $ctx->chgheader( $key, $index, $value );
 }
 
 sub is_local_ip_address {
-    my ( $self ) = @_;
+    my ($self) = @_;
     my $local_handler = $self->get_handler('localip');
     return $local_handler->{'is_local_ip_address'};
 }
 
 sub is_trusted_ip_address {
-    my ( $self ) = @_;
+    my ($self) = @_;
     my $trusted_handler = $self->get_handler('trustedip');
     return $trusted_handler->{'is_trusted_ip_address'};
 }
 
 sub is_authenticated {
-    my ( $self ) = @_;
+    my ($self) = @_;
     my $auth_handler = $self->get_handler('auth');
     return $auth_handler->{'is_authenticated'};
 }
 
 sub ip_address {
-    my ( $self ) = @_;
+    my ($self) = @_;
     my $core_handler = $self->get_handler('core');
     return $core_handler->{'ip_address'};
 }
 
 sub helo_name {
-    my ( $self ) = @_;
+    my ($self) = @_;
     my $core_handler = $self->get_handler('core');
     return $core_handler->{'helo_name'};
 }
 
 sub mail_from {
-    my ( $self ) = @_;
+    my ($self) = @_;
     my $core_handler = $self->get_handler('core');
     return $core_handler->{'mail_from'};
 }
 
 sub format_ctext {
+
     # Return ctext (but with spaces intact)
-    my ($self,$text) = @_;
+    my ( $self, $text ) = @_;
     $text =~ s/\t/ /g;
     $text =~ s/\n/ /g;
     $text =~ s/\r/ /g;
@@ -115,20 +117,20 @@ sub format_ctext {
 }
 
 sub format_ctext_no_space {
-    my ($self,$text) = @_;
+    my ( $self, $text ) = @_;
     $text = $self->format_ctext($text);
     $text =~ s/ //g;
     return $text;
 }
 
 sub format_header_comment {
-    my ($self,$comment) = @_;
+    my ( $self, $comment ) = @_;
     $comment = $self->format_ctext($comment);
     return $comment;
 }
 
 sub format_header_entry {
-    my ( $self,$key, $value ) = @_;
+    my ( $self, $key, $value ) = @_;
     $key   = $self->format_ctext_no_space($key);
     $value = $self->format_ctext_no_space($value);
     my $string = $key . '=' . $value;
@@ -136,7 +138,7 @@ sub format_header_entry {
 }
 
 sub get_domain_from {
-    my ($self,$address) = @_;
+    my ( $self, $address ) = @_;
     $address = $self->get_address_from($address);
     my $domain = 'localhost.localdomain';
     $address =~ s/<//g;
@@ -148,7 +150,7 @@ sub get_domain_from {
 }
 
 sub get_address_from {
-    my ($self,$address) = @_;
+    my ( $self, $address ) = @_;
     my @addresses = Email::Address->parse($address);
     if (@addresses) {
         my $first = $addresses[0];
@@ -160,10 +162,9 @@ sub get_address_from {
     }
 }
 
-
 sub get_my_hostname {
     my ($self) = @_;
-    return $self->get_symval( 'j' );
+    return $self->get_symval('j');
 }
 
 sub is_hostname_mine {
@@ -173,7 +174,7 @@ sub is_hostname_mine {
     my $hostname = $self->get_my_hostname();
     my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
 
-    if ( exists ( $CONFIG->{'hosts_to_remove'} ) ) {
+    if ( exists( $CONFIG->{'hosts_to_remove'} ) ) {
         foreach my $remove_hostname ( @{ $CONFIG->{'hosts_to_remove'} } ) {
             if (
                 substr( lc $check_hostname, ( 0 - length($remove_hostname) ) ) eq
@@ -195,16 +196,17 @@ sub is_hostname_mine {
 sub get_symval {
     my ( $self, $key ) = @_;
     my $ctx = $self->{'ctx'};
-    my $val = $ctx->getsymval( $key );
-    return $val if defined( $val );
+    my $val = $ctx->getsymval($key);
+    return $val if defined($val);
+
     # We didn't find it?
     # PMilter::Context fails to get the queue id from postfix as it is
     # not searching symbols for the correct code. Rewrite this here.
     # Intend to patch PMilter to fix this.
-    my $symbols = $ctx->{'symbols'}; ## Internals, here be dragons!
+    my $symbols = $ctx->{'symbols'};    ## Internals, here be dragons!
     foreach my $code ( keys %{$symbols} ) {
         $val = $symbols->{$code}->{$key};
-        return $val if defined( $val );
+        return $val if defined($val);
     }
     return;
 }
@@ -218,9 +220,9 @@ sub dbgout {
     }
     push @{ $core_handler->{'dbgout'} },
       {
-        'priority'   => $priority || LOG_INFO,
-        'key'        => $key || q{},
-        'value'      => $value || q{},
+        'priority' => $priority || LOG_INFO,
+        'key'      => $key      || q{},
+        'value'    => $value    || q{},
       };
 }
 
@@ -237,15 +239,15 @@ sub dbgoutwrite {
                     | LOG_MASK(LOG_INFO)
 #                    | LOG_MASK(LOG_DEBUG)
         );
-        my $queue_id = $self->get_symval( 'i' ) || q{--};
+        my $queue_id = $self->get_symval('i') || q{--};
         my $core_handler = $self->get_handler('core');
         if ( exists( $core_handler->{'dbgout'} ) ) {
             foreach my $entry ( @{ $core_handler->{'dbgout'} } ) {
                 my $key      = $entry->{'key'};
                 my $value    = $entry->{'value'};
                 my $priority = $entry->{'priority'};
-                my $line = "$queue_id: $key: $value";
-                syslog($priority, $line);
+                my $line     = "$queue_id: $key: $value";
+                syslog( $priority, $line );
             }
         }
         closelog();
@@ -259,13 +261,13 @@ sub add_headers {
     my $header = $self->get_my_hostname();
     my @auth_headers;
     my $core_handler = $self->get_handler('core');
-    if ( exists( $core_handler->{ 'c_auth_headers'} ) ) {
-        @auth_headers = @{$core_handler->{'c_auth_headers'}};
+    if ( exists( $core_handler->{'c_auth_headers'} ) ) {
+        @auth_headers = @{ $core_handler->{'c_auth_headers'} };
     }
     if ( exists( $core_handler->{'auth_headers'} ) ) {
-        @auth_headers = ( @auth_headers, @{$core_handler->{'auth_headers'}} );
+        @auth_headers = ( @auth_headers, @{ $core_handler->{'auth_headers'} } );
     }
-    if ( @auth_headers ) {
+    if (@auth_headers) {
         $header .= ";\n    ";
         $header .= join( ";\n    ", sort @auth_headers );
     }
@@ -277,7 +279,7 @@ sub add_headers {
 
     if ( exists( $core_handler->{'pre_headers'} ) ) {
         foreach my $header ( @{ $core_handler->{'pre_headers'} } ) {
-            $self->dbgout('PreHeader',
+            $self->dbgout( 'PreHeader',
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
             ## No support for this in Sendmail::PMilter
             ## so we shall write the packet manually.
@@ -313,7 +315,6 @@ sub prepend_header {
       };
 }
 
-
 sub add_auth_header {
     my ( $self, $value ) = @_;
     my $core_handler = $self->get_handler('core');
@@ -324,6 +325,7 @@ sub add_auth_header {
 }
 
 sub add_c_auth_header {
+
     # Connection wide auth headers
     my ( $self, $value ) = @_;
     my $core_handler = $self->get_handler('core');

@@ -12,8 +12,8 @@ use Sys::Syslog qw{:standard :macros};
 
 sub is_local_ip_address {
     my ( $self, $ip_address ) = @_;
-    my $ip = Net::IP->new( $ip_address );
-    my $ip_type = $ip->iptype();
+    my $ip       = Net::IP->new($ip_address);
+    my $ip_type  = $ip->iptype();
     my $type_map = {
         'PRIVATE'              => 1,
         'SHARED'               => 1,
@@ -43,13 +43,13 @@ sub is_local_ip_address {
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     my $CONFIG = $self->config();
-    $self->{ 'is_local_ip_address' } = 0;
+    $self->{'is_local_ip_address'} = 0;
     return if ( !$CONFIG->{'check_local_ip'} );
     my $ip_address = $self->ip_address();
-    if ( $self->is_local_ip_address( $ip_address ) ) {
+    if ( $self->is_local_ip_address($ip_address) ) {
         $self->dbgout( 'LocalIP', 'pass', LOG_DEBUG );
-        $self->add_c_auth_header( 'x-local-ip=pass' );
-        $self->{ 'is_local_ip_address' } = 1;
+        $self->add_c_auth_header('x-local-ip=pass');
+        $self->{'is_local_ip_address'} = 1;
     }
 }
 

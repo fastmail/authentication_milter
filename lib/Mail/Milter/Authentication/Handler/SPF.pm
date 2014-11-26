@@ -12,6 +12,7 @@ use Sys::Syslog qw{:standard :macros};
 use Mail::SPF;
 
 sub envfrom_callback {
+
     # On MAILFROM
     #...
     my ( $self, $env_from ) = @_;
@@ -25,9 +26,10 @@ sub envfrom_callback {
         $spf_server =
           Mail::SPF::Server->new( 'hostname' => $self->get_my_hostname() );
     };
+
     if ( my $error = $@ ) {
         $self->log_error( 'SPF Setup Error ' . $error );
-        $self->add_auth_header( 'spf=temperror' );
+        $self->add_auth_header('spf=temperror');
         return;
     }
 
@@ -37,17 +39,17 @@ sub envfrom_callback {
 
     my $identity;
     my $domain;
-    if ( ! $env_from ) {
+    if ( !$env_from ) {
         $identity = $self->helo_name();
         $domain   = $identity;
         $scope    = 'helo';
     }
     else {
-        $identity = $self->get_address_from( $env_from );
+        $identity = $self->get_address_from($env_from);
         $domain   = $self->get_domain_from($identity);
     }
 
-    if ( ! $identity ) {
+    if ( !$identity ) {
         $identity = $self->helo_name();
         $domain   = $identity;
         $scope    = 'helo';
@@ -71,11 +73,15 @@ sub envfrom_callback {
             $self->format_header_entry( 'smtp.mailfrom', $self->get_address_from( $env_from ) ),
             $self->format_header_entry( 'smtp.helo',     $self->helo_name() ),
         );
-        if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
-            $self->add_auth_header( $auth_header );
+        if ( !( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
+            $self->add_auth_header($auth_header);
         }
 
-        if ( $CONFIG->{'check_dmarc'} && ( $self->is_local_ip_address() == 0 ) && ( $self->is_trusted_ip_address() == 0 ) && ( $self->is_authenticated() == 0 ) ) {
+        if (   $CONFIG->{'check_dmarc'}
+            && ( $self->is_local_ip_address() == 0 )
+            && ( $self->is_trusted_ip_address() == 0 )
+            && ( $self->is_authenticated() == 0 ) )
+        {
             my $dmarc_handler = $self->get_handler('dmarc');
             if ( my $dmarc = $dmarc_handler->{'obj'} ) {
                 $dmarc->spf(
@@ -88,7 +94,7 @@ sub envfrom_callback {
 
         $self->dbgout( 'SPFCode', $result_code, LOG_INFO );
 
-        if ( ! ( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
+        if ( !( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
             my $result_header = $spf_result->received_spf_header();
             my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
             $self->prepend_header( $header, $value );
@@ -97,7 +103,7 @@ sub envfrom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'SPF Error ' . $error );
-        $self->add_auth_header( 'spf=temperror' );
+        $self->add_auth_header('spf=temperror');
     }
 
 }

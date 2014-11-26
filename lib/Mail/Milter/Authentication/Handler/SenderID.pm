@@ -48,14 +48,13 @@ sub eoh_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'SenderID Setup Error ' . $error );
-        $self->add_auth_header( 'senderid=temperror' );
+        $self->add_auth_header('senderid=temperror');
         return;
     }
 
     my $scope = 'pra';
 
     my $identity = $self->get_address_from( $self->{'from_header'} );
-
 
     eval {
         my $spf_request = Mail::SPF::Request->new(
@@ -84,7 +83,7 @@ sub eoh_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'SENDERID Error ' . $error );
-        $self->add_auth_header( 'senderid=temperror' );
+        $self->add_auth_header('senderid=temperror');
         return;
     }
 }

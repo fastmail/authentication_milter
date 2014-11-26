@@ -24,7 +24,7 @@ sub envfrom_callback {
     $env_from = q{} if $env_from eq '<>';
 
     my $domain_from;
-    if ( ! $env_from ) {
+    if ( !$env_from ) {
         $domain_from = $self->helo_name();
     }
     else {
@@ -35,11 +35,11 @@ sub envfrom_callback {
     eval {
         $dmarc = Mail::DMARC::PurePerl->new();
         $dmarc->verbose(1);
-        $dmarc->source_ip($self->ip_address())
+        $dmarc->source_ip( $self->ip_address() );
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC IP Error ' . $error );
-        $self->add_auth_header( 'dmarc=temperror' );
+        $self->add_auth_header('dmarc=temperror');
         $self->{'failmode'} = 1;
         return;
     }
@@ -59,7 +59,7 @@ sub envfrom_callback {
             $self->log_error( 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
             $self->log_error( 'DMARC Debug Helo: ' . $self->helo_name() );
             $self->log_error( 'DMARC Debug Envfrom: ' . $env_from );
-            $self->add_auth_header( 'dmarc=temperror' );
+            $self->add_auth_header('dmarc=temperror');
         }
         $self->{'failmode'} = 1;
         return;
@@ -74,12 +74,13 @@ sub envrcpt_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
-    my $dmarc = $self->{'obj'};
+    my $dmarc       = $self->{'obj'};
     my $envelope_to = $self->get_domain_from($env_to);
     eval { $dmarc->envelope_to($envelope_to) };
+
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Rcpt To Error ' . $error );
-        $self->add_auth_header( 'dmarc=temperror' );
+        $self->add_auth_header('dmarc=temperror');
         $self->{'failmode'} = 1;
         return;
     }
@@ -94,7 +95,7 @@ sub header_callback {
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
     if ( lc $header eq 'list-id' ) {
-        $self->dbgout( 'DMARCListId', 'List detected: ' . $value , LOG_INFO );
+        $self->dbgout( 'DMARCListId', 'List detected: ' . $value, LOG_INFO );
         $self->{'is_list'} = 1;
     }
     if ( $header eq 'From' ) {
@@ -112,7 +113,7 @@ sub header_callback {
         eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
         if ( my $error = $@ ) {
             $self->log_error( 'DMARC Header From Error ' . $error );
-            $self->add_auth_header( 'dmarc=temperror' );
+            $self->add_auth_header('dmarc=temperror');
             $self->{'failmode'} = 1;
             return;
         }
@@ -120,7 +121,7 @@ sub header_callback {
 }
 
 sub eom_callback {
-    my ( $self ) = @_;
+    my ($self) = @_;
     my $CONFIG = $self->config();
     return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $self->is_local_ip_address() );
@@ -128,20 +129,20 @@ sub eom_callback {
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
     eval {
-        my $dmarc = $self->{'obj'};
-        my $dkim_handler  = $self->get_handler('dkim');
+        my $dmarc        = $self->{'obj'};
+        my $dkim_handler = $self->get_handler('dkim');
         if ( $dkim_handler->{'failmode'} ) {
-            $self->log_error( 'DKIM is in failmode, Skipping DMARC' );
-            $self->add_auth_header( 'dmarc=temperror' );
+            $self->log_error('DKIM is in failmode, Skipping DMARC');
+            $self->add_auth_header('dmarc=temperror');
             $self->{'failmode'} = 1;
             return;
         }
-        my $dkim  = $dkim_handler->{'obj'};
+        my $dkim = $dkim_handler->{'obj'};
         $dmarc->dkim($dkim);
         my $dmarc_result = $dmarc->validate();
         my $dmarc_code   = $dmarc_result->result;
         $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
-        if ( ! ( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {
+        if ( !( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {
             my $dmarc_policy;
             if ( $dmarc_code ne 'pass' ) {
                 $dmarc_policy = eval { $dmarc_result->disposition() };
@@ -165,12 +166,13 @@ sub eom_callback {
             $dmarc_header .= ' '
               . $self->format_header_entry( 'header.from',
                 $self->get_domain_from( $self->{'from_header'} ) );
-            $self->add_auth_header( $dmarc_header );
+            $self->add_auth_header($dmarc_header);
         }
-            # Try as best we can to save a report, but don't stress if it fails.
-        my $rua = eval{ $dmarc_result->published()->rua(); };
-        if ( $rua ) {
-            eval{
+
+        # Try as best we can to save a report, but don't stress if it fails.
+        my $rua = eval { $dmarc_result->published()->rua(); };
+        if ($rua) {
+            eval {
                 $self->dbgout( 'DMARCReportTo', $rua, LOG_INFO );
                 $dmarc->save_aggregate();
             };
@@ -181,7 +183,7 @@ sub eom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Error ' . $error );
-        $self->add_auth_header( 'dmarc=temperror' );
+        $self->add_auth_header('dmarc=temperror');
         return;
     }
 }

@@ -14,24 +14,25 @@ sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     eval {
         my ( $port, $iaddr, $ip_address );
+
         # Process the connecting IP Address
-        my $ip_length = length( $sockaddr_in );
+        my $ip_length = length($sockaddr_in);
         if ( $ip_length eq 16 ) {
             ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
             $ip_address = inet_ntoa($iaddr);
         }
         elsif ( $ip_length eq 28 ) {
             ( $port, $iaddr ) = sockaddr_in6($sockaddr_in);
-            $ip_address = Socket::inet_ntop(AF_INET6, $iaddr);
+            $ip_address = Socket::inet_ntop( AF_INET6, $iaddr );
         }
         else {
             ## TODO something better here - this should never happen
-            $self->log_error( 'Unknown IP address format');
+            $self->log_error('Unknown IP address format');
             $ip_address = q{};
         }
         $self->{'ip_address'} = $ip_address;
         $self->dbgout( 'ConnectFrom', $ip_address, LOG_DEBUG );
-    }
+    };
 }
 
 sub helo_callback {
@@ -58,6 +59,7 @@ sub envrcpt_callback {
 }
 
 sub header_callback {
+
     # On Each Header
     my ( $self, $header, $value ) = @_;
     $self->dbgout( 'Header', $header . ': ' . $value, LOG_DEBUG );
