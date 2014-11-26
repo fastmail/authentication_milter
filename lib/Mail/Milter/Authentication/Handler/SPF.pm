@@ -63,7 +63,6 @@ sub envfrom_callback {
         );
 
         my $spf_result = $spf_server->process($spf_request);
-        #$self->{'ctx'}->progress();
 
         my $result_code = $spf_result->code();
 

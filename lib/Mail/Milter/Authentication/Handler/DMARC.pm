@@ -139,7 +139,6 @@ sub eom_callback {
         my $dkim  = $dkim_handler->{'obj'};
         $dmarc->dkim($dkim);
         my $dmarc_result = $dmarc->validate();
-        #$self->{'ctx'}->progress();
         my $dmarc_code   = $dmarc_result->result;
         $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
         if ( ! ( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {

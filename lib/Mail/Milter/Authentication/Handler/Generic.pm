@@ -135,7 +135,6 @@ sub get_my_hostname {
 
 sub is_hostname_mine {
     my ( $self, $check_hostname ) = @_;
-    my $ctx = $self->{'ctx'};
     my $CONFIG = $self->config();
 
     my $hostname = $self->get_my_hostname();
@@ -179,7 +178,6 @@ sub get_symval {
 
 sub dbgout {
     my ( $self, $key, $value, $priority ) = @_;
-    my $ctx = $self->{'ctx'};
     warn "$key: $value\n";
     my $core_handler = $self->get_handler('core');
     if ( !exists( $core_handler->{'dbgout'} ) ) {
@@ -275,7 +273,6 @@ sub add_headers {
 
 sub prepend_header {
     my ( $self, $field, $value ) = @_;
-    my $ctx = $self->{'ctx'};
     my $core_handler = $self->get_handler('core');
     if ( !exists( $core_handler->{'pre_headers'} ) ) {
         $core_handler->{'pre_headers'} = [];
@@ -290,7 +287,6 @@ sub prepend_header {
 
 sub add_auth_header {
     my ( $self, $value ) = @_;
-    my $ctx = $self->{'ctx'};
     my $core_handler = $self->get_handler('core');
     if ( !exists( $core_handler->{'auth_headers'} ) ) {
         $core_handler->{'auth_headers'} = [];
@@ -301,7 +297,6 @@ sub add_auth_header {
 sub add_c_auth_header {
     # Connection wide auth headers
     my ( $self, $value ) = @_;
-    my $ctx = $self->{'ctx'};
     my $core_handler = $self->get_handler('core');
     if ( !exists( $core_handler->{'x_auth_headers'} ) ) {
         $core_handler->{'c_auth_headers'} = [];
@@ -311,7 +306,6 @@ sub add_c_auth_header {
 
 sub append_header {
     my ( $self, $field, $value ) = @_;
-    my $ctx = $self->{'ctx'};
     my $core_handler = $self->get_handler('core');
     if ( !exists( $core_handler->{'add_headers'} ) ) {
         $core_handler->{'add_headers'} = [];

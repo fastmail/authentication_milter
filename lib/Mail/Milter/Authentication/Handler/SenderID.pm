@@ -67,7 +67,6 @@ sub eoh_callback {
         );
 
         my $spf_result = $spf_server->process($spf_request);
-        #$self->{'ctx'}->progress();
 
         my $result_code = $spf_result->code();
         $self->dbgout( 'SenderIdCode', $result_code, LOG_INFO );

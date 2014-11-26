@@ -77,7 +77,6 @@ sub eom_callback {
     my $dkim  = $self->{'obj'};
     eval {
         $dkim->CLOSE();
-        #$ctx->progress();
 
         my $dkim_result        = $dkim->result;
         my $dkim_result_detail = $dkim->result_detail;

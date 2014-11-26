@@ -29,7 +29,6 @@ sub connect_callback {
     # We do not consider multiple PTR records,
     # as this is not a recomended setup
     my $packet = $resolver->query( $ip_address, 'PTR' );
-    #$self->{'ctx'}->progress();
     if ($packet) {
         foreach my $rr ( $packet->answer ) {
             next unless $rr->type eq "PTR";
@@ -47,7 +46,6 @@ sub connect_callback {
     my $a_error;
     if ($domain) {
         my $packet = $resolver->query( $domain, 'A' );
-        #$self->{'ctx'}->progress();
         if ($packet) {
           APACKET:
             foreach my $rr ( $packet->answer ) {
@@ -73,7 +71,6 @@ sub connect_callback {
 
     if ( $domain && !$result ) {
         my $packet = $resolver->query( $domain, 'AAAA' );
-        #$self->{'ctx'}->progress();
         if ($packet) {
           APACKET:
             foreach my $rr ( $packet->answer ) {
