@@ -17,18 +17,18 @@ sub connect_callback {
         my ( $port, $iaddr, $ip_address );
 
         # Process the connecting IP Address
-        my $ip_length = length($sockaddr_in);
-        if ( $ip_length eq 16 ) {
+        my $family = sockaddr_family($sockaddr_in);
+        if ( $family == AF_INET ) {
             ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
             $ip_address = inet_ntoa($iaddr);
         }
-        elsif ( $ip_length eq 28 ) {
+        elsif ( $family == AF_INET6 ) {
             ( $port, $iaddr ) = sockaddr_in6($sockaddr_in);
             $ip_address = Socket::inet_ntop( AF_INET6, $iaddr );
         }
         else {
             ## TODO something better here - this should never happen
-            $self->log_error('Unknown IP address format - ' . $ip_length . ' - ' . encode_base64($sockaddr_in,q{}) );
+            $self->log_error('Unknown IP address format - ' . encode_base64($sockaddr_in,q{}) );
             $ip_address = q{};
         }
         $self->{'ip_address'} = $ip_address;
