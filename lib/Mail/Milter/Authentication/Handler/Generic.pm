@@ -5,6 +5,8 @@ use warnings;
 
 our $VERSION = 0.4;
 
+use base 'Mail::Milter::Authentication::Protocol';
+
 use Mail::Milter::Authentication::Config qw{ get_config };
 
 use Email::Address;
@@ -53,24 +55,6 @@ sub destroy_handler {
     my ( $self, $handler ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'handler'}->{$handler};
-}
-
-sub write_packet {
-    my ( $self, $type, $data ) = @_;
-    my $ctx = $self->{'ctx'};
-    $ctx->write_packet( $type, $data );
-}
-
-sub add_header {
-    my ( $self, $key, $value ) = @_;
-    my $ctx = $self->{'ctx'};
-    $ctx->addheader( $key, $value );
-}
-
-sub chgheader {
-    my ( $self, $key, $index, $value ) = @_;
-    my $ctx = $self->{'ctx'};
-    $ctx->chgheader( $key, $index, $value );
 }
 
 sub is_local_ip_address {
@@ -199,24 +183,6 @@ sub is_hostname_mine {
     }
 }
 
-sub get_symval {
-    my ( $self, $key ) = @_;
-    my $ctx = $self->{'ctx'};
-    my $val = $ctx->getsymval($key);
-    return $val if defined($val);
-
-    # We didn't find it?
-    # PMilter::Context fails to get the queue id from postfix as it is
-    # not searching symbols for the correct code. Rewrite this here.
-    # Intend to patch PMilter to fix this.
-    my $symbols = $ctx->{'symbols'};    ## Internals, here be dragons!
-    foreach my $code ( keys %{$symbols} ) {
-        $val = $symbols->{$code}->{$key};
-        return $val if defined($val);
-    }
-    return;
-}
-
 sub dbgout {
     my ( $self, $key, $value, $priority ) = @_;
     warn "$key: $value\n";
@@ -287,15 +253,7 @@ sub add_headers {
         foreach my $header ( @{ $core_handler->{'pre_headers'} } ) {
             $self->dbgout( 'PreHeader',
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
-            ## No support for this in Sendmail::PMilter
-            ## so we shall write the packet manually.
-            #  Intend to patch PMilter to fix this
-            my $index = 1;
-            $self->write_packet( 'i',
-                    pack( 'N', $index )
-                  . $header->{'field'} . "\0"
-                  . $header->{'value'}
-                  . "\0" );
+            $self->insert_header( 1, $header->{'field'}, $header->{'value'} );
         }
     }
 

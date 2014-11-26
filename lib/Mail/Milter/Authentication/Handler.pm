@@ -8,7 +8,6 @@ our $VERSION = 0.4;
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
 use Sys::Syslog qw{:standard :macros};
-use Sendmail::PMilter qw { :all };
 
 sub connect_callback {
 
@@ -23,7 +22,7 @@ sub connect_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'Connect callback error ' . $error );
     }
-    return SMFIS_CONTINUE;
+    return $self->smfis_continue();
 }
 
 sub helo_callback {
@@ -44,7 +43,7 @@ sub helo_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'HELO callback error ' . $error );
     }
-    return SMFIS_CONTINUE;
+    return $self->smfis_continue();
 }
 
 sub envfrom_callback {
@@ -62,7 +61,7 @@ sub envfrom_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'Env From callback error ' . $error );
     }
-    return SMFIS_CONTINUE;
+    return $self->smfis_continue();
 }
 
 sub envrcpt_callback {
@@ -80,7 +79,7 @@ sub envrcpt_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'Rcpt To callback error ' . $error );
     }
-    return SMFIS_CONTINUE;
+    return $self->smfis_continue();
 }
 
 sub header_callback {
@@ -97,7 +96,7 @@ sub header_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'Header callback error ' . $error );
     }
-    return SMFIS_CONTINUE;
+    return $self->smfis_continue();
 }
 
 sub eoh_callback {
@@ -114,7 +113,7 @@ sub eoh_callback {
         $self->log_error( 'EOH callback error ' . $error );
     }
     $self->dbgoutwrite();
-    return SMFIS_CONTINUE;
+    return $self->smfis_continue();
 }
 
 sub body_callback {
@@ -129,7 +128,7 @@ sub body_callback {
         $self->log_error( 'Body callback error ' . $error );
     }
     $self->dbgoutwrite();
-    return SMFIS_CONTINUE;
+    return $self->smfis_continue();
 }
 
 sub eom_callback {
@@ -147,7 +146,7 @@ sub eom_callback {
     }
     $self->add_headers();
     $self->dbgoutwrite();
-    return SMFIS_ACCEPT;
+    return $self->smfis_continue();
 }
 
 sub abort_callback {
@@ -156,7 +155,7 @@ sub abort_callback {
     my ($self) = @_;
     $self->dbgout( 'CALLBACK', 'Abort', LOG_DEBUG );
     $self->dbgoutwrite();
-    return SMFIS_CONTINUE;
+    return $self->smfis_continue();
 }
 
 sub close_callback {
@@ -165,7 +164,7 @@ sub close_callback {
     my ($self) = @_;
     $self->dbgout( 'CALLBACK', 'Close', LOG_DEBUG );
     $self->dbgoutwrite();
-    return SMFIS_CONTINUE;
+    return $self->smfis_continue();
 }
 
 1;

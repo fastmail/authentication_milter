@@ -3,6 +3,7 @@ lib/Mail/Milter/Authentication.pm
 lib/Mail/Milter/Authentication/Config.pm
 lib/Mail/Milter/Authentication/Dispatcher.pm
 lib/Mail/Milter/Authentication/ObjectBroker.pm
+lib/Mail/Milter/Authentication/Protocol.pm
 lib/Mail/Milter/Authentication/Handler.pm
 lib/Mail/Milter/Authentication/Handler/Generic.pm
 lib/Mail/Milter/Authentication/Handler/Core.pm
