@@ -25,12 +25,45 @@ sub config {
     return $self->{'config'};
 }
 
-sub get_handler {
-    my ( $self, $handler ) = @_;
+sub get_top_handler {
+    my ( $self ) = @_;
     my $ctx = $self->{'ctx'};
     my $priv = $ctx->getpriv();
-    my $object = $priv->{'handler'}->{ $handler };
+    my $object = $priv->{'handler_object'};
+    #weaken $object;
     return $object;
+
+}
+
+sub get_handler {
+    my ( $self, $handler ) = @_;
+    my $top_handler = $self->get_top_handler();    
+    my $object = $top_handler->{'handler'}->{ $handler };
+    return $object;
+}
+
+sub set_handler {
+    my ( $self, $handler, $object ) = @_;
+    my $top_handler = $self->get_top_handler();    
+    $top_handler->{'handler'}->{ $handler } = $object;
+}
+
+sub write_packet {
+        my ( $self, $type, $data ) = @_;
+        my $ctx = $self->{'ctx'};
+        $ctx->write_packet( $type, $data );
+}
+
+sub add_header {
+        my ( $self, $key, $value ) = @_;
+        my $ctx = $self->{'ctx'};
+        $ctx->addheader( $key, $value );
+}
+
+sub chgheader {
+        my ( $self, $key, $index, $value ) = @_;
+        my $ctx = $self->{'ctx'};
+        $ctx->chgheader( $key, $index, $value );
 }
 
 sub is_local_ip_address {
@@ -198,9 +231,6 @@ sub log_error {
 
 sub dbgoutwrite {
     my ($self) = @_;
-    my $ctx = $self->{'ctx'};
-    my $priv  = $ctx->getpriv();
-    return if not $priv;
     eval {
         openlog('authentication_milter', 'pid', LOG_MAIL);
         setlogmask(   LOG_MASK(LOG_ERR)
@@ -225,7 +255,6 @@ sub dbgoutwrite {
 
 sub add_headers {
     my ($self) = @_;
-    my $ctx = $self->{'ctx'};
 
     my $header = $self->get_my_hostname();
     my @auth_headers;
@@ -254,7 +283,7 @@ sub add_headers {
             ## so we shall write the packet manually.
             #  Intend to patch PMilter to fix this
             my $index = 1;
-            $ctx->write_packet( 'i',
+            $self->write_packet( 'i',
                     pack( 'N', $index )
                   . $header->{'field'} . "\0"
                   . $header->{'value'}
@@ -266,7 +295,7 @@ sub add_headers {
         foreach my $header ( @{ $core_handler->{'add_headers'} } ) {
             $self->dbgout( 'AddHeader',
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
-            $ctx->addheader( $header->{'field'}, $header->{'value'} );
+            $self->addheader( $header->{'field'}, $header->{'value'} );
         }
     }
 }

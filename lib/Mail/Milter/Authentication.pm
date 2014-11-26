@@ -8,7 +8,7 @@ our $VERSION = 0.3;
 use English;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Dispatcher;
-use Mail::Milter::Authentication::Handler;
+use Mail::Milter::Authentication::ObjectBroker;
 use Mail::Milter::Authentication::Util qw{ loginfo };
 use Net::Server::Daemonize qw{ daemonize check_pid_file };
 use Sendmail::PMilter qw { :all };
@@ -22,16 +22,16 @@ sub start {
     check_pid_file( $pid_file );
 
     my $callbacks = {
-      'connect' => \&Mail::Milter::Authentication::Handler::connect_callback,
-      'helo'    => \&Mail::Milter::Authentication::Handler::helo_callback,
-      'envfrom' => \&Mail::Milter::Authentication::Handler::envfrom_callback,
-      'envrcpt' => \&Mail::Milter::Authentication::Handler::envrcpt_callback,
-      'header'  => \&Mail::Milter::Authentication::Handler::header_callback,
-      'eoh'     => \&Mail::Milter::Authentication::Handler::eoh_callback,
-      'body'    => \&Mail::Milter::Authentication::Handler::body_callback,
-      'eom'     => \&Mail::Milter::Authentication::Handler::eom_callback,
-      'abort'   => \&Mail::Milter::Authentication::Handler::abort_callback,
-      'close'   => \&Mail::Milter::Authentication::Handler::close_callback,
+      'connect' => \&Mail::Milter::Authentication::ObjectBroker::connect_callback,
+      'helo'    => \&Mail::Milter::Authentication::ObjectBroker::helo_callback,
+      'envfrom' => \&Mail::Milter::Authentication::ObjectBroker::envfrom_callback,
+      'envrcpt' => \&Mail::Milter::Authentication::ObjectBroker::envrcpt_callback,
+      'header'  => \&Mail::Milter::Authentication::ObjectBroker::header_callback,
+      'eoh'     => \&Mail::Milter::Authentication::ObjectBroker::eoh_callback,
+      'body'    => \&Mail::Milter::Authentication::ObjectBroker::body_callback,
+      'eom'     => \&Mail::Milter::Authentication::ObjectBroker::eom_callback,
+      'abort'   => \&Mail::Milter::Authentication::ObjectBroker::abort_callback,
+      'close'   => \&Mail::Milter::Authentication::ObjectBroker::close_callback,
     };
 
     my $listen_backlog         = $CONFIG->{'listen_backlog'}         || 20;
