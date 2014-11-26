@@ -34,6 +34,7 @@ requires (
     'Mail::DKIM::Verifier',
     'Mail::DMARC::PurePerl',
     'Mail::SPF',
+    'MIME::Base64',
     'Net::DNS',
     'Net::IP',
     'Net::Server::Daemonize',

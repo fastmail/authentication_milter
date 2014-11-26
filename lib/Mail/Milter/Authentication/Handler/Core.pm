@@ -8,6 +8,7 @@ our $VERSION = 0.4;
 use base 'Mail::Milter::Authentication::Handler::Generic';
 
 use Socket;
+use MIME::Base64;
 use Sys::Syslog qw{:standard :macros};
 
 sub connect_callback {
@@ -27,7 +28,7 @@ sub connect_callback {
         }
         else {
             ## TODO something better here - this should never happen
-            $self->log_error('Unknown IP address format');
+            $self->log_error('Unknown IP address format - ' . $ip_length . ' - ' . encode_base64($sockaddr_in,q{}) );
             $ip_address = q{};
         }
         $self->{'ip_address'} = $ip_address;
