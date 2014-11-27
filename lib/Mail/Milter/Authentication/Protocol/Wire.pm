@@ -27,7 +27,8 @@ use Mail::Milter::Authentication::Constants qw{ :all };
 sub new {
     my ( $class, $socket ) = @_;
 
-    my $callback_flags = SMFI_CURR_ACTS;
+    my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
+
     my $protocol  = SMFIP_NONE & ~(SMFIP_NOCONNECT|SMFIP_NOMAIL);
        $protocol &= ~SMFIP_NOHELO;
        $protocol &= ~SMFIP_NORCPT;
@@ -148,6 +149,7 @@ warn "$host : $sockaddr_in \n";
         foreach my $key ( keys %datahash ) {
             $handler->set_symbol( $code, $key, $datahash{$key} );
         }
+        undef $returncode;
     }
     elsif ( $command eq SMFIC_BODYEOB ) {
         $returncode = $handler->eom_callback();
@@ -172,12 +174,12 @@ warn "$host : $sockaddr_in \n";
         die "SMFIC_OPTNEG: packet has wrong size\n" unless (length($buffer) == 12);
         my ($ver, $actions, $protocol) = unpack('NNN', $buffer);
         die "SMFIC_OPTNEG: unknown milter protocol version $ver\n" unless ($ver >= 2 && $ver <= 6);
-warn "optneg\n";
+        my $actions_reply  = $self->{'callback_flags'} & $actions;
+warn "protocol is " . $self->{'protocol'} . "\n";
+        my $protocol_reply = $self->{'protocol'}       & $protocol;
+        warn "optneg $ver $actions $protocol $actions_reply $protocol_reply\n";
         $self->write_packet(SMFIC_OPTNEG,
-            pack('NNN', 2,
-                $self->{'callback_flags'} & $actions,
-                $self->{'protocol'}       & $protocol,
-            )
+            pack('NNN', 2, $actions_reply, $protocol_reply)
         );
         undef $returncode;
     }
@@ -188,6 +190,7 @@ warn "optneg\n";
     elsif ( $command eq SMFIC_DATA ) {
     }
     elsif ( $command eq SMFIC_UNKNOWN ) {
+        undef $returncode;
         # Unknown SMTP command received
     }
     else {
