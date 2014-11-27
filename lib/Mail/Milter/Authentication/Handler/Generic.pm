@@ -13,9 +13,9 @@ use Email::Address;
 use Sys::Syslog qw{:standard :macros};
 
 sub new {
-    my ( $class, $ctx ) = @_;
+    my ( $class, $wire ) = @_;
     my $self = {
-        'ctx'    => $ctx,
+        'wire'   => $wire,
         'config' => get_config(),
     };
     bless $self, $class;
@@ -29,13 +29,10 @@ sub config {
 
 sub get_top_handler {
     my ($self) = @_;
-    my $ctx    = $self->{'ctx'};
-    my $priv   = $ctx->getpriv();
-    my $object = $priv->{'handler_object'};
-
-    #weaken $object;
+    my $wire   = $self->{'wire'};
+    my $object = $wire->{'handler'};
+    #weaken $object ?;
     return $object;
-
 }
 
 sub get_handler {
@@ -55,6 +52,45 @@ sub destroy_handler {
     my ( $self, $handler ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'handler'}->{$handler};
+}
+
+sub clear_symbols {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    delete $top_handler->{'symbols'};
+}
+
+sub set_symbol {
+    my ( $self, $code, $key, $value ) = @_;
+    my $top_handler = $self->get_top_handler();
+    if ( ! exists ( $top_handler->{'symbols'} ) ) {
+        $top_handler->{'symbols'} = {};
+    }
+    if ( ! exists ( $top_handler->{'symbols'}->{$code} ) ) {
+        $top_handler->{'symbols'}->{$code} = {};
+    }
+    $top_handler->{'symbols'}->{$code}->{$key} = $value;;
+}
+
+sub get_symbol {
+    my ( $self, $searchkey ) = @_;
+    my $top_handler = $self->get_top_handler();
+    my $symbols = $top_handler->{'symbols'} || {};
+    foreach my $code ( keys %{$symbols} ) {
+        my $subsymbols = $symbols->{$code};
+        foreach my $key ( keys %{$subsymbols} ) {
+            if ( $searchkey eq $key ) {
+                return $subsymbols->{$key};
+            }
+        }
+    }
+    return;
+}
+
+sub get_symval {
+    ## TODO rename all code to use get_symbol
+    my ( $self, $key ) = @_;
+    return $self->get_symbol( $key );
 }
 
 sub is_local_ip_address {

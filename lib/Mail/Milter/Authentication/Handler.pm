@@ -119,10 +119,10 @@ sub eoh_callback {
 sub body_callback {
 
     # On each body chunk
-    my ( $self, $body_chunk, $len ) = @_;
+    my ( $self, $body_chunk ) = @_;
     $self->dbgout( 'CALLBACK', 'Body', LOG_DEBUG );
     eval {
-        $self->get_handler('dkim')->body_callback( $body_chunk, $len );
+        $self->get_handler('dkim')->body_callback( $body_chunk );
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Body callback error ' . $error );

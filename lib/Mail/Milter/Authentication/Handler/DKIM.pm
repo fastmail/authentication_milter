@@ -58,7 +58,7 @@ sub eoh_callback {
 }
 
 sub body_callback {
-    my ( $self, $body_chunk, $len ) = @_;
+    my ( $self, $body_chunk ) = @_;
     my $CONFIG = $self->config();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
