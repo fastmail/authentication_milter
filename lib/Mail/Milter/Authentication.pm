@@ -35,34 +35,51 @@ sub start {
     my %args;
 
     if ( $args->{'daemon'} ) {
-        $args{'background'} = 1;
-        $args{'setsid'} = 1;
-        $args{'pid_file'} = $pid_file;
-        $args{'max_servers'} = $max_children;
-        $args{'max_requests'} = $max_requests_per_child;
-        $args{'min_servers'} = $min_children;
-        $args{'min_spare_servers'} = $min_spare_children;
-        $args{'max_spare_servers'} = $max_spare_children;
+        if ( $> == 0 ) {
+            loginfo("daemonizing servers=$min_children/$max_children spares=$min_spare_children/$max_spare_children requests=$max_requests_per_child");
+            $args{'background'} = 1;
+            $args{'setsid'} = 1;
+            $args{'pid_file'} = $pid_file;
+            $args{'max_servers'} = $max_children;
+            $args{'max_requests'} = $max_requests_per_child;
+            $args{'min_servers'} = $min_children;
+            $args{'min_spare_servers'} = $min_spare_children;
+            $args{'max_spare_servers'} = $max_spare_children;
+        }
+        else {
+            loginfo('Not running as root, daemonize ignored!');
+        }
     }
 
-    $args{'user'}  = $CONFIG->{'runas'}    || 'nobody';
-    $args{'group'} = $CONFIG->{'rungroup'} || 'nogroup'; 
+    if ( $> == 0 ) {
+        my $user  = $CONFIG->{'runas'}    || 'nobody';
+        my $group = $CONFIG->{'rungroup'} || 'nogroup'; 
+        loginfo("running as user=$user group=$group");
+        $args{'user'}  = $user;
+        $args{'group'} = $group;
+    }
+    else {
+        loginfo('Not running as root, could not drop privs - be careful!');
+    }
 
     {
         $connection =~ /^([^:]+):([^:@]+)(?:@([^:@]+|\[[0-9a-f:\.]+\]))?$/;
         my $type = $1;
         my $path = $2;
+        my $host = $3 || q{};
         if ( $type eq 'inet' ) {
-            my ( $port, $host ) = split '@', $path;
+            loginfo("Listening on inet host=$host port=$path backlog=$listen_backlog");
             $args{'host'} = $host;
-            $args{'port'} = $port;
+            $args{'port'} = $path;
             $args{'ipv'}  = '*';
             $args{'proto'} = 'tcp';
             $args{'listen'} = $listen_backlog;
         }
         elsif ( $type eq 'unix' ) {
+            loginfo("Listening on unix socket=$path backlog=$listen_backlog");
             $args{'port'} = $path;
             $args{'proto'} = 'unix';
+            $args{'listen'} = $listen_backlog;
 #            my $socketperms = $CONFIG->{'socketperms'};
 #            if ($socketperms) {
 #                chmod oct($socketperms), $path;
@@ -70,6 +87,7 @@ sub start {
 #            }
         }
         else {
+            die 'Invalid connection';
         }
     }
 
