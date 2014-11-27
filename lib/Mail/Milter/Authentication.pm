@@ -34,6 +34,8 @@ sub start {
 
     my %args;
 
+    $args{'no_client_stdout'} = 1;
+
     if ( $args->{'daemon'} ) {
         if ( $> == 0 ) {
             loginfo(
