@@ -26,7 +26,7 @@ sub add_header {
 sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
     my $wire = $self->{'wire'};
-    $wire->insert_header( $key, $index, $key, $value );
+    $wire->insert_header( $index, $key, $value );
 }
 
 ## TODO rename chgheader in code to change_header

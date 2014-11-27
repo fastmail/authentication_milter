@@ -59,8 +59,12 @@ sub main {
         my $command = $self->read_block(1) || last;
 
         # Get data
-        my $data = $self->read_block($length - 1) || die "EOF in stream\n";
+        my $data = $self->read_block($length - 1);
+        if ( ! defined ( $data ) ) {
+            die "EOF in stream\n";
+        }
 
+        last if $command eq SMFIC_QUIT;
         $self->process_command( $command, $data );
 
     }    
@@ -75,6 +79,7 @@ sub main {
 sub setup_objects {
     my ( $self ) = @_;
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
+    $self->{'handler'} = $handler;
     $handler->set_handler( 'generic',   Mail::Milter::Authentication::Handler::Generic->new( $self ) );
     $handler->set_handler( 'auth',      Mail::Milter::Authentication::Handler::Auth->new( $self ) );
     $handler->set_handler( 'core',      Mail::Milter::Authentication::Handler::Core->new( $self ) );
@@ -87,7 +92,10 @@ sub setup_objects {
     $handler->set_handler( 'senderid',  Mail::Milter::Authentication::Handler::SenderID->new( $self ) );
     $handler->set_handler( 'spf',       Mail::Milter::Authentication::Handler::SPF->new( $self ) );
     $handler->set_handler( 'trustedip', Mail::Milter::Authentication::Handler::TrustedIP->new( $self ) );
-    $self->{'handler'} = $handler;
+use Data::Dumper;
+warn Dumper( $self );
+
+warn "setting up wire handler\n";
 }
 
 sub destroy_objects {
@@ -111,53 +119,58 @@ sub destroy_objects {
 sub process_command {
     my ( $self, $command, $buffer ) = @_;
 
-    my $handler = $self->{'handler'};
-    my $returncode = SMFIS_CONTINUE;
+warn "processing command $command \n";
 
-    if ( $command == SMFIC_CONNECT ) {
+    my $handler = $self->{'handler'};
+    if ( ! defined ( $handler ) ) {
         $self->setup_objects();
         $handler = $self->{'handler'};
-        my ( $host, $sockaddr_in ) = $$self->connect_callback( $buffer );
+    }
+
+    my $returncode = SMFIS_CONTINUE;
+
+    if ( $command eq SMFIC_CONNECT ) {
+        my ( $host, $sockaddr_in ) = $self->connect_callback( $buffer );
+warn "$host : $sockaddr_in \n";
         $returncode = $handler->connect_callback( $host, $sockaddr_in );
     }
-    elsif ( $command == SMFIC_ABORT ) {
+    elsif ( $command eq SMFIC_ABORT ) {
         $handler->clear_symbols();
         $returncode = $handler->abort_callback();
     }
-    elsif ( $command == SMFIC_BODY ) {
+    elsif ( $command eq SMFIC_BODY ) {
         $returncode = $handler->body_callback( $buffer );
     }
-    elsif ( $command == SMFIC_MACRO ) {
+    elsif ( $command eq SMFIC_MACRO ) {
         die "SMFIC_MACRO: empty packet\n" unless ( $buffer =~ s/^(.)// );
         my $code = $1;
         my $data = $self->split_buffer( $buffer );
         push ( @$data, q{} ) if (( @$data & 1 ) != 0 ); # pad last entry with empty string if odd number
         my %datahash = @$data;
         foreach my $key ( keys %datahash ) {
-            $self->set_symbol( $code, $key, $datahash{$key} );
+            $handler->set_symbol( $code, $key, $datahash{$key} );
         }
-        undef $returncode;
     }
-    elsif ( $command == SMFIC_BODYEOB ) {
+    elsif ( $command eq SMFIC_BODYEOB ) {
         $returncode = $handler->eom_callback();
     }
-    elsif ( $command == SMFIC_HELO ) {
+    elsif ( $command eq SMFIC_HELO ) {
         my $helo = $self->split_buffer( $buffer );
         $returncode = $handler->helo_callback( @$helo );
     }
-    elsif ( $command == SMFIC_HEADER ) {
+    elsif ( $command eq SMFIC_HEADER ) {
         my $header = $self->split_buffer( $buffer );
         if ( @$header == 1 ) { push @$header , q{}; };
         $returncode = $handler->header_callback( @$header );
     }
-    elsif ( $command == SMFIC_MAIL ) {
+    elsif ( $command eq SMFIC_MAIL ) {
         my $envfrom = $self->split_buffer( $buffer );
         $returncode = $handler->envfrom_callback( @$envfrom );
     }
-    elsif ( $command == SMFIC_EOH ) {
+    elsif ( $command eq SMFIC_EOH ) {
         $returncode = $handler->eoh_callback();
     }
-    elsif ( $command == SMFIC_OPTNEG ) {
+    elsif ( $command eq SMFIC_OPTNEG ) {
         die "SMFIC_OPTNEG: packet has wrong size\n" unless (length($buffer) == 12);
         my ($ver, $actions, $protocol) = unpack('NNN', $buffer);
         die "SMFIC_OPTNEG: unknown milter protocol version $ver\n" unless ($ver >= 2 && $ver <= 6);
@@ -167,25 +180,24 @@ sub process_command {
                 $self->{protocol} & $protocol,
             )
         );
+        undef $returncode;
     }
-    elsif ( $command == SMFIC_RCPT ) {
+    elsif ( $command eq SMFIC_RCPT ) {
         my $envrcpt = $self->split_buffer( $buffer );
         $returncode = $handler->envrcpt_callback( @$envrcpt );
     }
-    elsif ( $command == SMFIC_DATA ) {
+    elsif ( $command eq SMFIC_DATA ) {
     }
-    elsif ( $command == SMFIC_QUIT ) {
-        last;
-    }
-    elsif ( $command == SMFIC_UNKNOWN ) {
+    elsif ( $command eq SMFIC_UNKNOWN ) {
         # Unknown SMTP command received
     }
     else {
         die "Unknown milter command $command";
     }
 
-    if ( $command != SMFIC_ABORT ) {
-        if (defined $returncode) {
+    if (defined $returncode) {
+        $returncode = SMFIR_CONTINUE if $returncode == SMFIS_CONTINUE;
+        if ( $command ne SMFIC_ABORT ) {
             $self->write_packet($returncode);
         }
     } 
@@ -216,8 +228,8 @@ sub connect_callback {
         $pack = eval {
             sockaddr_un($addr);
         };
-        return ( $host, $pack );
     }
+    return ( $host, $pack );
 }
 
 sub read_block {
@@ -229,9 +241,17 @@ sub read_block {
         my $read = $socket->sysread($buffer, $len - $sofar, $sofar);
         last if (!defined($read) || $read <= 0); # EOF
         $sofar += $read;
-    }   
+    }
+warn "read $buffer\n"; 
     return $buffer;
 }
+
+sub split_buffer {
+    my ( $self, $buffer ) = @_;
+    $buffer =~ s/\0$//; # remove trailing NUL
+    return [ split(/\0/, $buffer) ];
+};
+
 
 sub add_header {
     my ( $self, $header, $value ) = @_;
@@ -270,6 +290,7 @@ sub write_packet {
     my ( $self, $code, $data ) = @_;
     my $socket = $self->{'socket'};
     $data = q{} unless defined($data);
+warn "writing $code $data\n";
     my $len = pack('N', length($data) + 1);
     $socket->syswrite($len);
     $socket->syswrite($code);
