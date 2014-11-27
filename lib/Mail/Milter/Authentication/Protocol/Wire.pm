@@ -49,7 +49,6 @@ sub main {
     my ( $self ) = @_;
 
     my $quit = 0;
-    my $close_called = 0;
     while ( ! $quit ) {
 
         # Get packet length 
@@ -70,11 +69,9 @@ sub main {
 
     }    
 
-    if ( ! $close_called ) {
     # Call close callback
-        $self->{'handler'}->close_callback();
-        $self->destroy_objects();
-    }
+    $self->{'handler'}->close_callback();
+    $self->destroy_objects();
 }
 
 sub setup_objects {
