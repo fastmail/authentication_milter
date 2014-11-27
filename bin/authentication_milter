@@ -58,13 +58,11 @@ The configuration file format is as follows...
     "socketperms"            : "0777",                  | Permissions for socket
     "runas"                  : "nobody",                | Drop privs and run as this user
     "rungroup"               : "nogroup",               | Drop privs and run as this group (daemon only)
-    "dispatcher"             : "postfork"               | Dispatcher model to use
-                                                        | prefork
-                                                        | postfork (default)
-                                                        | ithread
-                                                        | sequential
     "listen_backlog"         : 20,                      | socket listen backlog limit (default 20)
-    "max_children"           : 20,                      | Max number of children to pre fork (prefork)
+    "min_children"           : 20                       | Max number of children to pre fork
+    "max_children"           : 200,                     | Max number of children to pre fork
+    "min_spare_children"     : 10,                      | Min number of spare children to maintain 
+    "max_spare_children"     : 20,                      | Max number of spare children to maintain
     "max_requests_per_child" : 200,                     | Max number of requests per child process (prefork)
 
     "show_default_adsp" : "0",                        | Boolean, include default adsp results?

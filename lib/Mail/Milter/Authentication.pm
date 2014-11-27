@@ -25,15 +25,60 @@ sub start {
     my $connection = $args->{'connection'}
       || die('No connection details given');
     my $pid_file = $args->{'pid_file'};
+    my $listen_backlog = $CONFIG->{'listen_backlog'} || 20;
+    my $max_children           = $CONFIG->{'max_children'} || 100;
+    my $max_requests_per_child = $CONFIG->{'max_requests_per_child'} || 200;
+    my $min_children           = $CONFIG->{'min_children'} || 20;
+    my $max_spare_children     = $CONFIG->{'max_spare_children'} || 20;
+    my $min_spare_children     = $CONFIG->{'min_spare_children'} || 10;
 
     my %args;
-    $args{'port'} = 12345;
+
+    if ( $args->{'daemon'} ) {
+        $args{'background'} = 1;
+        $args{'setsid'} = 1;
+        $args{'pid_file'} = $pid_file;
+        $args{'max_servers'} = $max_children;
+        $args{'max_requests'} = $max_requests_per_child;
+        $args{'min_servers'} = $min_children;
+        $args{'min_spare_servers'} = $min_spare_children;
+        $args{'max_spare_servers'} = $max_spare_children;
+    }
+
+    $args{'user'}  = $CONFIG->{'runas'}    || 'nobody';
+    $args{'group'} = $CONFIG->{'rungroup'} || 'nogroup'; 
+
+    {
+        $connection =~ /^([^:]+):([^:@]+)(?:@([^:@]+|\[[0-9a-f:\.]+\]))?$/;
+        my $type = $1;
+        my $path = $2;
+        if ( $type eq 'inet' ) {
+            my ( $port, $host ) = split '@', $path;
+            $args{'host'} = $host;
+            $args{'port'} = $port;
+            $args{'ipv'}  = '*';
+            $args{'proto'} = 'tcp';
+            $args{'listen'} = $listen_backlog;
+        }
+        elsif ( $type eq 'unix' ) {
+            $args{'port'} = $path;
+            $args{'proto'} = 'unix';
+#            my $socketperms = $CONFIG->{'socketperms'};
+#            if ($socketperms) {
+#                chmod oct($socketperms), $path;
+#                loginfo( 'setting socket permissions to ' . $socketperms );
+#            }
+        }
+        else {
+        }
+    }
+
+    $PROGRAM_NAME = '[authentication_milter]';
 
     __PACKAGE__->run( %args );
 
 #    check_pid_file($pid_file);
 #
-#    my $listen_backlog = $CONFIG->{'listen_backlog'} || 20;
 #
 #    #Sendmail::PMilter::setdbg( 9 );
 #    my $milter = Sendmail::PMilter->new();

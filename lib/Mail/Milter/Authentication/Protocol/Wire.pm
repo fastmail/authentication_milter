@@ -93,8 +93,6 @@ sub setup_objects {
     $handler->set_handler( 'senderid',  Mail::Milter::Authentication::Handler::SenderID->new( $self ) );
     $handler->set_handler( 'spf',       Mail::Milter::Authentication::Handler::SPF->new( $self ) );
     $handler->set_handler( 'trustedip', Mail::Milter::Authentication::Handler::TrustedIP->new( $self ) );
-
-warn "setting up wire handler\n";
 }
 
 sub destroy_objects {
@@ -118,8 +116,6 @@ sub destroy_objects {
 sub process_command {
     my ( $self, $command, $buffer ) = @_;
 
-warn "processing command $command \n";
-
     my $handler = $self->{'handler'};
     if ( ! defined ( $handler ) ) {
         $self->setup_objects();
@@ -130,7 +126,6 @@ warn "processing command $command \n";
 
     if ( $command eq SMFIC_CONNECT ) {
         my ( $host, $sockaddr_in ) = $self->connect_callback( $buffer );
-warn "$host : $sockaddr_in \n";
         $returncode = $handler->connect_callback( $host, $sockaddr_in );
     }
     elsif ( $command eq SMFIC_ABORT ) {
@@ -175,9 +170,7 @@ warn "$host : $sockaddr_in \n";
         my ($ver, $actions, $protocol) = unpack('NNN', $buffer);
         die "SMFIC_OPTNEG: unknown milter protocol version $ver\n" unless ($ver >= 2 && $ver <= 6);
         my $actions_reply  = $self->{'callback_flags'} & $actions;
-warn "protocol is " . $self->{'protocol'} . "\n";
         my $protocol_reply = $self->{'protocol'}       & $protocol;
-        warn "optneg $ver $actions $protocol $actions_reply $protocol_reply\n";
         $self->write_packet(SMFIC_OPTNEG,
             pack('NNN', 2, $actions_reply, $protocol_reply)
         );
@@ -244,7 +237,6 @@ sub read_block {
         last if (!defined($read) || $read <= 0); # EOF
         $sofar += $read;
     }
-warn "read $buffer\n"; 
     return $buffer;
 }
 
@@ -292,7 +284,6 @@ sub write_packet {
     my ( $self, $code, $data ) = @_;
     my $socket = $self->{'socket'};
     $data = q{} unless defined($data);
-warn "writing $code $data\n";
     my $len = pack('N', length($data) + 1);
     $socket->syswrite($len);
     $socket->syswrite($code);

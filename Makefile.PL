@@ -37,8 +37,8 @@ requires (
     'MIME::Base64',
     'Net::DNS',
     'Net::IP',
-    'Net::Server::Daemonize',
-    'Sendmail::PMilter',
+    'Net::Server',
+    'Net::Server::PreFork',
     'Socket',
     'Sys::Syslog', 
 );
