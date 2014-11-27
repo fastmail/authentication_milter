@@ -36,7 +36,14 @@ sub start {
 
     if ( $args->{'daemon'} ) {
         if ( $> == 0 ) {
-            loginfo("daemonizing servers=$min_children/$max_children spares=$min_spare_children/$max_spare_children requests=$max_requests_per_child");
+            loginfo(
+                join( ' ',
+                    'daemonize',
+                    "servers=$min_children/$max_children",
+                    "spares=$min_spare_children/$max_spare_children",
+                    "requests=$max_requests_per_child",
+                )
+            );
             $args{'background'} = 1;
             $args{'setsid'} = 1;
             $args{'pid_file'} = $pid_file;
@@ -54,7 +61,7 @@ sub start {
     if ( $> == 0 ) {
         my $user  = $CONFIG->{'runas'}    || 'nobody';
         my $group = $CONFIG->{'rungroup'} || 'nogroup'; 
-        loginfo("running as user=$user group=$group");
+        loginfo("run as user=$user group=$group");
         $args{'user'}  = $user;
         $args{'group'} = $group;
     }
@@ -68,7 +75,14 @@ sub start {
         my $path = $2;
         my $host = $3 || q{};
         if ( $type eq 'inet' ) {
-            loginfo("Listening on inet host=$host port=$path backlog=$listen_backlog");
+            loginfo(
+                join( ' ',
+                    'listen on inet',
+                    "host=$host",
+                    "port=$path",
+                    "backlog=$listen_backlog"
+                )
+            );
             $args{'host'} = $host;
             $args{'port'} = $path;
             $args{'ipv'}  = '*';
@@ -76,7 +90,13 @@ sub start {
             $args{'listen'} = $listen_backlog;
         }
         elsif ( $type eq 'unix' ) {
-            loginfo("Listening on unix socket=$path backlog=$listen_backlog");
+            loginfo(
+                join( ' ',
+                    'listening on unix',
+                    "socket=$path",
+                    "backlog=$listen_backlog",
+                )
+            );
             $args{'port'} = $path;
             $args{'proto'} = 'unix';
             $args{'listen'} = $listen_backlog;
@@ -93,6 +113,7 @@ sub start {
 
     $PROGRAM_NAME = '[authentication_milter]';
 
+    warn "\nStarting server\n";
     __PACKAGE__->run( %args );
 
 #    check_pid_file($pid_file);
