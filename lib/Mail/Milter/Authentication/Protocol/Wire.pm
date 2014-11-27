@@ -92,8 +92,6 @@ sub setup_objects {
     $handler->set_handler( 'senderid',  Mail::Milter::Authentication::Handler::SenderID->new( $self ) );
     $handler->set_handler( 'spf',       Mail::Milter::Authentication::Handler::SPF->new( $self ) );
     $handler->set_handler( 'trustedip', Mail::Milter::Authentication::Handler::TrustedIP->new( $self ) );
-use Data::Dumper;
-warn Dumper( $self );
 
 warn "setting up wire handler\n";
 }
@@ -174,10 +172,11 @@ warn "$host : $sockaddr_in \n";
         die "SMFIC_OPTNEG: packet has wrong size\n" unless (length($buffer) == 12);
         my ($ver, $actions, $protocol) = unpack('NNN', $buffer);
         die "SMFIC_OPTNEG: unknown milter protocol version $ver\n" unless ($ver >= 2 && $ver <= 6);
+warn "optneg\n";
         $self->write_packet(SMFIC_OPTNEG,
             pack('NNN', 2,
-                $self->{callback_flags} & $actions,
-                $self->{protocol} & $protocol,
+                $self->{'callback_flags'} & $actions,
+                $self->{'protocol'}       & $protocol,
             )
         );
         undef $returncode;
