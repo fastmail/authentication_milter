@@ -14,6 +14,7 @@ sub connect_callback {
     # On Connect
     my ( $self, $hostname, $sockaddr_in ) = @_;
     $self->dbgout( 'CALLBACK', 'Connect', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
     eval {
         foreach my $handler (qw{ core auth trustedip localip iprev }) {
             $self->get_handler($handler)->connect_callback( $hostname, $sockaddr_in );
@@ -21,8 +22,10 @@ sub connect_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Connect callback error ' . $error );
+        $self->exit_on_close();
+        $self->set_return( $self->smfis_tempfail() );
     }
-    return $self->smfis_continue();
+    return $self->get_return();
 }
 
 sub helo_callback {
@@ -30,6 +33,7 @@ sub helo_callback {
     # On HELO
     my ( $self, $helo_host ) = @_;
     $self->dbgout( 'CALLBACK', 'Helo', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
     $helo_host = q{} if not $helo_host;
     eval {
         # Take only the first HELO from a connection
@@ -42,8 +46,10 @@ sub helo_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'HELO callback error ' . $error );
+        $self->exit_on_close();
+        $self->set_return( $self->smfis_tempfail() );
     }
-    return $self->smfis_continue();
+    return $self->get_return();
 }
 
 sub envfrom_callback {
@@ -52,6 +58,7 @@ sub envfrom_callback {
     #...
     my ( $self, $env_from ) = @_;
     $self->dbgout( 'CALLBACK', 'EnvFrom', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
     $env_from = q{} if not $env_from;
     eval {
         foreach my $handler (qw{ core sanitize auth dmarc spf dkim }) {
@@ -60,8 +67,10 @@ sub envfrom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Env From callback error ' . $error );
+        $self->exit_on_close();
+        $self->set_return( $self->smfis_tempfail() );
     }
-    return $self->smfis_continue();
+    return $self->get_return();
 }
 
 sub envrcpt_callback {
@@ -70,6 +79,7 @@ sub envrcpt_callback {
     #...
     my ( $self, $env_to ) = @_;
     $self->dbgout( 'CALLBACK', 'EnvRcpt', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
     $env_to = q{} if not $env_to;
     eval {
         foreach my $handler (qw{ core dmarc }) {
@@ -78,8 +88,10 @@ sub envrcpt_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Rcpt To callback error ' . $error );
+        $self->exit_on_close();
+        $self->set_return( $self->smfis_tempfail() );
     }
-    return $self->smfis_continue();
+    return $self->get_return();
 }
 
 sub header_callback {
@@ -87,6 +99,7 @@ sub header_callback {
     # On Each Header
     my ( $self, $header, $value ) = @_;
     $self->dbgout( 'CALLBACK', 'Header', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
     $value = q{} if not $value;
     eval {
         foreach my $handler (qw{ core sanitize dkim dmarc senderid }) {
@@ -95,8 +108,10 @@ sub header_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Header callback error ' . $error );
+        $self->exit_on_close();
+        $self->set_return( $self->smfis_tempfail() );
     }
-    return $self->smfis_continue();
+    return $self->get_return();
 }
 
 sub eoh_callback {
@@ -104,6 +119,7 @@ sub eoh_callback {
     # On End of headers
     my ($self) = @_;
     $self->dbgout( 'CALLBACK', 'EOH', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
     eval {
         foreach my $handler (qw{ dkim senderid }) {
             $self->get_handler($handler)->eoh_callback();
@@ -111,9 +127,11 @@ sub eoh_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'EOH callback error ' . $error );
+        $self->exit_on_close();
+        $self->set_return( $self->smfis_tempfail() );
     }
     $self->dbgoutwrite();
-    return $self->smfis_continue();
+    return $self->get_return();
 }
 
 sub body_callback {
@@ -121,14 +139,17 @@ sub body_callback {
     # On each body chunk
     my ( $self, $body_chunk ) = @_;
     $self->dbgout( 'CALLBACK', 'Body', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
     eval {
         $self->get_handler('dkim')->body_callback( $body_chunk );
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Body callback error ' . $error );
+        $self->exit_on_close();
+        $self->set_return( $self->smfis_tempfail() );
     }
     $self->dbgoutwrite();
-    return $self->smfis_continue();
+    return $self->get_return();
 }
 
 sub eom_callback {
@@ -136,6 +157,7 @@ sub eom_callback {
     # On End of Message
     my ($self) = @_;
     $self->dbgout( 'CALLBACK', 'EOM', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
     eval {
         foreach my $handler (qw{ dkim dmarc sanitize }) {
             $self->get_handler($handler)->eom_callback();
@@ -143,10 +165,12 @@ sub eom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'EOM callback error ' . $error );
+        $self->exit_on_close();
+        $self->set_return( $self->smfis_tempfail() );
     }
     $self->add_headers();
     $self->dbgoutwrite();
-    return $self->smfis_continue();
+    return $self->get_return();
 }
 
 sub abort_callback {
@@ -154,8 +178,9 @@ sub abort_callback {
     # On any out of our control abort
     my ($self) = @_;
     $self->dbgout( 'CALLBACK', 'Abort', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
     $self->dbgoutwrite();
-    return $self->smfis_continue();
+    return $self->get_return();
 }
 
 sub close_callback {
@@ -163,8 +188,9 @@ sub close_callback {
     # On end of connection
     my ($self) = @_;
     $self->dbgout( 'CALLBACK', 'Close', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
     $self->dbgoutwrite();
-    return $self->smfis_continue();
+    return $self->get_return();
 }
 
 1;

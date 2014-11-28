@@ -71,6 +71,9 @@ sub main {
 
     # Call close callback
     $self->{'handler'}->close_callback();
+    if ( $self->{'handler'}->{'exit_on_close'} ) {
+        $quit = 1;
+    }
     $self->destroy_objects();
 }
 

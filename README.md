@@ -16,7 +16,7 @@ This milter verifies using the following standards.
 Design Decisions
 ----------------
 
-- Do not reject any mail, ever.
+- Do not reject mail during normal operation.
   - Add headers to allow filtering as required.
 - Try and handle failures gracefully.
 - Handle IPv4 and IPv6 properly

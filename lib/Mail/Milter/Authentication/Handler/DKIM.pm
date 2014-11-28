@@ -97,6 +97,15 @@ sub eom_callback {
             my $signature_result        = $signature->result();
             my $signature_result_detail = $signature->result_detail();
 
+            if ( $signature_result eq 'invalid' ) {
+                if ( $signature_result_detail =~ /public key: panic:/ ) {
+                    $self->log_error( "PANIC DETECTED: in DKIM result: $signature_result_detail" );
+                    $self->exit_on_close();
+                    $self->set_return( $self->smfis_tempfail() );
+                    return;
+                }
+            }
+
             my $result_comment = q{};
             if ( $signature_result ne 'pass' and $signature_result ne 'none' ) {
                 $signature_result_detail =~ /$signature_result \((.*)\)/;

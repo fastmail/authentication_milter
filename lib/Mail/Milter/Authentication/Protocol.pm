@@ -11,6 +11,22 @@ sub smfis_continue {
     return SMFIS_CONTINUE;
 }
 
+sub smfis_tempfail {
+    return SMFIS_TEMPFAIL;
+}
+
+sub smfis_reject {
+    return SMFIS_REJECT;
+}
+
+sub smfis_discard {
+    return SMFIS_DISCARD;
+}
+
+sub smfis_accept {
+    return SMFIS_ACCEPT;
+}
+
 sub write_packet {
     my ( $self, $type, $data ) = @_;
     my $wire = $self->{'wire'};

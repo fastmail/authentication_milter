@@ -27,6 +27,18 @@ sub config {
     return $self->{'config'};
 }
 
+sub set_return {
+    my ( $self, $return ) = @_;
+    my $top_handler = $self->get_top_handler();
+    $top_handler->{'return_code'} = $return;
+}
+
+sub get_return {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    return $top_handler->{'return_code'};
+}
+
 sub get_top_handler {
     my ($self) = @_;
     my $wire   = $self->{'wire'};
@@ -70,6 +82,12 @@ sub destroy_object {
     my ( $self, $name ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'object'}->{$name};
+}
+
+sub exit_on_close {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    $top_handler->{'exit_on_close'} = 1;
 }
 
 sub clear_symbols {
