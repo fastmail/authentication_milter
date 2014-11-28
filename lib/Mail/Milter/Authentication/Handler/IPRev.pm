@@ -22,6 +22,7 @@ sub connect_callback {
     my $i1         = Net::IP->new($ip_address);
 
     my $resolver = Net::DNS::Resolver->new;
+    $self->set_object('resolver',$resolver); # because reasons
 
     my $domain;
     my $result;

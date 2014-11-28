@@ -36,7 +36,7 @@ sub envfrom_callback {
         $dmarc = Mail::DMARC::PurePerl->new();
         $dmarc->verbose(1);
         $dmarc->source_ip( $self->ip_address() );
-        $self->{'obj'} = $dmarc;
+        $self->set_object('dmarc',$dmarc);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC IP Error ' . $error );
@@ -62,7 +62,6 @@ sub envfrom_callback {
             $self->add_auth_header('dmarc=temperror');
         }
         $self->{'failmode'} = 1;
-        delete $self->{'obj'};
         return;
     }
 }
@@ -75,7 +74,7 @@ sub envrcpt_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
-    my $dmarc       = $self->{'obj'};
+    my $dmarc       = $self->get_object('dmarc');
     my $envelope_to = $self->get_domain_from($env_to);
     eval { $dmarc->envelope_to($envelope_to) };
 
@@ -83,7 +82,6 @@ sub envrcpt_callback {
         $self->log_error( 'DMARC Rcpt To Error ' . $error );
         $self->add_auth_header('dmarc=temperror');
         $self->{'failmode'} = 1;
-        delete $self->{'obj'};
         return;
     }
 }
@@ -108,17 +106,15 @@ sub header_callback {
             # Currently this does not give reporting feedback to the author domain, this should be changed.
             $self->add_auth_header( 'dmarc=fail (multiple RFC5322 from fields in message)' );
             $self->{'failmode'} = 1;
-            delete $self->{'obj'};
             return;
         }
         $self->{'from_header'} = $value;
-        my $dmarc = $self->{'obj'};
+        my $dmarc = $self->get_object('dmarc');
         eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
         if ( my $error = $@ ) {
             $self->log_error( 'DMARC Header From Error ' . $error );
             $self->add_auth_header('dmarc=temperror');
             $self->{'failmode'} = 1;
-            delete $self->{'obj'};
             return;
         }
     }
@@ -133,16 +129,15 @@ sub eom_callback {
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
     eval {
-        my $dmarc        = $self->{'obj'};
+        my $dmarc        = $self->get_object('dmarc');
         my $dkim_handler = $self->get_handler('dkim');
         if ( $dkim_handler->{'failmode'} ) {
             $self->log_error('DKIM is in failmode, Skipping DMARC');
             $self->add_auth_header('dmarc=temperror');
             $self->{'failmode'} = 1;
-            delete $self->{'obj'};
             return;
         }
-        my $dkim = $dkim_handler->{'obj'};
+        my $dkim = $self->get_object('dkim');
         $dmarc->dkim($dkim);
         my $dmarc_result = $dmarc->validate();
         my $dmarc_code   = $dmarc_result->result;

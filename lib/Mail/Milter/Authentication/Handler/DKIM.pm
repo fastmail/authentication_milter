@@ -19,7 +19,7 @@ sub envfrom_callback {
     my $dkim;
     eval {
         $dkim = Mail::DKIM::Verifier->new();
-        $self->{'obj'} = $dkim;
+        $self->set_object('dkim',$dkim);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMKIM Setup Error ' . $error );
@@ -33,7 +33,7 @@ sub header_callback {
     my $CONFIG = $self->config();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
-    my $dkim       = $self->{'obj'};
+    my $dkim       = $self->get_object('dkim');
     my $EOL        = "\015\012";
     my $dkim_chunk = $header . ': ' . $value . $EOL;
     $dkim_chunk =~ s/\015?\012/$EOL/g;
@@ -53,7 +53,7 @@ sub eoh_callback {
     my $CONFIG = $self->config();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
-    my $dkim = $self->{'obj'};
+    my $dkim = $self->get_object('dkim');
     $dkim->PRINT("\015\012");
 }
 
@@ -62,7 +62,7 @@ sub body_callback {
     my $CONFIG = $self->config();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
-    my $dkim       = $self->{'obj'};
+    my $dkim       = $self->get_object('dkim');
     my $dkim_chunk = $body_chunk;
     my $EOL        = "\015\012";
     $dkim_chunk =~ s/\015?\012/$EOL/g;
@@ -74,7 +74,7 @@ sub eom_callback {
     my $CONFIG = $self->config();
     return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
-    my $dkim = $self->{'obj'};
+    my $dkim = $self->get_object('dkim');
     eval {
         $dkim->CLOSE();
 
@@ -211,7 +211,6 @@ sub eom_callback {
         $self->log_error( 'DKIM Error - ' . $error );
         $self->add_auth_header('dkim=temperror');
         $self->{'failmode'} = 1;
-        delete $self->{'obj'};
     }
 }
 

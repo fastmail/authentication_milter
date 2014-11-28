@@ -35,22 +35,41 @@ sub get_top_handler {
 }
 
 sub get_handler {
-    my ( $self, $handler ) = @_;
+    my ( $self, $name ) = @_;
     my $top_handler = $self->get_top_handler();
-    my $object      = $top_handler->{'handler'}->{$handler};
+    my $object      = $top_handler->{'handler'}->{$name};
     return $object;
 }
 
 sub set_handler {
-    my ( $self, $handler, $object ) = @_;
+    my ( $self, $name, $object ) = @_;
     my $top_handler = $self->get_top_handler();
-    $top_handler->{'handler'}->{$handler} = $object;
+    $top_handler->{'handler'}->{$name} = $object;
 }
 
 sub destroy_handler {
-    my ( $self, $handler ) = @_;
+    my ( $self, $name ) = @_;
     my $top_handler = $self->get_top_handler();
-    delete $top_handler->{'handler'}->{$handler};
+    delete $top_handler->{'handler'}->{$name};
+}
+
+sub get_object {
+    my ( $self, $name ) = @_;
+    my $top_handler = $self->get_top_handler();
+    my $object      = $top_handler->{'object'}->{$name};
+    return $object;
+}
+
+sub set_object {
+    my ( $self, $name, $object ) = @_;
+    my $top_handler = $self->get_top_handler();
+    $top_handler->{'object'}->{$name} = $object;
+}
+
+sub destroy_object {
+    my ( $self, $name ) = @_;
+    my $top_handler = $self->get_top_handler();
+    delete $top_handler->{'object'}->{$name};
 }
 
 sub clear_symbols {

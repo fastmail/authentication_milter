@@ -21,17 +21,20 @@ sub envfrom_callback {
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
-    my $spf_server;
-    eval {
-        $spf_server =
-          Mail::SPF::Server->new( 'hostname' => $self->get_my_hostname() );
-    };
 
-    if ( my $error = $@ ) {
-        $self->log_error( 'SPF Setup Error ' . $error );
-        $self->add_auth_header('spf=temperror');
-        return;
+    my $spf_server = $self->get_object('spf_server');
+    if ( ! $spf_server ) {
+        eval {
+            $spf_server = Mail::SPF::Server->new( 'hostname' => $self->get_my_hostname() );
+        };
+        if ( my $error = $@ ) {
+            $self->log_error( 'SPF Setup Error ' . $error );
+            $self->add_auth_header('spf=temperror');
+            return;
+        }
+        $self->set_object('spf_server',$spf_server);
     }
+
 
     my $scope = 'mfrom';
 
