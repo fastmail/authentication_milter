@@ -31,7 +31,6 @@ sub get_top_handler {
     my ($self) = @_;
     my $wire   = $self->{'wire'};
     my $object = $wire->{'handler'};
-    #weaken $object ?;
     return $object;
 }
 
