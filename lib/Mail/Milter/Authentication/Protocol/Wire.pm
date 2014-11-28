@@ -57,6 +57,7 @@ sub main {
 
         # Get command
         my $command = $self->read_block(1) || last;
+        warn "receive command $command\n";
 
         # Get data
         my $data = $self->read_block($length - 1);
@@ -75,10 +76,12 @@ sub main {
         $quit = 1;
     }
     $self->destroy_objects();
+    die 'exit_on_close' if $quit;
 }
 
 sub setup_objects {
     my ( $self ) = @_;
+    warn "setup objects\n";
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'} = $handler;
     $handler->set_handler( 'generic',   Mail::Milter::Authentication::Handler::Generic->new( $self ) );
@@ -97,6 +100,7 @@ sub setup_objects {
 
 sub destroy_objects {
     my ( $self ) = @_;
+    warn "destroy objects\n";
     my $handler = $self->{'handler'};
     $handler->destroy_handler( 'generic' );
     $handler->destroy_handler( 'auth' );
@@ -115,6 +119,7 @@ sub destroy_objects {
 
 sub process_command {
     my ( $self, $command, $buffer ) = @_;
+    warn "process command $command\n";
 
     my $handler = $self->{'handler'};
     if ( ! defined ( $handler ) ) {
