@@ -85,8 +85,7 @@ sub envfrom_callback {
             && ( $self->is_trusted_ip_address() == 0 )
             && ( $self->is_authenticated() == 0 ) )
         {
-            my $dmarc_handler = $self->get_handler('dmarc');
-            if ( my $dmarc = $dmarc_handler->{'obj'} ) {
+            if ( my $dmarc = $self->get_object('dmarc') ) {
                 $dmarc->spf(
                     'domain' => $domain,
                     'scope'  => $scope,
