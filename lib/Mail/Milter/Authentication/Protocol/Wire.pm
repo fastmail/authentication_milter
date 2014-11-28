@@ -197,6 +197,11 @@ sub process_command {
 
     if (defined $returncode) {
         $returncode = SMFIR_CONTINUE if $returncode == SMFIS_CONTINUE;
+        $returncode = SMFIR_TEMPFAIL if $returncode == SMFIS_TEMPFAIL;
+        $returncode = SMFIR_REJECT   if $returncode == SMFIS_REJECT;
+        $returncode = SMFIR_DISCARD  if $returncode == SMFIS_DISCARD;
+        $returncode = SMFIR_ACCEPT   if $returncode == SMFIS_ACCEPT;
+
         if ( $command ne SMFIC_ABORT ) {
             $self->write_packet($returncode);
         }
