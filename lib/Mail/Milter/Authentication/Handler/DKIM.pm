@@ -98,6 +98,11 @@ sub eom_callback {
             my $signature_result_detail = $signature->result_detail();
 
             if ( $signature_result eq 'invalid' ) {
+                if ( $signature_result_detail =~ /DNS query timeout for (.*) at / ) {
+                    my $timeout_domain = $1;
+                    $self->log_error( "TIMEOUT DETECTED: in DKIM result: $timeout_domain" );
+                    $signature_result_detail = "DNS query timeont for $timeout_domain";
+                }
                 if ( $signature_result_detail =~ /public key: panic:/ ) {
                     $self->log_error( "PANIC DETECTED: in DKIM result: $signature_result_detail" );
                     $self->exit_on_close();
@@ -217,6 +222,19 @@ sub eom_callback {
         }
     };
     if ( my $error = $@ ) {
+        if ( $error =~ / on an undefined value at /
+                or $error =~ / as a HASH ref while /
+                or $error =~ / as an ARRAY reference at /
+                or $error =~ / on unblessed reference at /
+                or $error =~ /^Not a HASH reference at /
+                or $error =~ /^Cannot copy to HASH in sassign at /
+                or $error =~ /^panic: /
+            ) {
+            $self->log_error( "PANIC DETECTED: in DKIM method: $error" );
+            $self->exit_on_close();
+            $self->set_return( $self->smfis_tempfail() );
+            return;
+        }
         $self->log_error( 'DKIM Error - ' . $error );
         $self->add_auth_header('dkim=temperror');
         $self->{'failmode'} = 1;
