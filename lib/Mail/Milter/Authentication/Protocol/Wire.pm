@@ -196,11 +196,21 @@ sub process_command {
     }
 
     if (defined $returncode) {
-        $returncode = SMFIR_CONTINUE if $returncode == SMFIS_CONTINUE;
-        $returncode = SMFIR_TEMPFAIL if $returncode == SMFIS_TEMPFAIL;
-        $returncode = SMFIR_REJECT   if $returncode == SMFIS_REJECT;
-        $returncode = SMFIR_DISCARD  if $returncode == SMFIS_DISCARD;
-        $returncode = SMFIR_ACCEPT   if $returncode == SMFIS_ACCEPT;
+        if ( $returncode == SMFIS_CONTINUE ) {
+            $returncode = SMFIR_CONTINUE;
+        }
+        elsif ( $returncode == SMFIS_TEMPFAIL ) {
+            $returncode = SMFIR_TEMPFAIL;
+        }
+        elsif ( $returncode == SMFIS_REJECT ) {
+            $returncode = SMFIR_REJECT;
+        }
+        elsif ( $returncode == SMFIS_DISCARD ) {
+            $returncode = SMFIR_DISCARD;
+        }
+        elsif ( $returncode == SMFIS_ACCEPT ) {
+            $returncode = SMFIR_ACCEPT;
+        }
 
         if ( $command ne SMFIC_ABORT ) {
             $self->write_packet($returncode);
@@ -268,7 +278,7 @@ sub add_header {
 }
 
 sub change_header {
-    my ( $self, $header, $index, $value );
+    my ( $self, $header, $index, $value ) = @_;
     $value = '' unless defined($value);
     $self->write_packet( SMFIR_CHGHEADER,
         pack('N', $index)

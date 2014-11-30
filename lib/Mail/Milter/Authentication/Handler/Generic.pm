@@ -69,6 +69,17 @@ sub get_object {
     my ( $self, $name ) = @_;
     my $top_handler = $self->get_top_handler();
     my $object      = $top_handler->{'object'}->{$name};
+    if ( ! $object ) {
+        if ( $name eq 'resolver' ) {
+            $object = Net::DNS::Resolver->new(
+                'udp_timeout' => 5,
+                'tcp_timeout' => 5,
+                'retry'       => 2,
+            );
+            $object->udppacketsize(1240);
+            $object->persistent_udp(1);
+        }
+    }
     return $object;
 }
 
@@ -347,7 +358,7 @@ sub add_headers {
         foreach my $header ( @{ $core_handler->{'add_headers'} } ) {
             $self->dbgout( 'AddHeader',
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
-            $self->addheader( $header->{'field'}, $header->{'value'} );
+            $self->add_header( $header->{'field'}, $header->{'value'} );
         }
     }
 }

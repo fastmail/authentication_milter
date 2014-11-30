@@ -10,6 +10,7 @@ use base 'Mail::Milter::Authentication::Handler::Generic';
 use Sys::Syslog qw{:standard :macros};
 
 use Mail::DKIM::Verifier;
+use Mail::DKIM::DNS;
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
@@ -20,6 +21,8 @@ sub envfrom_callback {
     eval {
         $dkim = Mail::DKIM::Verifier->new();
         $self->set_object('dkim',$dkim);
+        my $resolver = $self->get_object('resolver');
+        Mail::DKIM::DNS::resolver($resolver);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMKIM Setup Error ' . $error );

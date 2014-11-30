@@ -20,10 +20,7 @@ sub connect_callback {
     return if ( $self->is_authenticated() );
     my $ip_address = $self->ip_address();
     my $i1         = Net::IP->new($ip_address);
-
-    my $resolver = Net::DNS::Resolver->new;
-    $self->set_object('resolver',$resolver); # because reasons
-
+    my $resolver = $self->get_object('resolver');
     my $domain;
     my $result;
 

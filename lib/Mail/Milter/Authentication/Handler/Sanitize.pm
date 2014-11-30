@@ -59,7 +59,7 @@ sub eom_callback {
     if ( exists( $self->{'remove_auth_headers'} ) ) {
         foreach my $header ( reverse @{ $self->{'remove_auth_headers'} } ) {
             $self->dbgout( 'RemoveAuthHeader', $header, LOG_DEBUG );
-            $self->chgheader( 'Authentication-Results', $header, q{} );
+            $self->change_header( 'Authentication-Results', $header, q{} );
         }
     }
 }
