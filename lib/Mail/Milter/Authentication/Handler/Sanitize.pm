@@ -11,7 +11,7 @@ use Sys::Syslog qw{:standard :macros};
 
 sub remove_auth_header {
     my ( $self, $value ) = @_;
-    if ( !exists( $self->{'emove_auth_headers'} ) ) {
+    if ( !exists( $self->{'remove_auth_headers'} ) ) {
         $self->{'remove_auth_headers'} = [];
     }
     push @{ $self->{'remove_auth_headers'} }, $value;
