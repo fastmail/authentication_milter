@@ -143,7 +143,10 @@ sub get_symval {
 sub tempfail_on_error {
     my ( $self ) = @_;
     my $CONFIG = $self->config();
-    if ( $self->is_local_ip_address() ) {
+    if ( $self->is_authenticated() ) {
+        $self->set_return( $self->smfis_tempfail() ) if $CONFIG->{'tempfail_on_error_authenticated'};
+    }
+    elsif ( $self->is_local_ip_address() ) {
         $self->set_return( $self->smfis_tempfail() ) if $CONFIG->{'tempfail_on_error_local'};
     }
     elsif ( $self->is_trusted_ip_address() ) {

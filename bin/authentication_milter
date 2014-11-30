@@ -106,6 +106,7 @@ The configuration file format is as follows...
                                                       | as mailing lists frequently cause false DMARC failures.
 
     "tempfail_on_error" : "1",                        | Tempfail on errors
+    "tempfail_on_error_authenticated" : "0",          | Tempfail on errors for Authenticated IP Connections
     "tempfail_on_error_local" : "0",                  | Tempfail on errors for Local IP Connections
     "tempfail_on_error_trusted" : "0",                | Tempfail on errors for Trusted IP Connections
 
