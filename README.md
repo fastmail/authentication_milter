@@ -10,7 +10,7 @@ This milter verifies using the following standards.
 - DKIM
 - DKIM-ADSP
 - DMARC
-- IPREV
+- IPRev
 - Check HELO matches it's IP address
 
 Design Decisions
