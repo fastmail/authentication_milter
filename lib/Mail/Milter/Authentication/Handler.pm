@@ -23,7 +23,7 @@ sub connect_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'Connect callback error ' . $error );
         $self->exit_on_close();
-        $self->set_return( $self->smfis_tempfail() );
+        $self->tempfail_on_error();
     }
     return $self->get_return();
 }
@@ -47,7 +47,7 @@ sub helo_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'HELO callback error ' . $error );
         $self->exit_on_close();
-        $self->set_return( $self->smfis_tempfail() );
+        $self->tempfail_on_error();
     }
     return $self->get_return();
 }
@@ -68,7 +68,7 @@ sub envfrom_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'Env From callback error ' . $error );
         $self->exit_on_close();
-        $self->set_return( $self->smfis_tempfail() );
+        $self->tempfail_on_error();
     }
     return $self->get_return();
 }
@@ -89,7 +89,7 @@ sub envrcpt_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'Rcpt To callback error ' . $error );
         $self->exit_on_close();
-        $self->set_return( $self->smfis_tempfail() );
+        $self->tempfail_on_error();
     }
     return $self->get_return();
 }
@@ -109,7 +109,7 @@ sub header_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'Header callback error ' . $error );
         $self->exit_on_close();
-        $self->set_return( $self->smfis_tempfail() );
+        $self->tempfail_on_error();
     }
     return $self->get_return();
 }
@@ -128,7 +128,7 @@ sub eoh_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'EOH callback error ' . $error );
         $self->exit_on_close();
-        $self->set_return( $self->smfis_tempfail() );
+        $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
     return $self->get_return();
@@ -146,7 +146,7 @@ sub body_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'Body callback error ' . $error );
         $self->exit_on_close();
-        $self->set_return( $self->smfis_tempfail() );
+        $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
     return $self->get_return();
@@ -166,7 +166,7 @@ sub eom_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'EOM callback error ' . $error );
         $self->exit_on_close();
-        $self->set_return( $self->smfis_tempfail() );
+        $self->tempfail_on_error();
     }
     $self->add_headers();
     $self->dbgoutwrite();

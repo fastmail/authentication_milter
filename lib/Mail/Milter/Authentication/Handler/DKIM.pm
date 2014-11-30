@@ -106,7 +106,7 @@ sub eom_callback {
                 if ( $signature_result_detail =~ /public key: panic:/ ) {
                     $self->log_error( "PANIC DETECTED: in DKIM result: $signature_result_detail" );
                     $self->exit_on_close();
-                    $self->set_return( $self->smfis_tempfail() );
+                    $self->tempfail_on_error();
                     return;
                 }
             }
@@ -232,7 +232,7 @@ sub eom_callback {
             ) {
             $self->log_error( "PANIC DETECTED: in DKIM method: $error" );
             $self->exit_on_close();
-            $self->set_return( $self->smfis_tempfail() );
+            $self->tempfail_on_error();
             return;
         }
         $self->log_error( 'DKIM Error - ' . $error );

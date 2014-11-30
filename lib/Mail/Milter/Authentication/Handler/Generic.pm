@@ -129,6 +129,20 @@ sub get_symval {
     return $self->get_symbol( $key );
 }
 
+sub tempfail_on_error {
+    my ( $self ) = @_;
+    my $CONFIG = $self->config();
+    if ( $self->is_local_ip_address() ) {
+        $self->set_return( $self->smfis_tempfail() ) if $CONFIG->{'tempfail_on_error_local'};
+    }
+    elsif ( $self->is_trusted_ip_address() ) {
+        $self->set_return( $self->smfis_tempfail() ) if $CONFIG->{'tempfail_on_error_trusted'};
+    }
+    else {
+        $self->set_return( $self->smfis_tempfail() ) if $CONFIG->{'tempfail_on_error'};
+    }
+}
+
 sub is_local_ip_address {
     my ($self) = @_;
     my $local_handler = $self->get_handler('localip');
