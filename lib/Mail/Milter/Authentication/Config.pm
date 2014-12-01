@@ -34,7 +34,7 @@ use JSON;
         }
 
         my $json   = JSON->new();
-        my $CONFIG = $json->decode($text)
+        $CONFIG = $json->decode($text)
 
           || die "Error parsing config file $file";
         # Samity Checks
