@@ -15,10 +15,17 @@ sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     $self->dbgout( 'CALLBACK', 'Connect', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
+    my $CONFIG = $self->config();
     eval {
+        local $SIG{'ALRM'};
+        if ( $CONFIG->{'connect_timeout'} ) {
+            $SIG{'ALRM'} = sub{ die "Timeout\n" };
+            alarm( $CONFIG->{'connect_timeout'} );
+        }
         foreach my $handler (qw{ core auth trustedip localip iprev }) {
             $self->get_handler($handler)->connect_callback( $hostname, $sockaddr_in );
         }
+        alarm(0);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Connect callback error ' . $error );
@@ -35,14 +42,22 @@ sub helo_callback {
     $self->dbgout( 'CALLBACK', 'Helo', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $helo_host = q{} if not $helo_host;
+    my $CONFIG = $self->config();
     eval {
-        # Take only the first HELO from a connection
+        local $SIG{'ALRM'};
+        if ( $CONFIG->{'command_timeout'} ) {
+            $SIG{'ALRM'} = sub{ die "Timeout\n" };
+            alarm( $CONFIG->{'command_timeout'} );
+        }
 
+        # Take only the first HELO from a connection
         if ( !( $self->helo_name() ) ) {
             foreach my $handler (qw{ core ptr }) {
                 $self->get_handler($handler)->helo_callback($helo_host);
             }
         }
+
+        alarm(0);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'HELO callback error ' . $error );
@@ -60,10 +75,17 @@ sub envfrom_callback {
     $self->dbgout( 'CALLBACK', 'EnvFrom', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $env_from = q{} if not $env_from;
+    my $CONFIG = $self->config();
     eval {
+        local $SIG{'ALRM'};
+        if ( $CONFIG->{'command_timeout'} ) {
+            $SIG{'ALRM'} = sub{ die "Timeout\n" };
+            alarm( $CONFIG->{'command_timeout'} );
+        }
         foreach my $handler (qw{ core sanitize auth dmarc spf dkim }) {
             $self->get_handler($handler)->envfrom_callback($env_from);
         }
+        alarm(0);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Env From callback error ' . $error );
@@ -81,10 +103,17 @@ sub envrcpt_callback {
     $self->dbgout( 'CALLBACK', 'EnvRcpt', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $env_to = q{} if not $env_to;
+    my $CONFIG = $self->config();
     eval {
+        local $SIG{'ALRM'};
+        if ( $CONFIG->{'command_timeout'} ) {
+            $SIG{'ALRM'} = sub{ die "Timeout\n" };
+            alarm( $CONFIG->{'command_timeout'} );
+        }
         foreach my $handler (qw{ core dmarc }) {
             $self->get_handler($handler)->envrcpt_callback($env_to);
         }
+        alarm(0);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Rcpt To callback error ' . $error );
@@ -101,10 +130,17 @@ sub header_callback {
     $self->dbgout( 'CALLBACK', 'Header', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $value = q{} if not $value;
+    my $CONFIG = $self->config();
     eval {
+        local $SIG{'ALRM'};
+        if ( $CONFIG->{'content_timeout'} ) {
+            $SIG{'ALRM'} = sub{ die "Timeout\n" };
+            alarm( $CONFIG->{'content_timeout'} );
+        }
         foreach my $handler (qw{ core sanitize dkim dmarc senderid }) {
             $self->get_handler($handler)->header_callback( $header, $value );
         }
+        alarm(0);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Header callback error ' . $error );
@@ -120,10 +156,17 @@ sub eoh_callback {
     my ($self) = @_;
     $self->dbgout( 'CALLBACK', 'EOH', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
+    my $CONFIG = $self->config();
     eval {
+        local $SIG{'ALRM'};
+        if ( $CONFIG->{'content_timeout'} ) {
+            $SIG{'ALRM'} = sub{ die "Timeout\n" };
+            alarm( $CONFIG->{'content_timeout'} );
+        }
         foreach my $handler (qw{ dkim senderid }) {
             $self->get_handler($handler)->eoh_callback();
         }
+        alarm(0);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'EOH callback error ' . $error );
@@ -140,8 +183,15 @@ sub body_callback {
     my ( $self, $body_chunk ) = @_;
     $self->dbgout( 'CALLBACK', 'Body', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
+    my $CONFIG = $self->config();
     eval {
+        local $SIG{'ALRM'};
+        if ( $CONFIG->{'content_timeout'} ) {
+            $SIG{'ALRM'} = sub{ die "Timeout\n" };
+            alarm( $CONFIG->{'content_timeout'} );
+        }
         $self->get_handler('dkim')->body_callback( $body_chunk );
+        alarm(0);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'Body callback error ' . $error );
@@ -158,10 +208,17 @@ sub eom_callback {
     my ($self) = @_;
     $self->dbgout( 'CALLBACK', 'EOM', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
+    my $CONFIG = $self->config();
     eval {
+        local $SIG{'ALRM'};
+        if ( $CONFIG->{'content_timeout'} ) {
+            $SIG{'ALRM'} = sub{ die "Timeout\n" };
+            alarm( $CONFIG->{'content_timeout'} );
+        }
         foreach my $handler (qw{ dkim dmarc sanitize }) {
             $self->get_handler($handler)->eom_callback();
         }
+        alarm(0);
     };
     if ( my $error = $@ ) {
         $self->log_error( 'EOM callback error ' . $error );

@@ -65,6 +65,13 @@ The configuration file format is as follows...
     "max_spare_children"     : 20,                      | Max number of spare children to maintain
     "max_requests_per_child" : 200,                     | Max number of requests per child process (prefork)
 
+                                                        | Timeouts for callbacks, should be slightly lower
+                                                        | than the corresponding timeouts in Postfix
+                                                        | Timeouts are ignored if missing.
+    "connect_timeout" : 30,                             | Timeout for Connect callbacks
+    "command_timeout" : 30,                             | Timeout for Helo,Mail,Rcpt,Data and Unknown callbacks
+    "content_timeout" : 300,                            | Timeout for Header,Eoh, Body and Eom callbacks
+
     "show_default_adsp" : "0",                        | Boolean, include default adsp results?
 
                                                       | Checks to include.
