@@ -29,7 +29,7 @@ sub envfrom_callback {
         $self->dbgout( 'AuthenticatedAs', $auth_name, LOG_INFO );
 
         # Clear the current auth headers ( iprev and helo are already added )
-        my $core_handler = $self->get_handler('core');
+        my $core_handler = $self->get_handler('Core');
         $core_handler->{'c_auth_headers'} = [];
         $core_handler->{'auth_headers'}   = [];
         $self->{'is_authenticated'}       = 1;

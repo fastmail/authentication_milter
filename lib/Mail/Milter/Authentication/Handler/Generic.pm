@@ -159,37 +159,37 @@ sub tempfail_on_error {
 
 sub is_local_ip_address {
     my ($self) = @_;
-    my $local_handler = $self->get_handler('localip');
+    my $local_handler = $self->get_handler('LocalIP');
     return $local_handler->{'is_local_ip_address'};
 }
 
 sub is_trusted_ip_address {
     my ($self) = @_;
-    my $trusted_handler = $self->get_handler('trustedip');
+    my $trusted_handler = $self->get_handler('TrustedIP');
     return $trusted_handler->{'is_trusted_ip_address'};
 }
 
 sub is_authenticated {
     my ($self) = @_;
-    my $auth_handler = $self->get_handler('auth');
+    my $auth_handler = $self->get_handler('Auth');
     return $auth_handler->{'is_authenticated'};
 }
 
 sub ip_address {
     my ($self) = @_;
-    my $core_handler = $self->get_handler('core');
+    my $core_handler = $self->get_handler('Core');
     return $core_handler->{'ip_address'};
 }
 
 sub helo_name {
     my ($self) = @_;
-    my $core_handler = $self->get_handler('core');
+    my $core_handler = $self->get_handler('Core');
     return $core_handler->{'helo_name'};
 }
 
 sub mail_from {
     my ($self) = @_;
-    my $core_handler = $self->get_handler('core');
+    my $core_handler = $self->get_handler('Core');
     return $core_handler->{'mail_from'};
 }
 
@@ -286,7 +286,7 @@ sub is_hostname_mine {
 sub dbgout {
     my ( $self, $key, $value, $priority ) = @_;
     warn "$key: $value\n";
-    my $core_handler = $self->get_handler('core');
+    my $core_handler = $self->get_handler('Core');
     if ( !exists( $core_handler->{'dbgout'} ) ) {
         $core_handler->{'dbgout'} = [];
     }
@@ -312,7 +312,7 @@ sub dbgoutwrite {
 #                    | LOG_MASK(LOG_DEBUG)
         );
         my $queue_id = $self->get_symval('i') || q{--};
-        my $core_handler = $self->get_handler('core');
+        my $core_handler = $self->get_handler('Core');
         if ( exists( $core_handler->{'dbgout'} ) ) {
             foreach my $entry ( @{ $core_handler->{'dbgout'} } ) {
                 my $key      = $entry->{'key'};
@@ -332,7 +332,7 @@ sub add_headers {
 
     my $header = $self->get_my_hostname();
     my @auth_headers;
-    my $core_handler = $self->get_handler('core');
+    my $core_handler = $self->get_handler('Core');
     if ( exists( $core_handler->{'c_auth_headers'} ) ) {
         @auth_headers = @{ $core_handler->{'c_auth_headers'} };
     }
@@ -368,7 +368,7 @@ sub add_headers {
 
 sub prepend_header {
     my ( $self, $field, $value ) = @_;
-    my $core_handler = $self->get_handler('core');
+    my $core_handler = $self->get_handler('Core');
     if ( !exists( $core_handler->{'pre_headers'} ) ) {
         $core_handler->{'pre_headers'} = [];
     }
@@ -381,7 +381,7 @@ sub prepend_header {
 
 sub add_auth_header {
     my ( $self, $value ) = @_;
-    my $core_handler = $self->get_handler('core');
+    my $core_handler = $self->get_handler('Core');
     if ( !exists( $core_handler->{'auth_headers'} ) ) {
         $core_handler->{'auth_headers'} = [];
     }
@@ -392,7 +392,7 @@ sub add_c_auth_header {
 
     # Connection wide auth headers
     my ( $self, $value ) = @_;
-    my $core_handler = $self->get_handler('core');
+    my $core_handler = $self->get_handler('Core');
     if ( !exists( $core_handler->{'x_auth_headers'} ) ) {
         $core_handler->{'c_auth_headers'} = [];
     }
@@ -401,7 +401,7 @@ sub add_c_auth_header {
 
 sub append_header {
     my ( $self, $field, $value ) = @_;
-    my $core_handler = $self->get_handler('core');
+    my $core_handler = $self->get_handler('Core');
     if ( !exists( $core_handler->{'add_headers'} ) ) {
         $core_handler->{'add_headers'} = [];
     }

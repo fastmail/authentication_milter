@@ -19,7 +19,7 @@ sub helo_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
 
-    my $iprev_handler = $self->get_handler('iprev');
+    my $iprev_handler = $self->get_handler('IPRev');
     my $domain =
       exists( $iprev_handler->{'verified_ptr'} )
       ? $iprev_handler->{'verified_ptr'}

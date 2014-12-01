@@ -22,7 +22,7 @@ sub connect_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'connect_timeout'} );
         }
-        foreach my $handler (qw{ core auth trustedip localip iprev }) {
+        foreach my $handler (qw{ Core Auth TrustedIP LocalIP IPRev }) {
             $self->get_handler($handler)->connect_callback( $hostname, $sockaddr_in );
         }
         alarm(0);
@@ -52,7 +52,7 @@ sub helo_callback {
 
         # Take only the first HELO from a connection
         if ( !( $self->helo_name() ) ) {
-            foreach my $handler (qw{ core ptr }) {
+            foreach my $handler (qw{ Core PTR }) {
                 $self->get_handler($handler)->helo_callback($helo_host);
             }
         }
@@ -82,7 +82,7 @@ sub envfrom_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'command_timeout'} );
         }
-        foreach my $handler (qw{ core sanitize auth dmarc spf dkim }) {
+        foreach my $handler (qw{ Core Sanitize Auth DMARC SPF DKIM }) {
             $self->get_handler($handler)->envfrom_callback($env_from);
         }
         alarm(0);
@@ -110,7 +110,7 @@ sub envrcpt_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'command_timeout'} );
         }
-        foreach my $handler (qw{ core dmarc }) {
+        foreach my $handler (qw{ Core DMARC }) {
             $self->get_handler($handler)->envrcpt_callback($env_to);
         }
         alarm(0);
@@ -137,7 +137,7 @@ sub header_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'content_timeout'} );
         }
-        foreach my $handler (qw{ core sanitize dkim dmarc senderid }) {
+        foreach my $handler (qw{ Core Sanitize DKIM DMARC SenderID }) {
             $self->get_handler($handler)->header_callback( $header, $value );
         }
         alarm(0);
@@ -163,7 +163,7 @@ sub eoh_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'content_timeout'} );
         }
-        foreach my $handler (qw{ dkim senderid }) {
+        foreach my $handler (qw{ DKIM SenderID }) {
             $self->get_handler($handler)->eoh_callback();
         }
         alarm(0);
@@ -190,7 +190,9 @@ sub body_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'content_timeout'} );
         }
-        $self->get_handler('dkim')->body_callback( $body_chunk );
+        foreach my $handler (qw{ DKIM }) {
+            $self->get_handler($handler)->body_callback( $body_chunk );
+        }
         alarm(0);
     };
     if ( my $error = $@ ) {
@@ -215,7 +217,7 @@ sub eom_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'content_timeout'} );
         }
-        foreach my $handler (qw{ dkim dmarc sanitize }) {
+        foreach my $handler (qw{ DKIM DMARC Sanitize }) {
             $self->get_handler($handler)->eom_callback();
         }
         alarm(0);

@@ -130,7 +130,7 @@ sub eom_callback {
     return if ( $self->{'failmode'} );
     eval {
         my $dmarc        = $self->get_object('dmarc');
-        my $dkim_handler = $self->get_handler('dkim');
+        my $dkim_handler = $self->get_handler('DKIM');
         if ( $dkim_handler->{'failmode'} ) {
             $self->log_error('DKIM is in failmode, Skipping DMARC');
             $self->add_auth_header('dmarc=temperror');

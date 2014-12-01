@@ -35,6 +35,7 @@ requires (
     'Mail::DMARC::PurePerl',
     'Mail::SPF',
     'MIME::Base64',
+    'Module::Load',
     'Net::DNS',
     'Net::IP',
     'Net::Server',

@@ -12,11 +12,6 @@ use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Protocol::Wire;
 use Mail::Milter::Authentication::Util qw{ loginfo };
 
-use Net::DNS;
-use Net::DNS::Resolver;
-use Mail::DKIM;
-use Mail::DMARC;
-
 sub process_request {
     my ( $self ) = @_;
     my $socket = $self->{server}->{client};

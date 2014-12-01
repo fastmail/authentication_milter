@@ -5,22 +5,9 @@ use warnings;
 
 our $VERSION = 0.4;
 
+use Module::Load;
 use Socket;
 use Socket6;
-
-use Mail::Milter::Authentication::Handler;
-use Mail::Milter::Authentication::Handler::Generic;
-use Mail::Milter::Authentication::Handler::Auth;
-use Mail::Milter::Authentication::Handler::Core;
-use Mail::Milter::Authentication::Handler::DKIM;
-use Mail::Milter::Authentication::Handler::DMARC;
-use Mail::Milter::Authentication::Handler::IPRev;
-use Mail::Milter::Authentication::Handler::LocalIP;
-use Mail::Milter::Authentication::Handler::PTR;
-use Mail::Milter::Authentication::Handler::Sanitize;
-use Mail::Milter::Authentication::Handler::SenderID;
-use Mail::Milter::Authentication::Handler::SPF;
-use Mail::Milter::Authentication::Handler::TrustedIP;
 
 use Mail::Milter::Authentication::Constants qw{ :all };
 
@@ -82,38 +69,26 @@ sub main {
 sub setup_objects {
     my ( $self ) = @_;
     warn "setup objects\n";
+
+    load 'Mail::Milter::Authentication::Handler';
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'} = $handler;
-    $handler->set_handler( 'generic',   Mail::Milter::Authentication::Handler::Generic->new( $self ) );
-    $handler->set_handler( 'auth',      Mail::Milter::Authentication::Handler::Auth->new( $self ) );
-    $handler->set_handler( 'core',      Mail::Milter::Authentication::Handler::Core->new( $self ) );
-    $handler->set_handler( 'dkim',      Mail::Milter::Authentication::Handler::DKIM->new( $self ) );
-    $handler->set_handler( 'dmarc',     Mail::Milter::Authentication::Handler::DMARC->new( $self ) );
-    $handler->set_handler( 'iprev',     Mail::Milter::Authentication::Handler::IPRev->new( $self ) );
-    $handler->set_handler( 'localip',   Mail::Milter::Authentication::Handler::LocalIP->new( $self ) );
-    $handler->set_handler( 'ptr',       Mail::Milter::Authentication::Handler::PTR->new( $self ) );
-    $handler->set_handler( 'sanitize',  Mail::Milter::Authentication::Handler::Sanitize->new( $self ) );
-    $handler->set_handler( 'senderid',  Mail::Milter::Authentication::Handler::SenderID->new( $self ) );
-    $handler->set_handler( 'spf',       Mail::Milter::Authentication::Handler::SPF->new( $self ) );
-    $handler->set_handler( 'trustedip', Mail::Milter::Authentication::Handler::TrustedIP->new( $self ) );
+
+    foreach my $name (qw{ Generic Auth Core DKIM DMARC IPRev LocalIP PTR Sanitize SenderID SPF TrustedIP }) {
+        my $package = "Mail::Milter::Authentication::Handler::$name";
+        load $package;
+        my $obj = $package->new( $self );
+        $handler->set_handler( $name, $obj );
+    }
 }
 
 sub destroy_objects {
     my ( $self ) = @_;
     warn "destroy objects\n";
     my $handler = $self->{'handler'};
-    $handler->destroy_handler( 'generic' );
-    $handler->destroy_handler( 'auth' );
-    $handler->destroy_handler( 'core' );
-    $handler->destroy_handler( 'dkim' );
-    $handler->destroy_handler( 'dmarc' );
-    $handler->destroy_handler( 'iprev' );
-    $handler->destroy_handler( 'localip' );
-    $handler->destroy_handler( 'ptr' );
-    $handler->destroy_handler( 'sanitize' );
-    $handler->destroy_handler( 'senderid' );
-    $handler->destroy_handler( 'spf' );
-    $handler->destroy_handler( 'trustedip' );
+    foreach my $name (qw{ Generic Auth Core DKIM DMARC IPRev LocalIP PTR Sanitize SenderID SPF TrustedIP }) {
+        $handler->destroy_handler( $name );
+    }
     delete $self->{'handler'};
 }
 
