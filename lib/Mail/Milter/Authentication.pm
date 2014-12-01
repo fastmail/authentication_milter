@@ -118,61 +118,7 @@ sub start {
     warn "\nStarting server\n";
     __PACKAGE__->run( %args );
 
-#    check_pid_file($pid_file);
-#
-#
-#    #Sendmail::PMilter::setdbg( 9 );
-#    my $milter = Sendmail::PMilter->new();
-#    $milter->set_dispatcher(
-#        Mail::Milter::Authentication::Dispatcher::get_dispatcher() );
-#    loginfo( 'setting connection backlog to ' . $listen_backlog );
-#    $milter->set_listen($listen_backlog);
-#    $milter->setconn($connection)
-#      or die "Could not open connection $connection\n";
-#    $milter->register( "authentication_milter", $callbacks, SMFI_CURR_ACTS );
-#
-#    loginfo( 'listening on ' . $connection );
-#
-#    {
-#        $connection =~ /^([^:]+):([^:@]+)(?:@([^:@]+|\[[0-9a-f:\.]+\]))?$/;
-#        my $type = $1;
-#        my $path = $2;
-#        if ( $type eq 'unix' ) {
-#            my $socketperms = $CONFIG->{'socketperms'};
-#            if ($socketperms) {
-#                chmod oct($socketperms), $path;
-#                loginfo( 'setting socket permissions to ' . $socketperms );
-#            }
-#        }
-#    }
-#
-#    # Daemonise
-#    if ( $args->{'daemon'} ) {
-#        my $runas    = $CONFIG->{'runas'}    || 'nobody';
-#        my $rungroup = $CONFIG->{'rungroup'} || 'nogroup';
-#        loginfo('daemonizing');
-#        daemonize( $runas, $rungroup, $pid_file, );
-#    }
-#    else {
-#        # Drop Privs
-#        my $runas = $CONFIG->{'runas'};
-#        if ($runas) {
-#            my $uid = getpwnam($runas) || die "Could not find user $runas";
-#            $> = $uid;
-#            if ( $> != $uid ) {
-#                loginfo('could not drop privs - bailing');
-#                exit 1;
-#            }
-#            loginfo('privs dropped - starting up');
-#        }
-#        else {
-#            loginfo('running as logged in user - please be careful');
-#        }
-#    }
-#
-#    $milter->main();
-
-    # Never reaches here, callbacks are called from Milter.
+    # Never reaches here.
     loginfo('something went horribly wrong');
     die 'Something went horribly wrong';
 }
