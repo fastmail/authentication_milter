@@ -35,9 +35,9 @@ use JSON;
 
         my $json   = JSON->new();
         $CONFIG = $json->decode($text)
-
           || die "Error parsing config file $file";
-        # Samity Checks
+
+        # Sanity Checks
         if ( $CONFIG->{'check_dmarc'} ) {
             if ( not $CONFIG->{'check_dkim'} ) {
                 die 'dmarc checks require dkim to be enabled';
