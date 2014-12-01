@@ -250,7 +250,7 @@ sub add_header {
         $header
         . "\0"
         . $value
-        ."\0"
+        . "\0"
     );
 }
 
