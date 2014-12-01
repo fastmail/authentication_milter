@@ -3,6 +3,8 @@ package Mail::Milter::Authentication::Handler::Generic;
 use strict;
 use warnings;
 
+use English;
+
 our $VERSION = 0.4;
 
 use base 'Mail::Milter::Authentication::Protocol';
@@ -285,7 +287,8 @@ sub is_hostname_mine {
 
 sub dbgout {
     my ( $self, $key, $value, $priority ) = @_;
-    warn "$key: $value\n";
+    my $queue_id = $self->get_symval('i') || q{--};
+    warn "$PID: $queue_id: $key: $value\n";
     my $core_handler = $self->get_handler('Core');
     if ( !exists( $core_handler->{'dbgout'} ) ) {
         $core_handler->{'dbgout'} = [];
@@ -307,10 +310,18 @@ sub dbgoutwrite {
     my ($self) = @_;
     eval {
         openlog('authentication_milter', 'pid', LOG_MAIL);
-        setlogmask(   LOG_MASK(LOG_ERR)
-                    | LOG_MASK(LOG_INFO)
-#                    | LOG_MASK(LOG_DEBUG)
-        );
+        my $CONFIG = $self->config();
+        if ( $CONFIG->{'debug'} ) {
+            setlogmask(   LOG_MASK(LOG_ERR)
+                        | LOG_MASK(LOG_INFO)
+                        | LOG_MASK(LOG_DEBUG)
+            );
+        }
+        else {
+            setlogmask(   LOG_MASK(LOG_ERR)
+                        | LOG_MASK(LOG_INFO)
+            );
+        }
         my $queue_id = $self->get_symval('i') || q{--};
         my $core_handler = $self->get_handler('Core');
         if ( exists( $core_handler->{'dbgout'} ) ) {

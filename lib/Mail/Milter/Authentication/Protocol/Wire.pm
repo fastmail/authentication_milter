@@ -5,6 +5,8 @@ use warnings;
 
 our $VERSION = 0.4;
 
+use English;
+use Mail::Milter::Authentication::Util qw{ logdebug };
 use Module::Load;
 use Socket;
 use Socket6;
@@ -44,7 +46,7 @@ sub main {
 
         # Get command
         my $command = $self->read_block(1) || last;
-        warn "receive command $command\n";
+        logdebug( "receive command $command" );
 
         # Get data
         my $data = $self->read_block($length - 1);
@@ -68,7 +70,7 @@ sub main {
 
 sub setup_objects {
     my ( $self ) = @_;
-    warn "setup objects\n";
+    logdebug( 'setup objects' );
 
     load 'Mail::Milter::Authentication::Handler';
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
@@ -84,7 +86,7 @@ sub setup_objects {
 
 sub destroy_objects {
     my ( $self ) = @_;
-    warn "destroy objects\n";
+    logdebug ( 'destroy objects' );
     my $handler = $self->{'handler'};
     foreach my $name (qw{ Generic Auth Core DKIM DMARC IPRev LocalIP PTR Sanitize SenderID SPF TrustedIP }) {
         $handler->destroy_handler( $name );
@@ -94,7 +96,7 @@ sub destroy_objects {
 
 sub process_command {
     my ( $self, $command, $buffer ) = @_;
-    warn "process command $command\n";
+    logdebug ( "process command $command" );
 
     my $handler = $self->{'handler'};
     if ( ! defined ( $handler ) ) {
@@ -277,6 +279,7 @@ sub insert_header {
 
 sub write_packet {
     my ( $self, $code, $data ) = @_;
+    logdebug ( "send command $code" );
     my $socket = $self->{'socket'};
     $data = q{} unless defined($data);
     my $len = pack('N', length($data) + 1);

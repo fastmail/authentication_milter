@@ -231,6 +231,7 @@ sub eom_callback {
                 or $error =~ / on unblessed reference at /
                 or $error =~ /^Not a HASH reference at /
                 or $error =~ /^Cannot copy to HASH in sassign at /
+                or $error =~ /^Cannot copy to ARRAY in sassign at /
                 or $error =~ /^panic: /
             ) {
             $self->log_error( "PANIC DETECTED: in DKIM method: $error" );

@@ -10,7 +10,7 @@ use base 'Net::Server::PreFork';
 use English;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Protocol::Wire;
-use Mail::Milter::Authentication::Util qw{ loginfo };
+use Mail::Milter::Authentication::Util qw{ logerror loginfo };
 
 sub process_request {
     my ( $self ) = @_;
@@ -119,7 +119,7 @@ sub start {
     __PACKAGE__->run( %args );
 
     # Never reaches here.
-    loginfo('something went horribly wrong');
+    logerror('something went horribly wrong');
     die 'Something went horribly wrong';
 }
 
