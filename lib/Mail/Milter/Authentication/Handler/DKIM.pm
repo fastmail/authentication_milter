@@ -21,8 +21,11 @@ sub envfrom_callback {
     eval {
         $dkim = Mail::DKIM::Verifier->new();
         $self->set_object('dkim',$dkim);
-        my $resolver = $self->get_object('resolver');
-        Mail::DKIM::DNS::resolver($resolver);
+        # The following requires Mail::DKIM > 0.4
+        if ( $Mail::DKIM::VERSION >= 0.4 ) {
+            my $resolver = $self->get_object('resolver');
+            Mail::DKIM::DNS::resolver($resolver);
+        }
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMKIM Setup Error ' . $error );
