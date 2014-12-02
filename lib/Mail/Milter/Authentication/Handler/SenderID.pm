@@ -57,6 +57,12 @@ sub eoh_callback {
 
     my $identity = $self->get_address_from( $self->{'from_header'} );
 
+    if ( ! $identity ) {
+        $self->log_error( 'SENDERID Error No Identity' );
+        $self->add_auth_header('senderid=permerror');
+        return;
+    }
+
     eval {
         my $spf_request = Mail::SPF::Request->new(
             'versions'      => [2],
