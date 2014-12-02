@@ -49,7 +49,7 @@ sub envfrom_callback {
         $dmarc->envelope_from($domain_from);
     };
     if ( my $error = $@ ) {
-        if ( $error =~ / invalid envelope_from at / ) {
+        if ( $error =~ /^invalid envelope_from at / ) {
             $self->log_error( 'DMARC Invalid envelope from <' . $domain_from . '>' );
             $self->log_error( 'DMARC Debug Helo: ' . $self->helo_name() );
             $self->log_error( 'DMARC Debug Envfrom: ' . $env_from );
