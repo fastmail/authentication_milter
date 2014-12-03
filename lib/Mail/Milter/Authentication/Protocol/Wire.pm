@@ -189,6 +189,14 @@ sub process_command {
             $returncode = SMFIR_ACCEPT;
         }
 
+        my $CONFIG = get_config();
+        if ( $CONFIG->{'dryrun'} ) {
+            if ( $returncode ne SMFIR_CONTINUE ) {
+                logdebug ( "dryrun returncode changed from $returncode to continue" );
+                $returncode = SMFIR_CONTINUE;
+            }
+        }
+
         if ( $command ne SMFIC_ABORT ) {
             $self->write_packet($returncode);
         }

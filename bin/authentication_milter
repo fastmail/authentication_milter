@@ -54,6 +54,9 @@ The milter reads configuration from /etc/authentication_milter.json
 The configuration file format is as follows...
 
 {
+    "debug"  : 1,                                       | Verbose debugging output
+    "dryrun" : 1,                                       | Dryrun (do not alter or reject mail)
+
     "connection"             : "inet:12345\@localhost",  | The connection to use 
     "socketperms"            : "0777",                  | Permissions for socket
     "runas"                  : "nobody",                | Drop privs and run as this user

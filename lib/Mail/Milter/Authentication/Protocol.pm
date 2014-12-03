@@ -5,6 +5,7 @@ use warnings;
 
 our $VERSION = 0.4;
 
+use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw { :all };
 
 sub smfis_continue {
@@ -36,18 +37,24 @@ sub write_packet {
 sub add_header {
     my ( $self, $key, $value ) = @_;
     my $wire = $self->{'wire'};
+    my $CONFIG = get_config();
+    return if $CONFIG->{'dryrun'};
     $wire->add_header( $key, $value );
 }
 
 sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
     my $wire = $self->{'wire'};
+    my $CONFIG = get_config();
+    return if $CONFIG->{'dryrun'};
     $wire->insert_header( $index, $key, $value );
 }
 
 sub change_header {
     my ( $self, $key, $index, $value ) = @_;
     my $wire = $self->{'wire'};
+    my $CONFIG = get_config();
+    return if $CONFIG->{'dryrun'};
     $wire->change_header( $key, $index, $value );
 }
 
