@@ -404,7 +404,7 @@ sub add_c_auth_header {
     # Connection wide auth headers
     my ( $self, $value ) = @_;
     my $core_handler = $self->get_handler('Core');
-    if ( !exists( $core_handler->{'x_auth_headers'} ) ) {
+    if ( !exists( $core_handler->{'c_auth_headers'} ) ) {
         $core_handler->{'c_auth_headers'} = [];
     }
     push @{ $core_handler->{'c_auth_headers'} }, $value;
