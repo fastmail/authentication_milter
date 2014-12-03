@@ -105,7 +105,7 @@ sub start {
 
             my $umask = $CONFIG->{'umask'};
             if ($umask) {
-                umask (  0 + $umask );
+                umask (  oct( $umask ) );
                 loginfo( 'setting umask to ' . $umask );
             }
 
