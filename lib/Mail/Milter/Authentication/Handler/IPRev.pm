@@ -11,6 +11,24 @@ use Net::DNS;
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
+sub _dns_error {
+    my ( $self, $type, $data, $error ) = @_;
+    if ( $error eq 'NXDOMAIN' ) {
+        $self->dbgout( "DNS $type  Lookup", "$data gave $error", LOG_DEBUG );
+    }
+    elsif ( $error eq 'NOERROR' ) {
+        $self->dbgout( "DNS $type  Lookup", "$data gave $error", LOG_DEBUG );
+    }
+    else {
+        # Could be SERVFAIL or something else
+        $self->log_error(
+            'DNS ' . $type . ' query failed for '
+          . $data
+          . ' with '
+          . $error );
+    }
+}
+
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     my $CONFIG = $self->config();
@@ -34,14 +52,10 @@ sub connect_callback {
         }
     }
     else {
-        $self->log_error(
-                'DNS PTR query failed for '
-              . $ip_address
-              . ' with '
-              . $resolver->errorstring );
+        $self->_dns_error( 'PTR', $ip_address, $resolver->errorstring );
     }
 
-    my $a_error;
+    my @a_error;
     if ($domain) {
         my $packet = $resolver->query( $domain, 'A' );
         if ($packet) {
@@ -59,11 +73,7 @@ sub connect_callback {
         }
         else {
             # Don't log this right now, might be an AAAA only host.
-            $a_error =
-                'DNS A query failed for '
-              . $domain
-              . ' with '
-              . $resolver->errorstring;
+            @a_error = [ 'A', $domain, $resolver->errorstring ];
         }
     }
 
@@ -84,12 +94,8 @@ sub connect_callback {
         }
         else {
             # Log A errors now, as they become relevant if AAAA also fails.
-            $self->log_error( $a_error ) if $a_error;
-            $self->log_error(
-                    'DNS AAAA query failed for '
-                  . $domain
-                  . ' with '
-                  . $resolver->errorstring );
+            $self->_dns_error( @a_error );
+            $self->_dns_error( 'AAAA', $domain, $resolver->errorstring );
         }
     }
 
