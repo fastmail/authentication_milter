@@ -14,10 +14,10 @@ use Sys::Syslog qw{:standard :macros};
 sub _dns_error {
     my ( $self, $type, $data, $error ) = @_;
     if ( $error eq 'NXDOMAIN' ) {
-        $self->dbgout( "DNS $type  Lookup", "$data gave $error", LOG_DEBUG );
+        $self->dbgout( "DNS $type  Lookup", "$data gave $error", LOG_ERROR );
     }
     elsif ( $error eq 'NOERROR' ) {
-        $self->dbgout( "DNS $type  Lookup", "$data gave $error", LOG_DEBUG );
+        $self->dbgout( "DNS $type  Lookup", "$data gave $error", LOG_ERROR );
     }
     else {
         # Could be SERVFAIL or something else
@@ -79,7 +79,7 @@ sub connect_callback {
     
 
         if ( $a_error eq 'NXDOMAIN' ) {
-            $self->_dns_error( 'A', $domain, $a_error ) if $a_error;
+            $self->_dns_error( 'A', $domain, $a_error );
             $detail = 'NXDOMAIN';
         }
         else {
