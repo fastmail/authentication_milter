@@ -55,7 +55,7 @@ sub connect_callback {
         $self->_dns_error( 'PTR', $ip_address, $resolver->errorstring );
     }
 
-    my @a_error;
+    my $a_error;
     if ($domain) {
         my $packet = $resolver->query( $domain, 'A' );
         if ($packet) {
@@ -73,7 +73,7 @@ sub connect_callback {
         }
         else {
             # Don't log this right now, might be an AAAA only host.
-            @a_error = [ 'A', $domain, $resolver->errorstring ];
+            $a_error = $resolver->errorstring;
         }
     }
 
@@ -94,7 +94,7 @@ sub connect_callback {
         }
         else {
             # Log A errors now, as they become relevant if AAAA also fails.
-            $self->_dns_error( @a_error );
+            $self->_dns_error( 'A', $domain, $a_error ) if $a_error;
             $self->_dns_error( 'AAAA', $domain, $resolver->errorstring );
         }
     }
