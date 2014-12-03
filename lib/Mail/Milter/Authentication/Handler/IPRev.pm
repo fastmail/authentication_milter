@@ -41,6 +41,7 @@ sub connect_callback {
     my $resolver = $self->get_object('resolver');
     my $domain;
     my $result;
+    my $detail;
 
     # We do not consider multiple PTR records,
     # as this is not a recomended setup
@@ -75,27 +76,34 @@ sub connect_callback {
             # Don't log this right now, might be an AAAA only host.
             $a_error = $resolver->errorstring;
         }
-    }
+    
 
-    if ( $domain && !$result ) {
-        my $packet = $resolver->query( $domain, 'AAAA' );
-        if ($packet) {
-          APACKET:
-            foreach my $rr ( $packet->answer ) {
-                next unless $rr->type eq "AAAA";
-                my $address    = $rr->rdatastr;
-                my $i2         = Net::IP->new($address);
-                my $is_overlap = $i1->overlaps($i2) || 0;
-                if ( $is_overlap == $IP_IDENTICAL ) {
-                    $result = 'pass';
-                    last APACKET;
-                }
-            }
+        if ( $a_error eq 'NXDOMAIN' ) {
+            $self->_dns_error( 'A', $domain, $a_error ) if $a_error;
+            $detail = 'NXDOMAIN';
         }
         else {
-            # Log A errors now, as they become relevant if AAAA also fails.
-            $self->_dns_error( 'A', $domain, $a_error ) if $a_error;
-            $self->_dns_error( 'AAAA', $domain, $resolver->errorstring );
+            if ( !$result ) {
+                my $packet = $resolver->query( $domain, 'AAAA' );
+                if ($packet) {
+                  APACKET:
+                    foreach my $rr ( $packet->answer ) {
+                        next unless $rr->type eq "AAAA";
+                        my $address    = $rr->rdatastr;
+                        my $i2         = Net::IP->new($address);
+                        my $is_overlap = $i1->overlaps($i2) || 0;
+                        if ( $is_overlap == $IP_IDENTICAL ) {
+                            $result = 'pass';
+                            last APACKET;
+                        }
+                    }
+                }
+                else {
+                    # Log A errors now, as they become relevant if AAAA also fails.
+                    $self->_dns_error( 'A', $domain, $a_error ) if $a_error;
+                    $self->_dns_error( 'AAAA', $domain, $resolver->errorstring );
+                }
+            }
         }
     }
 
@@ -114,11 +122,14 @@ sub connect_callback {
         $self->{'verified_ptr'} = $domain;
     }
 
+    my $comment = $domain;
+    $comment .= " $detail" if $detail;
+
     $self->dbgout( 'IPRevCheck', $result, LOG_DEBUG );
     my $header =
         $self->format_header_entry( 'iprev',        $result ) . ' '
       . $self->format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
-      . $self->format_header_comment($domain) . ')';
+      . $self->format_header_comment($comment) . ')';
     $self->add_c_auth_header($header);
 
 }
