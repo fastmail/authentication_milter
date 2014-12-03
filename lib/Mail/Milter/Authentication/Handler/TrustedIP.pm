@@ -10,6 +10,21 @@ use base 'Mail::Milter::Authentication::Handler::Generic';
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
+sub callbacks {
+    return {
+        'connect' => 30,
+        'helo'    => undef,
+        'envfrom' => undef,
+        'envrcpt' => undef,
+        'header'  => undef,
+        'eoh'     => undef,
+        'body'    => undef,
+        'eom'     => undef,
+        'abort'   => undef,
+        'close'   => undef,
+    };
+}
+
 sub is_trusted_ip_address {
     my ( $self, $ip_address ) = @_;
     my $CONFIG = $self->config();

@@ -11,6 +11,21 @@ use Socket;
 use MIME::Base64;
 use Sys::Syslog qw{:standard :macros};
 
+sub callbacks {
+    return {
+        'connect' => 10,
+        'helo'    => 10,
+        'envfrom' => 10,
+        'envrcpt' => 10,
+        'header'  => 10,
+        'eoh'     => undef,
+        'body'    => undef,
+        'eom'     => undef,
+        'abort'   => undef,
+        'close'   => undef,
+    };
+}
+
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     eval {

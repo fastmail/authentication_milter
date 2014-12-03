@@ -11,6 +11,21 @@ use Net::DNS;
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
+sub callbacks {
+    return {
+        'connect' => 50,
+        'helo'    => undef,
+        'envfrom' => undef,
+        'envrcpt' => undef,
+        'header'  => undef,
+        'eoh'     => undef,
+        'body'    => undef,
+        'eom'     => undef,
+        'abort'   => undef,
+        'close'   => undef,
+    };
+}
+
 sub _dns_error {
     my ( $self, $type, $data, $error ) = @_;
     if ( $error eq 'NXDOMAIN' ) {

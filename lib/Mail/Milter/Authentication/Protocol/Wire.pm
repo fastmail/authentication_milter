@@ -77,10 +77,7 @@ sub setup_objects {
     $self->{'handler'} = $handler;
 
     foreach my $name (qw{ Generic Auth Core DKIM DMARC IPRev LocalIP PTR Sanitize SenderID SPF TrustedIP }) {
-        my $package = "Mail::Milter::Authentication::Handler::$name";
-        load $package;
-        my $obj = $package->new( $self );
-        $handler->set_handler( $name, $obj );
+        $handler->setup_handler( $name );
     }
 }
 

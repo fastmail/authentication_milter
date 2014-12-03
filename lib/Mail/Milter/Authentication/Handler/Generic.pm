@@ -12,7 +12,12 @@ use base 'Mail::Milter::Authentication::Protocol';
 use Mail::Milter::Authentication::Config qw{ get_config };
 
 use Email::Address;
+use Module::Load;
 use Sys::Syslog qw{:standard :macros};
+
+sub callbacks {
+    return {};
+}
 
 sub new {
     my ( $class, $wire ) = @_;
@@ -55,10 +60,51 @@ sub get_handler {
     return $object;
 }
 
-sub set_handler {
-    my ( $self, $name, $object ) = @_;
+sub setup_handler {
+    my ( $self, $name ) = @_;
+
+    ## TODO error handling here
+    my $package = "Mail::Milter::Authentication::Handler::$name";
+    load $package;
+    my $object = $package->new( $self->{'wire'} );
+
     my $top_handler = $self->get_top_handler();
     $top_handler->{'handler'}->{$name} = $object;
+    
+    my $callbacks = $object->callbacks();
+    foreach my $callback ( keys %{$callbacks} ) {
+        my $priority = $callbacks->{$callback};
+        if ( $priority ) {
+            $self->register_callback( $name, $callback, $priority );
+        }
+    }
+}
+
+sub register_callback {
+    my ( $self, $name, $callback, $priority ) = @_;
+    $self->dbgout( 'Register Callback', "$name:$callback:$priority", LOG_DEBUG );
+    my $top_handler = $self->get_top_handler();
+    if ( ! exists $top_handler->{'callbacks'} ) {
+        $top_handler->{'callbacks'} = {};
+    }
+    if ( ! exists $top_handler->{'callbacks'}->{$callback} ) {
+        $top_handler->{'callbacks'}->{$callback} = [];
+    }
+    push @{ $top_handler->{'callbacks'}->{$callback} }, { 'name' => $name, 'priority' => $priority };
+}
+
+sub get_callbacks {
+    my ( $self, $callback ) = @_;
+    my $top_handler = $self->get_top_handler();
+    
+    if ( ! exists $top_handler->{'callbacks'}->{$callback} ) {
+        $top_handler->{'callbacks'}->{$callback} = [];
+    }
+    
+    my @callbacks = map { $_->{'name'} }
+                    sort { $a->{'priority'} cmp $b->{'priority'} }
+                    @{ $top_handler->{'callbacks'}->{$callback} };
+    return \@callbacks;
 }
 
 sub destroy_handler {

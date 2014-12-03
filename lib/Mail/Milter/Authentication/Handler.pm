@@ -22,7 +22,8 @@ sub connect_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'connect_timeout'} );
         }
-        foreach my $handler (qw{ Core Auth TrustedIP LocalIP IPRev }) {
+        my $callbacks = $self->get_callbacks( 'connect' );
+        foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->connect_callback( $hostname, $sockaddr_in );
         }
         alarm(0);
@@ -52,7 +53,8 @@ sub helo_callback {
 
         # Take only the first HELO from a connection
         if ( !( $self->helo_name() ) ) {
-            foreach my $handler (qw{ Core PTR }) {
+            my $callbacks = $self->get_callbacks( 'helo' );
+            foreach my $handler ( @$callbacks ) {
                 $self->get_handler($handler)->helo_callback($helo_host);
             }
         }
@@ -82,7 +84,8 @@ sub envfrom_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'command_timeout'} );
         }
-        foreach my $handler (qw{ Core Sanitize Auth DMARC SPF DKIM }) {
+        my $callbacks = $self->get_callbacks( 'envfrom' );
+        foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->envfrom_callback($env_from);
         }
         alarm(0);
@@ -110,7 +113,8 @@ sub envrcpt_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'command_timeout'} );
         }
-        foreach my $handler (qw{ Core DMARC }) {
+        my $callbacks = $self->get_callbacks( 'envrcpt' );
+        foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->envrcpt_callback($env_to);
         }
         alarm(0);
@@ -137,7 +141,8 @@ sub header_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'content_timeout'} );
         }
-        foreach my $handler (qw{ Core Sanitize DKIM DMARC SenderID }) {
+        my $callbacks = $self->get_callbacks( 'header' );
+        foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->header_callback( $header, $value );
         }
         alarm(0);
@@ -163,7 +168,8 @@ sub eoh_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'content_timeout'} );
         }
-        foreach my $handler (qw{ DKIM SenderID }) {
+        my $callbacks = $self->get_callbacks( 'eoh' );
+        foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->eoh_callback();
         }
         alarm(0);
@@ -190,7 +196,8 @@ sub body_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'content_timeout'} );
         }
-        foreach my $handler (qw{ DKIM }) {
+        my $callbacks = $self->get_callbacks( 'body' );
+        foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->body_callback( $body_chunk );
         }
         alarm(0);
@@ -217,7 +224,8 @@ sub eom_callback {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $CONFIG->{'content_timeout'} );
         }
-        foreach my $handler (qw{ DKIM DMARC Sanitize }) {
+        my $callbacks = $self->get_callbacks( 'eom' );
+        foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->eom_callback();
         }
         alarm(0);
@@ -238,6 +246,24 @@ sub abort_callback {
     my ($self) = @_;
     $self->dbgout( 'CALLBACK', 'Abort', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
+    my $CONFIG = $self->config();
+    eval {
+        local $SIG{'ALRM'};
+        if ( $CONFIG->{'command_timeout'} ) {
+            $SIG{'ALRM'} = sub{ die "Timeout\n" };
+            alarm( $CONFIG->{'command_timeout'} );
+        }
+        my $callbacks = $self->get_callbacks( 'abort' );
+        foreach my $handler ( @$callbacks ) {
+            $self->get_handler($handler)->abord_callback();
+        }
+        alarm(0);
+    };
+    if ( my $error = $@ ) {
+        $self->log_error( 'Abort callback error ' . $error );
+        $self->exit_on_close();
+        $self->tempfail_on_error();
+    }
     $self->dbgoutwrite();
     return $self->get_return();
 }
@@ -248,6 +274,24 @@ sub close_callback {
     my ($self) = @_;
     $self->dbgout( 'CALLBACK', 'Close', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
+    my $CONFIG = $self->config();
+    eval {
+        local $SIG{'ALRM'};
+        if ( $CONFIG->{'content_timeout'} ) {
+            $SIG{'ALRM'} = sub{ die "Timeout\n" };
+            alarm( $CONFIG->{'content_timeout'} );
+        }
+        my $callbacks = $self->get_callbacks( 'close' );
+        foreach my $handler ( @$callbacks ) {
+            $self->get_handler($handler)->close_callback();
+        }
+        alarm(0);
+    };
+    if ( my $error = $@ ) {
+        $self->log_error( 'Close callback error ' . $error );
+        $self->exit_on_close();
+        $self->tempfail_on_error();
+    }
     $self->dbgoutwrite();
     return $self->get_return();
 }

@@ -11,6 +11,21 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
+sub callbacks {
+    return {
+        'connect' => undef,
+        'helo'    => undef,
+        'envfrom' => undef,
+        'envrcpt' => undef,
+        'header'  => 50,
+        'eoh'     => 20,
+        'body'    => undef,
+        'eom'     => undef,
+        'abort'   => undef,
+        'close'   => undef,
+    };
+}
+
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     my $CONFIG = $self->config();

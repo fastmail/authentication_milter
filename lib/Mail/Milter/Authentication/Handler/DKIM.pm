@@ -12,6 +12,21 @@ use Sys::Syslog qw{:standard :macros};
 use Mail::DKIM::Verifier;
 use Mail::DKIM::DNS;
 
+sub callbacks {
+    return {
+        'connect' => undef,
+        'helo'    => undef,
+        'envfrom' => 60,
+        'envrcpt' => undef,
+        'header'  => 30,
+        'eoh'     => 10,
+        'body'    => 10,
+        'eom'     => 10,
+        'abort'   => undef,
+        'close'   => undef,
+    };
+}
+
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     my $CONFIG = $self->config();

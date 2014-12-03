@@ -11,6 +11,21 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::DMARC::PurePerl;
 
+sub callbacks {
+    return {
+        'connect' => undef,
+        'helo'    => undef,
+        'envfrom' => 40,
+        'envrcpt' => 20,
+        'header'  => 40,
+        'eoh'     => undef,
+        'body'    => undef,
+        'eom'     => 20,
+        'abort'   => undef,
+        'close'   => undef,
+    };
+}
+
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     my $CONFIG = $self->config();

@@ -11,6 +11,21 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
+sub callbacks {
+    return {
+        'connect' => undef,
+        'helo'    => undef,
+        'envfrom' => 50,
+        'envrcpt' => undef,
+        'header'  => undef,
+        'eoh'     => undef,
+        'body'    => undef,
+        'eom'     => undef,
+        'abort'   => undef,
+        'close'   => undef,
+    };
+}
+
 sub envfrom_callback {
 
     # On MAILFROM

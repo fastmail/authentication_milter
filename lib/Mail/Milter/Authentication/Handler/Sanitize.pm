@@ -9,6 +9,21 @@ use base 'Mail::Milter::Authentication::Handler::Generic';
 
 use Sys::Syslog qw{:standard :macros};
 
+sub callbacks {
+    return {
+        'connect' => undef,
+        'helo'    => undef,
+        'envfrom' => 20,
+        'envrcpt' => undef,
+        'header'  => 20,
+        'eoh'     => undef,
+        'body'    => undef,
+        'eom'     => 30,
+        'abort'   => undef,
+        'close'   => undef,
+    };
+}
+
 sub remove_auth_header {
     my ( $self, $value ) = @_;
     if ( !exists( $self->{'remove_auth_headers'} ) ) {
