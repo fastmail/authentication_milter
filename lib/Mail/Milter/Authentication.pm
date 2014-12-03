@@ -102,11 +102,13 @@ sub start {
             $args{'port'} = $path;
             $args{'proto'} = 'unix';
             $args{'listen'} = $listen_backlog;
-#            my $socketperms = $CONFIG->{'socketperms'};
-#            if ($socketperms) {
-#                chmod oct($socketperms), $path;
-#                loginfo( 'setting socket permissions to ' . $socketperms );
-#            }
+
+            my $umask = $CONFIG->{'umask'};
+            if ($umask) {
+                umask (  0 + $umask );
+                loginfo( 'setting umask to ' . $umask );
+            }
+
         }
         else {
             die 'Invalid connection';

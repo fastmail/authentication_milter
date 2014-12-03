@@ -110,6 +110,10 @@ sub get_callbacks {
 sub destroy_handler {
     my ( $self, $name ) = @_;
     my $top_handler = $self->get_top_handler();
+    # Remove some back references
+    delete $top_handler->{'handler'}->{$name}->{'wire'};
+    delete $top_handler->{'handler'}->{$name}->{'config'};
+    # Remove reference to handler
     delete $top_handler->{'handler'}->{$name};
 }
 

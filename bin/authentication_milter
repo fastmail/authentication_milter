@@ -58,7 +58,7 @@ The configuration file format is as follows...
     "dryrun" : 1,                                       | Dryrun (do not alter or reject mail)
 
     "connection"             : "inet:12345\@localhost",  | The connection to use 
-    "socketperms"            : "0777",                  | Permissions for socket
+    "umask"                  : "0000",                  | Set umask
     "runas"                  : "nobody",                | Drop privs and run as this user
     "rungroup"               : "nogroup",               | Drop privs and run as this group (daemon only)
     "listen_backlog"         : 20,                      | socket listen backlog limit (default 20)
