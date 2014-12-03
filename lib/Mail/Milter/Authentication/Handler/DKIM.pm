@@ -9,6 +9,7 @@ use base 'Mail::Milter::Authentication::Handler::Generic';
 
 use Sys::Syslog qw{:standard :macros};
 
+use Mail::DKIM;
 use Mail::DKIM::Verifier;
 use Mail::DKIM::DNS;
 
