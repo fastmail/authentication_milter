@@ -255,7 +255,7 @@ sub abort_callback {
         }
         my $callbacks = $self->get_callbacks( 'abort' );
         foreach my $handler ( @$callbacks ) {
-            $self->get_handler($handler)->abord_callback();
+            $self->get_handler($handler)->abort_callback();
         }
         alarm(0);
     };
