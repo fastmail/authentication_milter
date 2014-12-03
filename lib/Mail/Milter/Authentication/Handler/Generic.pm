@@ -101,9 +101,9 @@ sub get_callbacks {
         $top_handler->{'callbacks'}->{$callback} = [];
     }
     
-    my @callbacks = map { $_->{'name'} }
-                    sort { $a->{'priority'} cmp $b->{'priority'} }
-                    @{ $top_handler->{'callbacks'}->{$callback} };
+    my @callbacks = @{ $top_handler->{'callbacks'}->{$callback} };
+    @callbacks    = sort { $a->{'priority'} cmp $b->{'priority'} } @callbacks;
+    @callbacks    = map { $_->{'name'} } @callbacks;
     return \@callbacks;
 }
 
