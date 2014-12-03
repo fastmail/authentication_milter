@@ -51,6 +51,12 @@ use JSON;
                 die 'ptr checks require iprev to be enabled';
             }
         }
+
+        my $load_modules = $CONFIG->{'load_modules'} || [];
+        my @standard_modules = qw{ Generic Auth Core DKIM DMARC IPRev LocalIP PTR Sanitize SenderID SPF TrustedIP };
+        @standard_modules = ( @standard_modules, @$load_modules );
+        $CONFIG->{'load_modules'} = \@standard_modules;
+
         return $CONFIG;
 
     }

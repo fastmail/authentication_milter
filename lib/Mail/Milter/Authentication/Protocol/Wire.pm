@@ -11,6 +11,7 @@ use Module::Load;
 use Socket;
 use Socket6;
 
+use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 
 sub new {
@@ -76,7 +77,8 @@ sub setup_objects {
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'} = $handler;
 
-    foreach my $name (qw{ Generic Auth Core DKIM DMARC IPRev LocalIP PTR Sanitize SenderID SPF TrustedIP }) {
+    my $CONFIG = get_config();
+    foreach my $name ( @{$CONFIG->{'load_modules'}} ) {
         $handler->setup_handler( $name );
     }
 }
@@ -85,7 +87,8 @@ sub destroy_objects {
     my ( $self ) = @_;
     logdebug ( 'destroy objects' );
     my $handler = $self->{'handler'};
-    foreach my $name (qw{ Generic Auth Core DKIM DMARC IPRev LocalIP PTR Sanitize SenderID SPF TrustedIP }) {
+    my $CONFIG = get_config();
+    foreach my $name ( @{$CONFIG->{'load_modules'}} ) {
         $handler->destroy_handler( $name );
     }
     delete $self->{'handler'};
