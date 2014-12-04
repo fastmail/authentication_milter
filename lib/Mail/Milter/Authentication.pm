@@ -25,7 +25,8 @@ sub process_request {
             my $size   = $process->size;
             my $rss    = $process->rss;
             my $pctmem = $process->pctmem;
-            logdebug( "Memory usage: $size/$rss/$pctmem\%" );
+            my $pctcpu = $process->pctcpu;
+            loginfo( "Resource usage: size $size/rss $rss/memory $pctmem\%/cpu $pctcpu\%" );
         }
     }
 
