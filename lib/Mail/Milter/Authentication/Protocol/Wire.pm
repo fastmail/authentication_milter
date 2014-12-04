@@ -67,6 +67,13 @@ sub main {
     }
     $self->destroy_objects();
     die 'exit_on_close' if $quit;
+
+    #use Devel::Peek;
+    #warn Dump($self);
+    #use Data::Dumper;
+    #print Dumper($self);
+    #use Devel::Cycle;
+    #find_cycle($self);
 }
 
 sub setup_objects {
@@ -87,10 +94,13 @@ sub destroy_objects {
     my ( $self ) = @_;
     logdebug ( 'destroy objects' );
     my $handler = $self->{'handler'};
+    $handler->destroy_all_objects();
     my $CONFIG = get_config();
     foreach my $name ( @{$CONFIG->{'load_modules'}} ) {
         $handler->destroy_handler( $name );
     }
+    delete $self->{'handler'}->{'config'};
+    delete $self->{'handler'}->{'wire'};
     delete $self->{'handler'};
 }
 

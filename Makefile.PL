@@ -40,6 +40,7 @@ requires (
     'Net::IP',
     'Net::Server',
     'Net::Server::PreFork',
+    'Proc::ProcessTable',
     'Socket',
     'Sys::Syslog', 
 );

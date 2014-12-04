@@ -10,13 +10,26 @@ use base 'Net::Server::PreFork';
 use English;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Protocol::Wire;
-use Mail::Milter::Authentication::Util qw{ logerror loginfo };
+use Mail::Milter::Authentication::Util qw{ logerror loginfo logdebug };
+use Proc::ProcessTable;
 
 sub process_request {
     my ( $self ) = @_;
-    my $socket = $self->{server}->{client};
-    my $wire = Mail::Milter::Authentication::Protocol::Wire->new( $socket );
-    $wire->main();
+
+    logdebug( 'Processing request' );
+    Mail::Milter::Authentication::Protocol::Wire->new( $self->{server}->{client} )->main();
+
+    my $process_table = Proc::ProcessTable->new();
+    foreach my $process ( @{$process_table->table} ) {
+        if ( $process->pid == $PID ) {
+            my $size   = $process->size;
+            my $rss    = $process->rss;
+            my $pctmem = $process->pctmem;
+            logdebug( "Memory usage: $size/$rss/$pctmem\%" );
+        }
+    }
+
+    logdebug( 'Request processing completed' );
 }
 
 sub start {

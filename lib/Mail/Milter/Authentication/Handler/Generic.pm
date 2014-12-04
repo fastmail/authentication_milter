@@ -96,14 +96,16 @@ sub register_callback {
 sub get_callbacks {
     my ( $self, $callback ) = @_;
     my $top_handler = $self->get_top_handler();
-    
+   
     if ( ! exists $top_handler->{'callbacks'}->{$callback} ) {
         $top_handler->{'callbacks'}->{$callback} = [];
     }
     
-    my @callbacks = @{ $top_handler->{'callbacks'}->{$callback} };
-    @callbacks    = sort { $a->{'priority'} cmp $b->{'priority'} } @callbacks;
-    @callbacks    = map { $_->{'name'} } @callbacks;
+    my @callbacks;
+    my $callbacks_ref;
+    $callbacks_ref = $top_handler->{'callbacks'}->{$callback};
+    @callbacks = sort { $a->{'priority'} cmp $b->{'priority'} } @{$callbacks_ref};
+    @callbacks = map { $_->{'name'} } @callbacks;
     return \@callbacks;
 }
 
@@ -145,6 +147,15 @@ sub destroy_object {
     my ( $self, $name ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'object'}->{$name};
+}
+
+sub destroy_all_objects {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    foreach my $name ( keys %{ $top_handler->{'object'} } )
+    {
+        $self->destroy_object( $name );
+    }
 }
 
 sub exit_on_close {
