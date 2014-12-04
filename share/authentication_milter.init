@@ -59,6 +59,7 @@ case "$1" in
 	echo -n "Restarting $DESC: "
 	start-stop-daemon --stop --pidfile $PIDFILE --exec $XNAME \
 	    --retry 5 --oknodo
+        /bin/rm $PIDFILE
 	start-stop-daemon --start --pidfile $PIDFILE --exec $XNAME \
 	    $NICE --oknodo --startas $DAEMON -- $OPTIONS $DOPTIONS
 
