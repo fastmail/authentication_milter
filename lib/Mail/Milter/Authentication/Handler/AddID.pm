@@ -3,7 +3,7 @@ package Mail::Milter::Authentication::Handler::AddID;
 use strict;
 use warnings;
 
-our $VERSION = 0.4;
+our $VERSION = 0.5;
 
 use base 'Mail::Milter::Authentication::Handler::Generic';
 

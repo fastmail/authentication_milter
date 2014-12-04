@@ -3,7 +3,7 @@ package Mail::Milter::Authentication::Util;
 use strict;
 use warnings;
 
-our $VERSION = 0.4;
+our $VERSION = 0.5;
 
 use English;
 use Sys::Syslog qw{:standard :macros};

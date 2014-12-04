@@ -3,7 +3,7 @@ package Mail::Milter::Authentication::Protocol::Wire;
 use strict;
 use warnings;
 
-our $VERSION = 0.4;
+our $VERSION = 0.5;
 
 use English;
 use Mail::Milter::Authentication::Util qw{ logdebug };

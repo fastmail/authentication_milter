@@ -5,7 +5,7 @@ use warnings;
 
 use English;
 
-our $VERSION = 0.4;
+our $VERSION = 0.5;
 
 use base 'Mail::Milter::Authentication::Protocol';
 
