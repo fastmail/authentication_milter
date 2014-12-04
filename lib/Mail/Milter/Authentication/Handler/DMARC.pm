@@ -197,8 +197,14 @@ sub eom_callback {
         }
     };
     if ( my $error = $@ ) {
-        $self->log_error( 'DMARC Error ' . $error );
-        $self->add_auth_header('dmarc=temperror');
+        if ( $error =~ /invalid header_from at / ) {
+            $self->log_error( 'DMARC Error invalid header_from' );
+            $self->add_auth_header('dmarc=permerror');
+        }
+        else {
+            $self->log_error( 'DMARC Error ' . $error );
+            $self->add_auth_header('dmarc=temperror');
+        }
         return;
     }
 }

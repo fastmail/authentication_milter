@@ -28,6 +28,10 @@ sub callbacks {
 sub is_local_ip_address {
     my ( $self, $ip_address ) = @_;
     my $ip       = Net::IP->new($ip_address);
+    if ( ! $ip ) {
+        $self->dbgout( 'IPAddress', "Address $ip_address detected as invalid", LOG_DEBUG );
+        return 0; 
+    }
     my $ip_type  = $ip->iptype();
     my $type_map = {
         'PRIVATE'              => 1,
