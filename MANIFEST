@@ -13,6 +13,7 @@ lib/Mail/Milter/Authentication/Handler/DKIM.pm
 lib/Mail/Milter/Authentication/Handler/DMARC.pm
 lib/Mail/Milter/Authentication/Handler/LocalIP.pm
 lib/Mail/Milter/Authentication/Handler/PTR.pm
+lib/Mail/Milter/Authentication/Handler/ReturnOK.pm
 lib/Mail/Milter/Authentication/Handler/Sanitize.pm
 lib/Mail/Milter/Authentication/Handler/SenderID.pm
 lib/Mail/Milter/Authentication/Handler/SPF.pm
