@@ -13,11 +13,19 @@ use Mail::Milter::Authentication::Protocol::Wire;
 use Mail::Milter::Authentication::Util qw{ logerror loginfo logdebug };
 use Proc::ProcessTable;
 
+sub child_init_hook {
+    my ( $self ) = @_;
+    $self->{'config'} = get_config();
+}
+
 sub process_request {
     my ( $self ) = @_;
 
     logdebug( 'Processing request' );
-    Mail::Milter::Authentication::Protocol::Wire->new( $self->{server}->{client} )->main();
+    Mail::Milter::Authentication::Protocol::Wire->new({
+        'socket' =>  $self->{'server'}->{'client'},
+        'config' => $self->{'config'},
+    })->main();
 
     my $process_table = Proc::ProcessTable->new();
     foreach my $process ( @{$process_table->table} ) {

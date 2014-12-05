@@ -50,7 +50,9 @@ sub _check_address {
     my $has_mx   = 0;
     my $has_a    = 0;
     my $has_aaaa = 0;
-    my $packet = $resolver->query( $domain, 'MX' );
+    my $packet;
+
+    $packet = $resolver->query( $domain, 'MX' );
     if ($packet) {
         foreach my $rr ( $packet->answer ) {
             next unless $rr->type eq "MX";
@@ -70,7 +72,7 @@ sub _check_address {
     }
 
     if ( ! $has_mx ) {
-        my $packet = $resolver->query( $domain, 'A' );
+        $packet = $resolver->query( $domain, 'A' );
         if ($packet) {
             foreach my $rr ( $packet->answer ) {
                 next unless $rr->type eq "A";
@@ -89,7 +91,7 @@ sub _check_address {
             }
         }
 
-        my $packet = $resolver->query( $domain, 'AAAA' );
+        $packet = $resolver->query( $domain, 'AAAA' );
         if ($packet) {
             foreach my $rr ( $packet->answer ) {
                 next unless $rr->type eq "AAAA";

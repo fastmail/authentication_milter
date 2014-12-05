@@ -9,8 +9,6 @@ our $VERSION = 0.5;
 
 use base 'Mail::Milter::Authentication::Protocol';
 
-use Mail::Milter::Authentication::Config qw{ get_config };
-
 use Email::Address;
 use Module::Load;
 use Sys::Syslog qw{:standard :macros};
@@ -23,7 +21,6 @@ sub new {
     my ( $class, $wire ) = @_;
     my $self = {
         'wire'   => $wire,
-        'config' => get_config(),
     };
     bless $self, $class;
     return $self;
@@ -31,7 +28,7 @@ sub new {
 
 sub config {
     my ($self) = @_;
-    return $self->{'config'};
+    return $self->{'wire'}->{'config'};
 }
 
 sub set_return {
@@ -114,7 +111,6 @@ sub destroy_handler {
     my $top_handler = $self->get_top_handler();
     # Remove some back references
     delete $top_handler->{'handler'}->{$name}->{'wire'};
-    delete $top_handler->{'handler'}->{$name}->{'config'};
     # Remove reference to handler
     delete $top_handler->{'handler'}->{$name};
 }

@@ -15,7 +15,10 @@ use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 
 sub new {
-    my ( $class, $socket ) = @_;
+    my ( $class, $args ) = @_;
+
+    my $socket = $args->{'socket'};
+    my $config = $args->{'config'};
 
     my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
 
