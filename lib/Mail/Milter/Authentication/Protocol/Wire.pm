@@ -88,7 +88,7 @@ sub setup_objects {
     $self->{'handler'} = $handler;
 
     my $CONFIG = $self->{'config'};
-    foreach my $name ( @{$CONFIG->{'load_modules'}} ) {
+    foreach my $name ( @{$CONFIG->{'load_handlers'}} ) {
         $handler->setup_handler( $name );
     }
 }
@@ -99,7 +99,7 @@ sub destroy_objects {
     my $handler = $self->{'handler'};
     $handler->destroy_all_objects();
     my $CONFIG = $self->{'config'};
-    foreach my $name ( @{$CONFIG->{'load_modules'}} ) {
+    foreach my $name ( @{$CONFIG->{'load_handlers'}} ) {
         $handler->destroy_handler( $name );
     }
     delete $self->{'handler'}->{'config'};

@@ -33,24 +33,24 @@ sub config {
 
 sub handler_config {
     my ($self) = @_;
-    my $type = $self->module_type();
+    my $type = $self->handler_type();
     return if ! $type;
-    my $CONFIG = $self->config();
-    if ( exists ( $CONFIG->{'modules'}->{$type} ) ) {
+    if ( $self->is_handler_loaded( $type ) ) {
+        my $CONFIG = $self->config();
         return $CONFIG->{'modules'}->{$type};
     }
     return;
 }
 
-sub module_type {
+sub handler_type {
     my ($self) = @_;
     my $type = ref $self;
     if ( $type eq 'Mail::Milter::Authentication::Handler' ) {
         return 'Handler';
     }
     elsif ( $type =~ /^Mail::Milter::Authentication::Handler::(.*)/ ) {
-        my $module = $1;
-        return $module;
+        my $handler_type = $1;
+        return $handler_type;
     }
     else {
         return undef;

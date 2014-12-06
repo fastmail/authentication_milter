@@ -37,11 +37,11 @@ use JSON;
         $CONFIG = $json->decode($text)
           || die "Error parsing config file $file";
 
-        my @standard_modules = qw{ Core };
-        my @load_modules = keys %{ $CONFIG->{'modules'} };
-        @load_modules = grep { ! /^\!/ } @load_modules;
-        @standard_modules = ( @standard_modules, @load_modules );
-        $CONFIG->{'load_modules'} = \@standard_modules;
+        my @standard_handlers = qw{ Core };
+        my @load_handlers = keys %{ $CONFIG->{'modules'} };
+        @load_handlers = grep { ! /^\!/ } @load_handlers;
+        @load_handlers = ( @standard_handlers, @load_handlers );
+        $CONFIG->{'load_handlers'} = \@load_handlers;
 
         return $CONFIG;
 
