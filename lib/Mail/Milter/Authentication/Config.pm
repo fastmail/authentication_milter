@@ -52,9 +52,9 @@ use JSON;
             }
         }
 
-        my $load_modules = $CONFIG->{'load_modules'} || [];
-        my @standard_modules = qw{ Generic Auth Core DKIM DMARC IPRev LocalIP PTR Sanitize SenderID SPF TrustedIP };
-        @standard_modules = ( @standard_modules, @$load_modules );
+        my @standard_modules = qw{ Core };
+        my @load_modules = keys %{ $CONFIG->{'modules'} };
+        @standard_modules = ( @standard_modules, @load_modules );
         $CONFIG->{'load_modules'} = \@standard_modules;
 
         return $CONFIG;

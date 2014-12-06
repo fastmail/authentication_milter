@@ -28,8 +28,6 @@ sub callbacks {
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
@@ -83,8 +81,6 @@ sub envfrom_callback {
 
 sub envrcpt_callback {
     my ( $self, $env_to ) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
@@ -103,8 +99,6 @@ sub envrcpt_callback {
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_dmarc'} );
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
@@ -137,8 +131,7 @@ sub header_callback {
 
 sub eom_callback {
     my ($self) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_dmarc'} );
+    my $CONFIG = $self->module_config();
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
@@ -157,7 +150,7 @@ sub eom_callback {
         my $dmarc_result = $dmarc->validate();
         my $dmarc_code   = $dmarc_result->result;
         $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
-        if ( !( $CONFIG->{'check_dmarc'} == 2 && $dmarc_code eq 'none' ) ) {
+        if ( !( $CONFIG->{'hide_none'} && $dmarc_code eq 'none' ) ) {
             my $dmarc_policy;
             if ( $dmarc_code ne 'pass' ) {
                 $dmarc_policy = eval { $dmarc_result->disposition() };
@@ -168,7 +161,7 @@ sub eom_callback {
             }
             my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
             my $is_list_entry = q{};
-            if ( $CONFIG->{'dmarc_detect_list_id'} && $self->{'is_list'} ) {
+            if ( $CONFIG->{'detect_list_id'} && $self->{'is_list'} ) {
                 $is_list_entry = ';has-list-id=yes';
             }
             if ($dmarc_policy) {

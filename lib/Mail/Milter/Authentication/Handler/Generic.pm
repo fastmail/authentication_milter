@@ -31,6 +31,30 @@ sub config {
     return $self->{'wire'}->{'config'};
 }
 
+sub module_config {
+    my ($self) = @_;
+    my $type = $self->module_type();
+    return if ! $type;
+    my $CONFIG = $self->config;
+    return if ! exists ( $CONFIG->{'modules'}->{$type} );
+    return $CONFIG->{'modules'}->{$type};
+}
+
+sub module_type {
+    my ($self) = @_;
+    my $type = ref $self;
+    if ( $type eq 'Mail::Milter::Authentication::Handler' ) {
+        return 'Handler';
+    }
+    elsif ( $type =~ /^Mail::Milter::Authentication::Handler::(.*)/ ) {
+        my $module = $1;
+        return $module;
+    }
+    else {
+        return undef;
+    }
+}
+
 sub set_return {
     my ( $self, $return ) = @_;
     my $top_handler = $self->get_top_handler();
@@ -61,6 +85,7 @@ sub setup_handler {
     my ( $self, $name ) = @_;
 
     ## TODO error handling here
+    $self->dbgout( 'Load Module', "$name", LOG_DEBUG );
     my $package = "Mail::Milter::Authentication::Handler::$name";
     load $package;
     my $object = $package->new( $self->{'wire'} );
@@ -213,18 +238,21 @@ sub tempfail_on_error {
 sub is_local_ip_address {
     my ($self) = @_;
     my $local_handler = $self->get_handler('LocalIP');
+    return 0 if ! $local_handler;
     return $local_handler->{'is_local_ip_address'};
 }
 
 sub is_trusted_ip_address {
     my ($self) = @_;
     my $trusted_handler = $self->get_handler('TrustedIP');
+    return 0 if ! $trusted_handler;
     return $trusted_handler->{'is_trusted_ip_address'};
 }
 
 sub is_authenticated {
     my ($self) = @_;
     my $auth_handler = $self->get_handler('Auth');
+    return 0 if ! $auth_handler;
     return $auth_handler->{'is_authenticated'};
 }
 
@@ -308,32 +336,6 @@ sub get_address_from {
 sub get_my_hostname {
     my ($self) = @_;
     return $self->get_symbol('j');
-}
-
-sub is_hostname_mine {
-    my ( $self, $check_hostname ) = @_;
-    my $CONFIG = $self->config();
-
-    my $hostname = $self->get_my_hostname();
-    my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
-
-    if ( exists( $CONFIG->{'hosts_to_remove'} ) ) {
-        foreach my $remove_hostname ( @{ $CONFIG->{'hosts_to_remove'} } ) {
-            if (
-                substr( lc $check_hostname, ( 0 - length($remove_hostname) ) ) eq
-                lc $remove_hostname )
-            {
-                return 1;
-            }
-        }
-    }
-
-    if (
-        substr( lc $check_hostname, ( 0 - length($check_for) ) ) eq
-        lc $check_for )
-    {
-        return 1;
-    }
 }
 
 sub dbgout {

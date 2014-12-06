@@ -27,7 +27,7 @@ sub callbacks {
 
 sub is_trusted_ip_address {
     my ( $self, $ip_address ) = @_;
-    my $CONFIG = $self->config();
+    my $CONFIG = $self->module_config();
     return 0 if not exists( $CONFIG->{'trusted_ip_list'} );
     my $trusted = 0;
     my $ip_obj  = Net::IP->new($ip_address);
@@ -49,9 +49,7 @@ sub is_trusted_ip_address {
 
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
-    my $CONFIG = $self->config();
     $self->{'is_trusted_ip_address'} = 0;
-    return if ( !$CONFIG->{'check_trusted_ip'} );
     my $ip_address = $self->ip_address();
     if ( $self->is_trusted_ip_address($ip_address) ) {
         $self->dbgout( 'TrustedIP', 'pass', LOG_DEBUG );

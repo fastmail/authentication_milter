@@ -46,8 +46,6 @@ sub _dns_error {
 
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_iprev'} );
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );

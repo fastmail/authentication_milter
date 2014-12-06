@@ -30,8 +30,6 @@ sub callbacks {
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_dkim'} );
     $self->{'failmode'} = 0;
     my $dkim;
     eval {
@@ -52,8 +50,6 @@ sub envfrom_callback {
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
     my $dkim       = $self->get_object('dkim');
     my $EOL        = "\015\012";
@@ -72,8 +68,6 @@ sub header_callback {
 
 sub eoh_callback {
     my ($self) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
     my $dkim = $self->get_object('dkim');
     $dkim->PRINT("\015\012");
@@ -81,8 +75,6 @@ sub eoh_callback {
 
 sub body_callback {
     my ( $self, $body_chunk ) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_dkim'} );
     return if ( $self->{'failmode'} );
     my $dkim       = $self->get_object('dkim');
     my $dkim_chunk = $body_chunk;
@@ -93,8 +85,7 @@ sub body_callback {
 
 sub eom_callback {
     my ($self) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_dkim'} );
+    my $CONFIG = $self->module_config();
     return if ( $self->{'failmode'} );
     my $dkim = $self->get_object('dkim');
     eval {
@@ -106,7 +97,7 @@ sub eom_callback {
         $self->dbgout( 'DKIMResult', $dkim_result_detail, LOG_INFO );
 
         if ( !$dkim->signatures ) {
-            if ( !( $CONFIG->{'check_dkim'} == 2 && $dkim_result eq 'none' ) ) {
+            if ( !( $CONFIG->{'hide_none'} && $dkim_result eq 'none' ) ) {
                 $self->add_auth_header(
                     $self->format_header_entry( 'dkim', $dkim_result )
                       . ' (no signatures found)' );
@@ -140,7 +131,7 @@ sub eom_callback {
             }
             if (
                 !(
-                    $CONFIG->{'check_dkim'} == 2 && $signature_result eq 'none'
+                    $CONFIG->{'hide_none'} && $signature_result eq 'none'
                 )
               )
             {
@@ -193,7 +184,7 @@ sub eom_callback {
         }
 
         # the alleged author of the email may specify how to handle email
-        if (   $CONFIG->{'check_dkim-adsp'}
+        if (   $CONFIG->{'check_adsp'}
             && ( $self->is_local_ip_address() == 0 )
             && ( $self->is_trusted_ip_address() == 0 )
             && ( $self->is_authenticated() == 0 ) )
@@ -225,7 +216,7 @@ sub eom_callback {
                   : $apply eq 'neutral' ? 'unknown'
                   :                       'unknown';
 
-                if ( ! ( $CONFIG->{'check_dkim-adsp'} == 2 && $result eq 'none' ) ) {
+                if ( ! ( $CONFIG->{'adsp_hide_none'} && $result eq 'none' ) ) {
                     if ( ( ! $default ) or $CONFIG->{'show_default_adsp'} ) {
                         my $comment = '('
                           . $self->format_header_comment( ( $default ? 'default ' : q{} )

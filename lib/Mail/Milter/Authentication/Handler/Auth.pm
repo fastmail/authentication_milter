@@ -37,8 +37,6 @@ sub connect_callback {
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_auth'} );
     my $auth_name = $self->get_auth_name();
     if ($auth_name) {
         $self->dbgout( 'AuthenticatedAs', $auth_name, LOG_INFO );

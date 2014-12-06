@@ -31,8 +31,7 @@ sub envfrom_callback {
     # On MAILFROM
     #...
     my ( $self, $env_from ) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_spf'} );
+    my $CONFIG = $self->module_config();
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
@@ -91,27 +90,25 @@ sub envfrom_callback {
             $self->format_header_entry( 'smtp.mailfrom', $self->get_address_from( $env_from ) ),
             $self->format_header_entry( 'smtp.helo',     $self->helo_name() ),
         );
-        if ( !( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
+        if ( !( $CONFIG->{'hide_none'} && $result_code eq 'none' ) ) {
             $self->add_auth_header($auth_header);
         }
 
-        if (   $CONFIG->{'check_dmarc'}
+        if ( my $dmarc = $self->get_object('dmarc')
             && ( $self->is_local_ip_address() == 0 )
             && ( $self->is_trusted_ip_address() == 0 )
             && ( $self->is_authenticated() == 0 ) )
         {
-            if ( my $dmarc = $self->get_object('dmarc') ) {
-                $dmarc->spf(
-                    'domain' => $domain,
-                    'scope'  => $scope,
-                    'result' => $result_code,
-                );
-            }
+            $dmarc->spf(
+                'domain' => $domain,
+                'scope'  => $scope,
+                'result' => $result_code,
+            );
         }
 
         $self->dbgout( 'SPFCode', $result_code, LOG_INFO );
 
-        if ( !( $CONFIG->{'check_spf'} == 2 && $result_code eq 'none' ) ) {
+        if ( !( $CONFIG->{'skip_none'} && $result_code eq 'none' ) ) {
             my $result_header = $spf_result->received_spf_header();
             my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
             $self->prepend_header( $header, $value );
