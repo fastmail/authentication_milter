@@ -11,7 +11,6 @@ use Module::Load;
 use Socket;
 use Socket6;
 
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 
 sub new {
@@ -30,6 +29,7 @@ sub new {
        $protocol &= ~SMFIP_NOEOH;
 
     my $self = {
+        'config'         => $config,
         'socket'         => $socket,
         'callback_flags' => $callback_flags,
         'protocol'       => $protocol,
@@ -87,7 +87,7 @@ sub setup_objects {
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'} = $handler;
 
-    my $CONFIG = get_config();
+    my $CONFIG = $self->{'config'};
     foreach my $name ( @{$CONFIG->{'load_modules'}} ) {
         $handler->setup_handler( $name );
     }
@@ -98,7 +98,7 @@ sub destroy_objects {
     logdebug ( 'destroy objects' );
     my $handler = $self->{'handler'};
     $handler->destroy_all_objects();
-    my $CONFIG = get_config();
+    my $CONFIG = $self->{'config'};
     foreach my $name ( @{$CONFIG->{'load_modules'}} ) {
         $handler->destroy_handler( $name );
     }
@@ -202,7 +202,7 @@ sub process_command {
             $returncode = SMFIR_ACCEPT;
         }
 
-        my $CONFIG = get_config();
+        my $CONFIG = $self->{'config'};
         if ( $CONFIG->{'dryrun'} ) {
             if ( $returncode ne SMFIR_CONTINUE ) {
                 logdebug ( "dryrun returncode changed from $returncode to continue" );

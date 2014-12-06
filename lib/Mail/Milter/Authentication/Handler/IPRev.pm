@@ -69,7 +69,7 @@ sub connect_callback {
         $self->_dns_error( 'PTR', $ip_address, $resolver->errorstring );
     }
 
-    my $a_error;
+    my $a_error = q{};
     if ($domain) {
         my $packet = $resolver->query( $domain, 'A' );
         if ($packet) {

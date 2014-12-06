@@ -94,7 +94,8 @@ sub envfrom_callback {
             $self->add_auth_header($auth_header);
         }
 
-        if ( my $dmarc = $self->get_object('dmarc')
+        my $dmarc = $self->get_object('dmarc');
+        if ( $dmarc
             && ( $self->is_local_ip_address() == 0 )
             && ( $self->is_trusted_ip_address() == 0 )
             && ( $self->is_authenticated() == 0 ) )

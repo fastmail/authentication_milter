@@ -28,11 +28,15 @@ sub helo_callback {
 
     # On HELO
     my ( $self, $helo_host ) = @_;
-    my $CONFIG = $self->config();
-    return if ( !$CONFIG->{'check_ptr'} );
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
+
+    my $CONFIG = $self->config();
+    if ( ! exists ( $CONFIG->{'modules'}->{'IPRev'} ) ) {
+        $self->log_error( 'PTR Config Error: IPRev is missing ');
+        return;
+    }
 
     my $iprev_handler = $self->get_handler('IPRev');
     my $domain =

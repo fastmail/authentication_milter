@@ -36,6 +36,20 @@ sub envfrom_callback {
 
     $env_from = q{} if $env_from eq '<>';
 
+    my $CONFIG = $self->config();
+
+    if ( ! exists ( $CONFIG->{'modules'}->{'SPF'} ) ) {
+        $self->log_error( 'DMARC Config Error: SPF is missing ');
+        $self->{'failmode'} = 1;
+        return;
+    }
+    if ( ! exists ( $CONFIG->{'modules'}->{'DKIM'} ) ) {
+        $self->log_error( 'DMARC Config Error: DKIM is missing ');
+        $self->{'failmode'} = 1;
+        return;
+    }
+
+
     my $domain_from;
     if ( !$env_from ) {
         $domain_from = $self->helo_name();

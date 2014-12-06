@@ -37,23 +37,9 @@ use JSON;
         $CONFIG = $json->decode($text)
           || die "Error parsing config file $file";
 
-        # Sanity Checks
-        if ( $CONFIG->{'check_dmarc'} ) {
-            if ( not $CONFIG->{'check_dkim'} ) {
-                die 'dmarc checks require dkim to be enabled';
-            }
-            if ( not $CONFIG->{'check_spf'} ) {
-                die 'dmarc checks require spf to be enabled';
-            }
-        }
-        if ( $CONFIG->{'check_ptr'} ) {
-            if ( not $CONFIG->{'check_iprev'} ) {
-                die 'ptr checks require iprev to be enabled';
-            }
-        }
-
         my @standard_modules = qw{ Core };
         my @load_modules = keys %{ $CONFIG->{'modules'} };
+        @load_modules = grep { ! /^\!/ } @load_modules;
         @standard_modules = ( @standard_modules, @load_modules );
         $CONFIG->{'load_modules'} = \@standard_modules;
 

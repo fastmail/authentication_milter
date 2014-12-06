@@ -35,9 +35,11 @@ sub module_config {
     my ($self) = @_;
     my $type = $self->module_type();
     return if ! $type;
-    my $CONFIG = $self->config;
-    return if ! exists ( $CONFIG->{'modules'}->{$type} );
-    return $CONFIG->{'modules'}->{$type};
+    my $CONFIG = $self->config();
+    if ( exists ( $CONFIG->{'modules'}->{$type} ) ) {
+        return $CONFIG->{'modules'}->{$type};
+    }
+    return;
 }
 
 sub module_type {
