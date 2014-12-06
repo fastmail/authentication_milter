@@ -7,11 +7,15 @@ This milter verifies using the following standards.
 
 - SPF
 - SenderID
-- DKIM
-- DKIM-ADSP
+- DKIM (including ADSP)
 - DMARC
 - IPRev
 - Check HELO matches it's IP address
+
+Includes 2 additional modules.
+
+- AddID - add a header to all email (example)
+- ReturnOK - Checks that return addresses have properly configured MX records
 
 Design Decisions
 ----------------
@@ -24,6 +28,7 @@ Design Decisions
 - Detect authenticated connections and skip irrelevant checks.
   - It is assumed that this milter runs after DKIM signatures are generated, these are still validated.
 - DMARC reporting should be possible.
+- Modular design to allow new checks to be implemented easily
 
 Mailing Lists and DMARC
 -----------------------
