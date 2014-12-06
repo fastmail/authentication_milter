@@ -54,8 +54,8 @@ The milter reads configuration from /etc/authentication_milter.json
 The configuration file format is as follows...
 
 {
-    "debug"  : 1,                                       | Verbose debugging output
-    "dryrun" : 1,                                       | Dryrun (do not alter or reject mail)
+    "debug"  : 0,                                       | Verbose debugging output
+    "dryrun" : 0,                                       | Dryrun (do not alter or reject mail)
 
     "connection"             : "inet:12345\@localhost",  | The connection to use 
     "umask"                  : "0000",                  | Set umask
@@ -74,6 +74,13 @@ The configuration file format is as follows...
     "connect_timeout" : 30,                             | Timeout for Connect callbacks
     "command_timeout" : 30,                             | Timeout for Helo,Mail,Rcpt,Data and Unknown callbacks
     "content_timeout" : 300,                            | Timeout for Header,Eoh, Body and Eom callbacks
+
+    "tempfail_on_error" : "1",                          | Tempfail on errors
+    "tempfail_on_error_authenticated" : "0",            | Tempfail on errors for Authenticated IP Connections
+    "tempfail_on_error_local" : "0",                    | Tempfail on errors for Local IP Connections
+    "tempfail_on_error_trusted" : "0",                  | Tempfail on errors for Trusted IP Connections
+
+##### THIS FILE IS OUT OF DATE FROM HERE #####
 
     "show_default_adsp" : "0",                        | Boolean, include default adsp results?
 
@@ -114,11 +121,6 @@ The configuration file format is as follows...
     "dmarc_detect_list_id" : "1",                     | Detect a list ID and modify the DMARC authentication header
                                                       | to note this, useful when making rules for junking email
                                                       | as mailing lists frequently cause false DMARC failures.
-
-    "tempfail_on_error" : "1",                        | Tempfail on errors
-    "tempfail_on_error_authenticated" : "0",          | Tempfail on errors for Authenticated IP Connections
-    "tempfail_on_error_local" : "0",                  | Tempfail on errors for Local IP Connections
-    "tempfail_on_error_trusted" : "0",                | Tempfail on errors for Trusted IP Connections
 
     "remove_headers" : "yes"                          | Remove headers with conflicting host names (as defined above)
                                                       | "no" : do not remove
