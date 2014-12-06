@@ -26,7 +26,7 @@ sub callbacks {
 
 sub get_auth_name {
     my ($self) = @_;
-    my $name = $self->get_symval('{auth_authen}');
+    my $name = $self->get_symbol('{auth_authen}');
     return $name;
 }
 

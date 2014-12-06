@@ -193,12 +193,6 @@ sub get_symbol {
     return;
 }
 
-sub get_symval {
-    ## TODO rename all code to use get_symbol
-    my ( $self, $key ) = @_;
-    return $self->get_symbol( $key );
-}
-
 sub tempfail_on_error {
     my ( $self ) = @_;
     my $CONFIG = $self->config();
@@ -313,7 +307,7 @@ sub get_address_from {
 
 sub get_my_hostname {
     my ($self) = @_;
-    return $self->get_symval('j');
+    return $self->get_symbol('j');
 }
 
 sub is_hostname_mine {
@@ -344,7 +338,7 @@ sub is_hostname_mine {
 
 sub dbgout {
     my ( $self, $key, $value, $priority ) = @_;
-    my $queue_id = $self->get_symval('i') || q{--};
+    my $queue_id = $self->get_symbol('i') || q{--};
     warn "$PID: $queue_id: $key: $value\n";
     my $core_handler = $self->get_handler('Core');
     if ( !exists( $core_handler->{'dbgout'} ) ) {
@@ -379,7 +373,7 @@ sub dbgoutwrite {
                         | LOG_MASK(LOG_INFO)
             );
         }
-        my $queue_id = $self->get_symval('i') || q{--};
+        my $queue_id = $self->get_symbol('i') || q{--};
         my $core_handler = $self->get_handler('Core');
         if ( exists( $core_handler->{'dbgout'} ) ) {
             foreach my $entry ( @{ $core_handler->{'dbgout'} } ) {
