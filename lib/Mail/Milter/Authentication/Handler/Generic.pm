@@ -37,7 +37,7 @@ sub handler_config {
     return if ! $type;
     if ( $self->is_handler_loaded( $type ) ) {
         my $CONFIG = $self->config();
-        return $CONFIG->{'modules'}->{$type};
+        return $CONFIG->{'handlers'}->{$type};
     }
     return;
 }
@@ -79,7 +79,7 @@ sub get_top_handler {
 sub is_handler_loaded {
     my ( $self, $name ) = @_;
     my $CONFIG = $self->config();
-    if ( exists ( $CONFIG->{'modules'}->{$name} ) ) {
+    if ( exists ( $CONFIG->{'handlers'}->{$name} ) ) {
         return 1;
     }
     return 0;
