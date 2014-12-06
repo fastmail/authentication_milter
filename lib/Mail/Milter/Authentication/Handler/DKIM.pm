@@ -85,7 +85,7 @@ sub body_callback {
 
 sub eom_callback {
     my ($self) = @_;
-    my $CONFIG = $self->module_config();
+    my $CONFIG = $self->handler_config();
     return if ( $self->{'failmode'} );
     my $dkim = $self->get_object('dkim');
     eval {

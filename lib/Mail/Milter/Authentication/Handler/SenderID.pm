@@ -46,7 +46,7 @@ sub header_callback {
 
 sub eoh_callback {
     my ($self) = @_;
-    my $CONFIG = $self->module_config();
+    my $CONFIG = $self->handler_config();
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );

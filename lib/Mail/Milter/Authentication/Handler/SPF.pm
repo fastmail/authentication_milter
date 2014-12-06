@@ -31,7 +31,7 @@ sub envfrom_callback {
     # On MAILFROM
     #...
     my ( $self, $env_from ) = @_;
-    my $CONFIG = $self->module_config();
+    my $CONFIG = $self->handler_config();
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );

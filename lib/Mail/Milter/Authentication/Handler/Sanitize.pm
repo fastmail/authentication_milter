@@ -26,7 +26,7 @@ sub callbacks {
 
 sub is_hostname_mine {
     my ( $self, $check_hostname ) = @_;
-    my $CONFIG = $self->module_config();
+    my $CONFIG = $self->handler_config();
 
     my $hostname = $self->get_my_hostname();
     my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
@@ -66,7 +66,7 @@ sub envfrom_callback {
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
-    my $CONFIG = $self->module_config();
+    my $CONFIG = $self->handler_config();
     return if ( $self->is_trusted_ip_address() );
     return if ( lc $CONFIG->{'remove_headers'} eq 'no' );
     if ( $header eq 'Authentication-Results' ) {
@@ -95,7 +95,7 @@ sub header_callback {
 
 sub eom_callback {
     my ($self) = @_;
-    my $CONFIG = $self->module_config();
+    my $CONFIG = $self->handler_config();
     return if ( lc $CONFIG->{'remove_headers'} eq 'no' );
     if ( exists( $self->{'remove_auth_headers'} ) ) {
         foreach my $header ( reverse @{ $self->{'remove_auth_headers'} } ) {

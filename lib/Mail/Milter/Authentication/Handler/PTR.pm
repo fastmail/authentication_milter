@@ -32,8 +32,7 @@ sub helo_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
 
-    my $CONFIG = $self->config();
-    if ( ! exists ( $CONFIG->{'modules'}->{'IPRev'} ) ) {
+    if ( ! $self->is_handler_loaded( 'IPRev' ) ) {
         $self->log_error( 'PTR Config Error: IPRev is missing ');
         return;
     }

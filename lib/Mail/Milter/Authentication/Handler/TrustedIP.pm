@@ -27,7 +27,7 @@ sub callbacks {
 
 sub is_trusted_ip_address {
     my ( $self, $ip_address ) = @_;
-    my $CONFIG = $self->module_config();
+    my $CONFIG = $self->handler_config();
     return 0 if not exists( $CONFIG->{'trusted_ip_list'} );
     my $trusted = 0;
     my $ip_obj  = Net::IP->new($ip_address);

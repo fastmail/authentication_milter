@@ -36,19 +36,16 @@ sub envfrom_callback {
 
     $env_from = q{} if $env_from eq '<>';
 
-    my $CONFIG = $self->config();
-
-    if ( ! exists ( $CONFIG->{'modules'}->{'SPF'} ) ) {
+    if ( ! $self->is_handler_loaded( 'SPF' ) ) {
         $self->log_error( 'DMARC Config Error: SPF is missing ');
         $self->{'failmode'} = 1;
         return;
     }
-    if ( ! exists ( $CONFIG->{'modules'}->{'DKIM'} ) ) {
+    if ( ! $self->is_handler_loaded( 'DKIM' ) ) {
         $self->log_error( 'DMARC Config Error: DKIM is missing ');
         $self->{'failmode'} = 1;
         return;
     }
-
 
     my $domain_from;
     if ( !$env_from ) {
@@ -145,7 +142,7 @@ sub header_callback {
 
 sub eom_callback {
     my ($self) = @_;
-    my $CONFIG = $self->module_config();
+    my $CONFIG = $self->handler_config();
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );

@@ -31,7 +31,7 @@ sub config {
     return $self->{'wire'}->{'config'};
 }
 
-sub module_config {
+sub handler_config {
     my ($self) = @_;
     my $type = $self->module_type();
     return if ! $type;
@@ -74,6 +74,15 @@ sub get_top_handler {
     my $wire   = $self->{'wire'};
     my $object = $wire->{'handler'};
     return $object;
+}
+
+sub is_handler_loaded {
+    my ( $self, $name ) = @_;
+    my $CONFIG = $self->config();
+    if ( exists ( $CONFIG->{'modules'}->{$name} ) ) {
+        return 1;
+    }
+    return 0;
 }
 
 sub get_handler {
@@ -239,23 +248,20 @@ sub tempfail_on_error {
 
 sub is_local_ip_address {
     my ($self) = @_;
-    my $local_handler = $self->get_handler('LocalIP');
-    return 0 if ! $local_handler;
-    return $local_handler->{'is_local_ip_address'};
+    return 0 if ! $self->is_handler_loaded('LocalIP');
+    return $self->get_handler('LocalIP')->{'is_local_ip_address'};
 }
 
 sub is_trusted_ip_address {
     my ($self) = @_;
-    my $trusted_handler = $self->get_handler('TrustedIP');
-    return 0 if ! $trusted_handler;
-    return $trusted_handler->{'is_trusted_ip_address'};
+    return 0 if ! $self->is_handler_loaded('TrustedIP');
+    return $self->get_handler('TrustedIP')->{'is_trusted_ip_address'};
 }
 
 sub is_authenticated {
     my ($self) = @_;
-    my $auth_handler = $self->get_handler('Auth');
-    return 0 if ! $auth_handler;
-    return $auth_handler->{'is_authenticated'};
+    return 0 if ! $self->is_handler_loaded('Auth');
+    return $self->get_handler('Auth')->{'is_authenticated'};
 }
 
 sub ip_address {
