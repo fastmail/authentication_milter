@@ -80,8 +80,8 @@ The configuration file format is as follows...
     "tempfail_on_error_local" : "0",                    | Tempfail on errors for Local IP Connections
     "tempfail_on_error_trusted" : "0",                  | Tempfail on errors for Trusted IP Connections
 
-    "modules" : {                                       | Config for each module, can be prefixed with !
-                                                        | to disable that module without having to remove
+    "handlers" : {                                      | Config for each handlers, can be prefixed with !
+                                                        | to disable that handler without having to remove
                                                         | it's config.
 
         "SPF" : {                                       | Config for the SPF Module
