@@ -49,7 +49,7 @@ sub envfrom_callback {
 
     my $domain_from;
     if ( !$env_from ) {
-        $domain_from = $self->helo_name();
+        $domain_from = lc $self->helo_name();
     }
     else {
         $domain_from = $self->get_domain_from($env_from);
