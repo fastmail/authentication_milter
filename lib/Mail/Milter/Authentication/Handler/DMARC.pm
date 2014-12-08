@@ -58,6 +58,10 @@ sub envfrom_callback {
     my $dmarc;
     eval {
         $dmarc = Mail::DMARC::PurePerl->new();
+        if ( $dmarc->can('set_resolver') ) {
+            my $resolver = $self->get_object('resolver');
+            $dmarc->set_resolver($resolver);
+        }
         $dmarc->verbose(1);
         $dmarc->source_ip( $self->ip_address() );
         $self->set_object('dmarc',$dmarc);
