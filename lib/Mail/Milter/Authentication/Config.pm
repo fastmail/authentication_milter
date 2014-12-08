@@ -59,6 +59,7 @@ sub load_file {
             foreach my $file ( @config_files ) {
                 $file =~ /(^.*)\.json$/;
                 my $handler = $1;
+                ## ToDo Consider what to do if config already exists in .json config
                 $CONFIG->{'handlers'}->{$handler} = load_file( join( '/', $folder, $file ) );
             }
         }
