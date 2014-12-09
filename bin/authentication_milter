@@ -74,6 +74,7 @@ The configuration file format is as follows...
     "connect_timeout" : 30,                             | Timeout for Connect callbacks
     "command_timeout" : 30,                             | Timeout for Helo,Mail,Rcpt,Data and Unknown callbacks
     "content_timeout" : 300,                            | Timeout for Header,Eoh, Body and Eom callbacks
+    "dns_timeout"     : 10,                             | Timeout for DNS lookups
 
     "tempfail_on_error" : "1",                          | Tempfail on errors
     "tempfail_on_error_authenticated" : "0",            | Tempfail on errors for Authenticated IP Connections

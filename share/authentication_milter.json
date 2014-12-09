@@ -1,34 +1,76 @@
 {
+    "debug"  : 0,
+    "dryrun" : 0,
 
-    "connection"       : "inet:12345@localhost",
-    "runas"            : "nobody",
+    "connection"             : "inet:12345@localhost",
+    "umask"                  : "0000",
+    "runas"                  : "nobody",
+    "rungroup"               : "nogroup",
+    "listen_backlog"         : 20,
+    "min_children"           : 20,
+    "max_children"           : 200,
+    "min_spare_children"     : 10,
+    "max_spare_children"     : 20,
+    "max_requests_per_child" : 200,
 
-    "show_default_adsp" : "0",
+    "connect_timeout" : 30,
+    "command_timeout" : 30,
+    "content_timeout" : 300,
+    "dns_timeout"     : 10,
 
-    "check_spf"        : "1",
-    "check_dkim"       : "1",
-    "check_dkim-adsp"  : "1",
-    "check_dmarc"      : "1",
-    "check_ptr"        : "1",
-    "check_iprev"      : "1",
-    "check_senderid"   : "2",
-    "check_auth"       : "1",
-    "check_local_ip"   : "1",
+    "tempfail_on_error" : "1",
+    "tempfail_on_error_authenticated" : "0",
+    "tempfail_on_error_local" : "0",
+    "tempfail_on_error_trusted" : "0",
 
-    "check_trusted_ip" : "1",
-    "trusted_ip_list" : [
-        "123.123.123.123",
-        "2001:dead:deef:aa00::/56",
-        "2001:abcd:1234:121:4332:cfee:1231:abcd",
-        "106.117.31.76"
-    ],
-    "hosts_to_remove" : [
-        "example.com",
-        "example.net"
-    ],
+    "handlers" : {
 
-    "dmarc_detect_list_id" : "1",
+        "SPF" : {
+            "hide_none" : 0
+        },
 
-    "remove_headers" : "yes"
+        "DKIM" : {
+            "hide_none" : 0,
+            "check_adsp" : 1,
+            "show_default_adsp" : 0,
+            "adsp_hide_none" : 0
+        },
 
+        "DMARC" : {
+            "hide_none" : 0,
+            "detect_list_id" : "1"
+        },
+
+        "PTR" : {},
+
+        "SenderID" : {
+            "hide_none" : 1
+        },
+
+        "IPRev" : {},
+
+        "Auth" : {},
+
+        "LocalIP" : {},
+
+        "TrustedIP" : {
+            "trusted_ip_list" : [
+                "100.200.100.2",
+                "2001:44c2:3881:aa00::/56",
+                "2001:44b8:3021:123:dead:beef:abcd:1234"
+            ],
+        },
+
+        "!AddID" : {},
+
+        "ReturnOK" : {},
+
+        "Sanitize" : {
+            "hosts_to_remove" : [
+                "example.com",
+                "example.net"
+            ],
+            "remove_headers" : "yes"
+        }
+    }
 }

@@ -157,10 +157,12 @@ sub get_object {
     my $top_handler = $self->get_top_handler();
     my $object      = $top_handler->{'object'}->{$name};
     if ( ! $object ) {
+        my $CONFIG = $self->config();
+        my $timeout = $CONFIG->{'dns_timeout'} || 8;
         if ( $name eq 'resolver' ) {
             $object = Net::DNS::Resolver->new(
-                'udp_timeout' => 5,
-                'tcp_timeout' => 5,
+                'udp_timeout' => $timeout,
+                'tcp_timeout' => $timeout,
                 'retry'       => 2,
             );
             $object->udppacketsize(1240);
