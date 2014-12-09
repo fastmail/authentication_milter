@@ -12,6 +12,7 @@ use base 'Mail::Milter::Authentication::Protocol';
 use Email::Address;
 use Module::Load;
 use Sys::Syslog qw{:standard :macros};
+use Sys::Hostname;
 
 sub callbacks {
     return {};
@@ -343,7 +344,14 @@ sub get_address_from {
 
 sub get_my_hostname {
     my ($self) = @_;
-    return $self->get_symbol('j');
+    my $hostname = $self->get_symbol('j');
+    if ( ! $hostname ) {
+        $hostname = $self->get_symbol('{rcpt_host}');
+    }
+    if ( ! $hostname ) { # Fallback
+        $hostname = hostname;
+    }
+    return $hostname;
 }
 
 sub dbgout {

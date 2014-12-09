@@ -42,6 +42,7 @@ requires (
     'Net::Server::PreFork',
     'Proc::ProcessTable',
     'Socket',
+    'Sys::Hostname',
     'Sys::Syslog', 
 );
 
