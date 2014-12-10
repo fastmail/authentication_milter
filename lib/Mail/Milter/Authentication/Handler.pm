@@ -34,7 +34,7 @@ sub connect_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    $self->status();
+    $self->status('postconnect');
     return $self->get_return();
 }
 
@@ -69,7 +69,7 @@ sub helo_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    $self->status();
+    $self->status('posthelo');
     return $self->get_return();
 }
 
@@ -100,7 +100,7 @@ sub envfrom_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    $self->status();
+    $self->status('postenvfrom');
     return $self->get_return();
 }
 
@@ -131,7 +131,7 @@ sub envrcpt_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    $self->status();
+    $self->status('postenvrcpt');
     return $self->get_return();
 }
 
@@ -161,7 +161,7 @@ sub header_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    $self->status();
+    $self->status('postheader');
     return $self->get_return();
 }
 
@@ -191,7 +191,7 @@ sub eoh_callback {
         $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
-    $self->status();
+    $self->status('posteoh');
     return $self->get_return();
 }
 
@@ -221,7 +221,7 @@ sub body_callback {
         $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
-    $self->status();
+    $self->status('postbody');
     return $self->get_return();
 }
 
@@ -252,7 +252,7 @@ sub eom_callback {
     }
     $self->add_headers();
     $self->dbgoutwrite();
-    $self->status();
+    $self->status('posteom');
     return $self->get_return();
 }
 
@@ -282,7 +282,7 @@ sub abort_callback {
         $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
-    $self->status();
+    $self->status('postabort');
     return $self->get_return();
 }
 
@@ -312,7 +312,7 @@ sub close_callback {
         $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
-    $self->status();
+    $self->status('postclose');
     return $self->get_return();
 }
 
