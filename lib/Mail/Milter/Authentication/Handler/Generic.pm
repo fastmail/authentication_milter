@@ -10,6 +10,7 @@ our $VERSION = 0.5;
 use base 'Mail::Milter::Authentication::Protocol';
 
 use Email::Address;
+use English;
 use Module::Load;
 use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
@@ -25,6 +26,17 @@ sub new {
     };
     bless $self, $class;
     return $self;
+}
+
+sub status {
+    my ($self, $status) = @_;
+    my $count = $self->{'wire'}->{'count'};
+    if ( $status ) {
+        $PROGRAM_NAME = '[authentication_milter:processing:' . $status . '(' . $count . ')]';
+    }
+    else {
+        $PROGRAM_NAME = '[authentication_milter:processing(' . $count . ')]';
+    }
 }
 
 sub config {

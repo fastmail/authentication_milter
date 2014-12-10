@@ -18,6 +18,7 @@ sub new {
 
     my $socket = $args->{'socket'};
     my $config = $args->{'config'};
+    my $count  = $args->{'count'};
 
     my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
 
@@ -33,6 +34,7 @@ sub new {
         'socket'         => $socket,
         'callback_flags' => $callback_flags,
         'protocol'       => $protocol,
+        'count'          => $count,
     };
     bless $self, $class;
     return $self;

@@ -13,6 +13,7 @@ sub connect_callback {
 
     # On Connect
     my ( $self, $hostname, $sockaddr_in ) = @_;
+    $self->status('connect');
     $self->dbgout( 'CALLBACK', 'Connect', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     my $CONFIG = $self->config();
@@ -33,6 +34,7 @@ sub connect_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
+    $self->status();
     return $self->get_return();
 }
 
@@ -40,6 +42,7 @@ sub helo_callback {
 
     # On HELO
     my ( $self, $helo_host ) = @_;
+    $self->status('helo');
     $self->dbgout( 'CALLBACK', 'Helo', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $helo_host = q{} if not $helo_host;
@@ -66,6 +69,7 @@ sub helo_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
+    $self->status();
     return $self->get_return();
 }
 
@@ -74,6 +78,7 @@ sub envfrom_callback {
     # On MAILFROM
     #...
     my ( $self, $env_from ) = @_;
+    $self->status('envfrom');
     $self->dbgout( 'CALLBACK', 'EnvFrom', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $env_from = q{} if not $env_from;
@@ -95,6 +100,7 @@ sub envfrom_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
+    $self->status();
     return $self->get_return();
 }
 
@@ -103,6 +109,7 @@ sub envrcpt_callback {
     # On RCPTTO
     #...
     my ( $self, $env_to ) = @_;
+    $self->status('envrcpt');
     $self->dbgout( 'CALLBACK', 'EnvRcpt', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $env_to = q{} if not $env_to;
@@ -124,6 +131,7 @@ sub envrcpt_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
+    $self->status();
     return $self->get_return();
 }
 
@@ -131,6 +139,7 @@ sub header_callback {
 
     # On Each Header
     my ( $self, $header, $value ) = @_;
+    $self->status('header');
     $self->dbgout( 'CALLBACK', 'Header', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $value = q{} if not $value;
@@ -152,6 +161,7 @@ sub header_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
+    $self->status();
     return $self->get_return();
 }
 
@@ -159,6 +169,7 @@ sub eoh_callback {
 
     # On End of headers
     my ($self) = @_;
+    $self->status('eoh');
     $self->dbgout( 'CALLBACK', 'EOH', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     my $CONFIG = $self->config();
@@ -180,6 +191,7 @@ sub eoh_callback {
         $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
+    $self->status();
     return $self->get_return();
 }
 
@@ -187,6 +199,7 @@ sub body_callback {
 
     # On each body chunk
     my ( $self, $body_chunk ) = @_;
+    $self->status('body');
     $self->dbgout( 'CALLBACK', 'Body', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     my $CONFIG = $self->config();
@@ -208,6 +221,7 @@ sub body_callback {
         $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
+    $self->status();
     return $self->get_return();
 }
 
@@ -215,6 +229,7 @@ sub eom_callback {
 
     # On End of Message
     my ($self) = @_;
+    $self->status('eom');
     $self->dbgout( 'CALLBACK', 'EOM', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     my $CONFIG = $self->config();
@@ -237,6 +252,7 @@ sub eom_callback {
     }
     $self->add_headers();
     $self->dbgoutwrite();
+    $self->status();
     return $self->get_return();
 }
 
@@ -244,6 +260,7 @@ sub abort_callback {
 
     # On any out of our control abort
     my ($self) = @_;
+    $self->status('abort');
     $self->dbgout( 'CALLBACK', 'Abort', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     my $CONFIG = $self->config();
@@ -265,6 +282,7 @@ sub abort_callback {
         $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
+    $self->status();
     return $self->get_return();
 }
 
@@ -272,6 +290,7 @@ sub close_callback {
 
     # On end of connection
     my ($self) = @_;
+    $self->status('close');
     $self->dbgout( 'CALLBACK', 'Close', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     my $CONFIG = $self->config();
@@ -293,6 +312,7 @@ sub close_callback {
         $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
+    $self->status();
     return $self->get_return();
 }
 

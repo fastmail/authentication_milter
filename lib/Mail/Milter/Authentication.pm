@@ -16,15 +16,21 @@ use Proc::ProcessTable;
 sub child_init_hook {
     my ( $self ) = @_;
     $self->{'config'} = get_config();
+    $self->{'count'}  = 0;
+    $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
 }
 
 sub process_request {
     my ( $self ) = @_;
 
-    logdebug( 'Processing request' );
+    $self->{'count'}++;
+    my $count = $self->{'count'};
+    $PROGRAM_NAME = '[authentication_milter:processing(' . $count . ')]';
+    logdebug( 'Processing request ' . $self->{'count'} );
     Mail::Milter::Authentication::Protocol::Wire->new({
-        'socket' =>  $self->{'server'}->{'client'},
+        'socket' => $self->{'server'}->{'client'},
         'config' => $self->{'config'},
+        'count'  => $count,
     })->main();
 
     my $process_table = Proc::ProcessTable->new();
@@ -34,10 +40,11 @@ sub process_request {
             my $rss    = $process->rss;
             my $pctmem = $process->pctmem;
             my $pctcpu = $process->pctcpu;
-            loginfo( "Resource usage: size $size/rss $rss/memory $pctmem\%/cpu $pctcpu\%" );
+            loginfo( "Resource usage: ($count) size $size/rss $rss/memory $pctmem\%/cpu $pctcpu\%" );
         }
     }
 
+    $PROGRAM_NAME = '[authentication_milter:waiting(' . $count . ')]';
     logdebug( 'Request processing completed' );
 }
 
@@ -137,7 +144,7 @@ sub start {
         }
     }
 
-    $PROGRAM_NAME = '[authentication_milter]';
+    $PROGRAM_NAME = '[authentication_milter:init]';
 
     warn "\nStarting server\n";
     __PACKAGE__->run( %args );
