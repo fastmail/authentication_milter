@@ -15,8 +15,10 @@ use Proc::ProcessTable;
 
 sub child_init_hook {
     my ( $self ) = @_;
-    $self->{'config'} = get_config();
-    $self->{'count'}  = 0;
+    $self->{'callbacks_list'} = {};
+    $self->{'config'}         = get_config();
+    $self->{'count'}          = 0;
+    $self->{'object'}         = {};
     $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
 }
 
@@ -28,9 +30,11 @@ sub process_request {
     $PROGRAM_NAME = '[authentication_milter:processing(' . $count . ')]';
     logdebug( 'Processing request ' . $self->{'count'} );
     Mail::Milter::Authentication::Protocol::Wire->new({
-        'socket' => $self->{'server'}->{'client'},
-        'config' => $self->{'config'},
-        'count'  => $count,
+        'socket'         => $self->{'server'}->{'client'},
+        'callbacks_list' => $self->{'callbacks_list'},
+        'config'         => $self->{'config'},
+        'count'          => $count,
+        'object'         => $self->{'object'},
     })->main();
 
     my $process_table = Proc::ProcessTable->new();

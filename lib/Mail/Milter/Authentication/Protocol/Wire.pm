@@ -16,9 +16,11 @@ use Mail::Milter::Authentication::Constants qw{ :all };
 sub new {
     my ( $class, $args ) = @_;
 
-    my $socket = $args->{'socket'};
-    my $config = $args->{'config'};
-    my $count  = $args->{'count'};
+    my $callbacks_list = $args->{'callbacks_list'}; 
+    my $config         = $args->{'config'};
+    my $count          = $args->{'count'};
+    my $object         = $args->{'object'};
+    my $socket         = $args->{'socket'};
 
     my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
 
@@ -31,10 +33,12 @@ sub new {
 
     my $self = {
         'config'         => $config,
-        'socket'         => $socket,
         'callback_flags' => $callback_flags,
-        'protocol'       => $protocol,
         'count'          => $count,
+        'callbacks_list' => $callbacks_list,
+        'object'         => $object,
+        'protocol'       => $protocol,
+        'socket'         => $socket,
     };
     bless $self, $class;
     return $self;
@@ -70,7 +74,7 @@ sub main {
     if ( $self->{'handler'}->{'exit_on_close'} ) {
         $quit = 1;
     }
-    $self->destroy_objects();
+    #$self->destroy_objects();
     die 'exit_on_close' if $quit;
 
     #use Devel::Peek;

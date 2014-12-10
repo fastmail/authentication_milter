@@ -204,4 +204,9 @@ sub eom_callback {
     }
 }
 
+sub close_callback {
+    my ( $self ) = @_;
+    $self->destroy_object('dmarc');
+}
+
 1;

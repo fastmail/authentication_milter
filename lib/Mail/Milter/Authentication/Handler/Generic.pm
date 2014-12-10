@@ -137,16 +137,17 @@ sub register_callback {
 sub get_callbacks {
     my ( $self, $callback ) = @_;
     my $top_handler = $self->get_top_handler();
-   
+    my $wire = $self->{'wire'};
+
     if ( ! exists $top_handler->{'callbacks'}->{$callback} ) {
         $top_handler->{'callbacks'}->{$callback} = [];
     }
 
-    if ( ! exists $top_handler->{'callbacks_list'}->{$callback} ) {
-        $top_handler->{'callbacks_list'}->{$callback} = [];
+    if ( ! exists $wire->{'callbacks_list'}->{$callback} ) {
+        $wire->{'callbacks_list'}->{$callback} = [];
     }
     else {
-      return $top_handler->{'callbacks_list'}->{$callback};
+        return $wire->{'callbacks_list'}->{$callback};
     }
     
     my $callbacks_ref = $top_handler->{'callbacks'}->{$callback};
@@ -191,7 +192,7 @@ sub get_callbacks {
         @todo = @defer;
     }
 
-    $top_handler->{'callbacks_list'}->{$callback} = \@order;
+    $wire->{'callbacks_list'}->{$callback} = \@order;
     return \@order;
 }
 
@@ -206,12 +207,13 @@ sub destroy_handler {
 
 sub get_object {
     my ( $self, $name ) = @_;
-    my $top_handler = $self->get_top_handler();
-    my $object      = $top_handler->{'object'}->{$name};
+    my $wire   = $self->{'wire'};
+    my $object = $wire->{'object'}->{$name};
     if ( ! $object ) {
-        my $CONFIG = $self->config();
-        my $timeout = $CONFIG->{'dns_timeout'} || 8;
+
         if ( $name eq 'resolver' ) {
+            my $CONFIG = $self->config();
+            my $timeout = $CONFIG->{'dns_timeout'} || 8;
             $object = Net::DNS::Resolver->new(
                 'udp_timeout' => $timeout,
                 'tcp_timeout' => $timeout,
@@ -219,27 +221,29 @@ sub get_object {
             );
             $object->udppacketsize(1240);
             $object->persistent_udp(1);
+            $wire->{'object'}->{$name} = $object;
         }
+
     }
     return $object;
 }
 
 sub set_object {
     my ( $self, $name, $object ) = @_;
-    my $top_handler = $self->get_top_handler();
-    $top_handler->{'object'}->{$name} = $object;
+    my $wire = $self->{'wire'};
+    $wire->{'object'}->{$name} = $object;
 }
 
 sub destroy_object {
     my ( $self, $name ) = @_;
-    my $top_handler = $self->get_top_handler();
-    delete $top_handler->{'object'}->{$name};
+    my $wire = $self->{'wire'};
+    delete $wire->{'object'}->{$name};
 }
 
 sub destroy_all_objects {
     my ( $self ) = @_;
-    my $top_handler = $self->get_top_handler();
-    foreach my $name ( keys %{ $top_handler->{'object'} } )
+    my $wire = $self->{'wire'};
+    foreach my $name ( keys %{ $wire->{'object'} } )
     {
         $self->destroy_object( $name );
     }
