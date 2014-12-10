@@ -11,19 +11,10 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
-sub callbacks {
-    return {
-        'connect' => undef,
-        'helo'    => undef,
-        'envfrom' => 50,
-        'envrcpt' => undef,
-        'header'  => undef,
-        'eoh'     => undef,
-        'body'    => undef,
-        'eom'     => undef,
-        'abort'   => undef,
-        'close'   => undef,
-    };
+sub envfrom_requires {
+    my ($self) = @_;
+    my @requires = qw{ Core };
+    return \@requires;
 }
 
 sub envfrom_callback {

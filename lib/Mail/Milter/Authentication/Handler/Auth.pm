@@ -9,21 +9,6 @@ use base 'Mail::Milter::Authentication::Handler::Generic';
 
 use Sys::Syslog qw{:standard :macros};
 
-sub callbacks {
-    return {
-        'connect' => 20,
-        'helo'    => undef,
-        'envfrom' => 30,
-        'envrcpt' => undef,
-        'header'  => undef,
-        'eoh'     => undef,
-        'body'    => undef,
-        'eom'     => undef,
-        'abort'   => undef,
-        'close'   => undef,
-    };
-}
-
 sub get_auth_name {
     my ($self) = @_;
     my $name = $self->get_symbol('{auth_authen}');
@@ -33,6 +18,12 @@ sub get_auth_name {
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     $self->{'is_authenticated'} = 0;
+}
+
+sub envfrom_requires {
+    my ($self) = @_;
+    my @requires = qw{ Core };
+    return \@requires;
 }
 
 sub envfrom_callback {

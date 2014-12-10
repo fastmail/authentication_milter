@@ -9,21 +9,6 @@ use base 'Mail::Milter::Authentication::Handler::Generic';
 
 use Sys::Syslog qw{:standard :macros};
 
-sub callbacks {
-    return {
-        'connect' => undef,
-        'helo'    => 20,
-        'envfrom' => undef,
-        'envrcpt' => undef,
-        'header'  => undef,
-        'eoh'     => undef,
-        'body'    => undef,
-        'eom'     => undef,
-        'abort'   => undef,
-        'close'   => undef,
-    };
-}
-
 sub helo_callback {
 
     # On HELO

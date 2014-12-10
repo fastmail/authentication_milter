@@ -10,21 +10,6 @@ use base 'Mail::Milter::Authentication::Handler::Generic';
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
-sub callbacks {
-    return {
-        'connect' => 40,
-        'helo'    => undef,
-        'envfrom' => undef,
-        'envrcpt' => undef,
-        'header'  => undef,
-        'eoh'     => undef,
-        'body'    => undef,
-        'eom'     => undef,
-        'abort'   => undef,
-        'close'   => undef,
-    };
-}
-
 sub is_local_ip_address {
     my ( $self, $ip_address ) = @_;
     my $ip       = Net::IP->new($ip_address);
@@ -57,6 +42,12 @@ sub is_local_ip_address {
     };
     $self->dbgout( 'IPAddress', "Address $ip_address detected as type $ip_type", LOG_DEBUG );
     return $type_map->{ $ip_type } || 0;
+}
+
+sub connect_requires {
+    my ($self) = @_;
+    my @requires = qw{ Core };
+    return \@requires;
 }
 
 sub connect_callback {

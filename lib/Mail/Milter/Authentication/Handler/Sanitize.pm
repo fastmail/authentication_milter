@@ -9,21 +9,6 @@ use base 'Mail::Milter::Authentication::Handler::Generic';
 
 use Sys::Syslog qw{:standard :macros};
 
-sub callbacks {
-    return {
-        'connect' => undef,
-        'helo'    => undef,
-        'envfrom' => 20,
-        'envrcpt' => undef,
-        'header'  => 20,
-        'eoh'     => undef,
-        'body'    => undef,
-        'eom'     => 30,
-        'abort'   => undef,
-        'close'   => undef,
-    };
-}
-
 sub is_hostname_mine {
     my ( $self, $check_hostname ) = @_;
     my $CONFIG = $self->handler_config();
@@ -56,6 +41,12 @@ sub remove_auth_header {
         $self->{'remove_auth_headers'} = [];
     }
     push @{ $self->{'remove_auth_headers'} }, $value;
+}
+
+sub envfrom_requires {
+    my ($self) = @_;
+    my @requires = qw{ Core };
+    return \@requires;
 }
 
 sub envfrom_callback {

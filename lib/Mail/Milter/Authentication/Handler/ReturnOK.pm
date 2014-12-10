@@ -10,21 +10,6 @@ use base 'Mail::Milter::Authentication::Handler::Generic';
 use Net::DNS;
 use Sys::Syslog qw{:standard :macros};
 
-sub callbacks {
-    return {
-        'connect' => undef,
-        'helo'    => undef,
-        'envfrom' => 60,
-        'envrcpt' => undef,
-        'header'  => 60,
-        'eoh'     => undef,
-        'body'    => undef,
-        'eom'     => undef,
-        'abort'   => undef,
-        'close'   => undef,
-    };
-}
-
 sub _check_address {
     my ( $self, $address, $type ) = @_;
 
@@ -119,6 +104,12 @@ sub _check_address {
     
     $self->add_auth_header($header);
 
+}
+
+sub envfrom_requires {
+    my ($self) = @_;
+    my @requires = qw{ Core };
+    return \@requires;
 }
 
 sub envfrom_callback {

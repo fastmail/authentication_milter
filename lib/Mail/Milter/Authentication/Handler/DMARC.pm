@@ -11,19 +11,10 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::DMARC::PurePerl;
 
-sub callbacks {
-    return {
-        'connect' => undef,
-        'helo'    => undef,
-        'envfrom' => 40,
-        'envrcpt' => 20,
-        'header'  => 40,
-        'eoh'     => undef,
-        'body'    => undef,
-        'eom'     => 20,
-        'abort'   => undef,
-        'close'   => undef,
-    };
+sub envfrom_requires {
+    my ($self) = @_;
+    my @requires = qw{ Core SPF DKIM };
+    return \@requires;
 }
 
 sub envfrom_callback {

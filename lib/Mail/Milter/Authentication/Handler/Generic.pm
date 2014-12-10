@@ -15,10 +15,6 @@ use Module::Load;
 use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 
-sub callbacks {
-    return {};
-}
-
 sub new {
     my ( $class, $wire ) = @_;
     my $self = {
@@ -116,19 +112,18 @@ sub setup_handler {
 
     my $top_handler = $self->get_top_handler();
     $top_handler->{'handler'}->{$name} = $object;
-    
-    my $callbacks = $object->callbacks();
-    foreach my $callback ( keys %{$callbacks} ) {
-        my $priority = $callbacks->{$callback};
-        if ( $priority ) {
-            $self->register_callback( $name, $callback, $priority );
+
+    foreach my $callback ( qw { connect helo envfrom envrcpt header eoh body eom abort close } ) {
+        if ( $object->can( $callback . '_callback' ) ) {
+            $self->register_callback( $name, $callback );
         }
     }
+
 }
 
 sub register_callback {
-    my ( $self, $name, $callback, $priority ) = @_;
-    $self->dbgout( 'Register Callback', "$name:$callback:$priority", LOG_DEBUG );
+    my ( $self, $name, $callback ) = @_;
+    $self->dbgout( 'Register Callback', "$name:$callback", LOG_DEBUG );
     my $top_handler = $self->get_top_handler();
     if ( ! exists $top_handler->{'callbacks'} ) {
         $top_handler->{'callbacks'} = {};
@@ -136,7 +131,7 @@ sub register_callback {
     if ( ! exists $top_handler->{'callbacks'}->{$callback} ) {
         $top_handler->{'callbacks'}->{$callback} = [];
     }
-    push @{ $top_handler->{'callbacks'}->{$callback} }, { 'name' => $name, 'priority' => $priority };
+    push @{ $top_handler->{'callbacks'}->{$callback} }, $name;
 }
 
 sub get_callbacks {
@@ -146,13 +141,58 @@ sub get_callbacks {
     if ( ! exists $top_handler->{'callbacks'}->{$callback} ) {
         $top_handler->{'callbacks'}->{$callback} = [];
     }
+
+    if ( ! exists $top_handler->{'callbacks_list'}->{$callback} ) {
+        $top_handler->{'callbacks_list'}->{$callback} = [];
+    }
+    else {
+      return $top_handler->{'callbacks_list'}->{$callback};
+    }
     
-    my @callbacks;
-    my $callbacks_ref;
-    $callbacks_ref = $top_handler->{'callbacks'}->{$callback};
-    @callbacks = sort { $a->{'priority'} cmp $b->{'priority'} } @{$callbacks_ref};
-    @callbacks = map { $_->{'name'} } @callbacks;
-    return \@callbacks;
+    my $callbacks_ref = $top_handler->{'callbacks'}->{$callback};
+
+    my $added = {};
+    my @order;
+
+    my @todo = sort @{$callbacks_ref};
+    my $todo_count = scalar @todo;
+    while ( $todo_count ) {
+        my @defer;
+        foreach my $item ( @todo ) {
+            my $handler = $self->get_handler( $item );
+            my $requires_method = $callback . '_requires';
+            if ( $handler->can( $requires_method ) ) { 
+                my $requires_met = 1;
+                my $requires = $handler->$requires_method;
+                foreach my $require ( @{ $requires } ) {
+                    if ( ! exists $added->{$require} ) {
+                        $requires_met = 0;
+                    }
+                }
+                if ( $requires_met == 1 ) {
+                    push @order, $item;
+                    $added->{$item} = 1;
+                }
+                else {
+                    push @defer, $item;
+                }
+            }
+            else {
+                push @order, $item;
+                $added->{$item} = 1;
+            }
+        }
+
+        my $defer_count = scalar @defer;
+        if ( $defer_count == $todo_count ) {
+            die 'Could not build order list';
+        }
+        $todo_count = $defer_count;
+        @todo = @defer;
+    }
+
+    $top_handler->{'callbacks_list'}->{$callback} = \@order;
+    return \@order;
 }
 
 sub destroy_handler {
