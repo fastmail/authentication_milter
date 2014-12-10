@@ -202,7 +202,22 @@ sub exit_on_close {
 sub clear_symbols {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
+
+    my $connect_symbols;
+    if ( exists ( $top_handler->{'symbols'} ) ) {
+        if ( exists ( $top_handler->{'symbols'}->{'C'} ) ) {
+            $connect_symbols = $top_handler->{'symbols'}->{'C'};
+        }
+    }
+
     delete $top_handler->{'symbols'};
+
+    if ( $connect_symbols ) {
+        $top_handler->{'symbols'} = {
+            'C' => $connect_symbols,
+        };
+    }
+
 }
 
 sub set_symbol {
