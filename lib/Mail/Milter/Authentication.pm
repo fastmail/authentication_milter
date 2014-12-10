@@ -9,7 +9,7 @@ use base 'Net::Server::PreFork';
 
 use English;
 use Mail::Milter::Authentication::Config qw{ get_config };
-use Mail::Milter::Authentication::Protocol::Wire;
+use Mail::Milter::Authentication::Protocol;
 use Mail::Milter::Authentication::Util qw{ logerror loginfo logdebug };
 use Proc::ProcessTable;
 
@@ -29,7 +29,7 @@ sub process_request {
     my $count = $self->{'count'};
     $PROGRAM_NAME = '[authentication_milter:processing(' . $count . ')]';
     logdebug( 'Processing request ' . $self->{'count'} );
-    Mail::Milter::Authentication::Protocol::Wire->new({
+    Mail::Milter::Authentication::Protocol->new({
         'socket'         => $self->{'server'}->{'client'},
         'callbacks_list' => $self->{'callbacks_list'},
         'config'         => $self->{'config'},

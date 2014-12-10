@@ -17,9 +17,9 @@ use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw { :all };
 
 sub new {
-    my ( $class, $wire ) = @_;
+    my ( $class, $protocol ) = @_;
     my $self = {
-        'wire'   => $wire,
+        'protocol'   => $protocol,
     };
     bless $self, $class;
     return $self;
@@ -27,7 +27,7 @@ sub new {
 
 sub status {
     my ($self, $status) = @_;
-    my $count = $self->{'wire'}->{'count'};
+    my $count = $self->{'protocol'}->{'count'};
     if ( $status ) {
         $PROGRAM_NAME = '[authentication_milter:processing:' . $status . '(' . $count . ')]';
     }
@@ -38,7 +38,7 @@ sub status {
 
 sub config {
     my ($self) = @_;
-    return $self->{'wire'}->{'config'};
+    return $self->{'protocol'}->{'config'};
 }
 
 sub handler_config {
@@ -81,8 +81,8 @@ sub get_return {
 
 sub get_top_handler {
     my ($self) = @_;
-    my $wire   = $self->{'wire'};
-    my $object = $wire->{'handler'};
+    my $protocol   = $self->{'protocol'};
+    my $object = $protocol->{'handler'};
     return $object;
 }
 
@@ -109,7 +109,7 @@ sub setup_handler {
     $self->dbgout( 'Load Module', "$name", LOG_DEBUG );
     my $package = "Mail::Milter::Authentication::Handler::$name";
     load $package;
-    my $object = $package->new( $self->{'wire'} );
+    my $object = $package->new( $self->{'protocol'} );
 
     my $top_handler = $self->get_top_handler();
     $top_handler->{'handler'}->{$name} = $object;
@@ -138,17 +138,17 @@ sub register_callback {
 sub get_callbacks {
     my ( $self, $callback ) = @_;
     my $top_handler = $self->get_top_handler();
-    my $wire = $self->{'wire'};
+    my $protocol = $self->{'protocol'};
 
     if ( ! exists $top_handler->{'callbacks'}->{$callback} ) {
         $top_handler->{'callbacks'}->{$callback} = [];
     }
 
-    if ( ! exists $wire->{'callbacks_list'}->{$callback} ) {
-        $wire->{'callbacks_list'}->{$callback} = [];
+    if ( ! exists $protocol->{'callbacks_list'}->{$callback} ) {
+        $protocol->{'callbacks_list'}->{$callback} = [];
     }
     else {
-        return $wire->{'callbacks_list'}->{$callback};
+        return $protocol->{'callbacks_list'}->{$callback};
     }
     
     my $callbacks_ref = $top_handler->{'callbacks'}->{$callback};
@@ -193,7 +193,7 @@ sub get_callbacks {
         @todo = @defer;
     }
 
-    $wire->{'callbacks_list'}->{$callback} = \@order;
+    $protocol->{'callbacks_list'}->{$callback} = \@order;
     return \@order;
 }
 
@@ -201,15 +201,15 @@ sub destroy_handler {
     my ( $self, $name ) = @_;
     my $top_handler = $self->get_top_handler();
     # Remove some back references
-    delete $top_handler->{'handler'}->{$name}->{'wire'};
+    delete $top_handler->{'handler'}->{$name}->{'protocol'};
     # Remove reference to handler
     delete $top_handler->{'handler'}->{$name};
 }
 
 sub get_object {
     my ( $self, $name ) = @_;
-    my $wire   = $self->{'wire'};
-    my $object = $wire->{'object'}->{$name};
+    my $protocol   = $self->{'protocol'};
+    my $object = $protocol->{'object'}->{$name};
     if ( ! $object ) {
 
         if ( $name eq 'resolver' ) {
@@ -222,7 +222,7 @@ sub get_object {
             );
             $object->udppacketsize(1240);
             $object->persistent_udp(1);
-            $wire->{'object'}->{$name} = $object;
+            $protocol->{'object'}->{$name} = $object;
         }
 
     }
@@ -231,20 +231,20 @@ sub get_object {
 
 sub set_object {
     my ( $self, $name, $object ) = @_;
-    my $wire = $self->{'wire'};
-    $wire->{'object'}->{$name} = $object;
+    my $protocol = $self->{'protocol'};
+    $protocol->{'object'}->{$name} = $object;
 }
 
 sub destroy_object {
     my ( $self, $name ) = @_;
-    my $wire = $self->{'wire'};
-    delete $wire->{'object'}->{$name};
+    my $protocol = $self->{'protocol'};
+    delete $protocol->{'object'}->{$name};
 }
 
 sub destroy_all_objects {
     my ( $self ) = @_;
-    my $wire = $self->{'wire'};
-    foreach my $name ( keys %{ $wire->{'object'} } )
+    my $protocol = $self->{'protocol'};
+    foreach my $name ( keys %{ $protocol->{'object'} } )
     {
         $self->destroy_object( $name );
     }
@@ -592,32 +592,32 @@ sub smfis_accept {
 
 sub write_packet {
     my ( $self, $type, $data ) = @_;
-    my $wire = $self->{'wire'};
-    $wire->write_packet( $type, $data );
+    my $protocol = $self->{'protocol'};
+    $protocol->write_packet( $type, $data );
 }
 
 sub add_header {
     my ( $self, $key, $value ) = @_;
-    my $wire = $self->{'wire'};
+    my $protocol = $self->{'protocol'};
     my $CONFIG = get_config();
     return if $CONFIG->{'dryrun'};
-    $wire->add_header( $key, $value );
+    $protocol->add_header( $key, $value );
 }
 
 sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
-    my $wire = $self->{'wire'};
+    my $protocol = $self->{'protocol'};
     my $CONFIG = get_config();
     return if $CONFIG->{'dryrun'};
-    $wire->insert_header( $index, $key, $value );
+    $protocol->insert_header( $index, $key, $value );
 }
 
 sub change_header {
     my ( $self, $key, $index, $value ) = @_;
-    my $wire = $self->{'wire'};
+    my $protocol = $self->{'protocol'};
     my $CONFIG = get_config();
     return if $CONFIG->{'dryrun'};
-    $wire->change_header( $key, $index, $value );
+    $protocol->change_header( $key, $index, $value );
 }
 
 

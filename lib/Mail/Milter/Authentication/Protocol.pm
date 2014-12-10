@@ -1,4 +1,4 @@
-package Mail::Milter::Authentication::Protocol::Wire;
+package Mail::Milter::Authentication::Protocol;
 
 use strict;
 use warnings;
@@ -109,7 +109,7 @@ sub destroy_objects {
         $handler->destroy_handler( $name );
     }
     delete $self->{'handler'}->{'config'};
-    delete $self->{'handler'}->{'wire'};
+    delete $self->{'handler'}->{'protocol'};
     delete $self->{'handler'};
 }
 
