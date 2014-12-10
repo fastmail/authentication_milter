@@ -79,6 +79,20 @@ sub envfrom_callback {
         $self->{'failmode'} = 1;
         return;
     }
+
+    eval {
+        my $spf = $self->get_handler('SPF');
+        $dmarc->spf(
+            'domain' => $spf->{'dmarc_domain'},
+            'scope'  => $spf->{'dmarc_scope'},
+            'result' => $spf->{'dmarc_result'},
+        );
+    };
+    if ( my $error = $@ ) {
+        $self->log_error( 'DMARC SPF Error: ' . $error );
+        $self->add_auth_header('dmarc=temperror');
+    }
+
 }
 
 sub envrcpt_callback {

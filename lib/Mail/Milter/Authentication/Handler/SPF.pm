@@ -85,18 +85,10 @@ sub envfrom_callback {
             $self->add_auth_header($auth_header);
         }
 
-        my $dmarc = $self->get_object('dmarc');
-        if ( $dmarc
-            && ( $self->is_local_ip_address() == 0 )
-            && ( $self->is_trusted_ip_address() == 0 )
-            && ( $self->is_authenticated() == 0 ) )
-        {
-            $dmarc->spf(
-                'domain' => $domain,
-                'scope'  => $scope,
-                'result' => $result_code,
-            );
-        }
+        # Set for DMARC
+        $self->{'dmarc_domain'} = $domain;
+        $self->{'dmarc_scope'}  = $scope;
+        $self->{'dmarc_result'} = $result_code;
 
         $self->dbgout( 'SPFCode', $result_code, LOG_INFO );
 

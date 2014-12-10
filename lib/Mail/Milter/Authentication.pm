@@ -30,11 +30,11 @@ sub process_request {
     $PROGRAM_NAME = '[authentication_milter:processing(' . $count . ')]';
     logdebug( 'Processing request ' . $self->{'count'} );
     Mail::Milter::Authentication::Protocol->new({
-        'socket'         => $self->{'server'}->{'client'},
         'callbacks_list' => $self->{'callbacks_list'},
         'config'         => $self->{'config'},
         'count'          => $count,
         'object'         => $self->{'object'},
+        'socket'         => $self->{'server'}->{'client'},
     })->main();
 
     my $process_table = Proc::ProcessTable->new();
