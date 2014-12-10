@@ -11,6 +11,11 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
+sub helo_callback {
+    my ( $self, $helo_host ) = @_;
+    $self->{'helo_name'} = $helo_host;
+}
+
 sub envfrom_requires {
     my ($self) = @_;
     my @requires = qw{ Core };
@@ -48,7 +53,7 @@ sub envfrom_callback {
     my $identity;
     my $domain;
     if ( !$env_from ) {
-        $identity = $self->helo_name();
+        $identity = $self->{'helo_name'};
         $domain   = $identity;
         $scope    = 'helo';
     }
@@ -58,7 +63,7 @@ sub envfrom_callback {
     }
 
     if ( !$identity ) {
-        $identity = $self->helo_name();
+        $identity = $self->{'helo_name'};
         $domain   = $identity;
         $scope    = 'helo';
     }
@@ -69,7 +74,7 @@ sub envfrom_callback {
             'scope'         => $scope,
             'identity'      => $identity,
             'ip_address'    => $self->ip_address(),
-            'helo_identity' => $self->helo_name(),
+            'helo_identity' => $self->{'helo_name'},
         );
 
         my $spf_result = $spf_server->process($spf_request);
@@ -79,7 +84,7 @@ sub envfrom_callback {
         my $auth_header = join( q{ },
             $self->format_header_entry( 'spf',           $result_code ),
             $self->format_header_entry( 'smtp.mailfrom', $self->get_address_from( $env_from ) ),
-            $self->format_header_entry( 'smtp.helo',     $self->helo_name() ),
+            $self->format_header_entry( 'smtp.helo',     $self->{'helo_name'} ),
         );
         if ( !( $CONFIG->{'hide_none'} && $result_code eq 'none' ) ) {
             $self->add_auth_header($auth_header);
@@ -104,6 +109,14 @@ sub envfrom_callback {
         $self->add_auth_header('spf=temperror');
     }
 
+}
+
+sub close_callback {
+    my ( $self ) = @_;
+    delete $self->{'dmarc_domain'};
+    delete $self->{'dmarc_scope'};
+    delete $self->{'dmarc_result'};
+    delete $self->{'helo_name'};
 }
 
 1;

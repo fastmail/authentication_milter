@@ -55,7 +55,8 @@ sub helo_callback {
         }
 
         # Take only the first HELO from a connection
-        if ( !( $self->helo_name() ) ) {
+        if ( !( $self->{'helo_name'} ) ) {
+            $self->{'helo_name'} = $helo_host;
             my $callbacks = $self->get_callbacks( 'helo' );
             foreach my $handler ( @$callbacks ) {
                 $self->get_handler($handler)->helo_callback($helo_host);
@@ -311,6 +312,7 @@ sub close_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
+    delete $self->{'helo_name'};
     $self->dbgoutwrite();
     $self->status('postclose');
     return $self->get_return();

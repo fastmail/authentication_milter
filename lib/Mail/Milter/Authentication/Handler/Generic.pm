@@ -321,6 +321,10 @@ sub tempfail_on_error {
     }
 }
 
+
+
+# Common calls into other Handlers
+
 sub is_local_ip_address {
     my ($self) = @_;
     return 0 if ! $self->is_handler_loaded('LocalIP');
@@ -345,17 +349,9 @@ sub ip_address {
     return $core_handler->{'ip_address'};
 }
 
-sub helo_name {
-    my ($self) = @_;
-    my $core_handler = $self->get_handler('Core');
-    return $core_handler->{'helo_name'};
-}
 
-sub mail_from {
-    my ($self) = @_;
-    my $core_handler = $self->get_handler('Core');
-    return $core_handler->{'mail_from'};
-}
+
+# Header formatting and data methods
 
 sub format_ctext {
 
@@ -428,6 +424,10 @@ sub get_my_hostname {
     return $hostname;
 }
 
+
+
+# Logging
+
 sub dbgout {
     my ( $self, $key, $value, $priority ) = @_;
     my $queue_id = $self->get_symbol('i') || q{--};
@@ -480,6 +480,10 @@ sub dbgoutwrite {
         delete $core_handler->{'dbgout'};
     };
 }
+
+
+
+# Header handling
 
 sub add_headers {
     my ($self) = @_;
@@ -567,6 +571,8 @@ sub append_header {
 }
 
 
+
+# Lower level methods
 
 sub smfis_continue {
     return SMFIS_CONTINUE;

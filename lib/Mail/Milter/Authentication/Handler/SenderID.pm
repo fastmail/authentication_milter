@@ -11,6 +11,11 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
+sub helo_callback {
+    my ( $self, $helo_host ) = @_;
+    $self->{'helo_name'} = $helo_host;
+}
+
 sub envfrom_requires {
     my ($self) = @_;
     my @requires = qw{ Core };
@@ -70,7 +75,7 @@ sub eoh_callback {
             'scope'         => $scope,
             'identity'      => $identity,
             'ip_address'    => $self->ip_address(),
-            'helo_identity' => $self->helo_name(),
+            'helo_identity' => $self->{'helo_name'},
         );
 
         my $spf_result = $spf_server->process($spf_request);
@@ -94,6 +99,12 @@ sub eoh_callback {
         $self->add_auth_header('senderid=temperror');
         return;
     }
+}
+
+sub close_callback {
+    my ( $self ) = @_;
+    delete $self->{'from_header'};
+    delete $self->{'helo_name'};
 }
 
 1;

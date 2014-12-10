@@ -11,6 +11,11 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::DMARC::PurePerl;
 
+sub helo_callback {
+    my ( $self, $helo_host ) = @_;
+    $self->{'helo_name'} = $helo_host;
+}
+
 sub envfrom_requires {
     my ($self) = @_;
     my @requires = qw{ Core SPF DKIM };
@@ -40,7 +45,7 @@ sub envfrom_callback {
 
     my $domain_from;
     if ( !$env_from ) {
-        $domain_from = lc $self->helo_name();
+        $domain_from = lc $self->{'helo_name'};
     }
     else {
         $domain_from = $self->get_domain_from($env_from);
@@ -220,6 +225,10 @@ sub eom_callback {
 
 sub close_callback {
     my ( $self ) = @_;
+    delete $self->{'helo_name'};
+    delete $self->{'failmode'};
+    delete $self->{'is_list'};
+    delete $self->{'from_header'};
     $self->destroy_object('dmarc');
 }
 

@@ -36,34 +36,22 @@ sub connect_callback {
     };
 }
 
-sub helo_callback {
-    my ( $self, $helo_host ) = @_;
-    $self->{'helo_name'} = $helo_host;
-}
-
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
 
     # Reset private data for this MAIL transaction
-    delete $self->{'mail_from'};
     delete $self->{'auth_headers'};
     delete $self->{'pre_headers'};
     delete $self->{'add_headers'};
-
-    $self->{'mail_from'} = $env_from || q{};
-    $self->dbgout( 'EnvelopeFrom', $env_from, LOG_DEBUG );
 }
 
-sub envrcpt_callback {
-    my ( $self, $env_to ) = @_;
-    $self->dbgout( 'EnvelopeTo', $env_to, LOG_DEBUG );
-}
-
-sub header_callback {
-
-    # On Each Header
-    my ( $self, $header, $value ) = @_;
-    $self->dbgout( 'Header', $header . ': ' . $value, LOG_DEBUG );
+sub close_callback {
+    my ( $self ) = @_;
+    delete $self->{'c_auth_headers'};
+    delete $self->{'auth_headers'};
+    delete $self->{'pre_headers'};
+    delete $self->{'add_headers'};
+    delete $self->{'ip_address'};
 }
 
 1;

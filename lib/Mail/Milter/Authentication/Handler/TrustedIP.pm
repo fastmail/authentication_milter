@@ -49,4 +49,9 @@ sub connect_callback {
     }
 }
 
+sub close_callback {
+    my ( $self ) = @_;
+    delete $self->{'is_trusted_ip_address'};
+}
+
 1;

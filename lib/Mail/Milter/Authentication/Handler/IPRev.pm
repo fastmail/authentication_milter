@@ -138,4 +138,9 @@ sub connect_callback {
 
 }
 
+sub close_callback {
+    my ( $self ) = @_;
+    delete $self->{'verified_ptr'};
+}
+
 1;

@@ -96,4 +96,10 @@ sub eom_callback {
     }
 }
 
+sub close_callback {
+    my ( $self ) = @_;
+    delete $self->{'remove_auth_headers'};
+    delete $self->{'auth_result_header_index'};
+}
+
 1;

@@ -41,4 +41,9 @@ sub envfrom_callback {
     }
 }
 
+sub close_callback {
+    my ( $self ) = @_;
+    delete $self->{'is_authenticated'};
+}
+
 1;
