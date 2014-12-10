@@ -29,10 +29,10 @@ sub callbacks {
 sub _dns_error {
     my ( $self, $type, $data, $error ) = @_;
     if ( $error eq 'NXDOMAIN' ) {
-        $self->dbgout( "DNS $type  Lookup", "$data gave $error", LOG_INFO );
+        $self->dbgout( "DNS $type  Lookup", "$data gave $error", LOG_DEBUG );
     }
     elsif ( $error eq 'NOERROR' ) {
-        $self->dbgout( "DNS $type  Lookup", "$data gave $error", LOG_INFO );
+        $self->dbgout( "DNS $type  Lookup", "$data gave $error", LOG_DEBUG );
     }
     else {
         # Could be SERVFAIL or something else

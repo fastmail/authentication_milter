@@ -79,14 +79,10 @@ sub envfrom_callback {
     if ( my $error = $@ ) {
         if ( $error =~ /invalid envelope_from at / ) {
             $self->log_error( 'DMARC Invalid envelope from <' . $domain_from . '>' );
-            $self->log_error( 'DMARC Debug Helo: ' . $self->helo_name() );
-            $self->log_error( 'DMARC Debug Envfrom: ' . $env_from );
             $self->add_auth_header( 'dmarc=permerror' );
         }
         else {
             $self->log_error( 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
-            $self->log_error( 'DMARC Debug Helo: ' . $self->helo_name() );
-            $self->log_error( 'DMARC Debug Envfrom: ' . $env_from );
             $self->add_auth_header('dmarc=temperror');
         }
         $self->{'failmode'} = 1;
