@@ -17,8 +17,10 @@ sub new {
     my ( $class, $args ) = @_;
 
     my $callbacks_list = $args->{'callbacks_list'}; 
+    my $callbacks      = $args->{'callbacks'};
     my $config         = $args->{'config'};
     my $count          = $args->{'count'};
+    my $handler        = $args->{'handler'};
     my $object         = $args->{'object'};
     my $socket         = $args->{'socket'};
 
@@ -34,19 +36,26 @@ sub new {
     my $self = {
         'config'         => $config,
         'callback_flags' => $callback_flags,
-        'count'          => $count,
+        'callbacks'      => $callbacks,
         'callbacks_list' => $callbacks_list,
+        'count'          => $count,
+        'handler'        => $handler,
         'object'         => $object,
         'protocol'       => $protocol,
         'socket'         => $socket,
     };
     bless $self, $class;
+
+    if ( ! exists( $handler->{'_Handler'} ) ) {
+        $self->setup_objects();
+    }
+
     return $self;
 }
 
 sub main {
     my ( $self ) = @_;
-
+  
     my $quit = 0;
     while ( ! $quit ) {
 
@@ -70,8 +79,8 @@ sub main {
     }    
 
     # Call close callback
-    $self->{'handler'}->close_callback();
-    if ( $self->{'handler'}->{'exit_on_close'} ) {
+    $self->{'handler'}->{'_Handler'}->close_callback();
+    if ( $self->{'handler'}->{'_Handler'}->{'exit_on_close'} ) {
         $quit = 1;
     }
     #$self->destroy_objects();
@@ -87,41 +96,142 @@ sub main {
 
 sub setup_objects {
     my ( $self ) = @_;
-    logdebug( 'setup objects' );
 
+    logdebug( 'setup objects' );
     load 'Mail::Milter::Authentication::Handler';
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
-    $self->{'handler'} = $handler;
+    $self->{'handler'}->{'_Handler'} = $handler;
 
     my $CONFIG = $self->{'config'};
     foreach my $name ( @{$CONFIG->{'load_handlers'}} ) {
-        $handler->setup_handler( $name );
+        $self->setup_handler( $name );
+    }
+    $self->sort_all_callbacks();
+}
+
+sub setup_handler {
+    my ( $self, $name ) = @_;
+
+    ## TODO error handling here
+    logdebug( "Load Handler $name" );
+
+    my $package = "Mail::Milter::Authentication::Handler::$name";
+    load $package;
+    my $object = $package->new( $self );
+    $self->{'handler'}->{$name} = $object;
+
+    foreach my $callback ( qw { connect helo envfrom envrcpt header eoh body eom abort close } ) {
+        if ( $object->can( $callback . '_callback' ) ) {
+            $self->register_callback( $name, $callback );
+        }
+    }
+
+}
+
+#sub destroy_handler {
+#    my ( $self, $name ) = @_;
+#    # Remove some back references
+#    delete $self->{'handler'}->{$name}->{'protocol'};
+#    # Remove reference to handler
+#    delete $self->{'handler'}->{'_Handler'}->{$name};
+#}
+
+
+sub register_callback {
+    my ( $self, $name, $callback ) = @_;
+    logdebug( "Register Callback $name:$callback" );
+    if ( ! exists $self->{'callbacks'}->{$callback} ) {
+        $self->{'callbacks'}->{$callback} = [];
+    }
+    push @{ $self->{'callbacks'}->{$callback} }, $name;
+}
+
+sub sort_all_callbacks {
+    my ($self) = @_;
+    foreach my $callback ( qw { connect helo envfrom envrcpt header eoh body eom abort close } ) {
+        $self->sort_callbacks( $callback );
     }
 }
 
-sub destroy_objects {
-    my ( $self ) = @_;
-    logdebug ( 'destroy objects' );
-    my $handler = $self->{'handler'};
-    $handler->destroy_all_objects();
-    my $CONFIG = $self->{'config'};
-    foreach my $name ( @{$CONFIG->{'load_handlers'}} ) {
-        $handler->destroy_handler( $name );
+sub sort_callbacks {
+    my ( $self, $callback ) = @_;
+
+    if ( ! exists $self->{'callbacks'}->{$callback} ) {
+        $self->{'callbacks'}->{$callback} = [];
     }
-    delete $self->{'handler'}->{'config'};
-    delete $self->{'handler'}->{'protocol'};
-    delete $self->{'handler'};
+
+    if ( ! exists $self->{'callbacks_list'}->{$callback} ) {
+        $self->{'callbacks_list'}->{$callback} = [];
+    }
+    else {
+        return $self->{'callbacks_list'}->{$callback};
+    }
+    
+    my $callbacks_ref = $self->{'callbacks'}->{$callback};
+
+    my $added = {};
+    my @order;
+
+    my @todo = sort @{$callbacks_ref};
+    my $todo_count = scalar @todo;
+    while ( $todo_count ) {
+        my @defer;
+        foreach my $item ( @todo ) {
+            my $handler = $self->{'handler'}->{ $item };
+            my $requires_method = $callback . '_requires';
+            if ( $handler->can( $requires_method ) ) { 
+                my $requires_met = 1;
+                my $requires = $handler->$requires_method;
+                foreach my $require ( @{ $requires } ) {
+                    if ( ! exists $added->{$require} ) {
+                        $requires_met = 0;
+                    }
+                }
+                if ( $requires_met == 1 ) {
+                    push @order, $item;
+                    $added->{$item} = 1;
+                }
+                else {
+                    push @defer, $item;
+                }
+            }
+            else {
+                push @order, $item;
+                $added->{$item} = 1;
+            }
+        }
+
+        my $defer_count = scalar @defer;
+        if ( $defer_count == $todo_count ) {
+            die 'Could not build order list';
+        }
+        $todo_count = $defer_count;
+        @todo = @defer;
+    }
+
+    $self->{'callbacks_list'}->{$callback} = \@order;
 }
+
+
+#sub destroy_objects {
+#    my ( $self ) = @_;
+#    logdebug ( 'destroy objects' );
+#    my $handler = $self->{'handler'};
+#    $handler->destroy_all_objects();
+#    my $CONFIG = $self->{'config'};
+#    foreach my $name ( @{$CONFIG->{'load_handlers'}} ) {
+#        $self->destroy_handler( $name );
+#    }
+#    delete $self->{'handler'}->{'_Handler'}->{'config'};
+#    delete $self->{'handler'}->{'_Handler'}->{'protocol'};
+#    delete $self->{'handler'}->{'_Handler'};
+#}
 
 sub process_command {
     my ( $self, $command, $buffer ) = @_;
     logdebug ( "process command $command" );
 
-    my $handler = $self->{'handler'};
-    if ( ! defined ( $handler ) ) {
-        $self->setup_objects();
-        $handler = $self->{'handler'};
-    }
+    my $handler = $self->{'handler'}->{'_Handler'};
 
     my $returncode = SMFIS_CONTINUE;
 

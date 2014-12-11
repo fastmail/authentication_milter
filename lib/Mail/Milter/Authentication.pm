@@ -15,9 +15,12 @@ use Proc::ProcessTable;
 
 sub child_init_hook {
     my ( $self ) = @_;
+
     $self->{'callbacks_list'} = {};
+    $self->{'callbacks'}      = {};
     $self->{'config'}         = get_config();
     $self->{'count'}          = 0;
+    $self->{'handler'}        = {};
     $self->{'object'}         = {};
     $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
 }
@@ -33,6 +36,7 @@ sub process_request {
         'callbacks_list' => $self->{'callbacks_list'},
         'config'         => $self->{'config'},
         'count'          => $count,
+        'handler'        => $self->{'handler'},
         'object'         => $self->{'object'},
         'socket'         => $self->{'server'}->{'client'},
     })->main();

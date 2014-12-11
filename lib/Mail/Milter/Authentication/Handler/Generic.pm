@@ -9,7 +9,6 @@ our $VERSION = 0.5;
 
 use Email::Address;
 use English;
-use Module::Load;
 use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 
@@ -97,119 +96,22 @@ sub is_handler_loaded {
 
 sub get_handler {
     my ( $self, $name ) = @_;
-    my $top_handler = $self->get_top_handler();
-    my $object      = $top_handler->{'handler'}->{$name};
+    my $protocol = $self->{'protocol'};
+    my $object   = $protocol->{'handler'}->{$name};
     return $object;
 }
 
-sub setup_handler {
-    my ( $self, $name ) = @_;
-
-    ## TODO error handling here
-    $self->dbgout( 'Load Module', "$name", LOG_DEBUG );
-    my $package = "Mail::Milter::Authentication::Handler::$name";
-    load $package;
-    my $object = $package->new( $self->{'protocol'} );
-
-    my $top_handler = $self->get_top_handler();
-    $top_handler->{'handler'}->{$name} = $object;
-
-    foreach my $callback ( qw { connect helo envfrom envrcpt header eoh body eom abort close } ) {
-        if ( $object->can( $callback . '_callback' ) ) {
-            $self->register_callback( $name, $callback );
-        }
-    }
-
-}
-
-sub register_callback {
-    my ( $self, $name, $callback ) = @_;
-    $self->dbgout( 'Register Callback', "$name:$callback", LOG_DEBUG );
-    my $top_handler = $self->get_top_handler();
-    if ( ! exists $top_handler->{'callbacks'} ) {
-        $top_handler->{'callbacks'} = {};
-    }
-    if ( ! exists $top_handler->{'callbacks'}->{$callback} ) {
-        $top_handler->{'callbacks'}->{$callback} = [];
-    }
-    push @{ $top_handler->{'callbacks'}->{$callback} }, $name;
-}
 
 sub get_callbacks {
     my ( $self, $callback ) = @_;
-    my $top_handler = $self->get_top_handler();
     my $protocol = $self->{'protocol'};
-
-    if ( ! exists $top_handler->{'callbacks'}->{$callback} ) {
-        $top_handler->{'callbacks'}->{$callback} = [];
-    }
-
-    if ( ! exists $protocol->{'callbacks_list'}->{$callback} ) {
-        $protocol->{'callbacks_list'}->{$callback} = [];
-    }
-    else {
-        return $protocol->{'callbacks_list'}->{$callback};
-    }
-    
-    my $callbacks_ref = $top_handler->{'callbacks'}->{$callback};
-
-    my $added = {};
-    my @order;
-
-    my @todo = sort @{$callbacks_ref};
-    my $todo_count = scalar @todo;
-    while ( $todo_count ) {
-        my @defer;
-        foreach my $item ( @todo ) {
-            my $handler = $self->get_handler( $item );
-            my $requires_method = $callback . '_requires';
-            if ( $handler->can( $requires_method ) ) { 
-                my $requires_met = 1;
-                my $requires = $handler->$requires_method;
-                foreach my $require ( @{ $requires } ) {
-                    if ( ! exists $added->{$require} ) {
-                        $requires_met = 0;
-                    }
-                }
-                if ( $requires_met == 1 ) {
-                    push @order, $item;
-                    $added->{$item} = 1;
-                }
-                else {
-                    push @defer, $item;
-                }
-            }
-            else {
-                push @order, $item;
-                $added->{$item} = 1;
-            }
-        }
-
-        my $defer_count = scalar @defer;
-        if ( $defer_count == $todo_count ) {
-            die 'Could not build order list';
-        }
-        $todo_count = $defer_count;
-        @todo = @defer;
-    }
-
-    $protocol->{'callbacks_list'}->{$callback} = \@order;
-    return \@order;
-}
-
-sub destroy_handler {
-    my ( $self, $name ) = @_;
-    my $top_handler = $self->get_top_handler();
-    # Remove some back references
-    delete $top_handler->{'handler'}->{$name}->{'protocol'};
-    # Remove reference to handler
-    delete $top_handler->{'handler'}->{$name};
+    return $protocol->{'callbacks_list'}->{$callback};
 }
 
 sub get_object {
     my ( $self, $name ) = @_;
-    my $protocol   = $self->{'protocol'};
-    my $object = $protocol->{'object'}->{$name};
+    my $protocol = $self->{'protocol'};
+    my $object   = $protocol->{'object'}->{$name};
     if ( ! $object ) {
 
         if ( $name eq 'resolver' ) {
