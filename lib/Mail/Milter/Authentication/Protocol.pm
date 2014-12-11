@@ -79,7 +79,7 @@ sub main {
     }    
 
     # Call close callback
-    $self->{'handler'}->{'_Handler'}->close_callback();
+    $self->{'handler'}->{'_Handler'}->top_close_callback();
     if ( $self->{'handler'}->{'_Handler'}->{'exit_on_close'} ) {
         $quit = 1;
     }
@@ -128,13 +128,14 @@ sub setup_handler {
 
 }
 
-#sub destroy_handler {
-#    my ( $self, $name ) = @_;
-#    # Remove some back references
-#    delete $self->{'handler'}->{$name}->{'protocol'};
-#    # Remove reference to handler
-#    delete $self->{'handler'}->{'_Handler'}->{$name};
-#}
+sub destroy_handler {
+    # Unused!
+    my ( $self, $name ) = @_;
+    # Remove some back references
+    delete $self->{'handler'}->{$name}->{'protocol'};
+    # Remove reference to handler
+    delete $self->{'handler'}->{$name};
+}
 
 
 sub register_callback {
@@ -212,20 +213,20 @@ sub sort_callbacks {
     $self->{'callbacks_list'}->{$callback} = \@order;
 }
 
-
-#sub destroy_objects {
-#    my ( $self ) = @_;
-#    logdebug ( 'destroy objects' );
-#    my $handler = $self->{'handler'};
-#    $handler->destroy_all_objects();
-#    my $CONFIG = $self->{'config'};
-#    foreach my $name ( @{$CONFIG->{'load_handlers'}} ) {
-#        $self->destroy_handler( $name );
-#    }
-#    delete $self->{'handler'}->{'_Handler'}->{'config'};
-#    delete $self->{'handler'}->{'_Handler'}->{'protocol'};
-#    delete $self->{'handler'}->{'_Handler'};
-#}
+sub destroy_objects {
+    # Unused!
+    my ( $self ) = @_;
+    logdebug ( 'destroy objects' );
+    my $handler = $self->{'handler'}->{'_Handler'};
+    $handler->destroy_all_objects();
+    my $CONFIG = $self->{'config'};
+    foreach my $name ( @{$CONFIG->{'load_handlers'}} ) {
+        $self->destroy_handler( $name );
+    }
+    delete $self->{'handler'}->{'_Handler'}->{'config'};
+    delete $self->{'handler'}->{'_Handler'}->{'protocol'};
+    delete $self->{'handler'}->{'_Handler'};
+}
 
 sub process_command {
     my ( $self, $command, $buffer ) = @_;
@@ -237,14 +238,14 @@ sub process_command {
 
     if ( $command eq SMFIC_CONNECT ) {
         my ( $host, $sockaddr_in ) = $self->connect_callback( $buffer );
-        $returncode = $handler->connect_callback( $host, $sockaddr_in );
+        $returncode = $handler->top_connect_callback( $host, $sockaddr_in );
     }
     elsif ( $command eq SMFIC_ABORT ) {
         $handler->clear_symbols();
-        $returncode = $handler->abort_callback();
+        $returncode = $handler->top_abort_callback();
     }
     elsif ( $command eq SMFIC_BODY ) {
-        $returncode = $handler->body_callback( $buffer );
+        $returncode = $handler->top_body_callback( $buffer );
     }
     elsif ( $command eq SMFIC_MACRO ) {
         die "SMFIC_MACRO: empty packet\n" unless ( $buffer =~ s/^(.)// );
@@ -258,23 +259,23 @@ sub process_command {
         undef $returncode;
     }
     elsif ( $command eq SMFIC_BODYEOB ) {
-        $returncode = $handler->eom_callback();
+        $returncode = $handler->top_eom_callback();
     }
     elsif ( $command eq SMFIC_HELO ) {
         my $helo = $self->split_buffer( $buffer );
-        $returncode = $handler->helo_callback( @$helo );
+        $returncode = $handler->top_helo_callback( @$helo );
     }
     elsif ( $command eq SMFIC_HEADER ) {
         my $header = $self->split_buffer( $buffer );
         if ( @$header == 1 ) { push @$header , q{}; };
-        $returncode = $handler->header_callback( @$header );
+        $returncode = $handler->top_header_callback( @$header );
     }
     elsif ( $command eq SMFIC_MAIL ) {
         my $envfrom = $self->split_buffer( $buffer );
-        $returncode = $handler->envfrom_callback( @$envfrom );
+        $returncode = $handler->top_envfrom_callback( @$envfrom );
     }
     elsif ( $command eq SMFIC_EOH ) {
-        $returncode = $handler->eoh_callback();
+        $returncode = $handler->top_eoh_callback();
     }
     elsif ( $command eq SMFIC_OPTNEG ) {
         die "SMFIC_OPTNEG: packet has wrong size\n" unless (length($buffer) == 12);
@@ -289,7 +290,7 @@ sub process_command {
     }
     elsif ( $command eq SMFIC_RCPT ) {
         my $envrcpt = $self->split_buffer( $buffer );
-        $returncode = $handler->envrcpt_callback( @$envrcpt );
+        $returncode = $handler->top_envrcpt_callback( @$envrcpt );
     }
     elsif ( $command eq SMFIC_DATA ) {
     }

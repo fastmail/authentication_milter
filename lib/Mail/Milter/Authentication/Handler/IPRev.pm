@@ -5,7 +5,7 @@ use warnings;
 
 our $VERSION = 0.5;
 
-use base 'Mail::Milter::Authentication::Handler::Generic';
+use base 'Mail::Milter::Authentication::Handler';
 
 use Net::DNS;
 use Net::IP;

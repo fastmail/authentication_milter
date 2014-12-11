@@ -6,7 +6,6 @@ lib/Mail/Milter/Authentication/Protocol.pm
 lib/Mail/Milter/Authentication/Handler.pm
 lib/Mail/Milter/Authentication/Handler/AddID.pm
 lib/Mail/Milter/Authentication/Handler/Auth.pm
-lib/Mail/Milter/Authentication/Handler/Generic.pm
 lib/Mail/Milter/Authentication/Handler/DKIM.pm
 lib/Mail/Milter/Authentication/Handler/DMARC.pm
 lib/Mail/Milter/Authentication/Handler/LocalIP.pm
