@@ -29,7 +29,11 @@ sub envfrom_callback {
     my $spf_server = $self->get_object('spf_server');
     if ( ! $spf_server ) {
         eval {
-            $spf_server = Mail::SPF::Server->new( 'hostname' => $self->get_my_hostname() );
+            my $resolver = $self->get_object('resolver');
+            $spf_server = Mail::SPF::Server->new(
+                'hostname'     => $self->get_my_hostname(),
+                'dns_resolver' => $resolver,
+            );
         };
         if ( my $error = $@ ) {
             $self->log_error( 'SPF Setup Error ' . $error );
