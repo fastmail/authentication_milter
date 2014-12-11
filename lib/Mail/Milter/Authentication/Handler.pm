@@ -8,10 +8,12 @@ our $VERSION = 0.5;
 use Email::Address;
 use English;
 use MIME::Base64;
+use Net::DNS::Resolver;
 use Socket;
 use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 
+use Mail::Milter::Authentication::DNSCache;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw { :all };
 
