@@ -16,12 +16,6 @@ sub helo_callback {
     $self->{'helo_name'} = $helo_host;
 }
 
-sub envfrom_requires {
-    my ($self) = @_;
-    my @requires = qw{ Core };
-    return \@requires;
-}
-
 sub envfrom_callback {
 
     # On MAILFROM

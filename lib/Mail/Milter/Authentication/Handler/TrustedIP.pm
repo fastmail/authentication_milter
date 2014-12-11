@@ -32,12 +32,6 @@ sub is_trusted_ip_address {
     return $trusted;
 }
 
-sub connect_requires {
-    my ($self) = @_;
-    my @requires = qw{ Core };
-    return \@requires;
-}
-
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     $self->{'is_trusted_ip_address'} = 0;

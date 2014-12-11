@@ -64,10 +64,8 @@ sub load_file {
             }
         }
 
-        my @standard_handlers = qw{ Core };
         my @load_handlers = keys %{ $CONFIG->{'handlers'} };
         @load_handlers = grep { ! /^\!/ } @load_handlers;
-        @load_handlers = ( @standard_handlers, @load_handlers );
         $CONFIG->{'load_handlers'} = \@load_handlers;
 
         return $CONFIG;

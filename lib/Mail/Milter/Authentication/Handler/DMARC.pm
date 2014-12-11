@@ -18,7 +18,7 @@ sub helo_callback {
 
 sub envfrom_requires {
     my ($self) = @_;
-    my @requires = qw{ Core SPF DKIM };
+    my @requires = qw{ SPF DKIM };
     return \@requires;
 }
 

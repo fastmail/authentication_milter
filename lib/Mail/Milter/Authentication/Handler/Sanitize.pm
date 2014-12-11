@@ -43,12 +43,6 @@ sub remove_auth_header {
     push @{ $self->{'remove_auth_headers'} }, $value;
 }
 
-sub envfrom_requires {
-    my ($self) = @_;
-    my @requires = qw{ Core };
-    return \@requires;
-}
-
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     delete $self->{'auth_result_header_index'};

@@ -106,12 +106,6 @@ sub _check_address {
 
 }
 
-sub envfrom_requires {
-    my ($self) = @_;
-    my @requires = qw{ Core };
-    return \@requires;
-}
-
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     $env_from = q{} if $env_from eq '<>';

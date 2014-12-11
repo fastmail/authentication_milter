@@ -31,7 +31,7 @@ sub _dns_error {
 
 sub connect_requires {
     my ($self) = @_;
-    my @requires = qw{ Core LocalIP TrustedIP Auth };
+    my @requires = qw{ LocalIP TrustedIP Auth };
     return \@requires;
 }
 

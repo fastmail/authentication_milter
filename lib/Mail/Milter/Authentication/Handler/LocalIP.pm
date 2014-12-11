@@ -44,12 +44,6 @@ sub is_local_ip_address {
     return $type_map->{ $ip_type } || 0;
 }
 
-sub connect_requires {
-    my ($self) = @_;
-    my @requires = qw{ Core };
-    return \@requires;
-}
-
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     $self->{'is_local_ip_address'} = 0;

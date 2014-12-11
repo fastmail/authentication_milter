@@ -81,7 +81,7 @@ sub get_return {
 sub get_top_handler {
     my ($self) = @_;
     my $protocol   = $self->{'protocol'};
-    my $object = $protocol->{'handler'};
+    my $object = $protocol->{'handler'}->{'_Handler'};
     return $object;
 }
 
@@ -247,8 +247,8 @@ sub is_authenticated {
 
 sub ip_address {
     my ($self) = @_;
-    my $core_handler = $self->get_handler('Core');
-    return $core_handler->{'ip_address'};
+    my $top_handler = $self->get_top_handler();
+    return $top_handler->{'ip_address'};
 }
 
 
@@ -334,11 +334,11 @@ sub dbgout {
     my ( $self, $key, $value, $priority ) = @_;
     my $queue_id = $self->get_symbol('i') || q{--};
     warn "$PID: $queue_id: $key: $value\n";
-    my $core_handler = $self->get_handler('Core');
-    if ( !exists( $core_handler->{'dbgout'} ) ) {
-        $core_handler->{'dbgout'} = [];
+    my $top_handler = $self->get_top_handler();
+    if ( !exists( $top_handler->{'dbgout'} ) ) {
+        $top_handler->{'dbgout'} = [];
     }
-    push @{ $core_handler->{'dbgout'} },
+    push @{ $top_handler->{'dbgout'} },
       {
         'priority' => $priority || LOG_INFO,
         'key'      => $key      || q{},
@@ -368,9 +368,9 @@ sub dbgoutwrite {
             );
         }
         my $queue_id = $self->get_symbol('i') || q{--};
-        my $core_handler = $self->get_handler('Core');
-        if ( exists( $core_handler->{'dbgout'} ) ) {
-            foreach my $entry ( @{ $core_handler->{'dbgout'} } ) {
+        my $top_handler = $self->get_top_handler();
+        if ( exists( $top_handler->{'dbgout'} ) ) {
+            foreach my $entry ( @{ $top_handler->{'dbgout'} } ) {
                 my $key      = $entry->{'key'};
                 my $value    = $entry->{'value'};
                 my $priority = $entry->{'priority'};
@@ -379,7 +379,7 @@ sub dbgoutwrite {
             }
         }
         closelog();
-        delete $core_handler->{'dbgout'};
+        delete $top_handler->{'dbgout'};
     };
 }
 
@@ -392,12 +392,12 @@ sub add_headers {
 
     my $header = $self->get_my_hostname();
     my @auth_headers;
-    my $core_handler = $self->get_handler('Core');
-    if ( exists( $core_handler->{'c_auth_headers'} ) ) {
-        @auth_headers = @{ $core_handler->{'c_auth_headers'} };
+    my $top_handler = $self->get_top_handler();
+    if ( exists( $top_handler->{'c_auth_headers'} ) ) {
+        @auth_headers = @{ $top_handler->{'c_auth_headers'} };
     }
-    if ( exists( $core_handler->{'auth_headers'} ) ) {
-        @auth_headers = ( @auth_headers, @{ $core_handler->{'auth_headers'} } );
+    if ( exists( $top_handler->{'auth_headers'} ) ) {
+        @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
     }
     if (@auth_headers) {
         $header .= ";\n    ";
@@ -409,16 +409,16 @@ sub add_headers {
 
     $self->prepend_header( 'Authentication-Results', $header );
 
-    if ( exists( $core_handler->{'pre_headers'} ) ) {
-        foreach my $header ( @{ $core_handler->{'pre_headers'} } ) {
+    if ( exists( $top_handler->{'pre_headers'} ) ) {
+        foreach my $header ( @{ $top_handler->{'pre_headers'} } ) {
             $self->dbgout( 'PreHeader',
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
             $self->insert_header( 1, $header->{'field'}, $header->{'value'} );
         }
     }
 
-    if ( exists( $core_handler->{'add_headers'} ) ) {
-        foreach my $header ( @{ $core_handler->{'add_headers'} } ) {
+    if ( exists( $top_handler->{'add_headers'} ) ) {
+        foreach my $header ( @{ $top_handler->{'add_headers'} } ) {
             $self->dbgout( 'AddHeader',
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
             $self->add_header( $header->{'field'}, $header->{'value'} );
@@ -428,11 +428,11 @@ sub add_headers {
 
 sub prepend_header {
     my ( $self, $field, $value ) = @_;
-    my $core_handler = $self->get_handler('Core');
-    if ( !exists( $core_handler->{'pre_headers'} ) ) {
-        $core_handler->{'pre_headers'} = [];
+    my $top_handler = $self->get_top_handler();
+    if ( !exists( $top_handler->{'pre_headers'} ) ) {
+        $top_handler->{'pre_headers'} = [];
     }
-    push @{ $core_handler->{'pre_headers'} },
+    push @{ $top_handler->{'pre_headers'} },
       {
         'field' => $field,
         'value' => $value,
@@ -441,31 +441,31 @@ sub prepend_header {
 
 sub add_auth_header {
     my ( $self, $value ) = @_;
-    my $core_handler = $self->get_handler('Core');
-    if ( !exists( $core_handler->{'auth_headers'} ) ) {
-        $core_handler->{'auth_headers'} = [];
+    my $top_handler = $self->get_top_handler();
+    if ( !exists( $top_handler->{'auth_headers'} ) ) {
+        $top_handler->{'auth_headers'} = [];
     }
-    push @{ $core_handler->{'auth_headers'} }, $value;
+    push @{ $top_handler->{'auth_headers'} }, $value;
 }
 
 sub add_c_auth_header {
 
     # Connection wide auth headers
     my ( $self, $value ) = @_;
-    my $core_handler = $self->get_handler('Core');
-    if ( !exists( $core_handler->{'c_auth_headers'} ) ) {
-        $core_handler->{'c_auth_headers'} = [];
+    my $top_handler = $self->get_top_handler();
+    if ( !exists( $top_handler->{'c_auth_headers'} ) ) {
+        $top_handler->{'c_auth_headers'} = [];
     }
-    push @{ $core_handler->{'c_auth_headers'} }, $value;
+    push @{ $top_handler->{'c_auth_headers'} }, $value;
 }
 
 sub append_header {
     my ( $self, $field, $value ) = @_;
-    my $core_handler = $self->get_handler('Core');
-    if ( !exists( $core_handler->{'add_headers'} ) ) {
-        $core_handler->{'add_headers'} = [];
+    my $top_handler = $self->get_top_handler();
+    if ( !exists( $top_handler->{'add_headers'} ) ) {
+        $top_handler->{'add_headers'} = [];
     }
-    push @{ $core_handler->{'add_headers'} },
+    push @{ $top_handler->{'add_headers'} },
       {
         'field' => $field,
         'value' => $value,

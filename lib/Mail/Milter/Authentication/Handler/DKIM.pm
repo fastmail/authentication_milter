@@ -13,12 +13,6 @@ use Mail::DKIM;
 use Mail::DKIM::Verifier;
 use Mail::DKIM::DNS;
 
-sub envfrom_requires {
-    my ($self) = @_;
-    my @requires = qw{ Core };
-    return \@requires;
-}
-
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     $self->{'failmode'} = 0;
