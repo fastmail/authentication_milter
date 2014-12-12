@@ -174,3 +174,49 @@ Mail::Milter::Authentication - A PERL Mail Authentication Milter
 
 A PERL implemtation of email authentication standards rolled up into a single easy to use milter.
 
+=head1 SYNOPSIS
+
+Subclass of Net::Server::PreFork for bringing up the main server process for authentication_milter.
+
+Please see Net::Server docs for more detail of the server code.
+
+=head1 METHODS
+
+=over
+
+=item I<child_init_hook()>
+
+Hook which runs after forking, sets up per process items.
+
+=item I<process_request()>
+
+Hook which runs for each request, sets up per request items and processes the request.
+
+=item I<start($hashref)>
+
+Start the server. This method does not return.
+
+    $hashref = {
+        'connection' => 'unix:path/to/socket', # The socket connection to open
+        'pid_file'   => 'The pid file to use', # 
+        'daemon'     => 1/0,                   # Daemonize process?
+    }
+
+=back
+
+=head1 DEPENDENCIES
+
+  Net::Server::PreFork
+  English
+  Proc::ProcessTable
+
+=head1 AUTHORS
+
+Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2014
+
+This library is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.

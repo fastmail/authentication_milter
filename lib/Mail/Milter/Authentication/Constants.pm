@@ -135,3 +135,38 @@ our %EXPORT_TAGS = ( 'all' => [ @EXPORT_OK ] );
 
 
 1;
+
+__END__
+
+=head1 NAME
+
+Mail::Milter::Authentication::Constants - Constant declarations
+
+=head1 DESCRIPTION
+
+Exports useful constants.
+
+=head1 SYNOPSIS
+
+Constants defined here are used in the sendmail milter protocol.
+
+=head1 FUNCTIONS
+
+none
+
+=head1 DEPENDENCIES
+
+none
+
+=head1 AUTHORS
+
+Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2014
+
+This library is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.
+
+

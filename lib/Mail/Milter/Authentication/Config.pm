@@ -75,3 +75,48 @@ sub load_file {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Mail::Milter::Authentication::Config - Load config files for Authentication Milter
+
+=head1 DESCRIPTION
+
+Load in configuration data.
+
+=head1 SYNOPSIS
+
+Load in the configuration data, does some processing on handlers loaded before returning
+config to the caller.
+
+=head1 FUNCTIONS
+
+=over
+
+=item I<load_file()>
+
+Internal function used to load the config from /etc/authentication_milter.json
+
+=item I<get_config()>
+
+Return the config hashref, load from file(s) if required.
+
+=back
+
+=head1 DEPENDENCIES
+
+  JSON
+
+=head1 AUTHORS
+
+Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2014
+
+This library is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.
+
