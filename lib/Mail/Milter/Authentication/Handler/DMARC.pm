@@ -18,7 +18,7 @@ sub helo_callback {
 
 sub envfrom_requires {
     my ($self) = @_;
-    my @requires = qw{ SPF DKIM };
+    my @requires = qw{ SPF };
     return \@requires;
 }
 
@@ -148,6 +148,12 @@ sub header_callback {
             return;
         }
     }
+}
+
+sub eom_requires {
+    my ($self) = @_;
+    my @requires = qw{ DKIM };
+    return \@requires;
 }
 
 sub eom_callback {

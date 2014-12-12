@@ -13,10 +13,12 @@ use Mail::DKIM;
 use Mail::DKIM::Verifier;
 use Mail::DKIM::DNS;
 
-sub envfrom_callback {
+sub get_dkim_object {
     my ( $self, $env_from ) = @_;
     $self->{'failmode'} = 0;
-    my $dkim;
+    my $dkim = $self->get_object('dkim');
+    return $dkim if $dkim;
+
     eval {
         $dkim = Mail::DKIM::Verifier->new();
         $self->set_object('dkim',$dkim);
@@ -31,12 +33,13 @@ sub envfrom_callback {
         $self->add_auth_header('dkim=temperror');
         $self->{'failmode'} = 1;
     }
+    return $dkim;
 }
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
     return if ( $self->{'failmode'} );
-    my $dkim       = $self->get_object('dkim');
+    my $dkim       = $self->get_dkim_object();
     my $EOL        = "\015\012";
     my $dkim_chunk = $header . ': ' . $value . $EOL;
     $dkim_chunk =~ s/\015?\012/$EOL/g;
@@ -54,14 +57,14 @@ sub header_callback {
 sub eoh_callback {
     my ($self) = @_;
     return if ( $self->{'failmode'} );
-    my $dkim = $self->get_object('dkim');
+    my $dkim = $self->get_dkim_object();
     $dkim->PRINT("\015\012");
 }
 
 sub body_callback {
     my ( $self, $body_chunk ) = @_;
     return if ( $self->{'failmode'} );
-    my $dkim       = $self->get_object('dkim');
+    my $dkim       = $self->get_dkim_object();
     my $dkim_chunk = $body_chunk;
     my $EOL        = "\015\012";
     $dkim_chunk =~ s/\015?\012/$EOL/g;
@@ -72,7 +75,7 @@ sub eom_callback {
     my ($self) = @_;
     my $CONFIG = $self->handler_config();
     return if ( $self->{'failmode'} );
-    my $dkim = $self->get_object('dkim');
+    my $dkim = $self->get_dkim_object();
     eval {
         $dkim->CLOSE();
 
