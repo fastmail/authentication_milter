@@ -13,6 +13,7 @@ use Mail::SPF;
 
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
+    $self->{'failmode'} = 0;
     $self->{'helo_name'} = $helo_host;
 }
 
@@ -105,6 +106,7 @@ sub envfrom_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'SPF Error ' . $error );
         $self->add_auth_header('spf=temperror');
+        $self->{'failmode'} = 1;
     }
 
 }
@@ -114,6 +116,7 @@ sub close_callback {
     delete $self->{'dmarc_domain'};
     delete $self->{'dmarc_scope'};
     delete $self->{'dmarc_result'};
+    delete $self->{'failmode'};
     delete $self->{'helo_name'};
 }
 

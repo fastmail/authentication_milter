@@ -85,6 +85,14 @@ sub envfrom_callback {
         return;
     }
 
+    my $spf_handler = $self->get_handler('SPF');
+    if ( $spf_handler->{'failmode'} ) {
+        $self->log_error('SPF is in failmode, Skipping DMARC');
+        $self->add_auth_header('dmarc=temperror');
+        $self->{'failmode'} = 1;
+        return;
+    }
+
     eval {
         my $spf = $self->get_handler('SPF');
         $dmarc->spf(
