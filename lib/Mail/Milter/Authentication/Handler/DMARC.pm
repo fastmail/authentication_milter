@@ -11,6 +11,32 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::DMARC::PurePerl;
 
+sub get_dmarc_object {
+    my ( $self, $env_from ) = @_;
+    $self->{'failmode'} = 0;
+    $self->{'is_list'}  = 0;
+    my $dmarc = $self->get_object('dmarc');
+    return $dmarc if $dmarc;
+
+    eval {
+        $dmarc = Mail::DMARC::PurePerl->new();
+        if ( $dmarc->can('set_resolver') ) {
+            my $resolver = $self->get_object('resolver');
+            $dmarc->set_resolver($resolver);
+        }
+        $dmarc->verbose(1);
+        $dmarc->source_ip( $self->ip_address() );
+        $self->set_object('dmarc',$dmarc);
+    };
+    if ( my $error = $@ ) {
+        $self->log_error( 'DMARC IP Error ' . $error );
+        $self->add_auth_header('dmarc=temperror');
+        $self->{'failmode'} = 1;
+    }
+    
+    return $dmarc;
+}
+
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'helo_name'} = $helo_host;
@@ -51,24 +77,7 @@ sub envfrom_callback {
         $domain_from = $self->get_domain_from($env_from);
     }
 
-    my $dmarc;
-    eval {
-        $dmarc = Mail::DMARC::PurePerl->new();
-        if ( $dmarc->can('set_resolver') ) {
-            my $resolver = $self->get_object('resolver');
-            $dmarc->set_resolver($resolver);
-        }
-        $dmarc->verbose(1);
-        $dmarc->source_ip( $self->ip_address() );
-        $self->set_object('dmarc',$dmarc);
-    };
-    if ( my $error = $@ ) {
-        $self->log_error( 'DMARC IP Error ' . $error );
-        $self->add_auth_header('dmarc=temperror');
-        $self->{'failmode'} = 1;
-        return;
-    }
-    $self->{'is_list'} = 0;
+    my $dmarc = $self->get_dmarc_object();
     eval {
         $dmarc->envelope_from($domain_from);
     };
@@ -114,7 +123,8 @@ sub envrcpt_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
-    my $dmarc       = $self->get_object('dmarc');
+    my $dmarc       = $self->get_dmarc_object();
+    return if ( $self->{'failmode'} );
     my $envelope_to = $self->get_domain_from($env_to);
     eval { $dmarc->envelope_to($envelope_to) };
 
@@ -147,7 +157,8 @@ sub header_callback {
             return;
         }
         $self->{'from_header'} = $value;
-        my $dmarc = $self->get_object('dmarc');
+        my $dmarc = $self->get_dmarc_object();
+        return if ( $self->{'failmode'} );
         eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
         if ( my $error = $@ ) {
             $self->log_error( 'DMARC Header From Error ' . $error );
@@ -172,7 +183,8 @@ sub eom_callback {
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
     eval {
-        my $dmarc        = $self->get_object('dmarc');
+        my $dmarc        = $self->get_dmarc_object();
+        return if ( $self->{'failmode'} );
         my $dkim_handler = $self->get_handler('DKIM');
         if ( $dkim_handler->{'failmode'} ) {
             $self->log_error('DKIM is in failmode, Skipping DMARC');

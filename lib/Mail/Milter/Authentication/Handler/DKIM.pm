@@ -40,6 +40,7 @@ sub header_callback {
     my ( $self, $header, $value ) = @_;
     return if ( $self->{'failmode'} );
     my $dkim       = $self->get_dkim_object();
+    return if ( $self->{'failmode'} );
     my $EOL        = "\015\012";
     my $dkim_chunk = $header . ': ' . $value . $EOL;
     $dkim_chunk =~ s/\015?\012/$EOL/g;
@@ -58,6 +59,7 @@ sub eoh_callback {
     my ($self) = @_;
     return if ( $self->{'failmode'} );
     my $dkim = $self->get_dkim_object();
+    return if ( $self->{'failmode'} );
     $dkim->PRINT("\015\012");
 }
 
@@ -65,6 +67,7 @@ sub body_callback {
     my ( $self, $body_chunk ) = @_;
     return if ( $self->{'failmode'} );
     my $dkim       = $self->get_dkim_object();
+    return if ( $self->{'failmode'} );
     my $dkim_chunk = $body_chunk;
     my $EOL        = "\015\012";
     $dkim_chunk =~ s/\015?\012/$EOL/g;
@@ -76,6 +79,7 @@ sub eom_callback {
     my $CONFIG = $self->handler_config();
     return if ( $self->{'failmode'} );
     my $dkim = $self->get_dkim_object();
+    return if ( $self->{'failmode'} );
     eval {
         $dkim->CLOSE();
 
