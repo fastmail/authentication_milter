@@ -27,7 +27,7 @@ sub envfrom_callback {
         }
     };
     if ( my $error = $@ ) {
-        $self->log_error( 'DMKIM Setup Error ' . $error );
+        $self->log_error( 'DKIM Setup Error ' . $error );
         $self->add_auth_header('dkim=temperror');
         $self->{'failmode'} = 1;
     }

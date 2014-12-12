@@ -45,19 +45,26 @@ sub top_connect_callback {
 
         # Process the connecting IP Address
         my ( $port, $iaddr, $ip_address );
-        my $family = sockaddr_family($sockaddr_in);
-        if ( $family == AF_INET ) {
-            ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
-            $ip_address = inet_ntoa($iaddr);
-        }
-        elsif ( $family == AF_INET6 ) {
-            ( $port, $iaddr ) = sockaddr_in6($sockaddr_in);
-            $ip_address = Socket::inet_ntop( AF_INET6, $iaddr );
+        if ( length ( $sockaddr_in ) == 0 ) {
+            $self->log_error('Unknown IP address format NULL');
+            $ip_address = q{};
+            # Could potentially fail here, connection is likely bad anyway.
         }
         else {
-            ## TODO something better here - this should never happen
-            $self->log_error('Unknown IP address format - ' . encode_base64($sockaddr_in,q{}) );
-            $ip_address = q{};
+            my $family = sockaddr_family($sockaddr_in);
+            if ( $family == AF_INET ) {
+                ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
+                $ip_address = inet_ntoa($iaddr);
+            }
+            elsif ( $family == AF_INET6 ) {
+                ( $port, $iaddr ) = sockaddr_in6($sockaddr_in);
+                $ip_address = Socket::inet_ntop( AF_INET6, $iaddr );
+            }
+            else {
+                ## TODO something better here - this should never happen
+                $self->log_error('Unknown IP address format - ' . encode_base64($sockaddr_in,q{}) );
+                $ip_address = q{};
+            }
         }
         $self->{'ip_address'} = $ip_address;
         $self->dbgout( 'ConnectFrom', $ip_address, LOG_DEBUG );
