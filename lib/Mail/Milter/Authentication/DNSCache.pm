@@ -102,3 +102,77 @@ sub cache_lookup {
 
 1;
 
+__END__
+
+=head1 NAME
+
+Mail::Milter::Authentication::DNSCache - DNS Cache methods for Authentication Milter
+
+=head1 DESCRIPTION
+
+Methods in the Net::DNS::Resolver namespace to implement a basic cache of
+DNS lookups.
+
+=head1 SYNOPSIS
+
+A basic cache of successful lookups made by the resolver.
+
+=head1 CONSTRUCTOR
+
+=over
+
+=item I<new()>
+
+New instance of object, please see Net::DNS::Resolver for details
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item I<send()>
+
+Override send method with a cache
+
+=item I<query()>
+
+Override query method with a cache
+
+=item I<search()>
+
+Override search method with a cache
+
+=item I<cache_cleanup()>
+
+Remove old items from the cache
+
+=item I<cache_lookup($type,@args)>
+
+Perform a lookup (send, query, or search) and cache the results
+
+=item I<child_init_hook()>
+
+Hook which runs after forking, sets up per process items.
+
+=item I<process_request()>
+
+Hook which runs for each request, sets up per request items and processes the request.
+
+=back
+
+=head1 DEPENDENCIES
+
+  Net::DNS::Resolver
+
+=head1 AUTHORS
+
+Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2014
+
+This library is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.
+
