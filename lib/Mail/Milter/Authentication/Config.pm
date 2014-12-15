@@ -35,42 +35,35 @@ sub load_file {
     return $data;
 }
 
-{
-    my $CONFIG;
+sub get_config {
 
-    sub get_config {
+    my $file = '/etc/authentication_milter.json';
 
-        return $CONFIG if $CONFIG;
+    my $CONFIG = load_file( $file );
 
-        my $file = '/etc/authentication_milter.json';
-
-        $CONFIG = load_file( $file );
-
-        my $folder = '/etc/authentication_milter.d';
-        if ( -d $folder ) {
-            my $dh;
-            opendir $dh, $folder;
-            my @config_files =
-                sort
-                grep { $_ =~ /\.json/ }
-                grep { not $_ =~ /^\./ }
-                readdir($dh);
-            closedir $dh;
-            foreach my $file ( @config_files ) {
-                $file =~ /(^.*)\.json$/;
-                my $handler = $1;
-                ## ToDo Consider what to do if config already exists in .json config
-                $CONFIG->{'handlers'}->{$handler} = load_file( join( '/', $folder, $file ) );
-            }
+    my $folder = '/etc/authentication_milter.d';
+    if ( -d $folder ) {
+        my $dh;
+        opendir $dh, $folder;
+        my @config_files =
+            sort
+            grep { $_ =~ /\.json/ }
+            grep { not $_ =~ /^\./ }
+            readdir($dh);
+        closedir $dh;
+        foreach my $file ( @config_files ) {
+            $file =~ /(^.*)\.json$/;
+            my $handler = $1;
+            ## ToDo Consider what to do if config already exists in .json config
+            $CONFIG->{'handlers'}->{$handler} = load_file( join( '/', $folder, $file ) );
         }
-
-        my @load_handlers = keys %{ $CONFIG->{'handlers'} };
-        @load_handlers = grep { ! /^\!/ } @load_handlers;
-        $CONFIG->{'load_handlers'} = \@load_handlers;
-
-        return $CONFIG;
-
     }
+
+    my @load_handlers = keys %{ $CONFIG->{'handlers'} };
+    @load_handlers = grep { ! /^\!/ } @load_handlers;
+    $CONFIG->{'load_handlers'} = \@load_handlers;
+
+    return $CONFIG;
 
 }
 
