@@ -14,16 +14,13 @@ package Net::DNS::Resolver;
 use strict;
 use warnings;
 
-use Mail::Milter::Authentication::Config qw{ get_config };
-
 sub new {
     my $class = shift;
+    my %args = @_;
     my $self = $class->SUPER::new( @_ );
 
-    my $CONFIG = get_config();
-
     $self->{'cache_data'}    = {};
-    $self->{'cache_timeout'} = $CONFIG->{'dns_cache_timeout'} || 240;
+    $self->{'cache_timeout'} = $args{'cache_timeout'};
     return $self;
 }
 
