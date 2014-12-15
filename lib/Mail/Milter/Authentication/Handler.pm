@@ -14,7 +14,6 @@ use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 
 use Mail::Milter::Authentication::DNSCache;
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw { :all };
 
 sub new {
@@ -865,7 +864,7 @@ sub write_packet {
 sub add_header {
     my ( $self, $key, $value ) = @_;
     my $protocol = $self->{'protocol'};
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     return if $CONFIG->{'dryrun'};
     $protocol->add_header( $key, $value );
 }
@@ -873,7 +872,7 @@ sub add_header {
 sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
     my $protocol = $self->{'protocol'};
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     return if $CONFIG->{'dryrun'};
     $protocol->insert_header( $index, $key, $value );
 }
@@ -881,7 +880,7 @@ sub insert_header {
 sub change_header {
     my ( $self, $key, $index, $value ) = @_;
     my $protocol = $self->{'protocol'};
-    my $CONFIG = get_config();
+    my $CONFIG = $self->config();
     return if $CONFIG->{'dryrun'};
     $protocol->change_header( $key, $index, $value );
 }
