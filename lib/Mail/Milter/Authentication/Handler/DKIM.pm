@@ -71,7 +71,15 @@ sub body_callback {
     my $dkim_chunk = $body_chunk;
     my $EOL        = "\015\012";
     $dkim_chunk =~ s/\015?\012/$EOL/g;
-    $dkim->PRINT($dkim_chunk);
+    eval {
+        $dkim->PRINT($dkim_chunk);
+    };
+    if ( my $error = $@ ) {
+        $self->log_error( "DKIM Print error: $error" );
+        $self->exit_on_close();
+        $self->tempfail_on_error();
+        return;
+    }
 }
 
 sub eom_callback {
