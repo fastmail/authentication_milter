@@ -6,7 +6,7 @@ use warnings;
 our $VERSION = 0.5;
 
 use English;
-use Mail::Milter::Authentication::Util qw{ logdebug };
+use Mail::Milter::Authentication::Util qw{ loginfo logdebug };
 use Module::Load;
 use Socket;
 use Socket6;
@@ -322,7 +322,7 @@ sub process_command {
         my $CONFIG = $self->{'config'};
         if ( $CONFIG->{'dryrun'} ) {
             if ( $returncode ne SMFIR_CONTINUE ) {
-                logdebug ( "dryrun returncode changed from $returncode to continue" );
+                loginfo ( "dryrun returncode changed from $returncode to continue" );
                 $returncode = SMFIR_CONTINUE;
             }
         }
