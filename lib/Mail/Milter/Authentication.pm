@@ -13,12 +13,28 @@ use Mail::Milter::Authentication::Protocol;
 use Mail::Milter::Authentication::Util qw{ logerror loginfo logdebug };
 use Proc::ProcessTable;
 
-# Perload some modules
+# Preload some modules
 use Mail::DKIM ();
 use Mail::DKIM::Common ();
 use Mail::DKIM::Verifier ();
 use Mail::DMARC ();
 use Mail::SPF ();
+
+# Preload some handlers
+
+use Mail::Milter::Authentication::Constants ();
+use Mail::Milter::Authentication::DNSCache ();
+use Mail::Milter::Authentication::Handler ();
+use Mail::Milter::Authentication::Handler::SPF ();
+use Mail::Milter::Authentication::Handler::DKIM ();
+use Mail::Milter::Authentication::Handler::DMARC ();
+use Mail::Milter::Authentication::Handler::LocalIP ();
+use Mail::Milter::Authentication::Handler::IPRev ();
+use Mail::Milter::Authentication::Handler::SenderID ();
+use Mail::Milter::Authentication::Handler::PTR ();
+use Mail::Milter::Authentication::Handler::Auth ();
+use Mail::Milter::Authentication::Handler::TrustedIP ();
+use Mail::Milter::Authentication::Handler::Sanitize ();
 
 sub child_init_hook {
     my ( $self ) = @_;
