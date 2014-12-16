@@ -27,7 +27,18 @@ sub child_init_hook {
     $self->{'count'}          = 0;
     $self->{'handler'}        = {};
     $self->{'object'}         = {};
+    loginfo( "Child process $PID starting up" );
     $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
+}
+
+sub child_finish_hook {
+    my ($self) = @_;
+    loginfo( "Child process $PID shutting down" );
+}
+
+sub pre_server_close_hook {
+    my ($self) = @_;
+    loginfo( 'Server closing down' );
 }
 
 sub process_request {
