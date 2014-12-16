@@ -13,6 +13,13 @@ use Mail::Milter::Authentication::Protocol;
 use Mail::Milter::Authentication::Util qw{ logerror loginfo logdebug };
 use Proc::ProcessTable;
 
+# Perload some modules
+use Mail::DKIM ();
+use Mail::DKIM::Common ();
+use Mail::DKIM::Verifier ();
+use Mail::DMARC ();
+use Mail::SPF ();
+
 sub child_init_hook {
     my ( $self ) = @_;
 

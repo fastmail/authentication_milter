@@ -17,7 +17,9 @@ sub get_dkim_object {
     my ( $self, $env_from ) = @_;
     $self->{'failmode'} = 0;
     my $dkim = $self->get_object('dkim');
-    return $dkim if $dkim;
+    if ( $dkim ) {
+        return $dkim;
+    }
 
     eval {
         $dkim = Mail::DKIM::Verifier->new();

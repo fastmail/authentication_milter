@@ -16,7 +16,9 @@ sub get_dmarc_object {
     $self->{'failmode'} = 0;
     $self->{'is_list'}  = 0;
     my $dmarc = $self->get_object('dmarc');
-    return $dmarc if $dmarc;
+    if ( $dmarc ) {
+        return $dmarc;
+    }
 
     eval {
         $dmarc = Mail::DMARC::PurePerl->new();
