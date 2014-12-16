@@ -36,6 +36,7 @@ requires (
     'Mail::SPF',
     'MIME::Base64',
     'Module::Load',
+    'Module::Loaded',
     'Net::DNS',
     'Net::IP',
     'Net::Server',

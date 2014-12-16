@@ -8,6 +8,7 @@ our $VERSION = 0.5;
 use English;
 use Mail::Milter::Authentication::Util qw{ loginfo logdebug };
 use Module::Load;
+use Module::Loaded;
 use Socket;
 use Socket6;
 
@@ -98,7 +99,9 @@ sub setup_objects {
     my ( $self ) = @_;
 
     logdebug( 'setup objects' );
-    load 'Mail::Milter::Authentication::Handler';
+    if ( ! is_loaded ( 'Mail::Milter::Authentication::Handler' ) ) {
+        load 'Mail::Milter::Authentication::Handler';
+    }
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'}->{'_Handler'} = $handler;
 
@@ -116,7 +119,9 @@ sub setup_handler {
     logdebug( "Load Handler $name" );
 
     my $package = "Mail::Milter::Authentication::Handler::$name";
-    load $package;
+    if ( ! is_loaded ( $package ) ) {
+       load $package;
+    }
     my $object = $package->new( $self );
     $self->{'handler'}->{$name} = $object;
 
