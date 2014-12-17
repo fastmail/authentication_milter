@@ -240,7 +240,7 @@ sub eom_callback {
     };
     if ( my $error = $@ ) {
         if ( $error =~ /invalid header_from at / ) {
-            $self->log_error( 'DMARC Error invalid header_from' );
+            $self->log_error( 'DMARC Error invalid header_from <' . $self->{'from_header'} . '>' );
             $self->add_auth_header('dmarc=permerror');
         }
         else {
