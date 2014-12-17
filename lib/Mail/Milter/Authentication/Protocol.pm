@@ -6,7 +6,7 @@ use warnings;
 our $VERSION = 0.5;
 
 use English;
-use Mail::Milter::Authentication::Util qw{ loginfo logdebug };
+use Mail::Milter::Authentication::Util qw{ loginfo logdebug logerror };
 use Module::Load;
 use Module::Loaded;
 use Socket;
@@ -54,6 +54,12 @@ sub new {
     return $self;
 }
 
+sub fatal {
+    my ( $self, $error ) = @_;
+    logerror( "Child process $PID shutting down due to fatal error: $error" );
+    die "$error\n";
+}
+
 sub main {
     my ( $self ) = @_;
   
@@ -62,7 +68,7 @@ sub main {
 
         # Get packet length 
         my $length = unpack('N', $self->read_block(4) ) || last;
-        die "bad packet length $length\n" if ($length <= 0 || $length > 131072);
+        $self->fatal("bad packet length $length") if ($length <= 0 || $length > 131072);
 
         # Get command
         my $command = $self->read_block(1) || last;
@@ -71,7 +77,7 @@ sub main {
         # Get data
         my $data = $self->read_block($length - 1);
         if ( ! defined ( $data ) ) {
-            die "EOF in stream\n";
+            $self->fatal('EOF in stream');
         }
 
         last if $command eq SMFIC_QUIT;
@@ -85,7 +91,7 @@ sub main {
         $quit = 1;
     }
     #$self->destroy_objects();
-    die 'exit_on_close' if $quit;
+    $self->fatal('exit_on_close requested') if $quit;
 
     #use Devel::Peek;
     #warn Dump($self);
@@ -209,7 +215,7 @@ sub sort_callbacks {
 
         my $defer_count = scalar @defer;
         if ( $defer_count == $todo_count ) {
-            die 'Could not build order list';
+            $self->fatal('Could not build order list');
         }
         $todo_count = $defer_count;
         @todo = @defer;
@@ -253,7 +259,7 @@ sub process_command {
         $returncode = $handler->top_body_callback( $buffer );
     }
     elsif ( $command eq SMFIC_MACRO ) {
-        die "SMFIC_MACRO: empty packet\n" unless ( $buffer =~ s/^(.)// );
+        $self->fatal('SMFIC_MACRO: empty packet') unless ( $buffer =~ s/^(.)// );
         my $code = $1;
         my $data = $self->split_buffer( $buffer );
         push ( @$data, q{} ) if (( @$data & 1 ) != 0 ); # pad last entry with empty string if odd number
@@ -283,9 +289,9 @@ sub process_command {
         $returncode = $handler->top_eoh_callback();
     }
     elsif ( $command eq SMFIC_OPTNEG ) {
-        die "SMFIC_OPTNEG: packet has wrong size\n" unless (length($buffer) == 12);
+        $self->fatal('SMFIC_OPTNEG: packet has wrong size') unless (length($buffer) == 12);
         my ($ver, $actions, $protocol) = unpack('NNN', $buffer);
-        die "SMFIC_OPTNEG: unknown milter protocol version $ver\n" unless ($ver >= 2 && $ver <= 6);
+        $self->fatal("SMFIC_OPTNEG: unknown milter protocol version $ver") unless ($ver >= 2 && $ver <= 6);
         my $actions_reply  = $self->{'callback_flags'} & $actions;
         my $protocol_reply = $self->{'protocol'}       & $protocol;
         $self->write_packet(SMFIC_OPTNEG,
@@ -304,7 +310,7 @@ sub process_command {
         # Unknown SMTP command received
     }
     else {
-        die "Unknown milter command $command";
+        $self->fatal("Unknown milter command $command");
     }
 
     if (defined $returncode) {
@@ -343,7 +349,7 @@ sub connect_callback {
     my ( $self, $buffer ) = @_;
 
     unless ($buffer =~ s/^([^\0]*)\0(.)//) {
-        die "SMFIC_CONNECT: invalid connect info\n";
+        $self->fatal('SMFIC_CONNECT: invalid connect info');
     }
     my $host = $1;
     my $af = $2;
