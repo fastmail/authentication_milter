@@ -71,11 +71,13 @@ The configuration file format is as follows...
                                                         | Timeouts for callbacks, should be slightly lower
                                                         | than the corresponding timeouts in Postfix
                                                         | Timeouts are ignored if missing.
-    "connect_timeout"   : 30,                           | Timeout for Connect callbacks
-    "command_timeout"   : 30,                           | Timeout for Helo,Mail,Rcpt,Data and Unknown callbacks
-    "content_timeout"   : 300,                          | Timeout for Header,Eoh, Body and Eom callbacks
-    "dns_timeout"       : 10,                           | Timeout for DNS lookups
-    "dns_cache_timeout" : 240,                          | Timeout for cached DNS lookups
+    "connect_timeout"       : 30,                       | Timeout for Connect callbacks
+    "command_timeout"       : 30,                       | Timeout for Helo,Mail,Rcpt,Data and Unknown callbacks
+    "content_timeout"       : 300,                      | Timeout for Header,Eoh, Body and Eom callbacks
+    "dns_timeout"           : 10,                       | Timeout for DNS lookups
+    "dns_cache_timeout"     : 240,                      | Timeout for cached DNS lookups
+    "dns_retry"             : 2,                        | Number of times a lookup will retry per call
+    "dns_cache_error_limit" : 3,                        | Number of errors before we use the cache
 
     "tempfail_on_error" : "1",                          | Tempfail on errors
     "tempfail_on_error_authenticated" : "0",            | Tempfail on errors for Authenticated IP Connections

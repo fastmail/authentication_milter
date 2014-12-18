@@ -470,13 +470,16 @@ sub get_object {
 
         if ( $name eq 'resolver' ) {
             my $CONFIG = $self->config();
-            my $timeout = $CONFIG->{'dns_timeout'} || 8;
-            my $cache_timeout = $CONFIG->{'dns_cache_timeout'} || 240;
+            my $timeout           = $CONFIG->{'dns_timeout'}           || 8;
+            my $cache_timeout     = $CONFIG->{'dns_cache_timeout'}     || 240;
+            my $cache_error_limit = $CONFIG->{'dns_cache_error_limit'} || 3;
+            my $dns_retry         = $CONFIG->{'dns_retry'}             || 2;
             $object = Net::DNS::Resolver->new(
-                'udp_timeout'   => $timeout,
-                'tcp_timeout'   => $timeout,
-                'cache_timeout' => $cache_timeout,
-                'retry'         => 2,
+                'udp_timeout'       => $timeout,
+                'tcp_timeout'       => $timeout,
+                'cache_timeout'     => $cache_timeout,
+                'cache_error_limit' => $cache_error_limit,
+                'retry'             => $dns_retry,
             );
             $object->udppacketsize(1240);
             $object->persistent_udp(1);
