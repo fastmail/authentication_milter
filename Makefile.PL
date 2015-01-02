@@ -32,6 +32,7 @@ build_requires (
 
 requires (
     'Email::Address',
+    'English',
     'JSON',
     'Mail::DKIM::Verifier' => '0.39',
     'Mail::DMARC::PurePerl',

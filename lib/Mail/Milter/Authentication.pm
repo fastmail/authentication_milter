@@ -222,9 +222,23 @@ Start the server. This method does not return.
 
 =head1 DEPENDENCIES
 
-  Net::Server::PreFork
+  Email::Address
   English
+  JSON
+  Mail::DKIM
+  Mail::DMARC
+  Mail::SPF
+  MIME::Base64
+  Module::Load
+  Module::Loaded
+  Net::DNS
+  Net::IP
+  Net::Server
+  Pod::Usage
   Proc::ProcessTable
+  Socket
+  Sys::Hostname
+  Sys::Syslog
 
 =head1 AUTHORS
 

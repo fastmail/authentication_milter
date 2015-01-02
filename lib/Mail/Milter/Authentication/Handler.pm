@@ -901,3 +901,293 @@ sub change_header {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Mail::Milter::Authentication::Handler - Main handler class and methods
+
+=head1 DESCRIPTION
+
+Handle the milter requests and pass off to individual handlers
+
+=head1 CONSTRUCTOR
+
+=over
+
+=item new( $protocol )
+
+my $object = Mail::Milter::Authentication::Handler->new( $protocol );
+
+Takes the argument of the current Mail::Milter::Authentication::Protocol object
+and creates a new handler object.
+
+=back
+
+=head1 METHODS
+
+=over 
+
+=item top_connect_callback( $hostname, $sockaddr_in )
+
+Top level handler for the connect event.
+
+=item top_helo_callback( $helo_host )
+
+Top level handler for the HELO event.
+
+=item top_envfrom_callback( $env_from )
+
+Top level handler for the MAIL FROM event.
+
+=item top_envrcpt_callback( $env_to )
+
+Top level handler for the RCPT TO event.
+
+=item top_header_callback( $header, $value )
+
+Top level handler for a Mail Header event.
+
+=item top_eoh_callback()
+
+Top level handler for the end of headers event.
+
+=item top_body_callback( $body_chunk )
+
+Top level handler for a Body Chunk event.
+
+=item top_eom_callback()
+
+Top level handler for the End of Message event.
+
+=item top_abort_callback()
+
+Top level handler for the Abort event.
+
+=item top_close_callback()
+
+Top level handler for the Close event.
+
+=item status( $status )
+
+Set the status of the current child as visible by ps.
+
+=item config()
+
+Return the configuration hashref.
+
+=item handler_config( $type )
+
+Return the configuration for the current handler.
+
+=item handler_type()
+
+Return the current handler type.
+
+=item set_return( $code )
+
+Set the return code to be passed back to the MTA.
+
+=item get_return()
+
+Get the current return code.
+
+=item get_top_handler()
+
+Return the current top Handler object.
+
+=item is_handler_loadedi( $name )
+
+Check if the named handler is loaded.
+
+=item get_handler( $name )
+
+Return the named handler object.
+
+=item get_callbacks( $callback )
+
+Return the list of handlers which have callbacks for the given event in the order they must be called in.
+
+=item get_object( $name )
+
+Return the named object from the object store.
+
+Object 'resolver' will be created if it does not already exist.
+
+=item set_object( $name, $object )
+
+Store the given object in the object store with the given name.
+
+=item destroy_object( $name )
+
+Remove the reference to the named object from the object store.
+
+=item destroy_all_objects()
+
+Remove the references to all objects currently stored in the object store.
+
+=item exit_on_close()
+
+Exit this child once it has completed, do not process further requests with this child.
+
+=item clear_symbols()
+
+Clear the symbol store.
+
+=item set_symbol( $code, $key, $value )
+
+Store the key value pair in the symbol store with the given code (event stage).
+
+=item get_symbol( $searchkey )
+
+Return a value from the symbol store, searches all codes for the given key.
+
+=item tempfail_on_error()
+
+Returns a TEMP FAIL to the calling MTA if the configuration is set to do so.
+
+Config can be set for all, authenticated, local, and trusted connections.
+
+=item is_local_ip_address()
+
+Is the current connection from a local ip address?
+
+Requires the LocalIP Handler to be loaded.
+
+=item is_trusted_ip_address()
+
+Is the current connection from a trusted ip address?
+
+Requires the TrustedIP Handler to be loaded.
+
+=item is_authenticated()
+
+Is the current connection authenticated?
+
+Requires the Auth Handler to be loaded.
+
+=item ip_address()
+
+Return the ip address of the current connection.
+
+=item format_ctext( $text )
+
+Format text as ctext for use in headers.
+
+=item format_ctext_no_space( $text )
+
+Format text as ctext with no spaces for use in headers.
+
+=item format_header_comment( $comment )
+
+Format text as a comment for use in headers.
+
+=item format_header_entry( $key, $value )
+
+Format text as a key value pair for use in authentication header.
+
+=item get_domain_from( $address )
+
+Extract the domain from an email address.
+
+=item get_address_from( $text )
+
+Extract an email address from a string using Email::Address.
+
+=item get_my_hostname()
+
+Return the effective hostname of the MTA.
+
+=item dbgout( $key, $value, $priority )
+
+Send output to debug and/or Mail Log.
+
+priority is a standard Syslog priority.
+
+=item log_error( $error )
+
+Log an error.
+
+=item dbgoutwrite()
+
+Write out logs to disc.
+
+Logs are not written immediately, they are written at the end of a connection so we can
+include a queue id. This is not available at the start of the process.
+
+=item add_headers()
+
+Send the header changes to the MTA.
+
+=item prepend_header( $field, $value )
+
+Add a trace header to the email.
+
+=item add_auth_header( $value )
+
+Add a section to the authentication header for this email.
+
+=item add_c_auth_header( $value )
+
+Add a section to the authentication header for this email, and to any subsequent emails for this connection.
+
+=item append_header( $field, $value )
+
+Add a normal header to the email.
+
+=item smfis_continue()
+
+Return Continue code.
+
+=item smfis_tempfail()
+
+Return TempFail code.
+
+=item smfis_reject()
+
+Return Reject code.
+
+=item smfis_discard()
+
+Return Discard code.
+
+=item smfis_accept()
+
+Return Accept code.
+
+=item write_packet( $type, $data )
+
+Write a packet to the MTA (calls Protocol object)
+
+=item add_header( $key, $value )
+
+Write an Add Header packet to the MTA (calls Protocol object)
+
+=item insert_header( $index, $key, $value )
+
+Write an Insert Header packet to the MTA (calls Protocol object)
+
+=item change_header( $key, $value, $index )
+
+Write a Change Header packet to the MTA (calls Protocol object)
+
+=back
+
+=head1 WRITING HANDLERS
+
+tbc
+
+=head1 AUTHORS
+
+Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2015
+
+This library is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.
+
+
+
