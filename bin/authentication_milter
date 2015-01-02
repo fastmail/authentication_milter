@@ -6,6 +6,7 @@ use warnings;
 use Getopt::Long;
 use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Config qw{ get_config };
+use Pod::Usage;
 
 # CONFIG
 my $CONFIG = get_config();
@@ -32,32 +33,49 @@ Mail::Milter::Authentication::start({
 });
 
 sub usage {
-    print STDERR qq{Usage: $0 [-d|--daemon] [-p|--pidfile <file>] [-h|--help]
+    pod2usage( -verbose => 2 );
+}
 
--h|--help
-    Show this help.
+__END__
 
--d|--daemon
-    detatch from shell and run as a daemon
+=head1 NAME
 
--p|--pidfile <file>
-    Write the process PID to the given file.
-    defaults to /run/authentication_milter.pid
+  Authentication Milter
 
+=head1 USAGE
 
+  authentication_milter [-d|--daemon] [-p|--pidfile <file>] [-h|--help]
 
-Configuration
--------------
+=head1 OPTIONS
 
-The milter reads configuration from /etc/authentication_milter.json
+=over
 
-The configuration file format is as follows...
+=item -h|--help
 
-{
+  Show this help.
+
+=item -d|--daemon
+
+  detatch from shell and run as a daemon
+
+=item -p|--pidfile <file>
+
+  Write the process PID to the given file.
+  defaults to /run/authentication_milter.pid
+
+=back
+
+=head1 CONFIGURATION
+
+  The milter reads configuration from /etc/authentication_milter.json
+
+  The configuration file format is as follows...
+
+  {
     "debug"  : 0,                                       | Verbose debugging output
     "dryrun" : 0,                                       | Dryrun (do not alter or reject mail)
 
-    "connection"             : "inet:12345\@localhost",  | The connection to use 
+    "connection"             : "inet:12345@localhost",  | The connection to use 
     "umask"                  : "0000",                  | Set umask
     "runas"                  : "nobody",                | Drop privs and run as this user
     "rungroup"               : "nogroup",               | Drop privs and run as this group (daemon only)
@@ -86,7 +104,7 @@ The configuration file format is as follows...
 
     "handlers" : {                                      | Config for each handlers, can be prefixed with !
                                                         | to disable that handler without having to remove
-                                                        | it's config.
+                                                        | its config.
 
         "SPF" : {                                       | Config for the SPF Module
             "hide_none" : 0                             | Hide auth line if the result is 'none'
@@ -145,33 +163,37 @@ The configuration file format is as follows...
                 "example.com",                          | want to remove existing authentication results headers.
                 "example.net"
             ],
-            "remove_headers" : "yes"                  | Remove headers with conflicting host names (as defined above)
-                                                      | "no" : do not remove
-                                                      | "yes" : remove and add a header for each one
-                                                      | "silent" : remove silently
-                                                      | Does not run for trusted IP address connections
+            "remove_headers" : "yes"                    | Remove headers with conflicting host names (as defined above)
+                                                        | "no" : do not remove
+                                                        | "yes" : remove and add a header for each one
+                                                        | "silent" : remove silently
+                                                        | Does not run for trusted IP address connections
         }
     }
-}
+  }
 
+=head1 DMARC
 
-DMARC
------
-
-This milter uses Mail::DMARC as a backend for DMARC checks, this module requires that a configuration
-file is setup.
+This milter uses Mail::DMARC as a backend for DMARC checks, this module requires that a configuration file is setup.
 
 You should create and populate /etc/mail-dmarc.ini
 
-For DMARC reporting you are also required to setup a datastore, including creating a basic table
-structure.  The detauls of this are to be found in the Mail::DMARC documentation.
+For DMARC reporting you are also required to setup a datastore, including creating a basic table structure.
+The detauls of this are to be found in the Mail::DMARC documentation.
 
-At this time forensic reports are not supported by Mail::DMARC or this milter. Only aggregate reports will
-be generated.
+At this time forensic reports are not supported by Mail::DMARC or this milter. Only aggregate reports will be generated.
 
-To check reports please use the dmarc_view_reports command, to send reports please use the dmarc_send_reports
-command. These are included with the Mail::DMARC module.
+To check reports please use the dmarc_view_reports command, to send reports please use the dmarc_send_reports command.
+These are included with the Mail::DMARC module.
 
-};
-}
+=head1 AUTHORS
+
+Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2015
+
+This library is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.
 

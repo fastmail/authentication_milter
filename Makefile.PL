@@ -13,11 +13,13 @@ perl_version 5.006;
 tests_recursive('t');
 
 resources (
-   #homepage   => 'http://yourwebsitehere.com',
+   #homepage   => '',
    #IRC        => 'irc://irc.perl.org/#Mail-Milter-Authentication',
    license    => 'http://www.perlfoundation.org/artistic_license_2_0',
-   repository => 'https://gitlab.com/marcbradshaw/authentication-milter/',
-   bugtracker => 'https://gitlab.com/marcbradshaw/authentication-milter/issues/',
+   #repository => 'https://gitlab.com/marcbradshaw/authentication-milter/',
+   #bugtracker => 'https://gitlab.com/marcbradshaw/authentication-milter/issues/',
+   repository => 'https://github.com/marcbradshaw/authentication-milter/',
+   bugtracker => 'https://github.com/marcbradshaw/authentication-milter/issues/',
 );
 
 configure_requires (
@@ -41,6 +43,7 @@ requires (
     'Net::IP',
     'Net::Server',
     'Net::Server::PreFork',
+    'Pod::Usage',
     'Proc::ProcessTable',
     'Socket',
     'Sys::Hostname',
