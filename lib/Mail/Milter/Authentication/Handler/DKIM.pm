@@ -38,36 +38,62 @@ sub get_dkim_object {
     return $dkim;
 }
 
+sub envfrom_callback {
+    my ( $self, $env_from ) = @_;
+    $self->{'failmode'} = 0;
+    $self->destroy_object('dkim');
+    $self->{'headers'} = [];
+    $self->{'has_dkim'} = 0;
+}
+
 sub header_callback {
     my ( $self, $header, $value ) = @_;
-    return if ( $self->{'failmode'} );
-    my $dkim       = $self->get_dkim_object();
     return if ( $self->{'failmode'} );
     my $EOL        = "\015\012";
     my $dkim_chunk = $header . ': ' . $value . $EOL;
     $dkim_chunk =~ s/\015?\012/$EOL/g;
-    $dkim->PRINT($dkim_chunk);
+    push @{$self->{'headers'}} , $dkim_chunk;
+
+    if ( $header eq 'DKIM-Signature' ) {
+        $self->{'has_dkim'} = 1;
+    }
 
     # Add Google signatures to the mix.
     # Is this wise?
     if ( $header eq 'X-Google-DKIM-Signature' ) {
         my $x_dkim_chunk = 'DKIM-Signature: ' . $value . $EOL;
         $x_dkim_chunk =~ s/\015?\012/$EOL/g;
-        $dkim->PRINT($x_dkim_chunk);
+        push @{$self->{'headers'}} , $x_dkim_chunk;
+        $self->{'has_dkim'} = 1;
     }
 }
 
 sub eoh_callback {
     my ($self) = @_;
     return if ( $self->{'failmode'} );
-    my $dkim = $self->get_dkim_object();
-    return if ( $self->{'failmode'} );
-    $dkim->PRINT("\015\012");
+    my $CONFIG = $self->handler_config();
+
+    if ( $self->{'has_dkim'} == 0 ) {
+        $self->dbgout( 'DKIMResult', 'No DKIM headers', LOG_INFO );
+        if ( !( $CONFIG->{'hide_none'} ) ) {
+            $self->add_auth_header(
+                $self->format_header_entry( 'dkim', 'none' )
+                . ' (no signatures found)' );
+        }
+    }
+    else {
+        my $dkim = $self->get_dkim_object();
+        return if ( $self->{'failmode'} );
+        $dkim->PRINT( join q{}, @{ $self->{'headers'} } );
+        $dkim->PRINT("\015\012");
+        delete $self->{'headers'};
+    }
 }
 
 sub body_callback {
     my ( $self, $body_chunk ) = @_;
     return if ( $self->{'failmode'} );
+    return if ( $self->{'has_dkim'} == 0 );
     my $dkim       = $self->get_dkim_object();
     return if ( $self->{'failmode'} );
     my $dkim_chunk = $body_chunk;
@@ -80,6 +106,7 @@ sub body_callback {
         $self->log_error( "DKIM Print error: $error" );
         $self->exit_on_close();
         $self->tempfail_on_error();
+        $self->destroy_object('dkim');
         return;
     }
 }
@@ -88,6 +115,7 @@ sub eom_callback {
     my ($self) = @_;
     my $CONFIG = $self->handler_config();
     return if ( $self->{'failmode'} );
+    return if ( $self->{'has_dkim'} == 0 );
     my $dkim = $self->get_dkim_object();
     return if ( $self->{'failmode'} );
     eval {
@@ -237,6 +265,8 @@ sub eom_callback {
         }
     };
     if ( my $error = $@ ) {
+        $self->destroy_object('dkim');
+        $self->{'failmode'} = 1;
         if ( $error =~ / on an undefined value at /
                 or $error =~ / as a HASH ref while /
                 or $error =~ / as an ARRAY reference at /
@@ -253,13 +283,14 @@ sub eom_callback {
         }
         $self->log_error( 'DKIM Error - ' . $error );
         $self->add_auth_header('dkim=temperror');
-        $self->{'failmode'} = 1;
     }
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'failmode'};
+    delete $self->{'headers'};
+    delete $self->{'has_dkim'};
     $self->destroy_object('dkim');
 }
 

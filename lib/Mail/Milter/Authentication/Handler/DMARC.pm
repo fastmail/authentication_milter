@@ -56,7 +56,9 @@ sub envfrom_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     delete $self->{'from_header'};
+    delete $self->{'is_list'};
     $self->{'failmode'} = 0;
+    $self->destroy_object('dmarc');
 
     $env_from = q{} if $env_from eq '<>';
 
@@ -195,7 +197,12 @@ sub eom_callback {
             return;
         }
         my $dkim = $self->get_object('dkim');
-        $dmarc->dkim($dkim);
+        if ( $dkim ) {
+            $dmarc->dkim($dkim);
+        }
+        else {
+            $dmarc->dkim( [] );
+        }
         my $dmarc_result = $dmarc->validate();
         my $dmarc_code   = $dmarc_result->result;
         $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
