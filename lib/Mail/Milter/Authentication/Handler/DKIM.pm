@@ -57,6 +57,9 @@ sub header_callback {
     if ( $header eq 'DKIM-Signature' ) {
         $self->{'has_dkim'} = 1;
     }
+    if ( $header eq 'DomainKey-Signature' ) {
+        $self->{'has_dkim'} = 1;
+    }
 
     # Add Google signatures to the mix.
     # Is this wise?
