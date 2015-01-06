@@ -14,17 +14,23 @@ package Net::DNS::Resolver;
 use strict;
 use warnings;
 
-sub new {
-    my $class = shift;
-    my %args = @_;
-    my $self = $class->SUPER::new( @_ );
+{
+    my $global_cached_data   = {};
+    my $global_cached_errors = {};
+    my $global_errors_index  = 0;
 
-    $self->{'cached_data'}         = {};
-    $self->{'cached_errors'}       = {};
-    $self->{'cached_errors_index'} = 0;
-    $self->{'cache_timeout'}       = $args{'cache_timeout'}     || 120;
-    $self->{'cache_error_limit'}   = $args{'cache_error_limit'} || 3;
-    return $self;
+    sub new {
+        my $class = shift;
+        my %args = @_;
+        my $self = $class->SUPER::new( @_ );
+
+        $self->{'cached_data'}         = $global_cached_data;
+        $self->{'cached_errors'}       = $global_cached_errors;
+        $self->{'cached_errors_index'} = $global_errors_index;
+        $self->{'cache_timeout'}       = $args{'cache_timeout'}     || 120;
+        $self->{'cache_error_limit'}   = $args{'cache_error_limit'} || 3;
+        return $self;
+    }
 }
 
 sub send {
