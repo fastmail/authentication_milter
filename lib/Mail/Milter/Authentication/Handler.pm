@@ -17,9 +17,9 @@ use Mail::Milter::Authentication::DNSCache;
 use Mail::Milter::Authentication::Constants qw { :all };
 
 sub new {
-    my ( $class, $protocol ) = @_;
+    my ( $class, $thischild ) = @_;
     my $self = {
-        'protocol'   => $protocol,
+        'thischild' => $thischild,
     };
     bless $self, $class;
     return $self;
@@ -383,7 +383,7 @@ sub top_close_callback {
 
 sub status {
     my ($self, $status) = @_;
-    my $count = $self->{'protocol'}->{'count'};
+    my $count = $self->{'thischild'}->{'count'};
     if ( $status ) {
         $PROGRAM_NAME = '[authentication_milter:processing:' . $status . '(' . $count . ')]';
     }
@@ -394,7 +394,7 @@ sub status {
 
 sub config {
     my ($self) = @_;
-    return $self->{'protocol'}->{'config'};
+    return $self->{'thischild'}->{'config'};
 }
 
 sub handler_config {
@@ -437,8 +437,8 @@ sub get_return {
 
 sub get_top_handler {
     my ($self) = @_;
-    my $protocol   = $self->{'protocol'};
-    my $object = $protocol->{'handler'}->{'_Handler'};
+    my $thischild = $self->{'thischild'};
+    my $object = $thischild->{'handler'}->{'_Handler'};
     return $object;
 }
 
@@ -453,22 +453,22 @@ sub is_handler_loaded {
 
 sub get_handler {
     my ( $self, $name ) = @_;
-    my $protocol = $self->{'protocol'};
-    my $object   = $protocol->{'handler'}->{$name};
+    my $thischild = $self->{'thischild'};
+    my $object = $thischild->{'handler'}->{$name};
     return $object;
 }
 
 
 sub get_callbacks {
     my ( $self, $callback ) = @_;
-    my $protocol = $self->{'protocol'};
-    return $protocol->{'callbacks_list'}->{$callback};
+    my $thischild = $self->{'thischild'};
+    return $thischild->{'callbacks_list'}->{$callback};
 }
 
 sub get_object {
     my ( $self, $name ) = @_;
-    my $protocol = $self->{'protocol'};
-    my $object   = $protocol->{'object'}->{$name};
+    my $thischild = $self->{'thischild'};
+    my $object = $thischild->{'object'}->{$name};
     if ( ! $object ) {
 
         if ( $name eq 'resolver' ) {
@@ -486,7 +486,7 @@ sub get_object {
             );
             $object->udppacketsize(1240);
             $object->persistent_udp(1);
-            $protocol->{'object'}->{$name} = $object;
+            $thischild->{'object'}->{$name} = $object;
         }
 
     }
@@ -495,21 +495,21 @@ sub get_object {
 
 sub set_object {
     my ( $self, $name, $object ) = @_;
-    my $protocol = $self->{'protocol'};
-    $protocol->{'object'}->{$name} = $object;
+    my $thischild = $self->{'thischild'};
+    $thischild->{'object'}->{$name} = $object;
 }
 
 sub destroy_object {
     my ( $self, $name ) = @_;
-    my $protocol = $self->{'protocol'};
-    delete $protocol->{'object'}->{$name};
+    my $thischild = $self->{'thischild'};
+    delete $thischild->{'object'}->{$name};
 }
 
 sub destroy_all_objects {
     # Unused!
     my ( $self ) = @_;
-    my $protocol = $self->{'protocol'};
-    foreach my $name ( keys %{ $protocol->{'object'} } )
+    my $thischild = $self->{'thischild'};
+    foreach my $name ( keys %{ $thischild->{'object'} } )
     {
         $self->destroy_object( $name );
     }
@@ -875,32 +875,32 @@ sub smfis_accept {
 
 sub write_packet {
     my ( $self, $type, $data ) = @_;
-    my $protocol = $self->{'protocol'};
-    $protocol->write_packet( $type, $data );
+    my $thischild = $self->{'thischild'};
+    $thischild->write_packet( $type, $data );
 }
 
 sub add_header {
     my ( $self, $key, $value ) = @_;
-    my $protocol = $self->{'protocol'};
+    my $thischild = $self->{'thischild'};
     my $CONFIG = $self->config();
     return if $CONFIG->{'dryrun'};
-    $protocol->add_header( $key, $value );
+    $thischild->add_header( $key, $value );
 }
 
 sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
-    my $protocol = $self->{'protocol'};
+    my $thischild = $self->{'thischild'};
     my $CONFIG = $self->config();
     return if $CONFIG->{'dryrun'};
-    $protocol->insert_header( $index, $key, $value );
+    $thischild->insert_header( $index, $key, $value );
 }
 
 sub change_header {
     my ( $self, $key, $index, $value ) = @_;
-    my $protocol = $self->{'protocol'};
+    my $thischild = $self->{'thischild'};
     my $CONFIG = $self->config();
     return if $CONFIG->{'dryrun'};
-    $protocol->change_header( $key, $index, $value );
+    $thischild->change_header( $key, $index, $value );
 }
 
 1;
@@ -919,11 +919,11 @@ Handle the milter requests and pass off to individual handlers
 
 =over
 
-=item new( $protocol )
+=item new( $thischild )
 
-my $object = Mail::Milter::Authentication::Handler->new( $protocol );
+my $object = Mail::Milter::Authentication::Handler->new( $thischild );
 
-Takes the argument of the current Mail::Milter::Authentication::Protocol object
+Takes the argument of the current Mail::Milter::Authentication object
 and creates a new handler object.
 
 =back

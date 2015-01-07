@@ -277,7 +277,7 @@ sub destroy_handler {
     # Unused!
     my ( $self, $name ) = @_;
     # Remove some back references
-    delete $self->{'handler'}->{$name}->{'protocol'};
+    delete $self->{'handler'}->{$name}->{'thischild'};
     # Remove reference to handler
     delete $self->{'handler'}->{$name};
 }
@@ -368,7 +368,7 @@ sub destroy_objects {
         $self->destroy_handler( $name );
     }
     delete $self->{'handler'}->{'_Handler'}->{'config'};
-    delete $self->{'handler'}->{'_Handler'}->{'protocol'};
+    delete $self->{'handler'}->{'_Handler'}->{'thischild'};
     delete $self->{'handler'}->{'_Handler'};
 }
 
