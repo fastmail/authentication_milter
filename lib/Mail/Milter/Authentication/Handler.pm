@@ -107,6 +107,9 @@ sub top_helo_callback {
                 $self->get_handler($handler)->helo_callback($helo_host);
             }
         }
+        else {
+            $self->log_error( 'Multiple HELO callbacks detected and ignored: ' . $helo_host );
+        }
 
         alarm(0);
     };
