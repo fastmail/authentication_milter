@@ -108,7 +108,7 @@ sub top_helo_callback {
             }
         }
         else {
-            $self->log_error( 'Multiple HELO callbacks detected and ignored: ' . $helo_host );
+            $self->dbgout('Multiple HELO callbacks detected and ignored', $self->{'helo_name'} . ' / ' . $helo_host, LOG_DEBUG );
         }
 
         alarm(0);
