@@ -10,17 +10,14 @@ use base 'Net::Server::PreFork';
 use English;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
+use Mail::Milter::Authentication::DNSCache;
+use Mail::Milter::Authentication::Handler;
 use Module::Load;
 use Module::Loaded;
 use Proc::ProcessTable;
 use Socket;
 use Socket6;
 use Sys::Syslog qw{:standard :macros};
-
-# Preloading
-use Mail::Milter::Authentication::Constants ();
-use Mail::Milter::Authentication::DNSCache ();
-use Mail::Milter::Authentication::Handler ();
 
 sub child_init_hook {
     my ( $self ) = @_;
@@ -239,9 +236,6 @@ sub setup_objects {
     my ( $self ) = @_;
 
     logdebug( 'setup objects' );
-    if ( ! is_loaded ( 'Mail::Milter::Authentication::Handler' ) ) {
-        load 'Mail::Milter::Authentication::Handler';
-    }
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'}->{'_Handler'} = $handler;
 
