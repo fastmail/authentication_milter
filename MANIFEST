@@ -3,7 +3,6 @@ lib/Mail/Milter/Authentication.pm
 lib/Mail/Milter/Authentication/Config.pm
 lib/Mail/Milter/Authentication/Constants.pm
 lib/Mail/Milter/Authentication/DNSCache.pm
-lib/Mail/Milter/Authentication/Protocol.pm
 lib/Mail/Milter/Authentication/Handler.pm
 lib/Mail/Milter/Authentication/Handler/AddID.pm
 lib/Mail/Milter/Authentication/Handler/Auth.pm
