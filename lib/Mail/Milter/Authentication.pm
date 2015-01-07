@@ -21,12 +21,18 @@ use Mail::Milter::Authentication::Handler ();
 sub child_init_hook {
     my ( $self ) = @_;
 
-    $self->{'callbacks_list'} = {};
-    $self->{'callbacks'}      = {};
+    my $callbacks_list = {};
+    my $callbacks      = {};
+    my $handler        = {};
+    my $object         = {};
+    my $count          = 0;
+
+    $self->{'callbacks_list'} = $callbacks_list;
+    $self->{'callbacks'}      = $callbacks;
     $self->{'config'}         = get_config();
-    $self->{'count'}          = 0;
-    $self->{'handler'}        = {};
-    $self->{'object'}         = {};
+    $self->{'count'}          = $count;
+    $self->{'handler'}        = $handler;
+    $self->{'object'}         = $object;
     loginfo( "Child process $PID starting up" );
     $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
 }
