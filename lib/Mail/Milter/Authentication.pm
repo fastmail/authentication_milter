@@ -10,12 +10,12 @@ use base 'Net::Server::PreFork';
 use English;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
-use Mail::Milter::Authentication::Util qw{ logerror loginfo logdebug };
 use Module::Load;
 use Module::Loaded;
 use Proc::ProcessTable;
 use Socket;
 use Socket6;
+use Sys::Syslog qw{:standard :macros};
 
 # Preloading
 use Mail::Milter::Authentication::Constants ();
@@ -571,6 +571,38 @@ sub write_packet {
     $socket->syswrite($data);
 }
 
+## Logging
+
+sub logerror {
+    my ($line) = @_;
+    warn "$PID: $line\n";
+    openlog( 'authentication_milter', 'pid', LOG_MAIL );
+    setlogmask( LOG_MASK(LOG_ERR) );
+    syslog( LOG_ERR, $line );
+    closelog();
+}
+
+sub loginfo {
+    my ($line) = @_;
+    warn "$PID: $line\n";
+    openlog( 'authentication_milter', 'pid', LOG_MAIL );
+    setlogmask( LOG_MASK(LOG_INFO) );
+    syslog( LOG_INFO, $line );
+    closelog();
+}
+
+sub logdebug {
+    my ($line) = @_;
+    warn "$PID: $line\n";
+    my $CONFIG = get_config();
+    if ( $CONFIG->{'debug'} ) {
+        openlog( 'authentication_milter', 'pid', LOG_MAIL );
+        setlogmask( LOG_MASK(LOG_DEBUG) );
+        syslog( LOG_DEBUG, $line );
+        closelog();
+    }
+}
+
 1;
 
 __END__
@@ -674,6 +706,24 @@ Writa an insert header packet
 =item I<write_packet( $code, $data )>
 
 Write a packet to the protocol stream.
+
+=back
+
+=head1 FUNCTIONS
+
+=over
+
+=item I<logerror( $line )>
+
+Log to the error log.
+
+=item I<loginfo( $line )>
+
+Log to the info log.
+
+=item I<logdebug( $line )>
+
+Log to the debug log.
 
 =back
 
