@@ -80,6 +80,8 @@ __END__
     "runas"                  : "nobody",                | Drop privs and run as this user (root only)
     "rungroup"               : "nogroup",               | Drop privs and run as this group (root daemon only)
     "chroot"                 : "/path/to/chroot"        | Set chroot before forking (root only)
+                                                        | N.B. This path will need to be setup with all required
+                                                        | files or the server WILL segfault.
     "listen_backlog"         : 20,                      | socket listen backlog limit (default 20)
     "min_children"           : 20,                      | Max number of children to pre fork
     "max_children"           : 200,                     | Max number of children to pre fork
