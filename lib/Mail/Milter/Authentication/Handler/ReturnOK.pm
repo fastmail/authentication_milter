@@ -98,7 +98,7 @@ sub _check_address {
 
     $self->dbgout( 'ReturnOKCheck', "$type: $result", LOG_DEBUG );
     my $header = join( ' ',
-        $self->format_header_entry( 'x-returnok', $result ),
+        $self->format_header_entry( 'x-return-mx', $result ),
         @details,
     );
     
