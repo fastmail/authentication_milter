@@ -273,15 +273,28 @@ sub eom_callback {
         if ( $error =~ / on an undefined value at /
                 or $error =~ / as a HASH ref while /
                 or $error =~ / as an ARRAY reference at /
+                or $error =~ / as a subroutine ref while /
                 or $error =~ / on unblessed reference at /
                 or $error =~ /^Not a HASH reference at /
+                or $error =~ /^Not a CODE reference at /
                 or $error =~ /^Cannot copy to HASH in sassign at /
                 or $error =~ /^Cannot copy to ARRAY in sassign at /
+                or $error =~ /^Undefined subroutine /
+                or $error =~ / locate object method /
                 or $error =~ /^panic: /
             ) {
             $self->log_error( "PANIC DETECTED: in DKIM method: $error" );
             $self->exit_on_close();
             $self->tempfail_on_error();
+
+# BEGIN TEMPORARY CODE CORE DUMP
+            use Data::Dumper;
+            use English;
+            open my $core, '>', "/tmp/authentication_milter.core.$PID";
+            print $core Dumper( $self->{'thischild'} );
+            close $core;
+# END TEMPORARY CODE CORE DUMP
+
             return;
         }
         $self->log_error( 'DKIM Error - ' . $error );
