@@ -19,6 +19,27 @@ use Socket;
 use Socket6;
 use Sys::Syslog qw{:standard :macros};
 
+sub pre_loop_hook {
+    my ( $self ) = @_;
+    
+    my $config = get_config();
+    $self->{'config'} = $config;
+
+    my $protocol  = SMFIP_NONE & ~(SMFIP_NOCONNECT|SMFIP_NOMAIL);
+       $protocol &= ~SMFIP_NOHELO;
+       $protocol &= ~SMFIP_NORCPT;
+       $protocol &= ~SMFIP_NOBODY;
+       $protocol &= ~SMFIP_NOHDRS;
+       $protocol &= ~SMFIP_NOEOH;
+    $self->{'protocol'} = $protocol;
+
+    # Load handlers
+    foreach my $name ( @{$config->{'load_handlers'}} ) {
+        $self->load_handler( $name );
+    }
+
+}
+
 sub child_init_hook {
     my ( $self ) = @_;
 
@@ -27,31 +48,21 @@ sub child_init_hook {
     my $handler        = {};
     my $object         = {};
     my $count          = 0;
-    my $config         = get_config();
 
     loginfo( "Child process $PID starting up" );
     $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
 
     my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
 
-    my $protocol  = SMFIP_NONE & ~(SMFIP_NOCONNECT|SMFIP_NOMAIL);
-       $protocol &= ~SMFIP_NOHELO;
-       $protocol &= ~SMFIP_NORCPT;
-       $protocol &= ~SMFIP_NOBODY;
-       $protocol &= ~SMFIP_NOHDRS;
-       $protocol &= ~SMFIP_NOEOH;
 
     $self->{'callback_flags'} = $callback_flags;
     $self->{'callbacks_list'} = $callbacks_list;
     $self->{'callbacks'}      = $callbacks;
-    $self->{'config'}         = $config;
     $self->{'count'}          = $count;
     $self->{'handler'}        = $handler;
     $self->{'object'}         = $object;
-    $self->{'protocol'}       = $protocol;
 
-    $self->setup_objects();
-
+    $self->setup_handlers();
 }
 
 sub child_finish_hook {
@@ -232,7 +243,7 @@ sub fatal {
     die "$error\n";
 }
 
-sub setup_objects {
+sub setup_handlers {
     my ( $self ) = @_;
 
     logdebug( 'setup objects' );
@@ -246,7 +257,7 @@ sub setup_objects {
     $self->sort_all_callbacks();
 }
 
-sub setup_handler {
+sub load_handler {
     my ( $self, $name ) = @_;
 
     ## TODO error handling here
@@ -256,6 +267,15 @@ sub setup_handler {
     if ( ! is_loaded ( $package ) ) {
        load $package;
     }
+}
+
+sub setup_handler {
+    my ( $self, $name ) = @_;
+
+    ## TODO error handling here
+    logdebug( "Instantiate Handler $name" );
+
+    my $package = "Mail::Milter::Authentication::Handler::$name";
     my $object = $package->new( $self );
     $self->{'handler'}->{$name} = $object;
 
@@ -641,9 +661,13 @@ Start the server. This method does not return.
 
 Log a fatal error and die
 
-=item I<setup_objects()>
+=item I<setup_handlers()>
 
 Setup the Handler objects.
+
+=item I<load_handler( $name )>
+
+Load the $name Handler module
 
 =item I<setup_handler( $name )>
 
