@@ -83,6 +83,7 @@ sub eoh_callback {
                 $self->format_header_entry( 'dkim', 'none' )
                 . ' (no signatures found)' );
         }
+        delete $self->{'headers'};
     }
     else {
         my $dkim = $self->get_dkim_object();
@@ -107,6 +108,13 @@ sub body_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( "DKIM Print error: $error" );
+# BEGIN TEMPORARY CODE CORE DUMP
+            use Data::Dumper;
+            use English;
+            open my $core, '>', "/tmp/authentication_milter.core.$PID";
+            print $core Dumper( $self->{'thischild'} );
+            close $core;
+# END TEMPORARY CODE CORE DUMP
         $self->exit_on_close();
         $self->tempfail_on_error();
         $self->destroy_object('dkim');
