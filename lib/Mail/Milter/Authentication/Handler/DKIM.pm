@@ -109,11 +109,11 @@ sub body_callback {
     if ( my $error = $@ ) {
         $self->log_error( "DKIM Print error: $error" );
 # BEGIN TEMPORARY CODE CORE DUMP
-            use Data::Dumper;
-            use English;
-            open my $core, '>', "/tmp/authentication_milter.core.$PID";
-            print $core Dumper( $self->{'thischild'} );
-            close $core;
+#            use Data::Dumper;
+#            use English;
+#            open my $core, '>', "/tmp/authentication_milter.core.$PID";
+#            print $core Dumper( $self->{'thischild'} );
+#            close $core;
 # END TEMPORARY CODE CORE DUMP
         $self->exit_on_close();
         $self->tempfail_on_error();
@@ -296,11 +296,11 @@ sub eom_callback {
             $self->tempfail_on_error();
 
 # BEGIN TEMPORARY CODE CORE DUMP
-            use Data::Dumper;
-            use English;
-            open my $core, '>', "/tmp/authentication_milter.core.$PID";
-            print $core Dumper( $self->{'thischild'} );
-            close $core;
+#            use Data::Dumper;
+#            use English;
+#            open my $core, '>', "/tmp/authentication_milter.core.$PID";
+#            print $core Dumper( $self->{'thischild'} );
+#            close $core;
 # END TEMPORARY CODE CORE DUMP
 
             return;
