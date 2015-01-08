@@ -175,6 +175,10 @@ sub start {
         loginfo("run as user=$user group=$group");
         $srvargs{'user'}  = $user;
         $srvargs{'group'} = $group;
+        if ( exists( $config->{'chroot'} ) ) {
+            loginfo('Chroot to ' . $config->{'chroot'});
+            $srvargs{'chroot'} = $config->{'chroot'};
+        }
     }
     else {
         loginfo('Not running as root, could not drop privs - be careful!');

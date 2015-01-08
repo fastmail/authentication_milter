@@ -77,8 +77,9 @@ __END__
 
     "connection"             : "inet:12345@localhost",  | The connection to use 
     "umask"                  : "0000",                  | Set umask
-    "runas"                  : "nobody",                | Drop privs and run as this user
-    "rungroup"               : "nogroup",               | Drop privs and run as this group (daemon only)
+    "runas"                  : "nobody",                | Drop privs and run as this user (root only)
+    "rungroup"               : "nogroup",               | Drop privs and run as this group (root daemon only)
+    "chroot"                 : "/path/to/chroot"        | Set chroot before forking (root only)
     "listen_backlog"         : 20,                      | socket listen backlog limit (default 20)
     "min_children"           : 20,                      | Max number of children to pre fork
     "max_children"           : 200,                     | Max number of children to pre fork
