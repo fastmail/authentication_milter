@@ -9,8 +9,8 @@ use Mail::Milter::Authentication::Config qw{ get_config };
 use Pod::Usage;
 
 # CONFIG
-my $CONFIG = get_config();
-my $connection = $CONFIG->{'connection'};
+my $config = get_config();
+my $connection = $config->{'connection'};
 my $pid_file = '/run/authentication_milter.pid';
 my $daemon = 0;
 my $help   = 0;

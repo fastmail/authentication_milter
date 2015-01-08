@@ -34,12 +34,12 @@ sub top_connect_callback {
     $self->status('connect');
     $self->dbgout( 'CALLBACK', 'Connect', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     eval {
         local $SIG{'ALRM'};
-        if ( $CONFIG->{'connect_timeout'} ) {
+        if ( $config->{'connect_timeout'} ) {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
-            alarm( $CONFIG->{'connect_timeout'} );
+            alarm( $config->{'connect_timeout'} );
         }
 
         # Process the connecting IP Address
@@ -91,12 +91,12 @@ sub top_helo_callback {
     $self->dbgout( 'CALLBACK', 'Helo', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $helo_host = q{} if not $helo_host;
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     eval {
         local $SIG{'ALRM'};
-        if ( $CONFIG->{'command_timeout'} ) {
+        if ( $config->{'command_timeout'} ) {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
-            alarm( $CONFIG->{'command_timeout'} );
+            alarm( $config->{'command_timeout'} );
         }
 
         # Take only the first HELO from a connection
@@ -131,12 +131,12 @@ sub top_envfrom_callback {
     $self->dbgout( 'CALLBACK', 'EnvFrom', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $env_from = q{} if not $env_from;
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     eval {
         local $SIG{'ALRM'};
-        if ( $CONFIG->{'command_timeout'} ) {
+        if ( $config->{'command_timeout'} ) {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
-            alarm( $CONFIG->{'command_timeout'} );
+            alarm( $config->{'command_timeout'} );
         }
 
         # Reset private data for this MAIL transaction
@@ -168,12 +168,12 @@ sub top_envrcpt_callback {
     $self->dbgout( 'CALLBACK', 'EnvRcpt', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $env_to = q{} if not $env_to;
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     eval {
         local $SIG{'ALRM'};
-        if ( $CONFIG->{'command_timeout'} ) {
+        if ( $config->{'command_timeout'} ) {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
-            alarm( $CONFIG->{'command_timeout'} );
+            alarm( $config->{'command_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'envrcpt' );
         foreach my $handler ( @$callbacks ) {
@@ -198,12 +198,12 @@ sub top_header_callback {
     $self->dbgout( 'CALLBACK', 'Header', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
     $value = q{} if not $value;
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     eval {
         local $SIG{'ALRM'};
-        if ( $CONFIG->{'content_timeout'} ) {
+        if ( $config->{'content_timeout'} ) {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
-            alarm( $CONFIG->{'content_timeout'} );
+            alarm( $config->{'content_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'header' );
         foreach my $handler ( @$callbacks ) {
@@ -227,12 +227,12 @@ sub top_eoh_callback {
     $self->status('eoh');
     $self->dbgout( 'CALLBACK', 'EOH', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     eval {
         local $SIG{'ALRM'};
-        if ( $CONFIG->{'content_timeout'} ) {
+        if ( $config->{'content_timeout'} ) {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
-            alarm( $CONFIG->{'content_timeout'} );
+            alarm( $config->{'content_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'eoh' );
         foreach my $handler ( @$callbacks ) {
@@ -257,12 +257,12 @@ sub top_body_callback {
     $self->status('body');
     $self->dbgout( 'CALLBACK', 'Body', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     eval {
         local $SIG{'ALRM'};
-        if ( $CONFIG->{'content_timeout'} ) {
+        if ( $config->{'content_timeout'} ) {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
-            alarm( $CONFIG->{'content_timeout'} );
+            alarm( $config->{'content_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'body' );
         foreach my $handler ( @$callbacks ) {
@@ -287,12 +287,12 @@ sub top_eom_callback {
     $self->status('eom');
     $self->dbgout( 'CALLBACK', 'EOM', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     eval {
         local $SIG{'ALRM'};
-        if ( $CONFIG->{'content_timeout'} ) {
+        if ( $config->{'content_timeout'} ) {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
-            alarm( $CONFIG->{'content_timeout'} );
+            alarm( $config->{'content_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'eom' );
         foreach my $handler ( @$callbacks ) {
@@ -318,12 +318,12 @@ sub top_abort_callback {
     $self->status('abort');
     $self->dbgout( 'CALLBACK', 'Abort', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     eval {
         local $SIG{'ALRM'};
-        if ( $CONFIG->{'command_timeout'} ) {
+        if ( $config->{'command_timeout'} ) {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
-            alarm( $CONFIG->{'command_timeout'} );
+            alarm( $config->{'command_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'abort' );
         foreach my $handler ( @$callbacks ) {
@@ -348,12 +348,12 @@ sub top_close_callback {
     $self->status('close');
     $self->dbgout( 'CALLBACK', 'Close', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     eval {
         local $SIG{'ALRM'};
-        if ( $CONFIG->{'content_timeout'} ) {
+        if ( $config->{'content_timeout'} ) {
             $SIG{'ALRM'} = sub{ die "Timeout\n" };
-            alarm( $CONFIG->{'content_timeout'} );
+            alarm( $config->{'content_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'close' );
         foreach my $handler ( @$callbacks ) {
@@ -402,8 +402,8 @@ sub handler_config {
     my $type = $self->handler_type();
     return if ! $type;
     if ( $self->is_handler_loaded( $type ) ) {
-        my $CONFIG = $self->config();
-        return $CONFIG->{'handlers'}->{$type};
+        my $config = $self->config();
+        return $config->{'handlers'}->{$type};
     }
     return;
 }
@@ -444,8 +444,8 @@ sub get_top_handler {
 
 sub is_handler_loaded {
     my ( $self, $name ) = @_;
-    my $CONFIG = $self->config();
-    if ( exists ( $CONFIG->{'handlers'}->{$name} ) ) {
+    my $config = $self->config();
+    if ( exists ( $config->{'handlers'}->{$name} ) ) {
         return 1;
     }
     return 0;
@@ -472,11 +472,11 @@ sub get_object {
     if ( ! $object ) {
 
         if ( $name eq 'resolver' ) {
-            my $CONFIG = $self->config();
-            my $timeout           = $CONFIG->{'dns_timeout'}           || 8;
-            my $cache_timeout     = $CONFIG->{'dns_cache_timeout'}     || 240;
-            my $cache_error_limit = $CONFIG->{'dns_cache_error_limit'} || 3;
-            my $dns_retry         = $CONFIG->{'dns_retry'}             || 2;
+            my $config = $self->config();
+            my $timeout           = $config->{'dns_timeout'}           || 8;
+            my $cache_timeout     = $config->{'dns_cache_timeout'}     || 240;
+            my $cache_error_limit = $config->{'dns_cache_error_limit'} || 3;
+            my $dns_retry         = $config->{'dns_retry'}             || 2;
             $object = Net::DNS::Resolver->new(
                 'udp_timeout'       => $timeout,
                 'tcp_timeout'       => $timeout,
@@ -571,27 +571,27 @@ sub get_symbol {
 
 sub tempfail_on_error {
     my ( $self ) = @_;
-    my $CONFIG = $self->config();
+    my $config = $self->config();
     if ( $self->is_authenticated() ) {
-        if ( $CONFIG->{'tempfail_on_error_authenticated'} ) {
+        if ( $config->{'tempfail_on_error_authenticated'} ) {
             $self->log_error('TempFail set');
             $self->set_return( $self->smfis_tempfail() ) 
         }
     }
     elsif ( $self->is_local_ip_address() ) {
-        if ( $CONFIG->{'tempfail_on_error_local'} ) {
+        if ( $config->{'tempfail_on_error_local'} ) {
             $self->log_error('TempFail set');
             $self->set_return( $self->smfis_tempfail() ) 
         }
     }
     elsif ( $self->is_trusted_ip_address() ) {
-        if ( $CONFIG->{'tempfail_on_error_trusted'} ) {
+        if ( $config->{'tempfail_on_error_trusted'} ) {
             $self->log_error('TempFail set');
             $self->set_return( $self->smfis_tempfail() )
         } 
     }
     else {
-        if ( $CONFIG->{'tempfail_on_error'} ) {
+        if ( $config->{'tempfail_on_error'} ) {
             $self->log_error('TempFail set');
             $self->set_return( $self->smfis_tempfail() ) 
         }
@@ -730,8 +730,8 @@ sub dbgoutwrite {
     my ($self) = @_;
     eval {
         openlog('authentication_milter', 'pid', LOG_MAIL);
-        my $CONFIG = $self->config();
-        if ( $CONFIG->{'debug'} ) {
+        my $config = $self->config();
+        if ( $config->{'debug'} ) {
             setlogmask(   LOG_MASK(LOG_ERR)
                         | LOG_MASK(LOG_INFO)
                         | LOG_MASK(LOG_DEBUG)
@@ -882,24 +882,24 @@ sub write_packet {
 sub add_header {
     my ( $self, $key, $value ) = @_;
     my $thischild = $self->{'thischild'};
-    my $CONFIG = $self->config();
-    return if $CONFIG->{'dryrun'};
+    my $config = $self->config();
+    return if $config->{'dryrun'};
     $thischild->add_header( $key, $value );
 }
 
 sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
     my $thischild = $self->{'thischild'};
-    my $CONFIG = $self->config();
-    return if $CONFIG->{'dryrun'};
+    my $config = $self->config();
+    return if $config->{'dryrun'};
     $thischild->insert_header( $index, $key, $value );
 }
 
 sub change_header {
     my ( $self, $key, $index, $value ) = @_;
     my $thischild = $self->{'thischild'};
-    my $CONFIG = $self->config();
-    return if $CONFIG->{'dryrun'};
+    my $config = $self->config();
+    return if $config->{'dryrun'};
     $thischild->change_header( $key, $index, $value );
 }
 

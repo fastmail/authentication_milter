@@ -22,7 +22,7 @@ sub envfrom_callback {
     # On MAILFROM
     #...
     my ( $self, $env_from ) = @_;
-    my $CONFIG = $self->handler_config();
+    my $config = $self->handler_config();
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
@@ -85,7 +85,7 @@ sub envfrom_callback {
             $self->format_header_entry( 'smtp.mailfrom', $self->get_address_from( $env_from ) ),
             $self->format_header_entry( 'smtp.helo',     $self->{'helo_name'} ),
         );
-        if ( !( $CONFIG->{'hide_none'} && $result_code eq 'none' ) ) {
+        if ( !( $config->{'hide_none'} && $result_code eq 'none' ) ) {
             $self->add_auth_header($auth_header);
         }
 
@@ -96,7 +96,7 @@ sub envfrom_callback {
 
         $self->dbgout( 'SPFCode', $result_code, LOG_INFO );
 
-        if ( !( $CONFIG->{'skip_none'} && $result_code eq 'none' ) ) {
+        if ( !( $config->{'skip_none'} && $result_code eq 'none' ) ) {
             my $result_header = $spf_result->received_spf_header();
             my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
             $self->prepend_header( $header, $value );

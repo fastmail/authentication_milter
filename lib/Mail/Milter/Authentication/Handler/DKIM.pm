@@ -74,11 +74,11 @@ sub header_callback {
 sub eoh_callback {
     my ($self) = @_;
     return if ( $self->{'failmode'} );
-    my $CONFIG = $self->handler_config();
+    my $config = $self->handler_config();
 
     if ( $self->{'has_dkim'} == 0 ) {
         $self->dbgout( 'DKIMResult', 'No DKIM headers', LOG_INFO );
-        if ( !( $CONFIG->{'hide_none'} ) ) {
+        if ( !( $config->{'hide_none'} ) ) {
             $self->add_auth_header(
                 $self->format_header_entry( 'dkim', 'none' )
                 . ' (no signatures found)' );
@@ -116,7 +116,7 @@ sub body_callback {
 
 sub eom_callback {
     my ($self) = @_;
-    my $CONFIG = $self->handler_config();
+    my $config = $self->handler_config();
     return if ( $self->{'failmode'} );
     return if ( $self->{'has_dkim'} == 0 );
     my $dkim = $self->get_dkim_object();
@@ -130,7 +130,7 @@ sub eom_callback {
         $self->dbgout( 'DKIMResult', $dkim_result_detail, LOG_INFO );
 
         if ( !$dkim->signatures ) {
-            if ( !( $CONFIG->{'hide_none'} && $dkim_result eq 'none' ) ) {
+            if ( !( $config->{'hide_none'} && $dkim_result eq 'none' ) ) {
                 $self->add_auth_header(
                     $self->format_header_entry( 'dkim', $dkim_result )
                       . ' (no signatures found)' );
@@ -164,7 +164,7 @@ sub eom_callback {
             }
             if (
                 !(
-                    $CONFIG->{'hide_none'} && $signature_result eq 'none'
+                    $config->{'hide_none'} && $signature_result eq 'none'
                 )
               )
             {
@@ -217,7 +217,7 @@ sub eom_callback {
         }
 
         # the alleged author of the email may specify how to handle email
-        if (   $CONFIG->{'check_adsp'}
+        if (   $config->{'check_adsp'}
             && ( $self->is_local_ip_address() == 0 )
             && ( $self->is_trusted_ip_address() == 0 )
             && ( $self->is_authenticated() == 0 ) )
@@ -249,8 +249,8 @@ sub eom_callback {
                   : $apply eq 'neutral' ? 'unknown'
                   :                       'unknown';
 
-                if ( ! ( $CONFIG->{'adsp_hide_none'} && $result eq 'none' ) ) {
-                    if ( ( ! $default ) or $CONFIG->{'show_default_adsp'} ) {
+                if ( ! ( $config->{'adsp_hide_none'} && $result eq 'none' ) ) {
+                    if ( ( ! $default ) or $config->{'show_default_adsp'} ) {
                         my $comment = '('
                           . $self->format_header_comment( ( $default ? 'default ' : q{} )
                             . "$name policy"

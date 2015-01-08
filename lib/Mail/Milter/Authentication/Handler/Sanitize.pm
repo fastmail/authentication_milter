@@ -11,13 +11,13 @@ use Sys::Syslog qw{:standard :macros};
 
 sub is_hostname_mine {
     my ( $self, $check_hostname ) = @_;
-    my $CONFIG = $self->handler_config();
+    my $config = $self->handler_config();
 
     my $hostname = $self->get_my_hostname();
     my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
 
-    if ( exists( $CONFIG->{'hosts_to_remove'} ) ) {
-        foreach my $remove_hostname ( @{ $CONFIG->{'hosts_to_remove'} } ) {
+    if ( exists( $config->{'hosts_to_remove'} ) ) {
+        foreach my $remove_hostname ( @{ $config->{'hosts_to_remove'} } ) {
             if (
                 substr( lc $check_hostname, ( 0 - length($remove_hostname) ) ) eq
                 lc $remove_hostname )
@@ -51,9 +51,9 @@ sub envfrom_callback {
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
-    my $CONFIG = $self->handler_config();
+    my $config = $self->handler_config();
     return if ( $self->is_trusted_ip_address() );
-    return if ( lc $CONFIG->{'remove_headers'} eq 'no' );
+    return if ( lc $config->{'remove_headers'} eq 'no' );
     if ( $header eq 'Authentication-Results' ) {
         if ( !exists $self->{'auth_result_header_index'} ) {
             $self->{'auth_result_header_index'} = 0;
@@ -64,7 +64,7 @@ sub header_callback {
         $domain_part =~ s/ +//g;
         if ( $self->is_hostname_mine($domain_part) ) {
             $self->remove_auth_header( $self->{'auth_result_header_index'} );
-            if ( lc $CONFIG->{'remove_headers'} ne 'silent' ) {
+            if ( lc $config->{'remove_headers'} ne 'silent' ) {
                 my $forged_header =
                   '(The following Authentication Results header was removed by '
                   . $self->get_my_hostname() . "\n"
@@ -80,8 +80,8 @@ sub header_callback {
 
 sub eom_callback {
     my ($self) = @_;
-    my $CONFIG = $self->handler_config();
-    return if ( lc $CONFIG->{'remove_headers'} eq 'no' );
+    my $config = $self->handler_config();
+    return if ( lc $config->{'remove_headers'} eq 'no' );
     if ( exists( $self->{'remove_auth_headers'} ) ) {
         foreach my $header ( reverse @{ $self->{'remove_auth_headers'} } ) {
             $self->dbgout( 'RemoveAuthHeader', $header, LOG_DEBUG );

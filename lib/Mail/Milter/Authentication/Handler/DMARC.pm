@@ -181,7 +181,7 @@ sub eom_requires {
 
 sub eom_callback {
     my ($self) = @_;
-    my $CONFIG = $self->handler_config();
+    my $config = $self->handler_config();
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
@@ -206,7 +206,7 @@ sub eom_callback {
         my $dmarc_result = $dmarc->validate();
         my $dmarc_code   = $dmarc_result->result;
         $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
-        if ( !( $CONFIG->{'hide_none'} && $dmarc_code eq 'none' ) ) {
+        if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
             my $dmarc_policy;
             if ( $dmarc_code ne 'pass' ) {
                 $dmarc_policy = eval { $dmarc_result->disposition() };
@@ -217,7 +217,7 @@ sub eom_callback {
             }
             my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
             my $is_list_entry = q{};
-            if ( $CONFIG->{'detect_list_id'} && $self->{'is_list'} ) {
+            if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
                 $is_list_entry = ';has-list-id=yes';
             }
             if ($dmarc_policy) {

@@ -39,7 +39,7 @@ sub get_config {
 
     my $file = '/etc/authentication_milter.json';
 
-    my $CONFIG = load_file( $file );
+    my $config = load_file( $file );
 
     my $folder = '/etc/authentication_milter.d';
     if ( -d $folder ) {
@@ -55,15 +55,15 @@ sub get_config {
             $file =~ /(^.*)\.json$/;
             my $handler = $1;
             ## ToDo Consider what to do if config already exists in .json config
-            $CONFIG->{'handlers'}->{$handler} = load_file( join( '/', $folder, $file ) );
+            $config->{'handlers'}->{$handler} = load_file( join( '/', $folder, $file ) );
         }
     }
 
-    my @load_handlers = keys %{ $CONFIG->{'handlers'} };
+    my @load_handlers = keys %{ $config->{'handlers'} };
     @load_handlers = grep { ! /^\!/ } @load_handlers;
-    $CONFIG->{'load_handlers'} = \@load_handlers;
+    $config->{'load_handlers'} = \@load_handlers;
 
-    return $CONFIG;
+    return $config;
 
 }
 

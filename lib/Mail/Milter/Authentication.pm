@@ -54,7 +54,6 @@ sub child_init_hook {
 
     my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
 
-
     $self->{'callback_flags'} = $callback_flags;
     $self->{'callbacks_list'} = $callbacks_list;
     $self->{'callbacks'}      = $callbacks;
@@ -131,20 +130,20 @@ sub process_request {
 
 sub start {
     my ($args)     = @_;
-    my $CONFIG     = get_config();
-    my $connection = $args->{'connection'}
-      || die('No connection details given');
-    my $pid_file = $args->{'pid_file'};
-    my $listen_backlog = $CONFIG->{'listen_backlog'} || 20;
-    my $max_children           = $CONFIG->{'max_children'} || 100;
-    my $max_requests_per_child = $CONFIG->{'max_requests_per_child'} || 200;
-    my $min_children           = $CONFIG->{'min_children'} || 20;
-    my $max_spare_children     = $CONFIG->{'max_spare_children'} || 20;
-    my $min_spare_children     = $CONFIG->{'min_spare_children'} || 10;
+    my $connection = $args->{'connection'} || die('No connection details given');
+    my $pid_file   = $args->{'pid_file'};
 
-    my %args;
+    my $config                 = get_config();
+    my $listen_backlog         = $config->{'listen_backlog'}         || 20;
+    my $max_children           = $config->{'max_children'}           || 100;
+    my $max_requests_per_child = $config->{'max_requests_per_child'} || 200;
+    my $min_children           = $config->{'min_children'}           || 20;
+    my $max_spare_children     = $config->{'max_spare_children'}     || 20;
+    my $min_spare_children     = $config->{'min_spare_children'}     || 10;
 
-    $args{'no_client_stdout'} = 1;
+    my %srvargs;
+
+    $srvargs{'no_client_stdout'} = 1;
 
     if ( $args->{'daemon'} ) {
         if ( $> == 0 ) {
@@ -156,14 +155,14 @@ sub start {
                     "requests=$max_requests_per_child",
                 )
             );
-            $args{'background'} = 1;
-            $args{'setsid'} = 1;
-            $args{'pid_file'} = $pid_file;
-            $args{'max_servers'} = $max_children;
-            $args{'max_requests'} = $max_requests_per_child;
-            $args{'min_servers'} = $min_children;
-            $args{'min_spare_servers'} = $min_spare_children;
-            $args{'max_spare_servers'} = $max_spare_children;
+            $srvargs{'background'}        = 1;
+            $srvargs{'setsid'}            = 1;
+            $srvargs{'pid_file'}          = $pid_file;
+            $srvargs{'max_servers'}       = $max_children;
+            $srvargs{'max_requests'}      = $max_requests_per_child;
+            $srvargs{'min_servers'}       = $min_children;
+            $srvargs{'min_spare_servers'} = $min_spare_children;
+            $srvargs{'max_spare_servers'} = $max_spare_children;
         }
         else {
             loginfo('Not running as root, daemonize ignored!');
@@ -171,11 +170,11 @@ sub start {
     }
 
     if ( $> == 0 ) {
-        my $user  = $CONFIG->{'runas'}    || 'nobody';
-        my $group = $CONFIG->{'rungroup'} || 'nogroup'; 
+        my $user  = $config->{'runas'}    || 'nobody';
+        my $group = $config->{'rungroup'} || 'nogroup'; 
         loginfo("run as user=$user group=$group");
-        $args{'user'}  = $user;
-        $args{'group'} = $group;
+        $srvargs{'user'}  = $user;
+        $srvargs{'group'} = $group;
     }
     else {
         loginfo('Not running as root, could not drop privs - be careful!');
@@ -195,11 +194,11 @@ sub start {
                     "backlog=$listen_backlog"
                 )
             );
-            $args{'host'} = $host;
-            $args{'port'} = $path;
-            $args{'ipv'}  = '*';
-            $args{'proto'} = 'tcp';
-            $args{'listen'} = $listen_backlog;
+            $srvargs{'host'}   = $host;
+            $srvargs{'port'}   = $path;
+            $srvargs{'ipv'}    = '*';
+            $srvargs{'proto'}  = 'tcp';
+            $srvargs{'listen'} = $listen_backlog;
         }
         elsif ( $type eq 'unix' ) {
             loginfo(
@@ -209,13 +208,13 @@ sub start {
                     "backlog=$listen_backlog",
                 )
             );
-            $args{'port'} = $path;
-            $args{'proto'} = 'unix';
-            $args{'listen'} = $listen_backlog;
+            $srvargs{'port'}   = $path;
+            $srvargs{'proto'}  = 'unix';
+            $srvargs{'listen'} = $listen_backlog;
 
-            my $umask = $CONFIG->{'umask'};
+            my $umask = $config->{'umask'};
             if ($umask) {
-                umask (  oct( $umask ) );
+                umask ( oct( $umask ) );
                 loginfo( 'setting umask to ' . $umask );
             }
 
@@ -228,7 +227,7 @@ sub start {
     $PROGRAM_NAME = '[authentication_milter:init]';
 
     warn "\nStarting server\n";
-    __PACKAGE__->run( %args );
+    __PACKAGE__->run( %srvargs );
 
     # Never reaches here.
     logerror('something went horribly wrong');
@@ -250,8 +249,8 @@ sub setup_handlers {
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'}->{'_Handler'} = $handler;
 
-    my $CONFIG = $self->{'config'};
-    foreach my $name ( @{$CONFIG->{'load_handlers'}} ) {
+    my $config = $self->{'config'};
+    foreach my $name ( @{$config->{'load_handlers'}} ) {
         $self->setup_handler( $name );
     }
     $self->sort_all_callbacks();
@@ -377,8 +376,8 @@ sub destroy_objects {
     logdebug ( 'destroy objects' );
     my $handler = $self->{'handler'}->{'_Handler'};
     $handler->destroy_all_objects();
-    my $CONFIG = $self->{'config'};
-    foreach my $name ( @{$CONFIG->{'load_handlers'}} ) {
+    my $config = $self->{'config'};
+    foreach my $name ( @{$config->{'load_handlers'}} ) {
         $self->destroy_handler( $name );
     }
     delete $self->{'handler'}->{'_Handler'}->{'config'};
@@ -477,8 +476,8 @@ sub process_command {
             $returncode = SMFIR_ACCEPT;
         }
 
-        my $CONFIG = $self->{'config'};
-        if ( $CONFIG->{'dryrun'} ) {
+        my $config = $self->{'config'};
+        if ( $config->{'dryrun'} ) {
             if ( $returncode ne SMFIR_CONTINUE ) {
                 loginfo ( "dryrun returncode changed from $returncode to continue" );
                 $returncode = SMFIR_CONTINUE;
@@ -608,8 +607,8 @@ sub loginfo {
 sub logdebug {
     my ($line) = @_;
     warn "$PID: $line\n";
-    my $CONFIG = get_config();
-    if ( $CONFIG->{'debug'} ) {
+    my $config = get_config();
+    if ( $config->{'debug'} ) {
         openlog( 'authentication_milter', 'pid', LOG_MAIL );
         setlogmask( LOG_MASK(LOG_DEBUG) );
         syslog( LOG_DEBUG, $line );

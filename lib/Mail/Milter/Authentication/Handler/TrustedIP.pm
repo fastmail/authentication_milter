@@ -12,11 +12,11 @@ use Sys::Syslog qw{:standard :macros};
 
 sub is_trusted_ip_address {
     my ( $self, $ip_address ) = @_;
-    my $CONFIG = $self->handler_config();
-    return 0 if not exists( $CONFIG->{'trusted_ip_list'} );
+    my $config = $self->handler_config();
+    return 0 if not exists( $config->{'trusted_ip_list'} );
     my $trusted = 0;
     my $ip_obj  = Net::IP->new($ip_address);
-    foreach my $trusted_ip ( @{ $CONFIG->{'trusted_ip_list'} } ) {
+    foreach my $trusted_ip ( @{ $config->{'trusted_ip_list'} } ) {
         my $trusted_obj = Net::IP->new($trusted_ip);
         my $is_overlap = $ip_obj->overlaps($trusted_obj) || 0;
         if (

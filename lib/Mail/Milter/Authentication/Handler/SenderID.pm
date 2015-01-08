@@ -36,7 +36,7 @@ sub header_callback {
 
 sub eoh_callback {
     my ($self) = @_;
-    my $CONFIG = $self->handler_config();
+    my $config = $self->handler_config();
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
@@ -81,7 +81,7 @@ sub eoh_callback {
         my $result_code = $spf_result->code();
         $self->dbgout( 'SenderIdCode', $result_code, LOG_INFO );
 
-        if ( ! ( $CONFIG->{'hide_none'} && $result_code eq 'none' ) ) {
+        if ( ! ( $config->{'hide_none'} && $result_code eq 'none' ) ) {
             my $auth_header = $self->format_header_entry( 'senderid', $result_code );
             $self->add_auth_header( $auth_header );
 #my $result_local  = $spf_result->local_explanation;
