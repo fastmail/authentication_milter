@@ -1,11 +1,9 @@
-package Mail::Milter::Authentication::Handler::TrustedIP;
-
 use strict;
 use warnings;
 
-our $VERSION = 0.5;
-
+package Mail::Milter::Authentication::Handler::TrustedIP;
 use base 'Mail::Milter::Authentication::Handler';
+our $VERSION = 0.5;
 
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};

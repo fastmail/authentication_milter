@@ -1,8 +1,7 @@
-package Mail::Milter::Authentication::Handler;
-
 use strict;
 use warnings;
 
+package Mail::Milter::Authentication::Handler;
 our $VERSION = 0.5;
 
 use Email::Address;

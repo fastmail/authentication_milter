@@ -1,11 +1,10 @@
-package Mail::Milter::Authentication::Constants;
-
 use strict;
 use warnings;
 
+package Mail::Milter::Authentication::Constants;
+use base 'Exporter';
 our $VERSION = 0.5;
 
-use base 'Exporter';
 
 use constant SMFIA_UNKNOWN      => 'U';
 use constant SMFIA_UNIX         => 'L';

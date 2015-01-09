@@ -1,8 +1,7 @@
-package Mail::Milter::Authentication::DNSCache;
-
 use strict;
 use warnings;
 
+package Mail::Milter::Authentication::DNSCache;
 our $VERSION = 0.5;
 
 # Package to override Net::DNS::Resolver and add cache features
@@ -10,9 +9,6 @@ our $VERSION = 0.5;
 1;
 
 package Net::DNS::Resolver;
-
-use strict;
-use warnings;
 
 {
     my $global_cached_data   = {};
