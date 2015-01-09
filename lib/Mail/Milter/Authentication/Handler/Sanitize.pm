@@ -64,12 +64,12 @@ sub header_callback {
             $self->remove_auth_header( $self->{'auth_result_header_index'} );
             if ( lc $config->{'remove_headers'} ne 'silent' ) {
                 my $forged_header =
-                  '(The following Authentication Results header was removed by '
-                  . $self->get_my_hostname() . "\n"
-                  . '    as the supplied domain conflicted with its own)' . "\n"
+                  '(Received Authentication-Results header removed by '
+                  . $self->get_my_hostname()
+                  . ')' . "\n"
                   . '    '
                   . $value;
-                $self->append_header( 'X-Invalid-Authentication-Results',
+                $self->append_header( 'X-Received-Authentication-Results',
                     $forged_header );
             }
         }
