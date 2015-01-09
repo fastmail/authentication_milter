@@ -275,8 +275,7 @@ sub eom_callback {
 # END TEMPORARY CODE CORE DUMP
 
             $self->destroy_object('dkim');
-            delete $self->{'headers'};
-            delete $self->{'body'};
+            $self->destroy_object('dmarc');
             return;
         }
         elsif ( $error =~ /invalid header_from at / ) {
