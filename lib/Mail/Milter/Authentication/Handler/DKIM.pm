@@ -281,6 +281,7 @@ sub eom_callback {
             $self->log_error( "PANIC DETECTED: in DKIM method: $error" );
             $self->exit_on_close();
             $self->tempfail_on_error();
+            $self->add_auth_header('dkim=temperror (internal error)');
 
 # BEGIN TEMPORARY CODE CORE DUMP
             use Data::Dumper;
@@ -296,18 +297,20 @@ sub eom_callback {
             delete $self->{'body'};
             return;
         }
-        elsif ( $error =~ /DNS error: query timed out/
+        elsif ( $error =~ /^DNS error: query timed out/
+                or $error =~ /^DNS query timeout/
         ){
             $self->log_error( 'Temp DKIM Error - ' . $error );
-            $self->add_auth_header('dkim=temperror');
+            $self->add_auth_header('dkim=temperror (dns timeout)');
             $self->destroy_object('dkim');
             delete $self->{'headers'};
             delete $self->{'body'};
         }
-        elsif ( $error =~ /no domain to fetch policy for/
+        elsif ( $error =~ /^no domain to fetch policy for$/
+                or $error =~ /^policy syntax error$/
         ){
             $self->log_error( 'Perm DKIM Error - ' . $error );
-            $self->add_auth_header('dkim=permerror');
+            $self->add_auth_header('dkim=permerror (' . $error . ')');
             $self->destroy_object('dkim');
             delete $self->{'headers'};
             delete $self->{'body'};
