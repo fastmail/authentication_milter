@@ -30,6 +30,9 @@ sub pre_loop_hook {
        $protocol &= ~SMFIP_NOHDRS;
        $protocol &= ~SMFIP_NOEOH;
     $self->{'protocol'} = $protocol;
+    
+    my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
+    $self->{'callback_flags'} = $callback_flags;
 
     # Load handlers
     foreach my $name ( @{$config->{'load_handlers'}} ) {
@@ -50,9 +53,6 @@ sub child_init_hook {
     loginfo( "Child process $PID starting up" );
     $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
 
-    my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
-
-    $self->{'callback_flags'} = $callback_flags;
     $self->{'callbacks_list'} = $callbacks_list;
     $self->{'callbacks'}      = $callbacks;
     $self->{'count'}          = $count;
@@ -266,6 +266,7 @@ sub load_handler {
 
     my $package = "Mail::Milter::Authentication::Handler::$name";
     if ( ! is_loaded ( $package ) ) {
+       logdebug( "Load Handler Module $name" );
        load $package;
     }
 }

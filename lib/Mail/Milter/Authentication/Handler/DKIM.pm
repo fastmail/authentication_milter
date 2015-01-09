@@ -5,6 +5,8 @@ package Mail::Milter::Authentication::Handler::DKIM;
 use base 'Mail::Milter::Authentication::Handler';
 our $VERSION = 0.5;
 
+use Data::Dumper;
+use English;
 use Sys::Syslog qw{:standard :macros};
 
 use Mail::DKIM;
@@ -139,7 +141,7 @@ sub eom_callback {
                 if ( $signature_result_detail =~ /DNS query timeout for (.*) at / ) {
                     my $timeout_domain = $1;
                     $self->log_error( "TIMEOUT DETECTED: in DKIM result: $timeout_domain" );
-                    $signature_result_detail = "DNS query timeont for $timeout_domain";
+                    $signature_result_detail = "DNS query timeout for $timeout_domain";
                 }
                 if ( $signature_result_detail =~ /public key: panic:/ ) {
                     $self->log_error( "PANIC DETECTED: in DKIM result: $signature_result_detail" );
@@ -261,6 +263,7 @@ sub eom_callback {
     if ( my $error = $@ ) {
 
         $self->{'failmode'} = 1;
+        # Also in DMARC module
         if ( $error =~ / on an undefined value at /
                 or $error =~ / as a HASH ref while /
                 or $error =~ / as an ARRAY reference at /
@@ -282,11 +285,10 @@ sub eom_callback {
             $self->add_auth_header('dkim=temperror (internal error)');
 
 # BEGIN TEMPORARY CODE CORE DUMP
-            use Data::Dumper;
-            use English;
-            open my $core, '>', "/tmp/authentication_milter.core.$PID";
+            open my $core, '>>', "/tmp/authentication_milter.core.$PID";
             print $core "$error\n\n";
             print $core Dumper( $self->{'thischild'} );
+            print $core "\n\n";
             close $core;
 # END TEMPORARY CODE CORE DUMP
 
