@@ -373,8 +373,8 @@ sub top_close_callback {
     delete $self->{'add_headers'};
     delete $self->{'ip_address'};
     delete $self->{'return_code'};
-    $self->clear_all_symbols();
     $self->dbgoutwrite();
+    $self->clear_all_symbols();
     $self->status('postclose');
     return $self->get_return();
 }
