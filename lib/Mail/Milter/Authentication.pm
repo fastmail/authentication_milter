@@ -145,7 +145,7 @@ sub start {
     $srvargs{'no_client_stdout'} = 1;
 
     if ( $args->{'daemon'} ) {
-        if ( $> == 0 ) {
+        if ( $EUID == 0 ) {
             loginfo(
                 join( ' ',
                     'daemonize',
@@ -168,7 +168,7 @@ sub start {
         }
     }
 
-    if ( $> == 0 ) {
+    if ( $EUID == 0 ) {
         my $user  = $config->{'runas'}    || 'nobody';
         my $group = $config->{'rungroup'} || 'nogroup'; 
         loginfo("run as user=$user group=$group");
