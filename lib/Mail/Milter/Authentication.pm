@@ -53,11 +53,12 @@ sub child_init_hook {
     loginfo( "Child process $PID starting up" );
     $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
 
-    $self->{'callbacks_list'} = $callbacks_list;
-    $self->{'callbacks'}      = $callbacks;
-    $self->{'count'}          = $count;
-    $self->{'handler'}        = $handler;
-    $self->{'object'}         = $object;
+    use Clone qw{ clone };
+    $self->{'callbacks_list'} = clone($callbacks_list);
+    $self->{'callbacks'}      = clone($callbacks);
+    $self->{'count'}          = clone($count);
+    $self->{'handler'}        = clone($handler);
+    $self->{'object'}         = clone($object);
 
     $self->setup_handlers();
 }
