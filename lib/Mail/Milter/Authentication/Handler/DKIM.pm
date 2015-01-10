@@ -120,7 +120,7 @@ sub eom_callback {
         }
         foreach my $signature ( $dkim->signatures() ) {
 
-            push @{ $self->{'dmarc_result'} } {
+            push @{ $self->{'dmarc_result'} }, {
                 domain       => $signature->domain,
                 selector     => $signature->selector,
                 result       => $signature->result,
