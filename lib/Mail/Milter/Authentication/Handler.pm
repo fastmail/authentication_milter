@@ -371,7 +371,8 @@ sub top_close_callback {
     delete $self->{'pre_headers'};
     delete $self->{'add_headers'};
     delete $self->{'ip_address'};
-    $self->clear_symbols();
+    delete $self->{'return_code'};
+    $self->clear_all_symbols();
     $self->dbgoutwrite();
     $self->status('postclose');
     return $self->get_return();
@@ -521,6 +522,12 @@ sub exit_on_close {
     $top_handler->{'exit_on_close'} = 1;
 }
 
+sub clear_all_symbols {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    delete $top_handler->{'symbols'};
+}
+
 sub clear_symbols {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
@@ -539,7 +546,6 @@ sub clear_symbols {
             'C' => $connect_symbols,
         };
     }
-
 }
 
 sub set_symbol {
@@ -1034,9 +1040,13 @@ Remove the references to all objects currently stored in the object store.
 
 Exit this child once it has completed, do not process further requests with this child.
 
-=item clear_symbols()
+=item clear_all_symbols()
 
 Clear the symbol store.
+
+=item clear_symbols()
+
+Clear the symbol store but do not remove the Connect symbols.
 
 =item set_symbol( $code, $key, $value )
 
