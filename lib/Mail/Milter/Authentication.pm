@@ -109,6 +109,7 @@ sub process_request {
         $quit = 1;
     }
     $self->fatal('exit_on_close requested') if $quit;
+    $self->{'handler'}->{'_Handler'}->clear_symbols();
 
     my $process_table = Proc::ProcessTable->new();
     foreach my $process ( @{$process_table->table} ) {
@@ -378,6 +379,7 @@ sub destroy_objects {
     my ( $self ) = @_;
     logdebug ( 'destroy objects' );
     my $handler = $self->{'handler'}->{'_Handler'};
+    $handler->clear_symbols();
     $handler->destroy_all_objects();
     my $config = $self->{'config'};
     foreach my $name ( @{$config->{'load_handlers'}} ) {
