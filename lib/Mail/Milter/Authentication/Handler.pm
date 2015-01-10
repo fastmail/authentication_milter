@@ -371,7 +371,6 @@ sub top_close_callback {
     delete $self->{'pre_headers'};
     delete $self->{'add_headers'};
     delete $self->{'ip_address'};
-    delete $self->{'return_code'};
     $self->dbgoutwrite();
     $self->clear_all_symbols();
     $self->status('postclose');
