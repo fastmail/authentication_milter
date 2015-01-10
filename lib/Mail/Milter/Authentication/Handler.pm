@@ -142,6 +142,7 @@ sub top_envfrom_callback {
         delete $self->{'auth_headers'};
         delete $self->{'pre_headers'};
         delete $self->{'add_headers'};
+        $self->clear_symbols();
 
         my $callbacks = $self->get_callbacks( 'envfrom' );
         foreach my $handler ( @$callbacks ) {
@@ -550,6 +551,7 @@ sub clear_symbols {
 
 sub set_symbol {
     my ( $self, $code, $key, $value ) = @_;
+    $self->dbgout( 'SetSymbol', "$code: $key: $value", LOG_DEBUG );
     my $top_handler = $self->get_top_handler();
     if ( ! exists ( $top_handler->{'symbols'} ) ) {
         $top_handler->{'symbols'} = {};
