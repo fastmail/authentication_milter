@@ -109,7 +109,6 @@ sub process_request {
         $quit = 1;
     }
     $self->fatal('exit_on_close requested') if $quit;
-    $self->{'handler'}->{'_Handler'}->clear_symbols();
 
     my $process_table = Proc::ProcessTable->new();
     foreach my $process ( @{$process_table->table} ) {
@@ -379,7 +378,6 @@ sub destroy_objects {
     my ( $self ) = @_;
     logdebug ( 'destroy objects' );
     my $handler = $self->{'handler'}->{'_Handler'};
-    $handler->clear_symbols();
     $handler->destroy_all_objects();
     my $config = $self->{'config'};
     foreach my $name ( @{$config->{'load_handlers'}} ) {
@@ -403,7 +401,6 @@ sub process_command {
         $returncode = $handler->top_connect_callback( $host, $sockaddr_in );
     }
     elsif ( $command eq SMFIC_ABORT ) {
-        $handler->clear_symbols();
         $returncode = $handler->top_abort_callback();
     }
     elsif ( $command eq SMFIC_BODY ) {
