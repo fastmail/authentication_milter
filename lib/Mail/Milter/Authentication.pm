@@ -39,26 +39,32 @@ sub pre_loop_hook {
         $self->load_handler( $name );
     }
 
+    $self->{'callbacks_list'} = {};
+    $self->{'callbacks'}      = {};
+    $self->{'count'}          = 0;
+    $self->{'handler'}        = {};
+    $self->{'object'}         = {};
+
 }
 
 sub child_init_hook {
     my ( $self ) = @_;
 
-    my $callbacks_list = {};
-    my $callbacks      = {};
-    my $handler        = {};
-    my $object         = {};
-    my $count          = 0;
+#    my $callbacks_list = {};
+#    my $callbacks      = {};
+#    my $handler        = {};
+#    my $object         = {};
+#    my $count          = 0;
 
     loginfo( "Child process $PID starting up" );
     $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
 
-    use Clone qw{ clone };
-    $self->{'callbacks_list'} = clone($callbacks_list);
-    $self->{'callbacks'}      = clone($callbacks);
-    $self->{'count'}          = clone($count);
-    $self->{'handler'}        = clone($handler);
-    $self->{'object'}         = clone($object);
+#    use Clone qw{ clone };
+#    $self->{'callbacks_list'} = clone($callbacks_list);
+#    $self->{'callbacks'}      = clone($callbacks);
+#    $self->{'count'}          = clone($count);
+#    $self->{'handler'}        = clone($handler);
+#    $self->{'object'}         = clone($object);
 
     $self->setup_handlers();
 }
