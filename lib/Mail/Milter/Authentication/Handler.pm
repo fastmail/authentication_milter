@@ -142,7 +142,6 @@ sub top_envfrom_callback {
         delete $self->{'auth_headers'};
         delete $self->{'pre_headers'};
         delete $self->{'add_headers'};
-        $self->clear_symbols();
 
         my $callbacks = $self->get_callbacks( 'envfrom' );
         foreach my $handler ( @$callbacks ) {
