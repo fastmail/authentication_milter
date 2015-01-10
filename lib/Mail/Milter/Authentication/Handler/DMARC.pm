@@ -196,13 +196,7 @@ sub eom_callback {
             $self->{'failmode'} = 1;
             return;
         }
-        my $dkim = $self->get_object('dkim');
-        if ( $dkim ) {
-            $dmarc->dkim($dkim);
-        }
-        else {
-            $dmarc->dkim( [] );
-        }
+        $dmarc->dkim( $dkim_handler->{'dmarc_result'} );
         my $dmarc_result = $dmarc->validate();
         my $dmarc_code   = $dmarc_result->result;
         $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );

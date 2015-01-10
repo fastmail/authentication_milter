@@ -13,38 +13,13 @@ use Mail::DKIM;
 use Mail::DKIM::Verifier;
 use Mail::DKIM::DNS;
 
-sub get_dkim_object {
-    my ( $self, $env_from ) = @_;
-    $self->{'failmode'} = 0;
-    my $dkim = $self->get_object('dkim');
-    if ( $dkim ) {
-        return $dkim;
-    }
-
-    eval {
-        $dkim = Mail::DKIM::Verifier->new();
-        $self->set_object('dkim',$dkim);
-        # The following requires Mail::DKIM > 0.4
-        if ( $Mail::DKIM::VERSION >= 0.4 ) {
-            my $resolver = $self->get_object('resolver');
-            Mail::DKIM::DNS::resolver($resolver);
-        }
-    };
-    if ( my $error = $@ ) {
-        $self->log_error( 'DKIM Setup Error ' . $error );
-        $self->add_auth_header('dkim=temperror');
-        $self->{'failmode'} = 1;
-    }
-    return $dkim;
-}
-
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    $self->{'failmode'} = 0;
-    $self->destroy_object('dkim');
-    $self->{'headers'}  = [];
-    $self->{'body'}     = [];
-    $self->{'has_dkim'} = 0;
+    $self->{'failmode'}     = 0;
+    $self->{'headers'}      = [];
+    $self->{'body'}         = [];
+    $self->{'has_dkim'}     = 0;
+    $self->{'dmarc_result'} = []
 }
 
 sub header_callback {
@@ -103,8 +78,21 @@ sub eom_callback {
     return if ( $self->{'has_dkim'} == 0 );
     return if ( $self->{'failmode'} );
 
-    my $dkim = $self->get_dkim_object();
-    return if ( $self->{'failmode'} );
+    my $dkim;
+    eval {
+        $dkim = Mail::DKIM::Verifier->new();
+        # The following requires Mail::DKIM > 0.4
+        if ( $Mail::DKIM::VERSION >= 0.4 ) {
+            my $resolver = $self->get_object('resolver');
+            Mail::DKIM::DNS::resolver($resolver);
+        }
+    };
+    if ( my $error = $@ ) {
+        $self->log_error( 'DKIM Setup Error ' . $error );
+        $self->add_auth_header('dkim=temperror');
+        $self->{'failmode'} = 1;
+        return;
+    }
 
     my $config = $self->handler_config();
 
@@ -131,6 +119,13 @@ sub eom_callback {
             }
         }
         foreach my $signature ( $dkim->signatures() ) {
+
+            push @{ $self->{'dmarc_result'} } {
+                domain       => $signature->domain,
+                selector     => $signature->selector,
+                result       => $signature->result,
+                human_result => $signature->result_detail,
+            };
 
             $self->dbgout( 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
             $self->dbgout( 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
@@ -292,7 +287,6 @@ sub eom_callback {
             close $core;
 # END TEMPORARY CODE CORE DUMP
 
-            $self->destroy_object('dkim');
             delete $self->{'headers'};
             delete $self->{'body'};
             return;
@@ -302,7 +296,6 @@ sub eom_callback {
         ){
             $self->log_error( 'Temp DKIM Error - ' . $error );
             $self->add_auth_header('dkim=temperror (dns timeout)');
-            $self->destroy_object('dkim');
             delete $self->{'headers'};
             delete $self->{'body'};
         }
@@ -311,7 +304,6 @@ sub eom_callback {
         ){
             $self->log_error( 'Perm DKIM Error - ' . $error );
             $self->add_auth_header('dkim=permerror (' . $error . ')');
-            $self->destroy_object('dkim');
             delete $self->{'headers'};
             delete $self->{'body'};
         }
@@ -322,7 +314,6 @@ sub eom_callback {
             # and tempfail/exit
             $self->exit_on_close();
             $self->tempfail_on_error();
-            $self->destroy_object('dkim');
             delete $self->{'headers'};
             delete $self->{'body'};
         }
@@ -335,7 +326,7 @@ sub close_callback {
     delete $self->{'headers'};
     delete $self->{'body'};
     delete $self->{'has_dkim'};
-    $self->destroy_object('dkim');
+    delete $self->{'dmarc_result'};
 }
 
 1;
