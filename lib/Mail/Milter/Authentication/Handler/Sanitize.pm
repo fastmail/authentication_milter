@@ -31,6 +31,7 @@ sub is_hostname_mine {
     {
         return 1;
     }
+    return 0;
 }
 
 sub remove_auth_header {
@@ -39,12 +40,14 @@ sub remove_auth_header {
         $self->{'remove_auth_headers'} = [];
     }
     push @{ $self->{'remove_auth_headers'} }, $value;
+    return;
 }
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     delete $self->{'auth_result_header_index'};
     delete $self->{'remove_auth_headers'};
+    return;
 }
 
 sub header_callback {
@@ -74,6 +77,7 @@ sub header_callback {
             }
         }
     }
+    return;
 }
 
 sub eom_callback {
@@ -86,12 +90,14 @@ sub eom_callback {
             $self->change_header( 'Authentication-Results', $header, q{} );
         }
     }
+    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'remove_auth_headers'};
     delete $self->{'auth_result_header_index'};
+    return;
 }
 
 1;

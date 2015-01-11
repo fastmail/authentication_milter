@@ -42,6 +42,7 @@ sub get_dmarc_object {
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'helo_name'} = $helo_host;
+    return;
 }
 
 sub envfrom_requires {
@@ -119,6 +120,7 @@ sub envfrom_callback {
         $self->add_auth_header('dmarc=temperror');
     }
 
+    return;
 }
 
 sub envrcpt_callback {
@@ -138,6 +140,8 @@ sub envrcpt_callback {
         $self->{'failmode'} = 1;
         return;
     }
+
+    return;
 }
 
 sub header_callback {
@@ -171,6 +175,7 @@ sub header_callback {
             return;
         }
     }
+    return;
 }
 
 sub eom_requires {
@@ -282,6 +287,7 @@ sub eom_callback {
         }
         return;
     }
+    return;
 }
 
 sub close_callback {
@@ -291,6 +297,7 @@ sub close_callback {
     delete $self->{'is_list'};
     delete $self->{'from_header'};
     $self->destroy_object('dmarc');
+    return;
 }
 
 1;

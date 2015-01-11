@@ -13,6 +13,7 @@ sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'failmode'} = 0;
     $self->{'helo_name'} = $helo_host;
+    return;
 }
 
 sub envfrom_callback {
@@ -107,6 +108,7 @@ sub envfrom_callback {
         $self->{'failmode'} = 1;
     }
 
+    return;
 }
 
 sub close_callback {
@@ -116,6 +118,7 @@ sub close_callback {
     delete $self->{'dmarc_result'};
     delete $self->{'failmode'};
     delete $self->{'helo_name'};
+    return;
 }
 
 1;

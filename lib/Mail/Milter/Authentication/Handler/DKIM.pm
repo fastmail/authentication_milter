@@ -19,7 +19,8 @@ sub envfrom_callback {
     $self->{'headers'}      = [];
     $self->{'body'}         = [];
     $self->{'has_dkim'}     = 0;
-    $self->{'dmarc_result'} = []
+    $self->{'dmarc_result'} = [];
+    return;
 }
 
 sub header_callback {
@@ -45,6 +46,7 @@ sub header_callback {
         push @{$self->{'headers'}} , $x_dkim_chunk;
         $self->{'has_dkim'} = 1;
     }
+    return;
 }
 
 sub eoh_callback {
@@ -60,6 +62,7 @@ sub eoh_callback {
                 . ' (no signatures found)' );
         }
     }
+    return;
 }
 
 sub body_callback {
@@ -70,6 +73,7 @@ sub body_callback {
     my $EOL        = "\015\012";
     $dkim_chunk =~ s/\015?\012/$EOL/g;
     push @{$self->{'body'}} , $dkim_chunk;
+    return;
 }
 
 sub eom_callback {
@@ -318,6 +322,7 @@ sub eom_callback {
             delete $self->{'body'};
         }
     }
+    return;
 }
 
 sub close_callback {
@@ -327,6 +332,7 @@ sub close_callback {
     delete $self->{'body'};
     delete $self->{'has_dkim'};
     delete $self->{'dmarc_result'};
+    return;
 }
 
 1;

@@ -51,11 +51,13 @@ sub connect_callback {
         $self->add_c_auth_header('x-local-ip=pass');
         $self->{'is_local_ip_address'} = 1;
     }
+    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'is_local_ip_address'};
+    return;
 }
 
 1;

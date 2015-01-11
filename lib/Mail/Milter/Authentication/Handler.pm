@@ -380,6 +380,7 @@ sub status {
     else {
         $PROGRAM_NAME = '[authentication_milter:processing(' . $count . ')]';
     }
+    return;
 }
 
 sub config {
@@ -417,6 +418,7 @@ sub set_return {
     my ( $self, $return ) = @_;
     my $top_handler = $self->get_top_handler();
     $top_handler->{'return_code'} = $return;
+    return;
 }
 
 sub get_return {
@@ -487,12 +489,14 @@ sub set_object {
     my ( $self, $name, $object ) = @_;
     my $thischild = $self->{'thischild'};
     $thischild->{'object'}->{$name} = $object;
+    return;
 }
 
 sub destroy_object {
     my ( $self, $name ) = @_;
     my $thischild = $self->{'thischild'};
     delete $thischild->{'object'}->{$name};
+    return;
 }
 
 sub destroy_all_objects {
@@ -503,18 +507,21 @@ sub destroy_all_objects {
     {
         $self->destroy_object( $name );
     }
+    return;
 }
 
 sub exit_on_close {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     $top_handler->{'exit_on_close'} = 1;
+    return;
 }
 
 sub clear_all_symbols {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'symbols'};
+    return;
 }
 
 sub clear_symbols {
@@ -535,6 +542,8 @@ sub clear_symbols {
             'C' => $connect_symbols,
         };
     }
+ 
+    return;
 }
 
 sub set_symbol {
@@ -548,6 +557,7 @@ sub set_symbol {
         $top_handler->{'symbols'}->{$code} = {};
     }
     $top_handler->{'symbols'}->{$code}->{$key} = $value;;
+    return;
 }
 
 sub get_symbol {
@@ -592,6 +602,7 @@ sub tempfail_on_error {
             $self->set_return( $self->smfis_tempfail() ) 
         }
     }
+    return;
 }
 
 
@@ -656,7 +667,7 @@ sub format_header_entry {
     my ( $self, $key, $value ) = @_;
     $key   = $self->format_ctext_no_space($key);
     $value = $self->format_ctext_no_space($value);
-    my $string = $key . '=' . $value;
+    my $string = "$key=$value";
     return $string;
 }
 
@@ -715,11 +726,13 @@ sub dbgout {
         'key'      => $key      || q{},
         'value'    => $value    || q{},
       };
+    return;
 }
 
 sub log_error {
     my ( $self, $error ) = @_;
     $self->dbgout( 'ERROR', $error, LOG_ERR );
+    return;
 }
 
 sub dbgoutwrite {
@@ -752,6 +765,7 @@ sub dbgoutwrite {
         closelog();
         delete $top_handler->{'dbgout'};
     };
+    return;
 }
 
 
@@ -795,6 +809,8 @@ sub add_headers {
             $self->add_header( $header->{'field'}, $header->{'value'} );
         }
     }
+ 
+    return;
 }
 
 sub prepend_header {
@@ -808,6 +824,7 @@ sub prepend_header {
         'field' => $field,
         'value' => $value,
       };
+    return;
 }
 
 sub add_auth_header {
@@ -817,6 +834,7 @@ sub add_auth_header {
         $top_handler->{'auth_headers'} = [];
     }
     push @{ $top_handler->{'auth_headers'} }, $value;
+    return;
 }
 
 sub add_c_auth_header {
@@ -828,6 +846,7 @@ sub add_c_auth_header {
         $top_handler->{'c_auth_headers'} = [];
     }
     push @{ $top_handler->{'c_auth_headers'} }, $value;
+    return;
 }
 
 sub append_header {
@@ -841,6 +860,7 @@ sub append_header {
         'field' => $field,
         'value' => $value,
       };
+    return;
 }
 
 
@@ -873,6 +893,7 @@ sub write_packet {
     my ( $self, $type, $data ) = @_;
     my $thischild = $self->{'thischild'};
     $thischild->write_packet( $type, $data );
+    return;
 }
 
 sub add_header {
@@ -881,6 +902,7 @@ sub add_header {
     my $config = $self->config();
     return if $config->{'dryrun'};
     $thischild->add_header( $key, $value );
+    return;
 }
 
 sub insert_header {
@@ -889,6 +911,7 @@ sub insert_header {
     my $config = $self->config();
     return if $config->{'dryrun'};
     $thischild->insert_header( $index, $key, $value );
+    return;
 }
 
 sub change_header {
@@ -897,6 +920,7 @@ sub change_header {
     my $config = $self->config();
     return if $config->{'dryrun'};
     $thischild->change_header( $key, $index, $value );
+    return;
 }
 
 1;

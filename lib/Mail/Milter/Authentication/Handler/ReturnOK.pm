@@ -108,6 +108,7 @@ sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     $env_from = q{} if $env_from eq '<>';
     $self->_check_address( $env_from, 'smtp' );
+    return;
 }
 
 sub header_callback {
@@ -115,6 +116,7 @@ sub header_callback {
     if ( $header eq 'From' ) {
         $self->_check_address( $value, 'header' );
     }
+    return;
 }
 
 1;

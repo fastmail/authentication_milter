@@ -12,6 +12,7 @@ use Mail::SPF;
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'helo_name'} = $helo_host;
+    return;
 }
 
 sub envfrom_callback {
@@ -20,6 +21,7 @@ sub envfrom_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     delete $self->{'from_header'};
+    return;
 }
 
 sub header_callback {
@@ -30,6 +32,7 @@ sub header_callback {
     if ( $header eq 'From' ) {
         $self->{'from_header'} = $value;
     }
+    return;
 }
 
 sub eoh_callback {
@@ -95,12 +98,14 @@ sub eoh_callback {
         $self->add_auth_header('senderid=temperror');
         return;
     }
+    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'from_header'};
     delete $self->{'helo_name'};
+    return;
 }
 
 1;

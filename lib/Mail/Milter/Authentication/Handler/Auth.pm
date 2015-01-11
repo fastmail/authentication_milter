@@ -16,6 +16,7 @@ sub get_auth_name {
 sub connect_callback {
     my ( $self, $hostname, $sockaddr_in ) = @_;
     $self->{'is_authenticated'} = 0;
+    return;
 }
 
 sub envfrom_callback {
@@ -31,11 +32,13 @@ sub envfrom_callback {
         $self->{'is_authenticated'}       = 1;
         $self->add_auth_header('auth=pass');
     }
+    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'is_authenticated'};
+    return;
 }
 
 1;

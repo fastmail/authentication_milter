@@ -25,6 +25,7 @@ sub _dns_error {
           . ' with '
           . $error );
     }
+    return;
 }
 
 sub connect_requires {
@@ -134,11 +135,13 @@ sub connect_callback {
       . $self->format_header_comment($comment) . ')';
     $self->add_c_auth_header($header);
 
+    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'verified_ptr'};
+    return;
 }
 
 1;

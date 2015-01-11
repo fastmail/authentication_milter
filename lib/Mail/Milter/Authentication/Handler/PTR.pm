@@ -40,6 +40,7 @@ sub helo_callback {
               . $self->format_header_entry( 'x-ptr-helo',   $helo_host ) . q{ }
               . $self->format_header_entry( 'x-ptr-lookup', $domain ) );
     }
+    return;
 }
 
 1;

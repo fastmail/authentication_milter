@@ -64,6 +64,7 @@ sub cache_cleanup {
             delete $cached_data->{$key};
         }
     }
+    return;
 }
 
 sub cache_lookup {
