@@ -124,17 +124,26 @@ sub eom_callback {
         }
         foreach my $signature ( $dkim->signatures() ) {
 
-            push @{ $self->{'dmarc_result'} }, {
-                domain       => $signature->domain,
-                selector     => $signature->selector,
-                result       => $signature->result,
-                human_result => $signature->result_detail,
-            };
+            my $otype = ref $signature;
+            my $type =
+                $otype eq 'Mail::DKIM::DkSignature' ? 'domainkeys'
+              : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
+              :                                       'dkim';
+            $self->dbgout( 'DKIMSignatureType', $type, LOG_DEBUG );
 
             $self->dbgout( 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
             $self->dbgout( 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
             my $signature_result        = $signature->result();
             my $signature_result_detail = $signature->result_detail();
+
+            if ( $type eq 'dkim' && $signature_result ne 'invalid' ) {
+                push @{ $self->{'dmarc_result'} }, {
+                    domain       => $signature->domain,
+                    selector     => $signature->selector,
+                    result       => $signature->result,
+                    human_result => $signature->result_detail,
+                };
+            }
 
             if ( $signature_result eq 'invalid' ) {
                 if ( $signature_result_detail =~ /DNS query timeout for (.*) at / ) {
@@ -161,12 +170,6 @@ sub eom_callback {
                 )
               )
             {
-                my $otype = ref $signature;
-                my $type =
-                    $otype eq 'Mail::DKIM::DkSignature' ? 'domainkeys'
-                  : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
-                  :                                       'dkim';
-                $self->dbgout( 'DKIMSignatureType', $type, LOG_DEBUG );
 
                 my $key_data = q{};
                 eval {
