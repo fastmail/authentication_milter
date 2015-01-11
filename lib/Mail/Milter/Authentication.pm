@@ -142,6 +142,9 @@ sub process_request {
 
 sub start {
     my ($args)     = @_;
+
+    $PROGRAM_NAME = '[authentication_milter:startup]';
+
     my $connection = $args->{'connection'} || die('No connection details given');
     my $pid_file   = $args->{'pid_file'};
 
