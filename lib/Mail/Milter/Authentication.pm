@@ -20,8 +20,28 @@ use Sys::Syslog qw{:standard :macros};
 sub pre_loop_hook {
     my ( $self ) = @_;
     
+    # Load handlers
+    my $config = get_config();
+    foreach my $name ( @{$config->{'load_handlers'}} ) {
+        $self->load_handler( $name );
+    }
+
+    return;
+}
+
+sub child_init_hook {
+    my ( $self ) = @_;
+
+    loginfo( "Child process $PID starting up" );
+    $PROGRAM_NAME = '[authentication_milter:starting]';
+
     my $config = get_config();
     $self->{'config'} = $config;
+
+    # Load handlers (again to allow for reconfiguration)
+    foreach my $name ( @{$config->{'load_handlers'}} ) {
+        $self->load_handler( $name );
+    }
 
     my $protocol  = SMFIP_NONE & ~(SMFIP_NOCONNECT|SMFIP_NOMAIL);
        $protocol &= ~SMFIP_NOHELO;
@@ -34,50 +54,35 @@ sub pre_loop_hook {
     my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
     $self->{'callback_flags'} = $callback_flags;
 
-    # Load handlers
-    foreach my $name ( @{$config->{'load_handlers'}} ) {
-        $self->load_handler( $name );
-    }
+    my $callbacks_list = {};
+    my $callbacks      = {};
+    my $handler        = {};
+    my $object         = {};
+    my $count          = 0;
 
-    $self->{'callbacks_list'} = {};
-    $self->{'callbacks'}      = {};
-    $self->{'count'}          = 0;
-    $self->{'handler'}        = {};
-    $self->{'object'}         = {};
-
-}
-
-sub child_init_hook {
-    my ( $self ) = @_;
-
-#    my $callbacks_list = {};
-#    my $callbacks      = {};
-#    my $handler        = {};
-#    my $object         = {};
-#    my $count          = 0;
-
-    loginfo( "Child process $PID starting up" );
-    $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
-
-#    use Clone qw{ clone };
-#    $self->{'callbacks_list'} = clone($callbacks_list);
-#    $self->{'callbacks'}      = clone($callbacks);
-#    $self->{'count'}          = clone($count);
-#    $self->{'handler'}        = clone($handler);
-#    $self->{'object'}         = clone($object);
+    $self->{'callbacks_list'} = $callbacks_list;
+    $self->{'callbacks'}      = $callbacks;
+    $self->{'count'}          = $count;
+    $self->{'handler'}        = $handler;
+    $self->{'object'}         = $object;
 
     $self->setup_handlers();
+
+    $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
+    return;
 }
 
 sub child_finish_hook {
     my ($self) = @_;
     loginfo( "Child process $PID shutting down" );
     $self->destroy_objects();
+    return;
 }
 
 sub pre_server_close_hook {
     my ($self) = @_;
     loginfo( 'Server closing down' );
+    return;
 }
 
 sub process_request {
@@ -132,6 +137,7 @@ sub process_request {
     delete $self->{'socket'};
     $PROGRAM_NAME = '[authentication_milter:waiting(' . $count . ')]';
     logdebug( 'Request processing completed' );
+    return;
 }
 
 sub start {
@@ -242,6 +248,7 @@ sub start {
     # Never reaches here.
     logerror('something went horribly wrong');
     die 'Something went horribly wrong';
+    return;
 }
 
 ##### Protocol methods
@@ -250,6 +257,7 @@ sub fatal {
     my ( $self, $error ) = @_;
     logerror( "Child process $PID shutting down due to fatal error: $error" );
     die "$error\n";
+    return;
 }
 
 sub setup_handlers {
@@ -264,6 +272,7 @@ sub setup_handlers {
         $self->setup_handler( $name );
     }
     $self->sort_all_callbacks();
+    return;
 }
 
 sub load_handler {
@@ -277,6 +286,7 @@ sub load_handler {
        logdebug( "Load Handler Module $name" );
        load $package;
     }
+    return;
 }
 
 sub setup_handler {
@@ -295,6 +305,7 @@ sub setup_handler {
         }
     }
 
+    return;
 }
 
 sub destroy_handler {
@@ -304,6 +315,7 @@ sub destroy_handler {
     delete $self->{'handler'}->{$name}->{'thischild'};
     # Remove reference to handler
     delete $self->{'handler'}->{$name};
+    return;
 }
 
 
@@ -314,6 +326,7 @@ sub register_callback {
         $self->{'callbacks'}->{$callback} = [];
     }
     push @{ $self->{'callbacks'}->{$callback} }, $name;
+    return;
 }
 
 sub sort_all_callbacks {
@@ -321,6 +334,7 @@ sub sort_all_callbacks {
     foreach my $callback ( qw { connect helo envfrom envrcpt header eoh body eom abort close } ) {
         $self->sort_callbacks( $callback );
     }
+    return;
 }
 
 sub sort_callbacks {
@@ -380,6 +394,7 @@ sub sort_callbacks {
     }
 
     $self->{'callbacks_list'}->{$callback} = \@order;
+    return;
 }
 
 sub destroy_objects {
@@ -394,6 +409,7 @@ sub destroy_objects {
     delete $self->{'handler'}->{'_Handler'}->{'config'};
     delete $self->{'handler'}->{'_Handler'}->{'thischild'};
     delete $self->{'handler'}->{'_Handler'};
+    return;
 }
 
 sub process_command {
@@ -499,6 +515,7 @@ sub process_command {
         }
     } 
  
+    return;
 }
 
 sub process_connect {
@@ -558,6 +575,7 @@ sub add_header {
         . $value
         . "\0"
     );
+    return;
 }
 
 sub change_header {
@@ -570,6 +588,7 @@ sub change_header {
         . $value
         . "\0"
     );
+    return;
 }
 
 sub insert_header {
@@ -581,6 +600,7 @@ sub insert_header {
         . $value
         . "\0"
     );
+    return;
 }
 
 sub write_packet {
@@ -592,6 +612,7 @@ sub write_packet {
     $socket->syswrite($len);
     $socket->syswrite($code);
     $socket->syswrite($data);
+    return;
 }
 
 ## Logging
@@ -603,6 +624,7 @@ sub logerror {
     setlogmask( LOG_MASK(LOG_ERR) );
     syslog( LOG_ERR, $line );
     closelog();
+    return;
 }
 
 sub loginfo {
@@ -612,6 +634,7 @@ sub loginfo {
     setlogmask( LOG_MASK(LOG_INFO) );
     syslog( LOG_INFO, $line );
     closelog();
+    return;
 }
 
 sub logdebug {
@@ -624,6 +647,7 @@ sub logdebug {
         syslog( LOG_DEBUG, $line );
         closelog();
     }
+    return;
 }
 
 1;
