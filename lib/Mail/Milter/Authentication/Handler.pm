@@ -35,9 +35,8 @@ sub top_connect_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'};
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'connect_timeout'} ) {
-            $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $config->{'connect_timeout'} );
         }
 
@@ -92,9 +91,8 @@ sub top_helo_callback {
     $helo_host = q{} if not $helo_host;
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'};
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'command_timeout'} ) {
-            $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $config->{'command_timeout'} );
         }
 
@@ -132,9 +130,8 @@ sub top_envfrom_callback {
     $env_from = q{} if not $env_from;
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'};
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'command_timeout'} ) {
-            $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $config->{'command_timeout'} );
         }
 
@@ -169,9 +166,8 @@ sub top_envrcpt_callback {
     $env_to = q{} if not $env_to;
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'};
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'command_timeout'} ) {
-            $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $config->{'command_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'envrcpt' );
@@ -199,9 +195,8 @@ sub top_header_callback {
     $value = q{} if not $value;
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'};
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'content_timeout'} ) {
-            $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $config->{'content_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'header' );
@@ -228,9 +223,8 @@ sub top_eoh_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'};
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'content_timeout'} ) {
-            $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $config->{'content_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'eoh' );
@@ -258,9 +252,8 @@ sub top_body_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'};
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'content_timeout'} ) {
-            $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $config->{'content_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'body' );
@@ -288,9 +281,8 @@ sub top_eom_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'};
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'content_timeout'} ) {
-            $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $config->{'content_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'eom' );
@@ -319,9 +311,8 @@ sub top_abort_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'};
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'command_timeout'} ) {
-            $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $config->{'command_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'abort' );
@@ -349,9 +340,8 @@ sub top_close_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'};
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'content_timeout'} ) {
-            $SIG{'ALRM'} = sub{ die "Timeout\n" };
             alarm( $config->{'content_timeout'} );
         }
         my $callbacks = $self->get_callbacks( 'close' );
