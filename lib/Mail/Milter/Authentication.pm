@@ -145,10 +145,11 @@ sub start {
 
     $PROGRAM_NAME = '[authentication_milter:startup]';
 
-    my $connection = $args->{'connection'} || die('No connection details given');
-    my $pid_file   = $args->{'pid_file'};
-
     my $config                 = get_config();
+
+    my $connection             = $config->{'connection'}             || die('No connection details given');
+    my $pid_file               = $args->{'pid_file'};
+
     my $listen_backlog         = $config->{'listen_backlog'}         || 20;
     my $max_children           = $config->{'max_children'}           || 100;
     my $max_requests_per_child = $config->{'max_requests_per_child'} || 200;
@@ -688,7 +689,6 @@ Hook which runs for each request, sets up per request items and processes the re
 Start the server. This method does not return.
 
     $hashref = {
-        'connection' => 'unix:path/to/socket', # The socket connection to open
         'pid_file'   => 'The pid file to use', # 
         'daemon'     => 1/0,                   # Daemonize process?
     }
