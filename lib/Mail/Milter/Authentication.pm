@@ -174,16 +174,16 @@ sub start {
             $srvargs{'background'}        = 1;
             $srvargs{'setsid'}            = 1;
             $srvargs{'pid_file'}          = $pid_file;
-            $srvargs{'max_servers'}       = $max_children;
-            $srvargs{'max_requests'}      = $max_requests_per_child;
-            $srvargs{'min_servers'}       = $min_children;
-            $srvargs{'min_spare_servers'} = $min_spare_children;
-            $srvargs{'max_spare_servers'} = $max_spare_children;
         }
         else {
             loginfo('Not running as root, daemonize ignored!');
         }
     }
+    $srvargs{'max_servers'}       = $max_children;
+    $srvargs{'max_requests'}      = $max_requests_per_child;
+    $srvargs{'min_servers'}       = $min_children;
+    $srvargs{'min_spare_servers'} = $min_spare_children;
+    $srvargs{'max_spare_servers'} = $max_spare_children;
 
     if ( $EUID == 0 ) {
         my $user  = $config->{'runas'}    || 'nobody';
