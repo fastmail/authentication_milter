@@ -5,7 +5,7 @@ package Mail::Milter::Authentication;
 use base 'Net::Server::PreFork';
 our $VERSION = 0.5;
 
-use English;
+use English qw{ -no_match_vars };
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::DNSCache;
@@ -13,8 +13,8 @@ use Mail::Milter::Authentication::Handler;
 use Module::Load;
 use Module::Loaded;
 use Proc::ProcessTable;
-use Socket;
-use Socket6;
+use Socket  qw{ pack_sockaddr_in  inet_aton sockaddr_un  AF_INET  };
+use Socket6 qw{ pack_sockaddr_in6 inet_pton              AF_INET6 };
 use Sys::Syslog qw{:standard :macros};
 
 sub pre_loop_hook {
@@ -161,6 +161,8 @@ sub start {
 
     $srvargs{'no_client_stdout'} = 1;
 
+    $srvargs{'serialize'} = 'flock';
+
     if ( $args->{'daemon'} ) {
         if ( $EUID == 0 ) {
             loginfo(
@@ -191,6 +193,7 @@ sub start {
         loginfo("run as user=$user group=$group");
         $srvargs{'user'}  = $user;
         $srvargs{'group'} = $group;
+        # Note, Chroot requires a chroot environment which is out of scope at present
         if ( exists( $config->{'chroot'} ) ) {
             loginfo('Chroot to ' . $config->{'chroot'});
             $srvargs{'chroot'} = $config->{'chroot'};
@@ -538,8 +541,9 @@ sub process_connect {
     elsif ($af eq SMFIA_INET6) {
         $pack = eval {
             $addr =~ s/^IPv6://;
-            Socket6::pack_sockaddr_in6($port,
-            Socket6::inet_pton(&Socket6::AF_INET6, $addr));
+            pack_sockaddr_in6($port,
+                inet_pton( AF_INET6, $addr)
+            );
         };
     }
     elsif ($af eq SMFIA_UNIX) {

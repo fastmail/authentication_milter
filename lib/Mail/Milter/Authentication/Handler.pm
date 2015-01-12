@@ -5,10 +5,11 @@ package Mail::Milter::Authentication::Handler;
 our $VERSION = 0.5;
 
 use Email::Address;
-use English;
+use English qw{ -no_match_vars };
 use MIME::Base64;
 use Net::DNS::Resolver;
-use Socket;
+use Socket  qw{ sockaddr_in  inet_ntoa sockaddr_family AF_INET  };
+use Socket6 qw{ sockaddr_in6 inet_ntop                 AF_INET6 };
 use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 
@@ -55,7 +56,7 @@ sub top_connect_callback {
             }
             elsif ( $family == AF_INET6 ) {
                 ( $port, $iaddr ) = sockaddr_in6($sockaddr_in);
-                $ip_address = Socket::inet_ntop( AF_INET6, $iaddr );
+                $ip_address = inet_ntop( AF_INET6, $iaddr );
             }
             else {
                 ## TODO something better here - this should never happen

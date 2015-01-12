@@ -6,7 +6,7 @@ use base 'Mail::Milter::Authentication::Handler';
 our $VERSION = 0.5;
 
 use Data::Dumper;
-use English;
+use English qw{ -no_match_vars };
 use Sys::Syslog qw{:standard :macros};
 
 use Mail::DKIM;
