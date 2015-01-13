@@ -1,9 +1,8 @@
+package Mail::Milter::Authentication::Handler::DMARC;
 use strict;
 use warnings;
-
-package Mail::Milter::Authentication::Handler::DMARC;
 use base 'Mail::Milter::Authentication::Handler';
-our $VERSION = 0.5;
+our $VERSION = 0.6;
 
 use Data::Dumper;
 use English qw{ -no_match_vars };
