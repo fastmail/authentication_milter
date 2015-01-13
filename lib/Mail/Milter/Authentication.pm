@@ -765,12 +765,6 @@ Writa an insert header packet
 
 Write a packet to the protocol stream.
 
-=back
-
-=head1 FUNCTIONS
-
-=over
-
 =item I<logerror( $line )>
 
 Log to the error log.
