@@ -723,7 +723,7 @@ sub dbgout {
     my $queue_id = $self->get_symbol('i') || q{--};
     $key   = q{--} if ! defined $key;
     $value = q{--} if ! defined $value;
-    warn "$PID: $queue_id: $key: $value\n";
+    warn "$PID: $queue_id: $key: $value\n" if $self->{'config'}->{'logtoerr'};
     my $top_handler = $self->get_top_handler();
     if ( !exists( $top_handler->{'dbgout'} ) ) {
         $top_handler->{'dbgout'} = [];

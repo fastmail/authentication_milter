@@ -32,11 +32,11 @@ sub pre_loop_hook {
 sub child_init_hook {
     my ( $self ) = @_;
 
-    loginfo( "Child process $PID starting up" );
-    $PROGRAM_NAME = '[authentication_milter:starting]';
-
     my $config = get_config();
     $self->{'config'} = $config;
+
+    $self->loginfo( "Child process $PID starting up" );
+    $PROGRAM_NAME = '[authentication_milter:starting]';
 
     # Load handlers (again to allow for reconfiguration)
     foreach my $name ( @{$config->{'load_handlers'}} ) {
@@ -74,14 +74,14 @@ sub child_init_hook {
 
 sub child_finish_hook {
     my ($self) = @_;
-    loginfo( "Child process $PID shutting down" );
+    $self->loginfo( "Child process $PID shutting down" );
     $self->destroy_objects();
     return;
 }
 
 sub pre_server_close_hook {
     my ($self) = @_;
-    loginfo( 'Server closing down' );
+    $self->loginfo( 'Server closing down' );
     return;
 }
 
@@ -91,7 +91,7 @@ sub process_request {
     $self->{'count'}++;
     my $count = $self->{'count'};
     $PROGRAM_NAME = '[authentication_milter:processing(' . $count . ')]';
-    logdebug( 'Processing request ' . $self->{'count'} );
+    $self->logdebug( 'Processing request ' . $self->{'count'} );
     $self->{'socket'} = $self->{'server'}->{'client'}; 
 
     my $quit = 0;
@@ -103,7 +103,7 @@ sub process_request {
 
         # Get command
         my $command = $self->read_block(1) || last;
-        logdebug( "receive command $command" );
+        $self->logdebug( "receive command $command" );
 
         # Get data
         my $data = $self->read_block($length - 1);
@@ -129,14 +129,14 @@ sub process_request {
             my $rss    = $process->rss;
             my $pctmem = $process->pctmem;
             my $pctcpu = $process->pctcpu;
-            loginfo( "Resource usage: ($count) size $size/rss $rss/memory $pctmem\%/cpu $pctcpu\%" );
+            $self->loginfo( "Resource usage: ($count) size $size/rss $rss/memory $pctmem\%/cpu $pctcpu\%" );
         }
     }
 
     delete $self->{'handler'}->{'_Handler'}->{'return_code'};
     delete $self->{'socket'};
     $PROGRAM_NAME = '[authentication_milter:waiting(' . $count . ')]';
-    logdebug( 'Request processing completed' );
+    $self->logdebug( 'Request processing completed' );
     return;
 }
 
@@ -267,7 +267,7 @@ sub start {
 
 sub fatal {
     my ( $self, $error ) = @_;
-    logerror( "Child process $PID shutting down due to fatal error: $error" );
+    $self->logerror( "Child process $PID shutting down due to fatal error: $error" );
     die "$error\n";
     return;
 }
@@ -275,7 +275,7 @@ sub fatal {
 sub setup_handlers {
     my ( $self ) = @_;
 
-    logdebug( 'setup objects' );
+    $self->logdebug( 'setup objects' );
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'}->{'_Handler'} = $handler;
 
@@ -291,11 +291,11 @@ sub load_handler {
     my ( $self, $name ) = @_;
 
     ## TODO error handling here
-    logdebug( "Load Handler $name" );
+    $self->logdebug( "Load Handler $name" );
 
     my $package = "Mail::Milter::Authentication::Handler::$name";
     if ( ! is_loaded ( $package ) ) {
-       logdebug( "Load Handler Module $name" );
+       $self->logdebug( "Load Handler Module $name" );
        load $package;
     }
     return;
@@ -305,7 +305,7 @@ sub setup_handler {
     my ( $self, $name ) = @_;
 
     ## TODO error handling here
-    logdebug( "Instantiate Handler $name" );
+    $self->logdebug( "Instantiate Handler $name" );
 
     my $package = "Mail::Milter::Authentication::Handler::$name";
     my $object = $package->new( $self );
@@ -333,7 +333,7 @@ sub destroy_handler {
 
 sub register_callback {
     my ( $self, $name, $callback ) = @_;
-    logdebug( "Register Callback $name:$callback" );
+    $self->logdebug( "Register Callback $name:$callback" );
     if ( ! exists $self->{'callbacks'}->{$callback} ) {
         $self->{'callbacks'}->{$callback} = [];
     }
@@ -411,22 +411,24 @@ sub sort_callbacks {
 
 sub destroy_objects {
     my ( $self ) = @_;
-    logdebug ( 'destroy objects' );
+    $self->logdebug ( 'destroy objects' );
     my $handler = $self->{'handler'}->{'_Handler'};
-    $handler->destroy_all_objects();
-    my $config = $self->{'config'};
-    foreach my $name ( @{$config->{'load_handlers'}} ) {
-        $self->destroy_handler( $name );
+    if ( $handler ) {
+        $handler->destroy_all_objects();
+        my $config = $self->{'config'};
+        foreach my $name ( @{$config->{'load_handlers'}} ) {
+            $self->destroy_handler( $name );
+        }
+        delete $self->{'handler'}->{'_Handler'}->{'config'};
+        delete $self->{'handler'}->{'_Handler'}->{'thischild'};
+        delete $self->{'handler'}->{'_Handler'};
     }
-    delete $self->{'handler'}->{'_Handler'}->{'config'};
-    delete $self->{'handler'}->{'_Handler'}->{'thischild'};
-    delete $self->{'handler'}->{'_Handler'};
     return;
 }
 
 sub process_command {
     my ( $self, $command, $buffer ) = @_;
-    logdebug ( "process command $command" );
+    $self->logdebug ( "process command $command" );
 
     my $handler = $self->{'handler'}->{'_Handler'};
 
@@ -517,7 +519,7 @@ sub process_command {
         my $config = $self->{'config'};
         if ( $config->{'dryrun'} ) {
             if ( $returncode ne SMFIR_CONTINUE ) {
-                loginfo ( "dryrun returncode changed from $returncode to continue" );
+                $self->loginfo ( "dryrun returncode changed from $returncode to continue" );
                 $returncode = SMFIR_CONTINUE;
             }
         }
@@ -618,7 +620,7 @@ sub insert_header {
 
 sub write_packet {
     my ( $self, $code, $data ) = @_;
-    logdebug ( "send command $code" );
+    $self->logdebug ( "send command $code" );
     my $socket = $self->{'socket'};
     $data = q{} unless defined($data);
     my $len = pack('N', length($data) + 1);
@@ -631,23 +633,25 @@ sub write_packet {
 ## Logging
 
 sub logerror {
-    my ($line) = @_;
-    warn "$PID: $line\n";
+    my ($self,$line) = @_;
+    my $config = $self->{'config'} || get_config();
+    warn "$PID: $line\n" if $config->{'logtoerr'};
     syslog( LOG_ERR, $line );
     return;
 }
 
 sub loginfo {
-    my ($line) = @_;
-    warn "$PID: $line\n";
+    my ($self,$line) = @_;
+    my $config = $self->{'config'} || get_config();
+    warn "$PID: $line\n" if $config->{'logtoerr'};
     syslog( LOG_INFO, $line );
     return;
 }
 
 sub logdebug {
-    my ($line) = @_;
-    warn "$PID: $line\n";
-    my $config = get_config();
+    my ($self,$line) = @_;
+    my $config = $self->{'config'} || get_config();
+    warn "$PID: $line\n" if $config->{'logtoerr'};
     if ( $config->{'debug'} ) {
         syslog( LOG_DEBUG, $line );
     }

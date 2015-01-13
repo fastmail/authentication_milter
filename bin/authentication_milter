@@ -71,6 +71,7 @@ __END__
   {
     "debug"  : 0,                                       | Verbose debugging output
     "dryrun" : 0,                                       | Dryrun (do not alter or reject mail)
+    "logtoerr" : 0,                                     | Also write logs to STDERR
 
     "connection"             : "inet:12345@localhost",  | The connection to use 
     "umask"                  : "0000",                  | Set umask
