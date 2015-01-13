@@ -161,24 +161,22 @@ sub start {
 
     $srvargs{'no_client_stdout'} = 1;
 
-    $srvargs{'serialize'} = 'flock';
-
     if ( $args->{'daemon'} ) {
         if ( $EUID == 0 ) {
-            loginfo(
+            warn(
                 join( ' ',
                     'daemonize',
                     "servers=$min_children/$max_children",
                     "spares=$min_spare_children/$max_spare_children",
                     "requests=$max_requests_per_child",
                 )
-            );
+            ) . "\n";
             $srvargs{'background'}        = 1;
             $srvargs{'setsid'}            = 1;
             $srvargs{'pid_file'}          = $pid_file;
         }
         else {
-            loginfo('Not running as root, daemonize ignored!');
+            warn("Not running as root, daemonize ignored!\n");
         }
     }
     $srvargs{'max_servers'}       = $max_children;
@@ -187,20 +185,25 @@ sub start {
     $srvargs{'min_spare_servers'} = $min_spare_children;
     $srvargs{'max_spare_servers'} = $max_spare_children;
 
+    $srvargs{'log_file'}          = 'Sys::Syslog';
+    $srvargs{'syslog_facility'}   = LOG_MAIL;
+    $srvargs{'syslog_ident'}      = 'authentication_milter';
+    $srvargs{'syslog_logopt'}     = 'pid';
+
     if ( $EUID == 0 ) {
         my $user  = $config->{'runas'}    || 'nobody';
         my $group = $config->{'rungroup'} || 'nogroup'; 
-        loginfo("run as user=$user group=$group");
+        warn("run as user=$user group=$group\n");
         $srvargs{'user'}  = $user;
         $srvargs{'group'} = $group;
         # Note, Chroot requires a chroot environment which is out of scope at present
         if ( exists( $config->{'chroot'} ) ) {
-            loginfo('Chroot to ' . $config->{'chroot'});
+            warn('Chroot to ' . $config->{'chroot'} . "\n");
             $srvargs{'chroot'} = $config->{'chroot'};
         }
     }
     else {
-        loginfo('Not running as root, could not drop privs - be careful!');
+        warn("Not running as root, could not drop privs - be careful!\n");
     }
 
     {
@@ -209,13 +212,13 @@ sub start {
         my $path = $2;
         my $host = $3 || q{};
         if ( $type eq 'inet' ) {
-            loginfo(
+            warn(
                 join( ' ',
                     'listen on inet',
                     "host=$host",
                     "port=$path",
                     "backlog=$listen_backlog"
-                )
+                ) . "\n"
             );
             $srvargs{'host'}   = $host;
             $srvargs{'port'}   = $path;
@@ -224,12 +227,12 @@ sub start {
             $srvargs{'listen'} = $listen_backlog;
         }
         elsif ( $type eq 'unix' ) {
-            loginfo(
+            warn(
                 join( ' ',
                     'listening on unix',
                     "socket=$path",
                     "backlog=$listen_backlog",
-                )
+                ) . "\n"
             );
             $srvargs{'port'}   = $path;
             $srvargs{'proto'}  = 'unix';
@@ -238,7 +241,7 @@ sub start {
             my $umask = $config->{'umask'};
             if ($umask) {
                 umask ( oct( $umask ) );
-                loginfo( 'setting umask to ' . $umask );
+                warn( 'setting umask to ' . $umask . "\n" );
             }
 
         }
@@ -253,7 +256,6 @@ sub start {
     __PACKAGE__->run( %srvargs );
 
     # Never reaches here.
-    logerror('something went horribly wrong');
     die 'Something went horribly wrong';
     return;
 }
@@ -628,20 +630,14 @@ sub write_packet {
 sub logerror {
     my ($line) = @_;
     warn "$PID: $line\n";
-    openlog( 'authentication_milter', 'pid', LOG_MAIL );
-    setlogmask( LOG_MASK(LOG_ERR) );
     syslog( LOG_ERR, $line );
-    closelog();
     return;
 }
 
 sub loginfo {
     my ($line) = @_;
     warn "$PID: $line\n";
-    openlog( 'authentication_milter', 'pid', LOG_MAIL );
-    setlogmask( LOG_MASK(LOG_INFO) );
     syslog( LOG_INFO, $line );
-    closelog();
     return;
 }
 
@@ -650,10 +646,7 @@ sub logdebug {
     warn "$PID: $line\n";
     my $config = get_config();
     if ( $config->{'debug'} ) {
-        openlog( 'authentication_milter', 'pid', LOG_MAIL );
-        setlogmask( LOG_MASK(LOG_DEBUG) );
         syslog( LOG_DEBUG, $line );
-        closelog();
     }
     return;
 }

@@ -43,7 +43,11 @@ sub top_connect_callback {
 
         # Process the connecting IP Address
         my ( $port, $iaddr, $ip_address );
-        if ( length ( $sockaddr_in ) == 0 ) {
+        if ( ! defined ( $sockaddr_in ) ) {
+            $self->log_error('Unknown IP address format UNDEF');
+            $ip_address = q{};
+        }
+        elsif ( length ( $sockaddr_in ) == 0 ) {
             $self->log_error('Unknown IP address format NULL');
             $ip_address = q{};
             # Could potentially fail here, connection is likely bad anyway.
@@ -739,31 +743,26 @@ sub log_error {
 sub dbgoutwrite {
     my ($self) = @_;
     eval {
-        openlog('authentication_milter', 'pid', LOG_MAIL);
         my $config = $self->config();
-        if ( $config->{'debug'} ) {
-            setlogmask(   LOG_MASK(LOG_ERR)
-                        | LOG_MASK(LOG_INFO)
-                        | LOG_MASK(LOG_DEBUG)
-            );
-        }
-        else {
-            setlogmask(   LOG_MASK(LOG_ERR)
-                        | LOG_MASK(LOG_INFO)
-            );
-        }
         my $queue_id = $self->get_symbol('i') || q{--};
         my $top_handler = $self->get_top_handler();
         if ( exists( $top_handler->{'dbgout'} ) ) {
+            LOGENTRY:
             foreach my $entry ( @{ $top_handler->{'dbgout'} } ) {
                 my $key      = $entry->{'key'};
                 my $value    = $entry->{'value'};
                 my $priority = $entry->{'priority'};
                 my $line     = "$queue_id: $key: $value";
+                if (
+                    $priority == LOG_DEBUG
+                    &&
+                    ! $config->{'debug'}
+                ) {
+                    next LOGENTRY;
+                }
                 syslog( $priority, $line );
             }
         }
-        closelog();
         delete $top_handler->{'dbgout'};
     };
     return;
