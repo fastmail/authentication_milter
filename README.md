@@ -57,6 +57,13 @@ To install this module, run the following commands:
  - make test
  - make install
 
+The DMARC module requires a little extra setup.
+
+ - A database needs to be created and populated
+ - A config file /etc/mail-dmarc.ini needs to be created
+
+Please see the documentation for Mail::DMARC for details.
+
 Config
 ------
 
