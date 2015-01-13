@@ -57,4 +57,28 @@ To install this module, run the following commands:
  - make test
  - make install
 
+Config
+------
+
+Please see the output of 'authentication_milter --help'
+
+Credits and License
+-------------------
+
+Copyright (c) 2015 Marc Bradshaw. <marc@marcbradshaw.net>
+
+This is free software; you can redistribute it and/or modify it under the
+same terms as the Perl 5 programming language system itself.
+
+See [LICENSE](LICENSE) file for license details.
+
+Who is using this?
+------------------
+
+[FastMail](https://www.fastmail.com/) are using this to perform SPF/DKIM/DMARC checks on email.
+
+Contributing
+------------
+
+Please fork and send pull requests.
 
