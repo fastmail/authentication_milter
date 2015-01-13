@@ -192,7 +192,7 @@ sub eom_callback {
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
     eval {
-        my $dmarc        = $self->get_dmarc_object();
+        my $dmarc = $self->get_dmarc_object();
         return if ( $self->{'failmode'} );
         my $dkim_handler = $self->get_handler('DKIM');
         if ( $dkim_handler->{'failmode'} ) {
@@ -201,7 +201,7 @@ sub eom_callback {
             $self->{'failmode'} = 1;
             return;
         }
-        $dmarc->dkim( $dkim_handler->{'dmarc_result'} );
+        $dmarc->dkim( $self->get_object('dkim') );
         my $dmarc_result = $dmarc->validate();
         my $dmarc_code   = $dmarc_result->result;
         $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
@@ -265,15 +265,16 @@ sub eom_callback {
             $self->tempfail_on_error();
             $self->add_auth_header('dmarc=temperror (internal error)');
 
+            # THIS SHOULD NO LONGER BE AN ISSUE
+
 # BEGIN TEMPORARY CODE CORE DUMP
-            open my $core, '>>', "/tmp/authentication_milter.core.$PID";
-            print $core "$error\n\n";
-            print $core Dumper( $self->{'thischild'} );
-            print $core "\n\n";
-            close $core;
+#            open my $core, '>>', "/tmp/authentication_milter.core.$PID";
+#            print $core "$error\n\n";
+#            print $core Dumper( $self->{'thischild'} );
+#            print $core "\n\n";
+#            close $core;
 # END TEMPORARY CODE CORE DUMP
 
-            $self->destroy_object('dkim');
             $self->destroy_object('dmarc');
             return;
         }

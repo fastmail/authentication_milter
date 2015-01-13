@@ -17,9 +17,8 @@ sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     $self->{'failmode'}     = 0;
     $self->{'headers'}      = [];
-    $self->{'body'}         = [];
     $self->{'has_dkim'}     = 0;
-    $self->{'dmarc_result'} = [];
+    $self->destroy_object('dkim');
     return;
 }
 
@@ -61,7 +60,43 @@ sub eoh_callback {
                 $self->format_header_entry( 'dkim', 'none' )
                 . ' (no signatures found)' );
         }
+        delete $self->{'headers'};
     }
+    else {
+
+        my $dkim;
+        eval {
+            $dkim = Mail::DKIM::Verifier->new();
+            # The following requires Mail::DKIM > 0.4
+            if ( $Mail::DKIM::VERSION >= 0.4 ) {
+                my $resolver = $self->get_object('resolver');
+                Mail::DKIM::DNS::resolver($resolver);
+            }
+            $self->set_object('dkim', $dkim);
+        };
+        if ( my $error = $@ ) {
+            $self->log_error( 'DKIM Setup Error ' . $error );
+            $self->_check_error( $error );
+            $self->{'failmode'} = 1;
+            delete $self->{'headers'};
+            return;
+        }
+
+        eval {
+            $dkim->PRINT( join q{},
+                @{ $self->{'headers'} },
+                "\015\012",
+            );
+        };
+        if ( my $error = $@ ) {
+            $self->log_error( 'DKIM Headers Error ' . $error );
+            $self->_check_error( $error );
+            $self->{'failmode'} = 1;
+        }
+
+        delete $self->{'headers'};
+    }
+
     return;
 }
 
@@ -72,7 +107,15 @@ sub body_callback {
     my $dkim_chunk = $body_chunk;
     my $EOL        = "\015\012";
     $dkim_chunk =~ s/\015?\012/$EOL/g;
-    push @{$self->{'body'}} , $dkim_chunk;
+    my $dkim = $self->get_object('dkim');
+    eval {
+        $dkim->PRINT( $dkim_chunk );
+    };
+    if ( my $error = $@ ) {
+        $self->log_error( 'DKIM Body Error ' . $error );
+        $self->_check_error( $error );
+        $self->{'failmode'} = 1;
+    }
     return;
 }
 
@@ -82,33 +125,12 @@ sub eom_callback {
     return if ( $self->{'has_dkim'} == 0 );
     return if ( $self->{'failmode'} );
 
-    my $dkim;
-    eval {
-        $dkim = Mail::DKIM::Verifier->new();
-        # The following requires Mail::DKIM > 0.4
-        if ( $Mail::DKIM::VERSION >= 0.4 ) {
-            my $resolver = $self->get_object('resolver');
-            Mail::DKIM::DNS::resolver($resolver);
-        }
-    };
-    if ( my $error = $@ ) {
-        $self->log_error( 'DKIM Setup Error ' . $error );
-        $self->add_auth_header('dkim=temperror');
-        $self->{'failmode'} = 1;
-        return;
-    }
-
     my $config = $self->handler_config();
 
+    my $dkim = $self->get_object('dkim');
+
     eval {
-        $dkim->PRINT( join q{},
-            @{ $self->{'headers'} },
-            "\015\012",
-            @{ $self->{'body'} },
-        );
         $dkim->CLOSE();
-        delete $self->{'headers'};
-        delete $self->{'body'};
 
         my $dkim_result        = $dkim->result;
         my $dkim_result_detail = $dkim->result_detail;
@@ -135,15 +157,6 @@ sub eom_callback {
             $self->dbgout( 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
             my $signature_result        = $signature->result();
             my $signature_result_detail = $signature->result_detail();
-
-            if ( $type eq 'dkim' && $signature_result ne 'invalid' ) {
-                push @{ $self->{'dmarc_result'} }, {
-                    domain       => $signature->domain,
-                    selector     => $signature->selector,
-                    result       => $signature->result,
-                    human_result => $signature->result_detail,
-                };
-            }
 
             if ( $signature_result eq 'invalid' ) {
                 if ( $signature_result_detail =~ /DNS query timeout for (.*) at / ) {
@@ -264,68 +277,12 @@ sub eom_callback {
     };
     if ( my $error = $@ ) {
 
-        $self->{'failmode'} = 1;
         # Also in DMARC module
-        if ( $error =~ / on an undefined value at /
-                or $error =~ / as a HASH ref while /
-                or $error =~ / as an ARRAY reference at /
-                or $error =~ / as a subroutine ref while /
-                or $error =~ / on unblessed reference at /
-                or $error =~ /^Cannot convert a reference to /
-                or $error =~ /^Not a HASH reference at /
-                or $error =~ /^Not a CODE reference at /
-                or $error =~ /^Cannot copy to HASH in sassign at /
-                or $error =~ /^Cannot copy to ARRAY in sassign at /
-                or $error =~ /^Undefined subroutine /
-                or $error =~ /^invalid protocol/
-                or $error =~ / locate object method /
-                or $error =~ /^panic: /
-        ) {
-            $self->log_error( "PANIC DETECTED: in DKIM method: $error" );
-            $self->exit_on_close();
-            $self->tempfail_on_error();
-            $self->add_auth_header('dkim=temperror (internal error)');
-
-# BEGIN TEMPORARY CODE CORE DUMP
-            open my $core, '>>', "/tmp/authentication_milter.core.$PID";
-            print $core "$error\n\n";
-            print $core Dumper( $self->{'thischild'} );
-            print $core "\n\n";
-            close $core;
-# END TEMPORARY CODE CORE DUMP
-
-            delete $self->{'headers'};
-            delete $self->{'body'};
-            return;
-        }
-        elsif ( $error =~ /^DNS error: query timed out/
-                or $error =~ /^DNS query timeout/
-        ){
-            $self->log_error( 'Temp DKIM Error - ' . $error );
-            $self->add_auth_header('dkim=temperror (dns timeout)');
-            delete $self->{'headers'};
-            delete $self->{'body'};
-        }
-        elsif ( $error =~ /^no domain to fetch policy for$/
-                or $error =~ /^policy syntax error$/
-        ){
-            $self->log_error( 'Perm DKIM Error - ' . $error );
-            $self->add_auth_header('dkim=permerror (' . $error . ')');
-            delete $self->{'headers'};
-            delete $self->{'body'};
-        }
-        else {
-            $self->log_error( 'Unexpected DKIM Error - ' . $error );
-            $self->add_auth_header('dkim=temperror');
-            # Fill these in as they occur, but for unknowns err on the side of caution
-            # and tempfail/exit
-            $self->exit_on_close();
-            $self->tempfail_on_error();
-            delete $self->{'headers'};
-            delete $self->{'body'};
-        }
+        $self->log_error( 'DKIM EOM Error ' . $error );
+        $self->_check_error( $error );
+        $self->{'failmode'} = 1;
+        return;
     }
-    return;
 }
 
 sub close_callback {
@@ -334,7 +291,66 @@ sub close_callback {
     delete $self->{'headers'};
     delete $self->{'body'};
     delete $self->{'has_dkim'};
-    delete $self->{'dmarc_result'};
+    $self->destroy_object('dkim');
+    return;
+}
+
+sub _check_error {
+    my ( $self, $error ) = @_;
+
+    if ( $error =~ / on an undefined value at /
+            or $error =~ / as a HASH ref while /
+            or $error =~ / as an ARRAY reference at /
+            or $error =~ / as a subroutine ref while /
+            or $error =~ / on unblessed reference at /
+            or $error =~ /^Cannot convert a reference to /
+            or $error =~ /^Not a HASH reference at /
+            or $error =~ /^Not a CODE reference at /
+            or $error =~ /^Cannot copy to HASH in sassign at /
+            or $error =~ /^Cannot copy to ARRAY in sassign at /
+            or $error =~ /^Undefined subroutine /
+            or $error =~ /^invalid protocol/
+            or $error =~ / locate object method /
+            or $error =~ /^panic: /
+    ) {
+        $self->log_error( "PANIC DETECTED: in DKIM method: $error" );
+        $self->exit_on_close();
+        $self->tempfail_on_error();
+        $self->add_auth_header('dkim=temperror (internal error)');
+
+        # THIS SHOULD NO LONGER BE AN ISSUE
+
+# BEGIN TEMPORARY CODE CORE DUMP
+#        open my $core, '>>', "/tmp/authentication_milter.core.$PID";
+#        print $core "$error\n\n";
+#        print $core Dumper( $self->{'thischild'} );
+#        print $core "\n\n";
+#        close $core;
+# END TEMPORARY CODE CORE DUMP
+
+        delete $self->{'headers'};
+        return;
+    }
+    elsif ( $error =~ /^DNS error: query timed out/
+            or $error =~ /^DNS query timeout/
+    ){
+        $self->log_error( 'Temp DKIM Error - ' . $error );
+        $self->add_auth_header('dkim=temperror (dns timeout)');
+    }
+    elsif ( $error =~ /^no domain to fetch policy for$/
+            or $error =~ /^policy syntax error$/
+    ){
+        $self->log_error( 'Perm DKIM Error - ' . $error );
+        $self->add_auth_header('dkim=permerror (' . $error . ')');
+    }
+    else {
+        $self->log_error( 'Unexpected DKIM Error - ' . $error );
+        $self->add_auth_header('dkim=temperror');
+        # Fill these in as they occur, but for unknowns err on the side of caution
+        # and tempfail/exit
+        $self->exit_on_close();
+        $self->tempfail_on_error();
+    }
     return;
 }
 
