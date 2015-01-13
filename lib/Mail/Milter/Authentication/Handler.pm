@@ -678,6 +678,7 @@ sub format_header_entry {
 
 sub get_domain_from {
     my ( $self, $address ) = @_;
+    $address = q{} if ! defined $address;
     $address = $self->get_address_from($address);
     my $domain = 'localhost.localdomain';
     $address =~ s/<//g;
@@ -720,6 +721,8 @@ sub get_my_hostname {
 sub dbgout {
     my ( $self, $key, $value, $priority ) = @_;
     my $queue_id = $self->get_symbol('i') || q{--};
+    $key   = q{--} if ! defined $key;
+    $value = q{--} if ! defined $value;
     warn "$PID: $queue_id: $key: $value\n";
     my $top_handler = $self->get_top_handler();
     if ( !exists( $top_handler->{'dbgout'} ) ) {
