@@ -169,8 +169,9 @@ sub start {
                     "servers=$min_children/$max_children",
                     "spares=$min_spare_children/$max_spare_children",
                     "requests=$max_requests_per_child",
+                    "\n",
                 )
-            ) . "\n";
+            );
             $srvargs{'background'}        = 1;
             $srvargs{'setsid'}            = 1;
             $srvargs{'pid_file'}          = $pid_file;
@@ -217,8 +218,9 @@ sub start {
                     'listen on inet',
                     "host=$host",
                     "port=$path",
-                    "backlog=$listen_backlog"
-                ) . "\n"
+                    "backlog=$listen_backlog",
+                    "\n",
+                )
             );
             $srvargs{'host'}   = $host;
             $srvargs{'port'}   = $path;
@@ -232,7 +234,8 @@ sub start {
                     'listening on unix',
                     "socket=$path",
                     "backlog=$listen_backlog",
-                ) . "\n"
+                    "\n",
+                )
             );
             $srvargs{'port'}   = $path;
             $srvargs{'proto'}  = 'unix';
