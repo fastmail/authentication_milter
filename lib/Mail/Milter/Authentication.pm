@@ -207,6 +207,14 @@ sub start {
         $srvargs{'user'}  = $user;
         $srvargs{'group'} = $group;
         # Note, Chroot requires a chroot environment which is out of scope at present
+        if ( $config->{'error_log'} ) {
+            if ( ! -e $config->{'error_log'} ) {
+                open my $outf, '>', $config->{'error_log'} || die "Could not create error log: $!\n";;
+                close $outf;
+            }
+            my ($login,$pass,$uid,$gid) = getpwnam($user);
+            chown $uid, $gid, $config->{'error_log'};
+        }
         if ( exists( $config->{'chroot'} ) ) {
             warn('Chroot to ' . $config->{'chroot'} . "\n");
             $srvargs{'chroot'} = $config->{'chroot'};
