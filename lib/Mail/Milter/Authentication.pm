@@ -25,6 +25,11 @@ sub pre_loop_hook {
         $self->load_handler( $name );
     }
 
+    if ( $config->{'error_log'} ) {
+        open( STDERR, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
+        open( STDOUT, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
+    }
+
     return;
 }
 
@@ -33,6 +38,11 @@ sub child_init_hook {
 
     my $config = get_config();
     $self->{'config'} = $config;
+
+    if ( $config->{'error_log'} ) {
+        open( STDERR, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
+        open( STDOUT, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
+    }
 
     $self->loginfo( "Child process $PID starting up" );
     $PROGRAM_NAME = '[authentication_milter:starting]';
