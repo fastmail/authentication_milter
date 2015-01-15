@@ -734,6 +734,12 @@ sub dbgout {
         'key'      => $key      || q{},
         'value'    => $value    || q{},
       };
+
+    # Write now if we can.
+    if ( $self->get_symbol('i') ) {
+        $self->dbgoutwrite();
+    }
+
     return;
 }
 
