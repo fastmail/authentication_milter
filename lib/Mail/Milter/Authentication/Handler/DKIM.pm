@@ -108,8 +108,14 @@ sub body_callback {
     return if ( $self->{'has_dkim'} == 0 );
     my $EOL = "\015\012";
 
-    my $dkim_chunk = $self->{'carry'} . $body_chunk;
-    $self->{'carry'} = q{};
+    my $dkim_chunk;
+    if ( $self->{'carry'} ne q{} ) {
+        $dkim_chunk = $self->{'carry'} . $body_chunk;
+        $self->{'carry'} = q{};
+    }
+    else {
+        $dkim_chunk = $body_chunk;
+    }
 
     if ( substr( $dkim_chunk, -1 ) eq "\015" ) {
         $self->{'carry'} = "\015";
