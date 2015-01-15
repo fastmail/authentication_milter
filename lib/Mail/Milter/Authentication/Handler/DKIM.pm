@@ -174,7 +174,9 @@ sub eom_callback {
             my $result_comment = q{};
             if ( $signature_result ne 'pass' and $signature_result ne 'none' ) {
                 $signature_result_detail =~ /$signature_result \((.*)\)/;
-                $result_comment = $1 . '; ';
+                if ( $1 ) {
+                    $result_comment = $1 . '; ';
+                }
             }
             if (
                 !(
