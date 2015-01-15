@@ -99,6 +99,7 @@ sub process_request {
 
     $self->{'count'}++;
     my $count = $self->{'count'};
+    my $config = $self->{'config'};
     $PROGRAM_NAME = '[authentication_milter:processing(' . $count . ')]';
     $self->logdebug( 'Processing request ' . $self->{'count'} );
     $self->{'socket'} = $self->{'server'}->{'client'}; 
@@ -131,14 +132,16 @@ sub process_request {
     }
     $self->fatal('exit_on_close requested') if $quit;
 
-    my $process_table = Proc::ProcessTable->new();
-    foreach my $process ( @{$process_table->table} ) {
-        if ( $process->pid == $PID ) {
-            my $size   = $process->size;
-            my $rss    = $process->rss;
-            my $pctmem = $process->pctmem;
-            my $pctcpu = $process->pctcpu;
-            $self->loginfo( "Resource usage: ($count) size $size/rss $rss/memory $pctmem\%/cpu $pctcpu\%" );
+    if ( $config->{'debug'} ) {
+        my $process_table = Proc::ProcessTable->new();
+        foreach my $process ( @{$process_table->table} ) {
+            if ( $process->pid == $PID ) {
+                my $size   = $process->size;
+                my $rss    = $process->rss;
+                my $pctmem = $process->pctmem;
+                my $pctcpu = $process->pctcpu;
+                $self->loginfo( "Resource usage: ($count) size $size/rss $rss/memory $pctmem\%/cpu $pctcpu\%" );
+            }
         }
     }
 
