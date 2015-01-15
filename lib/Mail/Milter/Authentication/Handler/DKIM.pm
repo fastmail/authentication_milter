@@ -113,7 +113,7 @@ sub body_callback {
 
     if ( substr( $dkim_chunk, -1 ) eq "\015" ) {
         $self->{'carry'} = "\015";
-        $dkim_chunk = chop $dkim_chunk;
+        $dkim_chunk = substr( $dkim_chunk, 0, -1 );
     }
 
     $dkim_chunk =~ s/\015?\012/$EOL/g;
