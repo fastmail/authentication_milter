@@ -17,6 +17,7 @@ sub envfrom_callback {
     $self->{'failmode'}     = 0;
     $self->{'headers'}      = [];
     $self->{'has_dkim'}     = 0;
+    $self->{'carry'}        = q{};
     $self->destroy_object('dkim');
     return;
 }
@@ -96,6 +97,8 @@ sub eoh_callback {
         delete $self->{'headers'};
     }
 
+    $self->{'carry'} = q{};
+
     return;
 }
 
@@ -103,9 +106,18 @@ sub body_callback {
     my ( $self, $body_chunk ) = @_;
     return if ( $self->{'failmode'} );
     return if ( $self->{'has_dkim'} == 0 );
-    my $dkim_chunk = $body_chunk;
-    my $EOL        = "\015\012";
+    my $EOL = "\015\012";
+
+    my $dkim_chunk = $self->{'carry'} . $body_chunk;
+    $self->{'carry'} = q{};
+
+    if ( substr( $dkim_chunk, -1 ) eq "\015" ) {
+        $self->{'carry'} = "\015";
+        $dkim_chunk = chop $dkim_chunk;
+    }
+
     $dkim_chunk =~ s/\015?\012/$EOL/g;
+
     my $dkim = $self->get_object('dkim');
     eval {
         $dkim->PRINT( $dkim_chunk );
@@ -129,6 +141,7 @@ sub eom_callback {
     my $dkim = $self->get_object('dkim');
 
     eval {
+        $dkim->PRINT( $self->{'carry'} );
         $dkim->CLOSE();
 
         my $dkim_result        = $dkim->result;
@@ -291,6 +304,7 @@ sub close_callback {
     delete $self->{'failmode'};
     delete $self->{'headers'};
     delete $self->{'body'};
+    delete $self->{'carry'};
     delete $self->{'has_dkim'};
     $self->destroy_object('dkim');
     return;
