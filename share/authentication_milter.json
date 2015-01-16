@@ -1,11 +1,15 @@
 {
-    "debug"  : 0,
-    "dryrun" : 0,
+    "debug"     : 0,
+    "dryrun"    : 0,
+    "logtoerr"  : 0,
+    "error_log" : "/var/log/authentication_milter.err",
 
     "connection"             : "inet:12345@localhost",
     "umask"                  : "0000",
     "runas"                  : "nobody",
     "rungroup"               : "nogroup",
+    "chroot"                 : "",
+
     "listen_backlog"         : 20,
     "min_children"           : 20,
     "max_children"           : 200,
@@ -13,15 +17,18 @@
     "max_spare_children"     : 20,
     "max_requests_per_child" : 200,
 
-    "connect_timeout" : 30,
-    "command_timeout" : 30,
-    "content_timeout" : 300,
-    "dns_timeout"     : 10,
+    "connect_timeout"       : 30,
+    "command_timeout"       : 30,
+    "content_timeout"       : 300,
+    "dns_timeout"           : 10,
+    "dns_cache_timeout"     : 240,
+    "dns_retry"             : 2,
+    "dns_cache_error_limit" : 3,
 
-    "tempfail_on_error" : "1",
+    "tempfail_on_error"               : "1",
     "tempfail_on_error_authenticated" : "0",
-    "tempfail_on_error_local" : "0",
-    "tempfail_on_error_trusted" : "0",
+    "tempfail_on_error_local"         : "0",
+    "tempfail_on_error_trusted"       : "0",
 
     "handlers" : {
 
