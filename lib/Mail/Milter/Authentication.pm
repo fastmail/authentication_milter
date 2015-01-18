@@ -40,8 +40,13 @@ sub child_init_hook {
     $self->{'config'} = $config;
 
     if ( $config->{'error_log'} ) {
-        open( STDERR, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
-        open( STDOUT, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
+        eval {
+            open( STDERR, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
+            open( STDOUT, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
+        };
+        if ( my $error = $@ ) {
+            $self->logerror( "Child process $PID could not open the error log: $error" );
+        }
     }
 
     $self->loginfo( "Child process $PID starting up" );
