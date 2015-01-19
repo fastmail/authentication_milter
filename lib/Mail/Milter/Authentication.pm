@@ -278,7 +278,7 @@ sub start {
         }
     }
 
-    $PROGRAM_NAME = '[authentication_milter:init]';
+    $PROGRAM_NAME = '[authentication_milter:master]';
 
     warn "\nStarting server\n";
     __PACKAGE__->run( %srvargs );
