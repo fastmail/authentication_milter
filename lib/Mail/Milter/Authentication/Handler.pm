@@ -704,7 +704,7 @@ sub get_address_from {
     };
     if ( my $error = $@ ) {
         $self->log_error('Could not parse address $address : $error');
-        return q{};
+        return $address;
     }
 }
 
