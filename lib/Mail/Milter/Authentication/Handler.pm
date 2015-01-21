@@ -691,21 +691,22 @@ sub get_domain_from {
 
 sub get_address_from {
     my ( $self, $address ) = @_;
+    my $parsed = $address;
     eval {
         my @addresses = Email::Address->parse($address);
         if (@addresses) {
             my $first = $addresses[0];
-            return $first->address();
+            $parsed = $first->address();
         }
         else {
             # We couldn't parse, so just run with it and hope for the best
-            return $address;
         }
     };
     if ( my $error = $@ ) {
         $self->log_error('Could not parse address $address : $error');
-        return $address;
     }
+
+  return $parsed;
 }
 
 sub get_my_hostname {
