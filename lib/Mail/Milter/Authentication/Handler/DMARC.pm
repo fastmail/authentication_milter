@@ -273,16 +273,6 @@ sub eom_callback {
             $self->tempfail_on_error();
             $self->add_auth_header('dmarc=temperror (internal error)');
 
-            # THIS SHOULD NO LONGER BE AN ISSUE
-
-# BEGIN TEMPORARY CODE CORE DUMP
-#            open my $core, '>>', "/tmp/authentication_milter.core.$PID";
-#            print $core "$error\n\n";
-#            print $core Dumper( $self->{'thischild'} );
-#            print $core "\n\n";
-#            close $core;
-# END TEMPORARY CODE CORE DUMP
-
             $self->destroy_object('dmarc');
             return;
         }
