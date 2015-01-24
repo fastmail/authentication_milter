@@ -25,6 +25,7 @@ MANIFEST			This list of files
 LICENCE
 README
 bin/authentication_milter
+bin/authentication_milter_client
 t/00-load.t
 t/manifest.t
 t/pod-coverage.t

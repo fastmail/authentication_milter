@@ -54,6 +54,7 @@ requires (
 
 install_script (
     'bin/authentication_milter',
+    'bin/authentication_milter_client',
 );
 
 install_share (

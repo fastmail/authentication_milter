@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Email::Simple;
+use Getopt::Long;
+use Pod::Usage;
+
+use Mail::Milter::Authentication::Client;
+
+# CONFIG
+my $help         = 0;
+my $mailer_name  = 'test.mta.example.com';
+my $connect_ip   = '127.0.0.1';
+my $connect_name = 'localhost.localdomain';
+my $connect_port = '54321';
+my $connect_type = 'tcp4';
+my $helo_host    = 'localhost.example.com';
+my $mail_from    = 'test_user@localhost.example.com';
+my $rcpt_to      = 'test_user@mta.example.com';
+my $mail_file    = q{};
+
+GetOptions (
+    'mailer_name=s'  => \$mailer_name,
+    'connect_ip=s'   => \$connect_ip,
+    'connect_name=s' => \$connect_name,
+    'connect_port=s' => \$connect_port,
+    'connect_type=s' => \$connect_type,
+    'helo_host=s'    => \$helo_host,
+    'mail_from=s'    => \$mail_from,
+    'rcpt_to=s'      => \$rcpt_to,
+    'mail_file=s'    => \$mail_file,
+    "help"           => \$help
+) or die "Error in command line arguments\n";
+
+if ( $help ) {
+    usage();
+    exit 0;
+}
+
+sub usage {
+    pod2usage( -verbose => 2 );
+    return;
+}
+
+my $args = {
+    'mailer_name'   => $mailer_name,
+    'connect_ip'    => $connect_ip,
+    'connect_name'  => $connect_name,
+    'connect_port'  => $connect_port,
+    'connect_type'  => $connect_type,
+    'helo_host'     => $helo_host,
+    'mail_from'     => $mail_from,
+    'rcpt_to'       => $rcpt_to,
+};
+
+if ( $mail_file eq '-' ) {
+    my $mail_data = q{};
+    while ( my $l = <> ) {
+        $mail_data .= $l;
+    }
+    $args->{'mail_data'} = $mail_data;
+}
+else {
+    $args->{'mail_file'} = $mail_file;
+}
+
+my $client = Mail::Milter::Authentication::Client->new( $args );
+
+$client->process();
+
+print $client->result();
+
+__END__
+
+=head1 NAME
+
+  Authentication Milter Client
+
+=head1 USAGE
+
+  authentication_milter_client [--mailer_name <name>] \
+    [--connect_ip <ip>] [--connect_name <name] [--connect_port <port>] [--connect_type <type>] \
+    [--helo_host <host>] [--mail_from <from>] [--rcpt_to <rcpt_to>] \
+    [--mail_file <filename>] ]
+    [-h|--help]
+
+=head1 OPTIONS
+
+=over
+
+=item -h|--help
+
+  Show this help.
+
+=item --mail_file <file>
+
+  Filename of file containing the email contents.
+  If the filename is set to - then the client will read from STDIN
+
+=item --mailer_name <name>
+
+The name (fqdn) of the MTA
+
+=item --connect_ip <ip>
+
+The IP address of the host connecting to the mailer.
+
+=item --connect_name <hostname>
+
+The name of the host connecting to the mailer.
+
+=item --connect_port <port>
+
+The port of the connection to the mailer.
+
+=item --connect_type <type>
+
+The type of connection to the mailer (eg tcp4).
+
+=item --helo_host <hostname>
+
+The string passed in the HELO stage of the SMTP transaction.
+
+=item --mail_from <address>
+
+The string passed in the MAIL FROM stage of the SMTP transaction.
+
+=item --rcpt_to <address>
+
+The string passed in the RCPT TO stage of the SMTP transaction.
+
+=back
+
+=head1 AUTHORS
+
+Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2015
+
+This library is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.
+
+
