@@ -33,6 +33,7 @@ build_requires (
 requires (
     'Email::Address'        => 0,
     'English'               => 0,
+    'IO::Socket'            => 0,
     'JSON'                  => 0,
     'Mail::DKIM::Verifier'  => '0.39',
     'Mail::DMARC::PurePerl' => 0,
