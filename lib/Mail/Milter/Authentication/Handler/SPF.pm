@@ -85,7 +85,7 @@ sub envfrom_callback {
 
         if ( !( $config->{'skip_none'} && $result_code eq 'none' ) ) {
             my $result_header = $spf_result->received_spf_header();
-            my ( $header, $value ) = $result_header =~ /([^:]*): (.*)/;
+            my ( $header, $value ) = split( ': ', $result_header, 2 );
             $self->prepend_header( $header, $value );
             $self->dbgout( 'SPFHeader', $result_header, LOG_DEBUG );
         }
