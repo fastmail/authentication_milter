@@ -72,7 +72,7 @@ sub eoh_callback {
                 my $resolver = $self->get_object('resolver');
                 Mail::DKIM::DNS::resolver($resolver);
             }
-            $self->set_object('dkim', $dkim);
+            $self->set_object('dkim', $dkim, 1);
         };
         if ( my $error = $@ ) {
             $self->log_error( 'DKIM Setup Error ' . $error );

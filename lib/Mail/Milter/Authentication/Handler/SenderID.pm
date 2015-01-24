@@ -43,20 +43,11 @@ sub eoh_callback {
     
     my $spf_server = $self->get_object('spf_server');
     if ( ! $spf_server ) {
-        eval {
-            my $resolver = $self->get_object('resolver');
-            $spf_server = Mail::SPF::Server->new(
-                'hostname'     => $self->get_my_hostname(),
-                'dns_resolver' => $resolver,
-            );
-        };
-        if ( my $error = $@ ) {
-            $self->log_error( 'SenderID Setup Error ' . $error );
-            $self->add_auth_header('senderid=temperror');
-            return;
-        }
-        $self->set_object('spf_server',$spf_server);
+        $self->log_error( 'SenderID Setup Error' );
+        $self->add_auth_header('senderid=temperror');
+        return;
     }
+
     my $scope = 'pra';
 
     my $identity = $self->get_address_from( $self->{'from_header'} );

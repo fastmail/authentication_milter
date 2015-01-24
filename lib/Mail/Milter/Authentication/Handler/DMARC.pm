@@ -31,7 +31,7 @@ sub get_dmarc_object {
             $dmarc->verbose(1);
         }
         $dmarc->source_ip( $self->ip_address() );
-        $self->set_object('dmarc',$dmarc);
+        $self->set_object('dmarc', $dmarc,1 );
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC IP Error ' . $error );

@@ -5,6 +5,7 @@ our $VERSION = 0.6;
 
 use Email::Address;
 use English qw{ -no_match_vars };
+use Mail::SPF;
 use MIME::Base64;
 use Net::DNS::Resolver;
 use Socket  qw{ sockaddr_in  inet_ntoa sockaddr_family AF_INET  };
@@ -463,11 +464,31 @@ sub get_callbacks {
 
 sub get_object {
     my ( $self, $name ) = @_;
+
     my $thischild = $self->{'thischild'};
     my $object = $thischild->{'object'}->{$name};
     if ( ! $object ) {
 
+        if ( $name eq 'spf_server' ) {
+            $self->dbgout( 'Object created', $name, LOG_DEBUG );
+            eval {
+                my $resolver = $self->get_object('resolver');
+                $object = Mail::SPF::Server->new(
+                    'hostname'     => $self->get_my_hostname(),
+                    'dns_resolver' => $resolver,
+                );
+            };
+            if ( my $error = $@ ) {
+                $self->log_error( 'SPF Object Setup Error ' . $error );
+            }
+            $thischild->{'object'}->{$name} = {
+                'object'  => $object,
+                'destroy' => 0,
+            };
+        }
+
         if ( $name eq 'resolver' ) {
+            $self->dbgout( 'Object created', $name, LOG_DEBUG );
             my $config = $self->config();
             my $timeout           = $config->{'dns_timeout'}           || 8;
             my $cache_timeout     = $config->{'dns_cache_timeout'}     || 240;
@@ -482,23 +503,37 @@ sub get_object {
             );
             $object->udppacketsize(1240);
             $object->persistent_udp(1);
-            $thischild->{'object'}->{$name} = $object;
+            $thischild->{'object'}->{$name} = {
+                'object'  => $object,
+                'destroy' => 0,
+            };
         }
 
     }
-    return $object;
+    return $thischild->{'object'}->{$name}->{'object'};
 }
 
 sub set_object {
-    my ( $self, $name, $object ) = @_;
+    my ( $self, $name, $object, $destroy ) = @_;
     my $thischild = $self->{'thischild'};
-    $thischild->{'object'}->{$name} = $object;
+    $self->dbgout( 'Object set', $name, LOG_DEBUG );
+    $thischild->{'object'}->{$name} = {
+        'object'  => $object,
+        'destroy' => $destroy,
+    };
     return;
 }
 
 sub destroy_object {
     my ( $self, $name ) = @_;
     my $thischild = $self->{'thischild'};
+
+    # Objects may be set to not be destroyed,
+    # eg. resolver and spf_server are not
+    # destroyed for performance reasons
+    return if $thischild->{'object'}->{$name}->{'destroy'};
+    return if ! $thischild->{'object'}->{$name};
+    $self->dbgout( 'Object destroyed', $name, LOG_DEBUG );
     delete $thischild->{'object'}->{$name};
     return;
 }
@@ -1054,9 +1089,13 @@ Return the named object from the object store.
 
 Object 'resolver' will be created if it does not already exist.
 
-=item set_object( $name, $object )
+Object 'spf_server' will be created if it does not already exist.
+
+=item set_object( $name, $object, $destroy )
 
 Store the given object in the object store with the given name.
+
+If $destroy then the object will be destroyed when the connection to the child closes
 
 =item destroy_object( $name )
 
@@ -1065,6 +1104,8 @@ Remove the reference to the named object from the object store.
 =item destroy_all_objects()
 
 Remove the references to all objects currently stored in the object store.
+
+Certain objects (resolver and spf_server) are not destroyed for performance reasons.
 
 =item exit_on_close()
 
