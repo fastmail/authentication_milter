@@ -78,7 +78,7 @@ sub eoh_callback {
 #my $result_local  = $spf_result->local_explanation;
 #my $result_auth   = $spf_result->can( 'authority_explanation' ) ? $spf_result->authority_explanation() : '';
             my $result_header = $spf_result->received_spf_header();
-            my ( $header, $value ) = $result_header =~ /(.*): (.*)/;
+            my ( $header, $value ) = $result_header =~ /([^:]*): (.*)/;
             $self->prepend_header( $header, $value );
             $self->dbgout( 'SPFHeader', $result_header, LOG_DEBUG );
         }
