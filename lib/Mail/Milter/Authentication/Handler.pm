@@ -531,7 +531,7 @@ sub destroy_object {
     # Objects may be set to not be destroyed,
     # eg. resolver and spf_server are not
     # destroyed for performance reasons
-    return if $thischild->{'object'}->{$name}->{'destroy'};
+    return if ! $thischild->{'object'}->{$name}->{'destroy'};
     return if ! $thischild->{'object'}->{$name};
     $self->dbgout( 'Object destroyed', $name, LOG_DEBUG );
     delete $thischild->{'object'}->{$name};
