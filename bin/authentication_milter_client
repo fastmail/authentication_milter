@@ -55,6 +55,8 @@ my $args = {
     'rcpt_to'       => $rcpt_to,
 };
 
+die "Please supply a mail file" if ! $mail_file;
+
 if ( $mail_file eq '-' ) {
     my $mail_data = q{};
     while ( my $l = <> ) {
@@ -63,6 +65,9 @@ if ( $mail_file eq '-' ) {
     $args->{'mail_data'} = $mail_data;
 }
 else {
+    if ( ! -e $mail_file ) {
+        die "Mail file $mail_file does not exist";
+    }
     $args->{'mail_file'} = $mail_file;
 }
 
