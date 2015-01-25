@@ -27,7 +27,8 @@ configure_requires (
 );
 
 build_requires (
-   'Test::More' => 0,
+    'Test::More' => 0,
+    'Test::File::Contents' => 0,
 );
 
 requires (

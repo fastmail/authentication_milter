@@ -1,0 +1,70 @@
+{
+
+    "debug"                           : 0,
+    "dryrun"                          : 1,
+    "logtoerr"                        : 0,
+    "connection"                      : "unix:tmp/authentication_milter_test.sock",
+    "umask"                           : "0000",
+    "oldrunas"                        : "nobody",
+    "dispatcher"                      : "prefork",
+    "connect_timeout"                 : 55,
+    "command_timeout"                 : 55,
+    "content_timeout"                 : 595,
+    "tempfail_on_error"               : 1,
+    "tempfail_on_error_authenticated" : 1,
+    "tempfail_on_error_local"         : 1,
+    "tempfail_on_error_trusted"       : 1,
+
+    "listen_backlog"         : 1,
+    "min_children"           : 1,
+    "max_children"           : 2,
+    "min_spare_children"     : 1,
+    "max_spare_children"     : 1,
+    "max_requests_per_child" : 1000,
+
+    "handlers" : {
+        "SPF" : {
+            "hide_none" : 0
+        },
+        "DMARC" : {
+            "hide_none" : 0,
+            "detect_list_id" : 1
+        },
+        "DKIM" : {
+            "hide_none" : 0,
+            "show_default_adsp" : 0,
+            "check_adsp" : 1,
+            "adsp_hide_none" : 0
+        },
+        "PTR" : {},
+        "SenderID" : {
+            "hide_none" : 1
+        },
+        "IPRev" : {},
+        "Auth" : {},
+        "LocalIP" : {},
+        "TrustedIP" : {
+            "trusted_ip_list" : [
+                "59.167.198.153",
+                "2001:44b8:4162:bb00::/56",
+                "2001:44b8:4030:fef:3631:c4ff:fe4f:add7",
+                "106.187.51.197",
+                "2400:8900::f03c:91ff:fe6e:84c7",
+                "178.79.176.97",
+                "2a01:7e00::f03c:91ff:fe93:1cd"
+            ]
+        },
+        "!AddID" : {},
+        "!ReturnOK" : {},
+        "Sanitize" : {
+            "hosts_to_remove" : [
+                "electric-dreams.org",
+                "twofiftyeight.ltd.uk",
+                "fastmail.com",
+                "fastmail.com"
+            ],
+            "remove_headers" : "yes"
+        }
+    }
+
+}
