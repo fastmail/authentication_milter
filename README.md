@@ -28,7 +28,7 @@ Design Decisions
 - Detect authenticated connections and skip irrelevant checks.
   - It is assumed that this milter runs after DKIM signatures are generated, these are still validated.
 - DMARC reporting should be possible.
-- Modular design to allow new checks to be implemented easily
+- Modular design to allow new checks to be implemented easily.
 
 Mailing Lists and DMARC
 -----------------------
