@@ -191,12 +191,12 @@ sub start {
             );
             $srvargs{'background'}        = 1;
             $srvargs{'setsid'}            = 1;
-            $srvargs{'pid_file'}          = $pid_file;
         }
         else {
             warn("Not running as root, daemonize ignored!\n");
         }
     }
+    $srvargs{'pid_file'}          = $pid_file;
     $srvargs{'max_servers'}       = $max_children;
     $srvargs{'max_requests'}      = $max_requests_per_child;
     $srvargs{'min_servers'}       = $min_children;
