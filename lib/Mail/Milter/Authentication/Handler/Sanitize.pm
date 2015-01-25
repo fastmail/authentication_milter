@@ -60,7 +60,7 @@ sub header_callback {
         }
         $self->{'auth_result_header_index'} =
           $self->{'auth_result_header_index'} + 1;
-        my ($domain_part) = $value =~ /(.*);/;
+        my ($domain_part) = $value =~ /^([^;]*);/;
         $domain_part =~ s/ +//g;
         if ( $self->is_hostname_mine($domain_part) ) {
             $self->remove_auth_header( $self->{'auth_result_header_index'} );
