@@ -209,11 +209,16 @@ sub start {
     $srvargs{'syslog_logopt'}     = 'pid';
 
     if ( $EUID == 0 ) {
-        my $user  = $config->{'runas'}    || 'nobody';
-        my $group = $config->{'rungroup'} || 'nogroup'; 
+        my $user  = $config->{'runas'};
+        my $group = $config->{'rungroup'};
+        if ( $user && $group ) {
         warn("run as user=$user group=$group\n");
-        $srvargs{'user'}  = $user;
-        $srvargs{'group'} = $group;
+            $srvargs{'user'}  = $user;
+            $srvargs{'group'} = $group;
+        }
+        else {
+            warn("No runas details supplied, could not drop privs - be careful!\n");
+        }
         # Note, Chroot requires a chroot environment which is out of scope at present
         if ( $config->{'error_log'} ) {
             if ( ! -e $config->{'error_log'} ) {
