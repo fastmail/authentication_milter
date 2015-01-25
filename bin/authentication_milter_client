@@ -8,6 +8,7 @@ use Getopt::Long;
 use Pod::Usage;
 
 use Mail::Milter::Authentication::Client;
+use Mail::Milter::Authentication::Config;
 
 # CONFIG
 my $help         = 0;
@@ -20,6 +21,7 @@ my $helo_host    = 'localhost.example.com';
 my $mail_from    = 'test_user@localhost.example.com';
 my $rcpt_to      = 'test_user@mta.example.com';
 my $mail_file    = q{};
+my $prefix;
 
 GetOptions (
     'mailer_name=s'  => \$mailer_name,
@@ -31,12 +33,17 @@ GetOptions (
     'mail_from=s'    => \$mail_from,
     'rcpt_to=s'      => \$rcpt_to,
     'mail_file=s'    => \$mail_file,
-    "help"           => \$help
+    "help"           => \$help,
+    "prefix=s"       => \$prefix,
 ) or die "Error in command line arguments\n";
 
 if ( $help ) {
     usage();
     exit 0;
+}
+
+if ( $prefix ) {
+    $Mail::Milter::Authentication::Config::PREFIX = $prefix;
 }
 
 sub usage {
@@ -88,7 +95,8 @@ __END__
   authentication_milter_client [--mailer_name <name>] \
     [--connect_ip <ip>] [--connect_name <name] [--connect_port <port>] [--connect_type <type>] \
     [--helo_host <host>] [--mail_from <from>] [--rcpt_to <rcpt_to>] \
-    [--mail_file <filename>] ]
+    [--mail_file <filename>] \
+    [--prefix <dir>] \
     [-h|--help]
 
 =head1 OPTIONS
@@ -103,6 +111,10 @@ __END__
 
   Filename of file containing the email contents.
   If the filename is set to - then the client will read from STDIN
+
+=item --prefix <dir>
+
+  Read configuration from dir rather than /etc/
 
 =item --mailer_name <name>
 

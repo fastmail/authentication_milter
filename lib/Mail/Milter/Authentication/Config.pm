@@ -10,6 +10,8 @@ our @EXPORT_OK = qw{
 
 use JSON;
 
+our $PREFIX = '/etc';
+
 sub load_file {
     my ( $file ) = @_;
 
@@ -35,11 +37,11 @@ sub load_file {
 
 sub get_config {
 
-    my $file = '/etc/authentication_milter.json';
+    my $file = $PREFIX . '/authentication_milter.json';
 
     my $config = load_file( $file );
 
-    my $folder = '/etc/authentication_milter.d';
+    my $folder = $PREFIX . '/authentication_milter.d';
     if ( -d $folder ) {
         my $dh;
         opendir $dh, $folder;
@@ -81,6 +83,9 @@ Load in configuration data.
 
 Load in the configuration data, does some processing on handlers loaded before returning
 config to the caller.
+
+If the $Mail::Milter::Authentication::Config::PREFIX variable is set then the config file
+will be read from the supplied directory rather than /etc/
 
 =head1 FUNCTIONS
 

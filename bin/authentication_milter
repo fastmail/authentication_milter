@@ -5,22 +5,29 @@ use warnings;
 
 use Getopt::Long;
 use Mail::Milter::Authentication;
+use Mail::Milter::Authentication::Config;
 use Pod::Usage;
 
 # CONFIG
 my $pid_file = '/run/authentication_milter.pid';
 my $daemon = 0;
 my $help   = 0;
+my $prefix;
 
 GetOptions (
     "daemon"    => \$daemon,
     "pidfile=s" => \$pid_file,
-    "help"      => \$help
+    "help"      => \$help,
+    "prefix=s"  => \$prefix,
 ) or die "Error in command line arguments\n";
 
 if ( $help ) {
     usage();
     exit 0;
+}
+
+if ( $prefix ) {
+    $Mail::Milter::Authentication::Config::PREFIX = $prefix;
 }
 
 Mail::Milter::Authentication::start({
@@ -41,7 +48,7 @@ __END__
 
 =head1 USAGE
 
-  authentication_milter [-d|--daemon] [-p|--pidfile <file>] [-h|--help]
+  authentication_milter [-d|--daemon] [-p|--pidfile <file>] [-h|--help] [--prefix <dir>]
 
 =head1 OPTIONS
 
@@ -59,6 +66,10 @@ __END__
 
   Write the process PID to the given file.
   defaults to /run/authentication_milter.pid
+
+=item --prefix <dir>
+
+  Read configuration from dir rather than /etc/
 
 =back
 
