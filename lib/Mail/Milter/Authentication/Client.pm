@@ -50,6 +50,7 @@ sub new {
     $self->{'mail_from'}     = $args->{'mail_from'}    || 'test@from.example.com';
     $self->{'rcpt_to'}       = $args->{'rcpt_to'}      || 'test@to.example.com';
 
+    # Generate a unique Queue ID
     $self->{'queue_id'}      = md5_base64( "Authentication Milter Client $PID " . time() );
 
     $self->{'mail_file'}     = $args->{'mail_file'};
