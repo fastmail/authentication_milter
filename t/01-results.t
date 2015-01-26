@@ -29,6 +29,8 @@ sub start_milter {
         die "Could not find config";
     }
 
+    system "cp $prefix/mail-dmarc.ini .";
+
     my $setlib = 'export PERL5LIB=../lib';
     my $cmd = join( q{ },
         '../bin/authentication_milter',
@@ -45,6 +47,7 @@ sub start_milter {
 sub stop_milter {
     system( 'kill `cat tmp/authentication_milter.pid`' );
     unlink 'tmp/authentication_milter.pid';
+    unlink 'mail-dmarc.ini';
     sleep 5;
     return;
 }
