@@ -8,11 +8,10 @@ use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
 sub is_trusted_ip_address {
-    my ( $self, $ip_address ) = @_;
+    my ( $self, $ip_obj ) = @_;
     my $config = $self->handler_config();
     return 0 if not exists( $config->{'trusted_ip_list'} );
     my $trusted = 0;
-    my $ip_obj  = Net::IP->new($ip_address);
     foreach my $trusted_ip ( @{ $config->{'trusted_ip_list'} } ) {
         my $trusted_obj = Net::IP->new($trusted_ip);
         my $is_overlap = $ip_obj->overlaps($trusted_obj) || 0;
@@ -30,10 +29,9 @@ sub is_trusted_ip_address {
 }
 
 sub connect_callback {
-    my ( $self, $hostname, $sockaddr_in ) = @_;
+    my ( $self, $hostname, $ip ) = @_;
     $self->{'is_trusted_ip_address'} = 0;
-    my $ip_address = $self->ip_address();
-    if ( $self->is_trusted_ip_address($ip_address) ) {
+    if ( $self->is_trusted_ip_address($ip) ) {
         $self->dbgout( 'TrustedIP', 'pass', LOG_DEBUG );
         $self->add_c_auth_header('x-trusted-ip=pass');
         $self->{'is_trusted_ip_address'} = 1;

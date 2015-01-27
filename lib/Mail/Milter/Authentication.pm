@@ -11,9 +11,10 @@ use Mail::Milter::Authentication::DNSCache;
 use Mail::Milter::Authentication::Handler;
 use Module::Load;
 use Module::Loaded;
+use Net::IP;
 use Proc::ProcessTable;
-use Socket  qw{ pack_sockaddr_in  inet_aton sockaddr_un  AF_INET  };
-use Socket6 qw{ pack_sockaddr_in6 inet_pton              AF_INET6 };
+use Socket  qw{ pack_sockaddr_in  sockaddr_in  inet_ntoa inet_aton sockaddr_un sockaddr_family AF_INET  };
+use Socket6 qw{ pack_sockaddr_in6 sockaddr_in6 inet_ntop inet_pton                             AF_INET6 };
 use Sys::Syslog qw{:standard :macros};
 
 sub pre_loop_hook {
@@ -479,8 +480,10 @@ sub process_milter_command {
     my $returncode = SMFIS_CONTINUE;
 
     if ( $command eq SMFIC_CONNECT ) {
-        my ( $host, $sockaddr_in ) = $self->process_milter_connect( $buffer );
-        $returncode = $handler->top_connect_callback( $host, $sockaddr_in );
+        # BEGIN MILTER PROTOCOL BLOCK
+        my ( $host, $ip ) = $self->process_milter_connect( $buffer );
+        # END MILTER PROTOCOL BLOCK
+        $returncode = $handler->top_connect_callback( $host, $ip );
     }
     elsif ( $command eq SMFIC_ABORT ) {
         $returncode = $handler->top_abort_callback();
@@ -580,18 +583,20 @@ sub process_milter_command {
 sub process_milter_connect {
     my ( $self, $buffer ) = @_;
 
+    # TODO Can this be optimized?
     unless ($buffer =~ s/^([^\0]*)\0(.)//) {
         $self->fatal('SMFIC_CONNECT: invalid connect info');
     }
+    my $ip;
     my $host = $1;
     my $af = $2;
     my ($port, $addr) = unpack('nZ*', $buffer);
-    my $pack; # default undef
+    my $sockaddr_in; # default undef
     if ($af eq SMFIA_INET) {
-        $pack = pack_sockaddr_in($port, inet_aton($addr));
+        $sockaddr_in = pack_sockaddr_in($port, inet_aton($addr));
     }
     elsif ($af eq SMFIA_INET6) {
-        $pack = eval {
+        $sockaddr_in = eval {
             $addr =~ s/^IPv6://;
             pack_sockaddr_in6($port,
                 inet_pton( AF_INET6, $addr)
@@ -599,11 +604,43 @@ sub process_milter_connect {
         };
     }
     elsif ($af eq SMFIA_UNIX) {
-        $pack = eval {
+        # TODO this doesn't make sense in context
+        $sockaddr_in = eval {
             sockaddr_un($addr);
         };
     }
-    return ( $host, $pack );
+
+    my ( $iaddr, $ip_address );
+    if ( ! defined ( $sockaddr_in ) ) {
+        $self->log_error('Unknown IP address format UNDEF');
+        $ip_address = undef;
+        # Could potentially fail here, connection is likely bad anyway.
+    }
+        elsif ( length ( $sockaddr_in ) == 0 ) {
+            $self->log_error('Unknown IP address format NULL');
+            $ip_address = undef;
+            # Could potentially fail here, connection is likely bad anyway.
+        }
+        else {
+            my $family = sockaddr_family($sockaddr_in);
+            if ( $family == AF_INET ) {
+                ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
+                $ip_address = Net::IP->new( inet_ntoa($iaddr) );
+            }
+            elsif ( $family == AF_INET6 ) {
+                ( $port, $iaddr ) = sockaddr_in6($sockaddr_in);
+                $ip_address = Net::IP->new( inet_ntop( AF_INET6, $iaddr ) );
+            }
+            else {
+                ## TODO something better here - this should never happen
+                $self->log_error('Unknown IP address format - ' . encode_base64($sockaddr_in,q{}) );
+                $ip_address = undef;
+                # Could potentially fail here, connection is likely bad anyway.
+            }
+        }
+        $self->{'ip_address'} = $ip_address;
+
+    return ( $host, $ip_address );
 }
 # END MILTER PROTOCOL BLOCK
 

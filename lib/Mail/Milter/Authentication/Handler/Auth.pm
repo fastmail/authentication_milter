@@ -13,7 +13,7 @@ sub get_auth_name {
 }
 
 sub connect_callback {
-    my ( $self, $hostname, $sockaddr_in ) = @_;
+    my ( $self, $hostname, $ip ) = @_;
     $self->{'is_authenticated'} = 0;
     return;
 }

@@ -4,12 +4,11 @@ use warnings;
 use base 'Mail::Milter::Authentication::Handler';
 our $VERSION = 0.6;
 
-use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
 sub is_local_ip_address {
-    my ( $self, $ip_address ) = @_;
-    my $ip       = Net::IP->new($ip_address);
+    my ( $self, $ip ) = @_;
+    my $ip_address = $ip->ip();
     if ( ! $ip ) {
         $self->dbgout( 'IPAddress', "Address $ip_address detected as invalid", LOG_DEBUG );
         return 0; 
@@ -42,10 +41,9 @@ sub is_local_ip_address {
 }
 
 sub connect_callback {
-    my ( $self, $hostname, $sockaddr_in ) = @_;
+    my ( $self, $hostname, $ip ) = @_;
     $self->{'is_local_ip_address'} = 0;
-    my $ip_address = $self->ip_address();
-    if ( $self->is_local_ip_address($ip_address) ) {
+    if ( $self->is_local_ip_address($ip) ) {
         $self->dbgout( 'LocalIP', 'pass', LOG_DEBUG );
         $self->add_c_auth_header('x-local-ip=pass');
         $self->{'is_local_ip_address'} = 1;

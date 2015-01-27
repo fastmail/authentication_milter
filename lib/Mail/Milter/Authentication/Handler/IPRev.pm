@@ -34,12 +34,12 @@ sub connect_requires {
 }
 
 sub connect_callback {
-    my ( $self, $hostname, $sockaddr_in ) = @_;
+    my ( $self, $hostname, $ip ) = @_;
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     my $ip_address = $self->ip_address();
-    my $i1         = Net::IP->new($ip_address);
+    my $i1         = $ip;
     my $resolver = $self->get_object('resolver');
     my $domain;
     my $result;

@@ -8,8 +8,6 @@ use English qw{ -no_match_vars };
 use Mail::SPF;
 use MIME::Base64;
 use Net::DNS::Resolver;
-use Socket  qw{ sockaddr_in  inet_ntoa sockaddr_family AF_INET  };
-use Socket6 qw{ sockaddr_in6 inet_ntop                 AF_INET6 };
 use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 
@@ -30,7 +28,7 @@ sub new {
 sub top_connect_callback {
 
     # On Connect
-    my ( $self, $hostname, $sockaddr_in ) = @_;
+    my ( $self, $hostname, $ip ) = @_;
     $self->status('connect');
     $self->dbgout( 'CALLBACK', 'Connect', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
@@ -41,39 +39,13 @@ sub top_connect_callback {
             alarm( $config->{'connect_timeout'} );
         }
 
-        # Process the connecting IP Address
-        my ( $port, $iaddr, $ip_address );
-        if ( ! defined ( $sockaddr_in ) ) {
-            $self->log_error('Unknown IP address format UNDEF');
-            $ip_address = q{};
-        }
-        elsif ( length ( $sockaddr_in ) == 0 ) {
-            $self->log_error('Unknown IP address format NULL');
-            $ip_address = q{};
-            # Could potentially fail here, connection is likely bad anyway.
-        }
-        else {
-            my $family = sockaddr_family($sockaddr_in);
-            if ( $family == AF_INET ) {
-                ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
-                $ip_address = inet_ntoa($iaddr);
-            }
-            elsif ( $family == AF_INET6 ) {
-                ( $port, $iaddr ) = sockaddr_in6($sockaddr_in);
-                $ip_address = inet_ntop( AF_INET6, $iaddr );
-            }
-            else {
-                ## TODO something better here - this should never happen
-                $self->log_error('Unknown IP address format - ' . encode_base64($sockaddr_in,q{}) );
-                $ip_address = q{};
-            }
-        }
-        $self->{'ip_address'} = $ip_address;
-        $self->dbgout( 'ConnectFrom', $ip_address, LOG_DEBUG );
+        $self->{'ip_object'} = $ip;
+
+        $self->dbgout( 'ConnectFrom', $ip->ip(), LOG_DEBUG );
 
         my $callbacks = $self->get_callbacks( 'connect' );
         foreach my $handler ( @$callbacks ) {
-            $self->get_handler($handler)->connect_callback( $hostname, $sockaddr_in );
+            $self->get_handler($handler)->connect_callback( $hostname, $ip );
         }
         alarm(0);
     };
@@ -365,7 +337,7 @@ sub top_close_callback {
     delete $self->{'auth_headers'};
     delete $self->{'pre_headers'};
     delete $self->{'add_headers'};
-    delete $self->{'ip_address'};
+    delete $self->{'ip_object'};
     $self->dbgoutwrite();
     $self->clear_all_symbols();
     $self->status('postclose');
@@ -669,7 +641,7 @@ sub is_authenticated {
 sub ip_address {
     my ($self) = @_;
     my $top_handler = $self->get_top_handler();
-    return $top_handler->{'ip_address'};
+    return $top_handler->{'ip_object'}->ip();
 }
 
 
@@ -1014,7 +986,7 @@ and creates a new handler object.
 
 =over 
 
-=item top_connect_callback( $hostname, $sockaddr_in )
+=item top_connect_callback( $hostname, $ip )
 
 Top level handler for the connect event.
 
