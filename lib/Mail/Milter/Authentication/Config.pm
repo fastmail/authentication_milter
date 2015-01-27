@@ -63,6 +63,9 @@ sub get_config {
     @load_handlers = grep { ! /^\!/ } @load_handlers;
     $config->{'load_handlers'} = \@load_handlers;
 
+    my $protocol = $config->{'protocol'} || 'milter';
+    $config->{'protocol'} = $protocol;
+
     return $config;
 
 }

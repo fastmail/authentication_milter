@@ -4,6 +4,7 @@ use warnings;
 use base 'Net::Server::PreFork';
 our $VERSION = 0.6;
 
+use Digest::MD5 qw{ md5_base64 };
 use English qw{ -no_match_vars };
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
@@ -57,7 +58,7 @@ sub child_init_hook {
     }
 
     # BEGIN MILTER PROTOCOL BLOCK
-    {
+    if ( $config->{'protocol'} eq 'milter' ) {
         my $protocol  = SMFIP_NONE & ~(SMFIP_NOCONNECT|SMFIP_NOMAIL);
            $protocol &= ~SMFIP_NOHELO;
            $protocol &= ~SMFIP_NORCPT;
@@ -112,7 +113,13 @@ sub process_request {
     $self->logdebug( 'Processing request ' . $self->{'count'} );
     $self->{'socket'} = $self->{'server'}->{'client'}; 
 
-    $self->milter_process_request();
+    if ( $config->{'protocol'} eq 'milter' ) {
+        $self->milter_process_request();
+    }
+    else {
+    # Assume SMTP
+        $self->smtp_process_request();
+    }
 
     # Call close callback
     $self->{'handler'}->{'_Handler'}->top_close_callback();
@@ -139,6 +146,183 @@ sub process_request {
     $self->logdebug( 'Request processing completed' );
     return;
 }
+
+sub smtp_process_request {
+    my ( $self ) = @_;
+   
+    my $socket = $self->{'socket'};
+
+    my $connect_ip   = $self->{'server'}->{'peeraddr'};
+    my $connect_host = $self->{'server'}->{'peeraddr'}; ## TODO Lookup Name Here
+    my $fwd_helo_host;
+    my $helo_host;
+    my $has_connected = 0;
+    my $data_sent = 0;
+
+    my $server_name = 'server.example.com';
+    my $handler = $self->{'handler'}->{'_Handler'};
+
+    # Get connect host and Connect IP from the connection here!
+
+    print $socket "220 $server_name ESMTP AuthenticationMilter\r\n";
+
+    $handler->set_symbol( 'C', 'j', $server_name );
+    $handler->set_symbol( 'C', '{rcpt_host}', $server_name );
+
+    my $queue_id = md5_base64( "Authentication Milter Client $PID " . time() );
+    $handler->set_symbol( 'C', 'i', $queue_id );
+
+    COMMAND:
+    while ( 1 ) {
+
+        my $command = <$socket> || last COMMAND;
+        $command =~ s/\r?\n$//;
+
+        $self->logdebug( "receive command $command" );
+
+        my $returncode = SMFIS_CONTINUE;
+
+        if ( $command =~ /^EHLO/ ) {
+            if ( $data_sent ) {
+                print $socket "501 Out of Order\r\n";
+                last COMMAND;
+            }
+            $helo_host = substr( $command,5 );
+            print $socket "250-$server_name\r\n";
+            print $socket "250-XFORWARD NAME ADDR PROTO HELO\r\n";
+            print $socket "250 8BITMIME\r\n";
+        }
+        elsif ( $command =~ /^HELO/ ) {
+            if ( $data_sent ) {
+                print $socket "501 Out of Order\r\n";
+                last COMMAND;
+            }
+            $helo_host = substr( $command,5 );
+            print $socket "250 $server_name Hi $helo_host\r\n";
+        }
+        elsif ( $command =~ /^XFORWARD/ ) {
+            if ( $data_sent ) {
+                print $socket "503 Out of Order\r\n";
+                last COMMAND;
+            }
+            my $xdata = substr( $command,9 );
+            foreach my $entry ( split( q{ }, $xdata ) ) {
+                my ( $key, $value ) = split( '=', $entry, 2 );
+                if ( $key eq 'NAME' ) {
+                    $connect_host = $value;
+                }
+                elsif ( $key eq 'ADDR' ) {
+                    $connect_ip = $value;
+                }
+                elsif ( $key eq 'HELO' ) {
+                    $fwd_helo_host = $value;
+                }
+                else {
+                    # NOP
+                    ### log it here though
+                }
+            }
+            print $socket "250 Ok\r\n";
+        }
+        elsif ( $command =~ /^MAIL FROM:/ ) {
+            if ( $data_sent ) {
+                print $socket "503 Out of Order\r\n";
+                last COMMAND;
+            }
+            # Do connect callback here, because of XFORWARD
+            if ( ! $has_connected ) {
+                $returncode = $handler->top_connect_callback( $connect_host, Net::IP->new( $connect_ip ) );
+                if ( $returncode == SMFIS_CONTINUE ) {
+                    $returncode = $handler->top_helo_callback( $helo_host );
+                    if ( $returncode == SMFIS_CONTINUE ) {
+                        $has_connected = 1;
+                        my $envfrom = substr( $command,11 );
+                        $returncode = $handler->top_envfrom_callback( $envfrom );
+                        if ( $returncode == SMFIS_CONTINUE ) {
+                            print $socket "250 Ok\r\n";
+                        }
+                        else {
+                            print $socket "451 That's not right\r\n";
+                        }
+                    }
+                    else { 
+                        print $socket "451 That's not right\r\n";
+                    }
+                }
+                else { 
+                    print $socket "451 That's not right\r\n";
+                }
+            } 
+            else { 
+                my $envfrom = substr( $command,11 );
+                $returncode = $handler->top_envfrom_callback( $envfrom );
+                if ( $returncode == SMFIS_CONTINUE ) {
+                    print $socket "250 Ok\r\n";
+                }
+                else {
+                    print $socket "451 That's not right\r\n";
+                }
+            }
+        }
+        elsif ( $command =~ /^RCPT TO:/ ) {
+            if ( $data_sent ) {
+                print $socket "503 Out of Order\r\n";
+                last COMMAND;
+            }
+            my $envrcpt = substr( $command,9 );
+            $returncode = $handler->top_envrcpt_callback( $envrcpt );
+            if ( $returncode == SMFIS_CONTINUE ) {
+                print $socket "250 Ok\r\n";
+            }
+            else {
+                print $socket "451 That's not right\r\n";
+            }
+        }
+        elsif ( $command =~ /^DATA/ ) {
+            if ( $data_sent ) {
+                print $socket "503 One at a time please\r\n";
+                last COMMAND;
+            }
+            $data_sent = 1;
+            print $socket "354 Send body\r\n";
+            DATA:
+            while ( my $dataline = <$socket> ) {
+                $dataline =~ s/\r?\n$//;
+                # Don't forget to deal with encoded . in the message text
+                last DATA if $dataline eq '.';
+            }
+            #$returncode = $handler->top_header_callback( '', '' );
+            #$returncode = $handler->top_eoh_callback();
+            #$returncode = $handler->top_body_callback( '' );
+            #$returncode = $handler->top_eom_callback();
+            if ( $returncode == SMFIS_CONTINUE ) {
+                print $socket "250 Queued as $queue_id\r\n";
+            }
+            else { 
+                print $socket "451 That's not right\r\n";
+            }
+
+        }
+        elsif ( $command =~ /^QUIT/ ){
+            print $socket "221 Bye\n";
+            last COMMAND;
+        }
+        else {
+            print $socket "502 I don't understand\r\n";
+        }
+
+    }
+
+    # Setup Header arrays
+
+    # Process commands
+    
+    # Process header results
+    
+    # Pass on to destination
+    
+}
+
 
 # BEGIN MILTER PROTOCOL BLOCK
 sub milter_process_request {
