@@ -5,7 +5,9 @@ use warnings;
 
 use Getopt::Long;
 use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Config;
+use Mail::Milter::Authentication::Protocol::Milter;
+use Mail::Milter::Authentication::Protocol::SMTP;
+use Mail::Milter::Authentication::Config qw{ get_config };
 use Pod::Usage;
 
 # CONFIG

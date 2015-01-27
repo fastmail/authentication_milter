@@ -4,7 +4,6 @@ use warnings;
 use base 'Net::Server::PreFork';
 our $VERSION = 0.6;
 
-use Digest::MD5 qw{ md5_base64 };
 use English qw{ -no_match_vars };
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
@@ -15,6 +14,8 @@ use Module::Loaded;
 use Net::IP;
 use Proc::ProcessTable;
 use Sys::Syslog qw{:standard :macros};
+
+use vars qw(@ISA);
 
 sub pre_loop_hook {
     my ( $self ) = @_;
@@ -51,6 +52,19 @@ sub child_init_hook {
 
     $self->loginfo( "Child process $PID starting up" );
     $PROGRAM_NAME = '[authentication_milter:starting]';
+
+    my $base;
+    if ( $config->{'protocol'} eq 'milter' ) {
+        $base = 'Mail::Milter::Authentication::Protocol::Milter';
+    }
+    elsif ( $config->{'protocol'} eq 'smtp' ) {
+        $base = 'Mail::Milter::Authentication::Protocol::SMTP';
+    }
+    else {
+        die "Unknown protocol " . $config->{'protocol'} . "\n";
+    }
+    load $base;
+    push @ISA, $base;
 
     # Load handlers (again to allow for reconfiguration)
     foreach my $name ( @{$config->{'load_handlers'}} ) {
@@ -113,13 +127,7 @@ sub process_request {
     $self->logdebug( 'Processing request ' . $self->{'count'} );
     $self->{'socket'} = $self->{'server'}->{'client'}; 
 
-    if ( $config->{'protocol'} eq 'milter' ) {
-        $self->milter_process_request();
-    }
-    else {
-    # Assume SMTP
-        $self->smtp_process_request();
-    }
+    $self->protocol_process_request();
 
     # Call close callback
     $self->{'handler'}->{'_Handler'}->top_close_callback();
@@ -147,212 +155,8 @@ sub process_request {
     return;
 }
 
-sub smtp_process_request {
-    my ( $self ) = @_;
-   
-    my $socket = $self->{'socket'};
-
-    my $connect_ip   = $self->{'server'}->{'peeraddr'};
-    my $connect_host = $self->{'server'}->{'peeraddr'}; ## TODO Lookup Name Here
-    my $fwd_helo_host;
-    my $helo_host;
-    my $has_connected = 0;
-    my $data_sent = 0;
-
-    my $server_name = 'server.example.com';
-    my $handler = $self->{'handler'}->{'_Handler'};
-
-    # Get connect host and Connect IP from the connection here!
-
-    print $socket "220 $server_name ESMTP AuthenticationMilter\r\n";
-
-    $handler->set_symbol( 'C', 'j', $server_name );
-    $handler->set_symbol( 'C', '{rcpt_host}', $server_name );
-
-    my $queue_id = md5_base64( "Authentication Milter Client $PID " . time() );
-    $handler->set_symbol( 'C', 'i', $queue_id );
-
-    COMMAND:
-    while ( 1 ) {
-
-        my $command = <$socket> || last COMMAND;
-        $command =~ s/\r?\n$//;
-
-        $self->logdebug( "receive command $command" );
-
-        my $returncode = SMFIS_CONTINUE;
-
-        if ( $command =~ /^EHLO/ ) {
-            if ( $data_sent ) {
-                print $socket "501 Out of Order\r\n";
-                last COMMAND;
-            }
-            $helo_host = substr( $command,5 );
-            print $socket "250-$server_name\r\n";
-            print $socket "250-XFORWARD NAME ADDR PROTO HELO\r\n";
-            print $socket "250 8BITMIME\r\n";
-        }
-        elsif ( $command =~ /^HELO/ ) {
-            if ( $data_sent ) {
-                print $socket "501 Out of Order\r\n";
-                last COMMAND;
-            }
-            $helo_host = substr( $command,5 );
-            print $socket "250 $server_name Hi $helo_host\r\n";
-        }
-        elsif ( $command =~ /^XFORWARD/ ) {
-            if ( $data_sent ) {
-                print $socket "503 Out of Order\r\n";
-                last COMMAND;
-            }
-            my $xdata = substr( $command,9 );
-            foreach my $entry ( split( q{ }, $xdata ) ) {
-                my ( $key, $value ) = split( '=', $entry, 2 );
-                if ( $key eq 'NAME' ) {
-                    $connect_host = $value;
-                }
-                elsif ( $key eq 'ADDR' ) {
-                    $connect_ip = $value;
-                }
-                elsif ( $key eq 'HELO' ) {
-                    $fwd_helo_host = $value;
-                }
-                else {
-                    # NOP
-                    ### log it here though
-                }
-            }
-            print $socket "250 Ok\r\n";
-        }
-        elsif ( $command =~ /^MAIL FROM:/ ) {
-            if ( $data_sent ) {
-                print $socket "503 Out of Order\r\n";
-                last COMMAND;
-            }
-            # Do connect callback here, because of XFORWARD
-            if ( ! $has_connected ) {
-                $returncode = $handler->top_connect_callback( $connect_host, Net::IP->new( $connect_ip ) );
-                if ( $returncode == SMFIS_CONTINUE ) {
-                    $returncode = $handler->top_helo_callback( $helo_host );
-                    if ( $returncode == SMFIS_CONTINUE ) {
-                        $has_connected = 1;
-                        my $envfrom = substr( $command,11 );
-                        $returncode = $handler->top_envfrom_callback( $envfrom );
-                        if ( $returncode == SMFIS_CONTINUE ) {
-                            print $socket "250 Ok\r\n";
-                        }
-                        else {
-                            print $socket "451 That's not right\r\n";
-                        }
-                    }
-                    else { 
-                        print $socket "451 That's not right\r\n";
-                    }
-                }
-                else { 
-                    print $socket "451 That's not right\r\n";
-                }
-            } 
-            else { 
-                my $envfrom = substr( $command,11 );
-                $returncode = $handler->top_envfrom_callback( $envfrom );
-                if ( $returncode == SMFIS_CONTINUE ) {
-                    print $socket "250 Ok\r\n";
-                }
-                else {
-                    print $socket "451 That's not right\r\n";
-                }
-            }
-        }
-        elsif ( $command =~ /^RCPT TO:/ ) {
-            if ( $data_sent ) {
-                print $socket "503 Out of Order\r\n";
-                last COMMAND;
-            }
-            my $envrcpt = substr( $command,9 );
-            $returncode = $handler->top_envrcpt_callback( $envrcpt );
-            if ( $returncode == SMFIS_CONTINUE ) {
-                print $socket "250 Ok\r\n";
-            }
-            else {
-                print $socket "451 That's not right\r\n";
-            }
-        }
-        elsif ( $command =~ /^DATA/ ) {
-            if ( $data_sent ) {
-                print $socket "503 One at a time please\r\n";
-                last COMMAND;
-            }
-            $data_sent = 1;
-            print $socket "354 Send body\r\n";
-            DATA:
-            while ( my $dataline = <$socket> ) {
-                $dataline =~ s/\r?\n$//;
-                # Don't forget to deal with encoded . in the message text
-                last DATA if $dataline eq '.';
-            }
-            #$returncode = $handler->top_header_callback( '', '' );
-            #$returncode = $handler->top_eoh_callback();
-            #$returncode = $handler->top_body_callback( '' );
-            #$returncode = $handler->top_eom_callback();
-            if ( $returncode == SMFIS_CONTINUE ) {
-                print $socket "250 Queued as $queue_id\r\n";
-            }
-            else { 
-                print $socket "451 That's not right\r\n";
-            }
-
-        }
-        elsif ( $command =~ /^QUIT/ ){
-            print $socket "221 Bye\n";
-            last COMMAND;
-        }
-        else {
-            print $socket "502 I don't understand\r\n";
-        }
-
-    }
-
-    # Setup Header arrays
-
-    # Process commands
-    
-    # Process header results
-    
-    # Pass on to destination
-    
-}
 
 
-# BEGIN MILTER PROTOCOL BLOCK
-sub milter_process_request {
-    my ( $self ) = @_;
-
-    COMMAND:
-    while ( 1 ) {
-
-        # Get packet length 
-        my $length = unpack('N', $self->milter_read_block(4) ) || last;
-        $self->fatal("bad packet length $length") if ($length <= 0 || $length > 131072);
-
-        # Get command
-        my $command = $self->milter_read_block(1) || last;
-        $self->logdebug( "receive command $command" );
-
-        # Get data
-        my $data = $self->milter_read_block($length - 1);
-        if ( ! defined ( $data ) ) {
-            $self->fatal('EOF in stream');
-        }
-
-        last COMMAND if $command eq SMFIC_QUIT;
-        $self->milter_process_command( $command, $data );
-
-    }    
-
-    return;
-}
-# END MILTER PROTOCOL BLOCK
 
 sub start {
     my ($args)     = @_;
@@ -653,231 +457,7 @@ sub destroy_objects {
     return;
 }
 
-sub milter_process_command {
-    my ( $self, $command, $buffer ) = @_;
-    $self->logdebug ( "process command $command" );
 
-    my $handler = $self->{'handler'}->{'_Handler'};
-
-    my $returncode = SMFIS_CONTINUE;
-
-    if ( $command eq SMFIC_CONNECT ) {
-        # BEGIN MILTER PROTOCOL BLOCK
-        my ( $host, $ip ) = $self->milter_process_connect( $buffer );
-        # END MILTER PROTOCOL BLOCK
-        $returncode = $handler->top_connect_callback( $host, $ip );
-    }
-    elsif ( $command eq SMFIC_ABORT ) {
-        $returncode = $handler->top_abort_callback();
-    }
-    elsif ( $command eq SMFIC_BODY ) {
-        $returncode = $handler->top_body_callback( $buffer );
-    }
-    elsif ( $command eq SMFIC_MACRO ) {
-        $self->fatal('SMFIC_MACRO: empty packet') unless ( $buffer =~ s/^(.)// );
-        my $code = $1;
-        my $data = $self->milter_split_buffer( $buffer );
-        push ( @$data, q{} ) if (( @$data & 1 ) != 0 ); # pad last entry with empty string if odd number
-        my %datahash = @$data;
-        foreach my $key ( keys %datahash ) {
-            $handler->set_symbol( $code, $key, $datahash{$key} );
-        }
-        undef $returncode;
-    }
-    elsif ( $command eq SMFIC_BODYEOB ) {
-        $returncode = $handler->top_eom_callback();
-    }
-    elsif ( $command eq SMFIC_HELO ) {
-        my $helo = $self->milter_split_buffer( $buffer );
-        $returncode = $handler->top_helo_callback( @$helo );
-    }
-    elsif ( $command eq SMFIC_HEADER ) {
-        my $header = $self->milter_split_buffer( $buffer );
-        if ( @$header == 1 ) { push @$header , q{}; };
-        $returncode = $handler->top_header_callback( @$header );
-    }
-    elsif ( $command eq SMFIC_MAIL ) {
-        my $envfrom = $self->milter_split_buffer( $buffer );
-        $returncode = $handler->top_envfrom_callback( @$envfrom );
-    }
-    elsif ( $command eq SMFIC_EOH ) {
-        $returncode = $handler->top_eoh_callback();
-    }
-    elsif ( $command eq SMFIC_OPTNEG ) {
-        $self->fatal('SMFIC_OPTNEG: packet has wrong size') unless (length($buffer) == 12);
-        my ($ver, $actions, $protocol) = unpack('NNN', $buffer);
-        $self->fatal("SMFIC_OPTNEG: unknown milter protocol version $ver") unless ($ver >= 2 && $ver <= 6);
-        my $actions_reply  = $self->{'callback_flags'} & $actions;
-        my $protocol_reply = $self->{'protocol'}       & $protocol;
-        $self->write_packet(SMFIC_OPTNEG,
-            pack('NNN', 2, $actions_reply, $protocol_reply)
-        );
-        undef $returncode;
-    }
-    elsif ( $command eq SMFIC_RCPT ) {
-        my $envrcpt = $self->milter_split_buffer( $buffer );
-        $returncode = $handler->top_envrcpt_callback( @$envrcpt );
-    }
-    elsif ( $command eq SMFIC_DATA ) {
-    }
-    elsif ( $command eq SMFIC_UNKNOWN ) {
-        undef $returncode;
-        # Unknown SMTP command received
-    }
-    else {
-        $self->fatal("Unknown milter command $command");
-    }
-
-    if (defined $returncode) {
-        if ( $returncode == SMFIS_CONTINUE ) {
-            $returncode = SMFIR_CONTINUE;
-        }
-        elsif ( $returncode == SMFIS_TEMPFAIL ) {
-            $returncode = SMFIR_TEMPFAIL;
-        }
-        elsif ( $returncode == SMFIS_REJECT ) {
-            $returncode = SMFIR_REJECT;
-        }
-        elsif ( $returncode == SMFIS_DISCARD ) {
-            $returncode = SMFIR_DISCARD;
-        }
-        elsif ( $returncode == SMFIS_ACCEPT ) {
-            $returncode = SMFIR_ACCEPT;
-        }
-
-        my $config = $self->{'config'};
-        if ( $config->{'dryrun'} ) {
-            if ( $returncode ne SMFIR_CONTINUE ) {
-                $self->loginfo ( "dryrun returncode changed from $returncode to continue" );
-                $returncode = SMFIR_CONTINUE;
-            }
-        }
-
-        if ( $command ne SMFIC_ABORT ) {
-            $self->write_packet($returncode);
-        }
-    } 
- 
-    return;
-}
-
-# BEGIN MILTER PROTOCOL BLOCK
-sub milter_process_connect {
-    my ( $self, $buffer ) = @_;
-
-    unless ($buffer =~ s/^([^\0]*)\0(.)//) {
-        $self->fatal('SMFIC_CONNECT: invalid connect info');
-    }
-    my $ip;
-    my $host = $1;
-
-    my ($port, $addr) = unpack('nZ*', $buffer);
-
-    if ( ! defined ( $addr ) ) {
-        $self->log_error('Unknown IP address format UNDEF');
-        $ip = undef;
-        # Could potentially fail here, connection is likely bad anyway.
-    }
-    elsif ( length ( $addr ) == 0 ) {
-            $self->log_error('Unknown IP address format NULL');
-            $ip = undef;
-            # Could potentially fail here, connection is likely bad anyway.
-    }
-    else {
-        eval {
-            $ip = Net::IP->new( $addr );
-        };
-        if ( my $error = $@ ) {
-            $self->log_error('Unknown IP address format - ' . $addr . ' - ' . $error );
-            $ip = undef;
-            # Could potentially fail here, connection is likely bad anyway.
-        }
-    }
-
-    return ( $host, $ip );
-}
-# END MILTER PROTOCOL BLOCK
-
-# BEGIN MILTER PROTOCOL BLOCK
-sub milter_read_block {
-    my ( $self, $len ) = @_;
-    my $socket = $self->{'socket'};
-    my $sofar = 0;
-    my $buffer = q{}; 
-    while ($len > $sofar) {
-        my $read = $socket->sysread($buffer, $len - $sofar, $sofar);
-        last if (!defined($read) || $read <= 0); # EOF
-        $sofar += $read;
-    }
-    return $buffer;
-}
-# END MILTER PROTOCOL BLOCK
-
-# BEGIN MILTER PROTOCOL BLOCK
-sub milter_split_buffer {
-    my ( $self, $buffer ) = @_;
-    $buffer =~ s/\0$//; # remove trailing NUL
-    return [ split(/\0/, $buffer) ];
-};
-# END MILTER PROTOCOL BLOCK
-
-##
-
-# BEGIN MILTER PROTOCOL BLOCK
-sub add_header {
-    my ( $self, $header, $value ) = @_;
-    $self->write_packet( SMFIR_ADDHEADER,
-        $header
-        . "\0"
-        . $value
-        . "\0"
-    );
-    return;
-}
-# END MILTER PROTOCOL BLOCK
-
-# BEGIN MILTER PROTOCOL BLOCK
-sub change_header {
-    my ( $self, $header, $index, $value ) = @_;
-    $value = '' unless defined($value);
-    $self->write_packet( SMFIR_CHGHEADER,
-        pack('N', $index)
-        . $header
-        . "\0"
-        . $value
-        . "\0"
-    );
-    return;
-}
-# END MILTER PROTOCOL BLOCK
-
-# BEGIN MILTER PROTOCOL BLOCK
-sub insert_header {
-    my ( $self, $index, $key, $value ) = @_;
-    $self->write_packet( SMFIR_INSHEADER,
-        pack( 'N', $index )
-        . $key
-        . "\0"
-        . $value
-        . "\0"
-    );
-    return;
-}
-# END MILTER PROTOCOL BLOCK
-
-# BEGIN MILTER PROTOCOL BLOCK
-sub write_packet {
-    my ( $self, $code, $data ) = @_;
-    $self->logdebug ( "send command $code" );
-    my $socket = $self->{'socket'};
-    $data = q{} unless defined($data);
-    my $len = pack('N', length($data) + 1);
-    $socket->syswrite($len);
-    $socket->syswrite($code);
-    $socket->syswrite($data);
-    return;
-}
-# END MILTER PROTOCOL BLOCK
 
 
 ## Logging
@@ -982,38 +562,6 @@ Sort the callbacks for the $callback callback into the right order
 =item I<destroy_objects()>
 
 Remove references to all objects
-
-=item I<milter_process_command( $command, $buffer )>
-
-Process the command from the milter protocol stream.
-
-=item I<milter_processconnect( $buffer )>
-
-Process a milter connect command.
-
-=item I<milter_read_block( $len )>
-
-Read $len bytes from the milter protocol stream.
-
-=item I<milter_split_buffer( $buffer )>
-
-Split the milter buffer at null
-
-=item I<add_header( $header, $value )>
-
-Write an add header packet
-
-=item I<change_header( $header, $index, $value )>
-
-Write a change header packet
-
-=item I<insert_header( $index, $key, $value )>
-
-Writa an insert header packet
-
-=item I<write_packet( $code, $data )>
-
-Write a packet to the protocol stream.
 
 =item I<logerror( $line )>
 

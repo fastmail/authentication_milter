@@ -6,7 +6,7 @@ use warnings;
 use Data::Dumper;
 use Digest::MD5 qw{ md5_base64 };
 use Email::Simple;
-use English;
+use English qw{ -no_match_vars };
 
 use Mail::Milter::Authentication::Config qw{ get_config };
 
