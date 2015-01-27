@@ -13,8 +13,6 @@ use Module::Load;
 use Module::Loaded;
 use Net::IP;
 use Proc::ProcessTable;
-use Socket  qw{ pack_sockaddr_in  sockaddr_in  inet_ntoa inet_aton sockaddr_un sockaddr_family AF_INET  };
-use Socket6 qw{ pack_sockaddr_in6 sockaddr_in6 inet_ntop inet_pton                             AF_INET6 };
 use Sys::Syslog qw{:standard :macros};
 
 sub pre_loop_hook {
@@ -583,64 +581,36 @@ sub process_milter_command {
 sub process_milter_connect {
     my ( $self, $buffer ) = @_;
 
-    # TODO Can this be optimized?
     unless ($buffer =~ s/^([^\0]*)\0(.)//) {
         $self->fatal('SMFIC_CONNECT: invalid connect info');
     }
     my $ip;
     my $host = $1;
-    my $af = $2;
-    my ($port, $addr) = unpack('nZ*', $buffer);
-    my $sockaddr_in; # default undef
-    if ($af eq SMFIA_INET) {
-        $sockaddr_in = pack_sockaddr_in($port, inet_aton($addr));
-    }
-    elsif ($af eq SMFIA_INET6) {
-        $sockaddr_in = eval {
-            $addr =~ s/^IPv6://;
-            pack_sockaddr_in6($port,
-                inet_pton( AF_INET6, $addr)
-            );
-        };
-    }
-    elsif ($af eq SMFIA_UNIX) {
-        # TODO this doesn't make sense in context
-        $sockaddr_in = eval {
-            sockaddr_un($addr);
-        };
-    }
 
-    my ( $iaddr, $ip_address );
-    if ( ! defined ( $sockaddr_in ) ) {
+    my ($port, $addr) = unpack('nZ*', $buffer);
+
+    if ( ! defined ( $addr ) ) {
         $self->log_error('Unknown IP address format UNDEF');
-        $ip_address = undef;
+        $ip = undef;
         # Could potentially fail here, connection is likely bad anyway.
     }
-        elsif ( length ( $sockaddr_in ) == 0 ) {
+    elsif ( length ( $addr ) == 0 ) {
             $self->log_error('Unknown IP address format NULL');
-            $ip_address = undef;
+            $ip = undef;
+            # Could potentially fail here, connection is likely bad anyway.
+    }
+    else {
+        eval {
+            $ip = Net::IP->new( $addr );
+        };
+        if ( my $error = $@ ) {
+            $self->log_error('Unknown IP address format - ' . $addr . ' - ' . $error );
+            $ip = undef;
             # Could potentially fail here, connection is likely bad anyway.
         }
-        else {
-            my $family = sockaddr_family($sockaddr_in);
-            if ( $family == AF_INET ) {
-                ( $port, $iaddr ) = sockaddr_in($sockaddr_in);
-                $ip_address = Net::IP->new( inet_ntoa($iaddr) );
-            }
-            elsif ( $family == AF_INET6 ) {
-                ( $port, $iaddr ) = sockaddr_in6($sockaddr_in);
-                $ip_address = Net::IP->new( inet_ntop( AF_INET6, $iaddr ) );
-            }
-            else {
-                ## TODO something better here - this should never happen
-                $self->log_error('Unknown IP address format - ' . encode_base64($sockaddr_in,q{}) );
-                $ip_address = undef;
-                # Could potentially fail here, connection is likely bad anyway.
-            }
-        }
-        $self->{'ip_address'} = $ip_address;
+    }
 
-    return ( $host, $ip_address );
+    return ( $host, $ip );
 }
 # END MILTER PROTOCOL BLOCK
 
@@ -891,8 +861,6 @@ Log to the debug log.
   Net::Server
   Pod::Usage
   Proc::ProcessTable
-  Socket
-  Socket6
   Sys::Hostname
   Sys::Syslog
 
