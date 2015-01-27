@@ -57,16 +57,20 @@ sub child_init_hook {
         $self->load_handler( $name );
     }
 
-    my $protocol  = SMFIP_NONE & ~(SMFIP_NOCONNECT|SMFIP_NOMAIL);
-       $protocol &= ~SMFIP_NOHELO;
-       $protocol &= ~SMFIP_NORCPT;
-       $protocol &= ~SMFIP_NOBODY;
-       $protocol &= ~SMFIP_NOHDRS;
-       $protocol &= ~SMFIP_NOEOH;
-    $self->{'protocol'} = $protocol;
+    # BEGIN MILTER PROTOCOL BLOCK
+    {
+        my $protocol  = SMFIP_NONE & ~(SMFIP_NOCONNECT|SMFIP_NOMAIL);
+           $protocol &= ~SMFIP_NOHELO;
+           $protocol &= ~SMFIP_NORCPT;
+           $protocol &= ~SMFIP_NOBODY;
+           $protocol &= ~SMFIP_NOHDRS;
+           $protocol &= ~SMFIP_NOEOH;
+        $self->{'protocol'} = $protocol;
     
-    my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
-    $self->{'callback_flags'} = $callback_flags;
+        my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
+        $self->{'callback_flags'} = $callback_flags;
+    }
+    # END MILTER PROTOCOL BLOCK
 
     my $callbacks_list = {};
     my $callbacks      = {};
@@ -109,33 +113,13 @@ sub process_request {
     $self->logdebug( 'Processing request ' . $self->{'count'} );
     $self->{'socket'} = $self->{'server'}->{'client'}; 
 
-    my $quit = 0;
-    while ( ! $quit ) {
-
-        # Get packet length 
-        my $length = unpack('N', $self->read_block(4) ) || last;
-        $self->fatal("bad packet length $length") if ($length <= 0 || $length > 131072);
-
-        # Get command
-        my $command = $self->read_block(1) || last;
-        $self->logdebug( "receive command $command" );
-
-        # Get data
-        my $data = $self->read_block($length - 1);
-        if ( ! defined ( $data ) ) {
-            $self->fatal('EOF in stream');
-        }
-
-        last if $command eq SMFIC_QUIT;
-        $self->process_command( $command, $data );
-    }    
+    $self->process_milter_request();
 
     # Call close callback
     $self->{'handler'}->{'_Handler'}->top_close_callback();
     if ( $self->{'handler'}->{'_Handler'}->{'exit_on_close'} ) {
-        $quit = 1;
+        $self->fatal('exit_on_close requested');
     }
-    $self->fatal('exit_on_close requested') if $quit;
 
     if ( $config->{'debug'} ) {
         my $process_table = Proc::ProcessTable->new();
@@ -156,6 +140,36 @@ sub process_request {
     $self->logdebug( 'Request processing completed' );
     return;
 }
+
+# BEGIN MILTER PROTOCOL BLOCK
+sub process_milter_request {
+    my ( $self ) = @_;
+
+    COMMAND:
+    while ( 1 ) {
+
+        # Get packet length 
+        my $length = unpack('N', $self->read_block(4) ) || last;
+        $self->fatal("bad packet length $length") if ($length <= 0 || $length > 131072);
+
+        # Get command
+        my $command = $self->read_block(1) || last;
+        $self->logdebug( "receive command $command" );
+
+        # Get data
+        my $data = $self->read_block($length - 1);
+        if ( ! defined ( $data ) ) {
+            $self->fatal('EOF in stream');
+        }
+
+        last COMMAND if $command eq SMFIC_QUIT;
+        $self->process_milter_command( $command, $data );
+
+    }    
+
+    return;
+}
+# END MILTER PROTOCOL BLOCK
 
 sub start {
     my ($args)     = @_;
@@ -456,7 +470,7 @@ sub destroy_objects {
     return;
 }
 
-sub process_command {
+sub process_milter_command {
     my ( $self, $command, $buffer ) = @_;
     $self->logdebug ( "process command $command" );
 
@@ -465,7 +479,7 @@ sub process_command {
     my $returncode = SMFIS_CONTINUE;
 
     if ( $command eq SMFIC_CONNECT ) {
-        my ( $host, $sockaddr_in ) = $self->process_connect( $buffer );
+        my ( $host, $sockaddr_in ) = $self->process_milter_connect( $buffer );
         $returncode = $handler->top_connect_callback( $host, $sockaddr_in );
     }
     elsif ( $command eq SMFIC_ABORT ) {
@@ -562,7 +576,8 @@ sub process_command {
     return;
 }
 
-sub process_connect {
+# BEGIN MILTER PROTOCOL BLOCK
+sub process_milter_connect {
     my ( $self, $buffer ) = @_;
 
     unless ($buffer =~ s/^([^\0]*)\0(.)//) {
@@ -590,7 +605,9 @@ sub process_connect {
     }
     return ( $host, $pack );
 }
+# END MILTER PROTOCOL BLOCK
 
+# BEGIN MILTER PROTOCOL BLOCK
 sub read_block {
     my ( $self, $len ) = @_;
     my $socket = $self->{'socket'};
@@ -603,15 +620,19 @@ sub read_block {
     }
     return $buffer;
 }
+# END MILTER PROTOCOL BLOCK
 
+# BEGIN MILTER PROTOCOL BLOCK
 sub split_buffer {
     my ( $self, $buffer ) = @_;
     $buffer =~ s/\0$//; # remove trailing NUL
     return [ split(/\0/, $buffer) ];
 };
+# END MILTER PROTOCOL BLOCK
 
 ##
 
+# BEGIN MILTER PROTOCOL BLOCK
 sub add_header {
     my ( $self, $header, $value ) = @_;
     $self->write_packet( SMFIR_ADDHEADER,
@@ -622,7 +643,9 @@ sub add_header {
     );
     return;
 }
+# END MILTER PROTOCOL BLOCK
 
+# BEGIN MILTER PROTOCOL BLOCK
 sub change_header {
     my ( $self, $header, $index, $value ) = @_;
     $value = '' unless defined($value);
@@ -635,7 +658,9 @@ sub change_header {
     );
     return;
 }
+# END MILTER PROTOCOL BLOCK
 
+# BEGIN MILTER PROTOCOL BLOCK
 sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
     $self->write_packet( SMFIR_INSHEADER,
@@ -647,7 +672,9 @@ sub insert_header {
     );
     return;
 }
+# END MILTER PROTOCOL BLOCK
 
+# BEGIN MILTER PROTOCOL BLOCK
 sub write_packet {
     my ( $self, $code, $data ) = @_;
     $self->logdebug ( "send command $code" );
@@ -659,6 +686,8 @@ sub write_packet {
     $socket->syswrite($data);
     return;
 }
+# END MILTER PROTOCOL BLOCK
+
 
 ## Logging
 
@@ -763,13 +792,13 @@ Sort the callbacks for the $callback callback into the right order
 
 Remove references to all objects
 
-=item I<process_command( $command, $buffer )>
+=item I<process_milter_command( $command, $buffer )>
 
-Process the command from the protocol stream.
+Process the command from the milter protocol stream.
 
-=item I<process_connect( $buffer )>
+=item I<process_milter_connect( $buffer )>
 
-Process a connect command.
+Process a milter connect command.
 
 =item I<read_block( $len )>
 
