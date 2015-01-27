@@ -112,7 +112,7 @@ sub process_request {
     $self->logdebug( 'Processing request ' . $self->{'count'} );
     $self->{'socket'} = $self->{'server'}->{'client'}; 
 
-    $self->process_milter_request();
+    $self->milter_process_request();
 
     # Call close callback
     $self->{'handler'}->{'_Handler'}->top_close_callback();
@@ -141,28 +141,28 @@ sub process_request {
 }
 
 # BEGIN MILTER PROTOCOL BLOCK
-sub process_milter_request {
+sub milter_process_request {
     my ( $self ) = @_;
 
     COMMAND:
     while ( 1 ) {
 
         # Get packet length 
-        my $length = unpack('N', $self->read_block(4) ) || last;
+        my $length = unpack('N', $self->milter_read_block(4) ) || last;
         $self->fatal("bad packet length $length") if ($length <= 0 || $length > 131072);
 
         # Get command
-        my $command = $self->read_block(1) || last;
+        my $command = $self->milter_read_block(1) || last;
         $self->logdebug( "receive command $command" );
 
         # Get data
-        my $data = $self->read_block($length - 1);
+        my $data = $self->milter_read_block($length - 1);
         if ( ! defined ( $data ) ) {
             $self->fatal('EOF in stream');
         }
 
         last COMMAND if $command eq SMFIC_QUIT;
-        $self->process_milter_command( $command, $data );
+        $self->milter_process_command( $command, $data );
 
     }    
 
@@ -469,7 +469,7 @@ sub destroy_objects {
     return;
 }
 
-sub process_milter_command {
+sub milter_process_command {
     my ( $self, $command, $buffer ) = @_;
     $self->logdebug ( "process command $command" );
 
@@ -479,7 +479,7 @@ sub process_milter_command {
 
     if ( $command eq SMFIC_CONNECT ) {
         # BEGIN MILTER PROTOCOL BLOCK
-        my ( $host, $ip ) = $self->process_milter_connect( $buffer );
+        my ( $host, $ip ) = $self->milter_process_connect( $buffer );
         # END MILTER PROTOCOL BLOCK
         $returncode = $handler->top_connect_callback( $host, $ip );
     }
@@ -492,7 +492,7 @@ sub process_milter_command {
     elsif ( $command eq SMFIC_MACRO ) {
         $self->fatal('SMFIC_MACRO: empty packet') unless ( $buffer =~ s/^(.)// );
         my $code = $1;
-        my $data = $self->split_buffer( $buffer );
+        my $data = $self->milter_split_buffer( $buffer );
         push ( @$data, q{} ) if (( @$data & 1 ) != 0 ); # pad last entry with empty string if odd number
         my %datahash = @$data;
         foreach my $key ( keys %datahash ) {
@@ -504,16 +504,16 @@ sub process_milter_command {
         $returncode = $handler->top_eom_callback();
     }
     elsif ( $command eq SMFIC_HELO ) {
-        my $helo = $self->split_buffer( $buffer );
+        my $helo = $self->milter_split_buffer( $buffer );
         $returncode = $handler->top_helo_callback( @$helo );
     }
     elsif ( $command eq SMFIC_HEADER ) {
-        my $header = $self->split_buffer( $buffer );
+        my $header = $self->milter_split_buffer( $buffer );
         if ( @$header == 1 ) { push @$header , q{}; };
         $returncode = $handler->top_header_callback( @$header );
     }
     elsif ( $command eq SMFIC_MAIL ) {
-        my $envfrom = $self->split_buffer( $buffer );
+        my $envfrom = $self->milter_split_buffer( $buffer );
         $returncode = $handler->top_envfrom_callback( @$envfrom );
     }
     elsif ( $command eq SMFIC_EOH ) {
@@ -531,7 +531,7 @@ sub process_milter_command {
         undef $returncode;
     }
     elsif ( $command eq SMFIC_RCPT ) {
-        my $envrcpt = $self->split_buffer( $buffer );
+        my $envrcpt = $self->milter_split_buffer( $buffer );
         $returncode = $handler->top_envrcpt_callback( @$envrcpt );
     }
     elsif ( $command eq SMFIC_DATA ) {
@@ -578,7 +578,7 @@ sub process_milter_command {
 }
 
 # BEGIN MILTER PROTOCOL BLOCK
-sub process_milter_connect {
+sub milter_process_connect {
     my ( $self, $buffer ) = @_;
 
     unless ($buffer =~ s/^([^\0]*)\0(.)//) {
@@ -615,7 +615,7 @@ sub process_milter_connect {
 # END MILTER PROTOCOL BLOCK
 
 # BEGIN MILTER PROTOCOL BLOCK
-sub read_block {
+sub milter_read_block {
     my ( $self, $len ) = @_;
     my $socket = $self->{'socket'};
     my $sofar = 0;
@@ -630,7 +630,7 @@ sub read_block {
 # END MILTER PROTOCOL BLOCK
 
 # BEGIN MILTER PROTOCOL BLOCK
-sub split_buffer {
+sub milter_split_buffer {
     my ( $self, $buffer ) = @_;
     $buffer =~ s/\0$//; # remove trailing NUL
     return [ split(/\0/, $buffer) ];
@@ -799,21 +799,21 @@ Sort the callbacks for the $callback callback into the right order
 
 Remove references to all objects
 
-=item I<process_milter_command( $command, $buffer )>
+=item I<milter_process_command( $command, $buffer )>
 
 Process the command from the milter protocol stream.
 
-=item I<process_milter_connect( $buffer )>
+=item I<milter_processconnect( $buffer )>
 
 Process a milter connect command.
 
-=item I<read_block( $len )>
+=item I<milter_read_block( $len )>
 
-Read $len bytes from the protocol stream.
+Read $len bytes from the milter protocol stream.
 
-=item I<split_buffer( $buffer )>
+=item I<milter_split_buffer( $buffer )>
 
-Split the buffer at null
+Split the milter buffer at null
 
 =item I<add_header( $header, $value )>
 
