@@ -5,9 +5,8 @@ our $VERSION = 0.6;
 
 use English qw{ -no_match_vars };
 use Email::Date::Format qw{ email_date };
-use Email::Sender::Simple qw(sendmail);
-use Email::Sender::Transport::SMTP ();
 use Email::Simple;
+use IO::Socket;
 use Digest::MD5 qw{ md5_base64 };
 use Net::IP;
 
@@ -19,6 +18,8 @@ sub protocol_process_request {
     $self->{'smtp'} = {
         'fwd_helo_host' => q{},
         'helo_host'     => q{},
+        'mail_from'     => q{},
+        'rcpt_to'       => [],
         'has_connected' => 0,
         'has_data'      => 0,
         'connect_ip'    => $self->{'server'}->{'peeraddr'},
@@ -101,6 +102,7 @@ sub smtp_command_ehlo {
     $smtp->{'helo_host'} = substr( $command,5 );
     print $socket "250-" . $smtp->{'server_name'} . "\r\n";
     print $socket "250-XFORWARD NAME ADDR PROTO HELO\r\n";
+    print $socket "250-PIPELINING\r\n";
     print $socket "250 8BITMIME\r\n";
     return;
 }
@@ -154,6 +156,10 @@ sub smtp_command_xforward {
     return;
 }
 
+## TODO RSET command
+#  resetting XForward variables
+#  this should be done on reset and DATA complete
+
 sub smtp_command_mailfrom {
     my ( $self, $command ) = @_;
     my $smtp = $self->{'smtp'};
@@ -178,7 +184,7 @@ sub smtp_command_mailfrom {
             }
             if ( $returncode == SMFIS_CONTINUE ) {
                 $smtp->{'has_connected'} = 1;
-                my $envfrom = substr( $command,11 );
+                my $envfrom = substr( $command,10 );
                 $smtp->{'mail_from'} = $envfrom;
                 $returncode = $handler->top_envfrom_callback( $envfrom );
                 if ( $returncode == SMFIS_CONTINUE ) {
@@ -197,7 +203,7 @@ sub smtp_command_mailfrom {
         }
     } 
     else { 
-        my $envfrom = substr( $command,11 );
+        my $envfrom = substr( $command,10 );
         $returncode = $handler->top_envfrom_callback( $envfrom );
         if ( $returncode == SMFIS_CONTINUE ) {
             print $socket "250 Ok\r\n";
@@ -221,8 +227,8 @@ sub smtp_command_rcptto {
         print $socket "503 Out of Order\r\n";
         return;
     }
-    my $envrcpt = substr( $command,9 );
-    $smtp->{'rcpt_to'} = $envrcpt;
+    my $envrcpt = substr( $command,8 );
+    push @{ $smtp->{'rcpt_to'} }, $envrcpt;
     my $returncode = $handler->top_envrcpt_callback( $envrcpt );
     if ( $returncode == SMFIS_CONTINUE ) {
         print $socket "250 Ok\r\n";
@@ -325,6 +331,13 @@ sub smtp_command_data {
         print $socket "451 That's not right\r\n";
     }
 
+    # Reset
+    $smtp->{'mail_from'} = q{};
+    $smtp->{'rcpt_to'}   = [];
+    $smtp->{'headers'}   = [];
+    $smtp->{'body'}      = q{};
+    $smtp->{'has_data'}  = 0;
+
     return;
 }
 
@@ -369,36 +382,68 @@ sub smtp_forward_to_destination {
 
     $self->smtp_insert_received_header();
 
-    eval {
+    my $smtpserver = 'localhost';
+    my $smtpport = '12346';
 
-        my $smtpserver = 'localhost';
-        my $smtpport = '12346';
+    ## TODO this DOESNT set MAIL FROM and RCPT TO properly
 
-        ## TODO this DOESNT set MAIL FROM and RCPT TO properly
+    my $sock = IO::Socket::INET->new(
+        'Proto' => 'tcp',
+        'PeerAddr' => 'localhost',
+        'PeerPort' => '12346',
+    );
 
-        my $transport = Email::Sender::Transport::SMTP->new({
-            'host'          => $smtpserver,
-            'port'          => $smtpport,
-        });
-
-        my $email = q{};
-
-        foreach my $header ( @{ $smtp->{'headers'} } ) {
-            my $key   = $header->{'key'};
-            my $value = $header->{'value'};
-            $email .= "$key: $value\r\n";
-        }
-        $email .= "\r\n";
-        $email .= $smtp->{'body'};
-
-        sendmail( $email, { transport => $transport } );
-
-    };
-    if ( my $error = $@ ) {
-        $self->logerror( "Sendmail error: $error" );
+    if ( ! $sock ) {
+        $self->logerror( "Could not open outbound SMTP socket" );
         return 0;
     }
+
+    my $line = <$sock>;
+
+    if ( ! $line =~ /250/ ) {
+        $self->logerror( "Unexpected SMTP response $line" );
+        return 0;
+    }
+
+    $self->send_smtp_packet( $sock, 'HELO ' .      $smtp->{'server_name'}, '250' ) || return;
+    $self->send_smtp_packet( $sock, 'MAIL FROM:' . $smtp->{'mail_from'},   '250' ) || return;
+    foreach my $rcpt_to ( @{ $smtp->{'rcpt_to'} } ) {
+        $self->send_smtp_packet( $sock, 'RCPT TO:' .   $rcpt_to, '250' ) || return;
+    }
+    $self->send_smtp_packet( $sock, 'DATA', '354' ) || return;
+
+    ## TODO handle a . in the email properly
+    
+    my $email = q{};
+    foreach my $header ( @{ $smtp->{'headers'} } ) {
+        my $key   = $header->{'key'};
+        my $value = $header->{'value'};
+        $email .= "$key: $value\r\n";
+    }
+    $email .= "\r\n";
+    $email .= $smtp->{'body'};
+
+    print $sock $email;
+    
+    $self->send_smtp_packet( $sock, '.',    '250' ) || return;
+    $self->send_smtp_packet( $sock, 'QUIT', '221' ) || return;
+
+    $sock->close();
+
     return 1;
+}
+
+sub send_smtp_packet {
+    my ( $self, $socket, $send, $expect ) = @_;
+    print $socket "$send\r\n";
+    my $recv = <$socket>;
+    if ( $recv =~ /^$expect/ ) {
+        return 1;
+    }
+    else {
+        $self->logerror( "SMTP Send expected $expect received $recv when sending $send" );
+        return 0;
+    }
 }
 
 sub add_header {

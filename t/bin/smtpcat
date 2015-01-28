@@ -1,0 +1,61 @@
+#!/usr/bin/perl
+
+# Simple script which accepts a SMTP style connection
+# And dumps it back out to the console
+
+use strict;
+use warnings;
+
+use IO::Socket::INET;
+
+my $socket = IO::Socket::INET->new(
+    'Listen'    => 5,
+    'LocalHost' => 'localhost',
+    'LocalPort' => 12346,
+    'Protocol'  => 'tcp',
+) || die "could not open socket: $!";
+
+my $accept = $socket->accept();
+
+print $accept "220 smtp.cat ESMTP Test\r\n";
+
+my $quit = 0;
+while ( ! $quit ) {
+    my $command = <$accept> || { $quit = 1 };
+
+    if ( $command =~ /^HELO/ ) {
+        print $command;
+        print $accept "250 Ok\r\n";
+    }
+    elsif ( $command =~ /^EHLO/ ) {
+        print $command;
+        print $accept "250 Ok\r\n";
+    }
+    elsif ( $command =~ /^MAIL/ ) {
+        print $command;
+        print $accept "250 Ok\r\n";
+    }
+    elsif ( $command =~ /^RCPT/ ) {
+        print $command;
+        print $accept "250 Ok\r\n";
+    }
+    elsif ( $command =~ /^DATA/ ) {
+        print $command;
+        print $accept "354 Send\r\n";
+        DATA:
+        while ( my $line = <$accept> ) {
+            print $line;
+            last DATA if $line eq "\.\r\n";
+        }
+        print $accept "250 Ok\r\n";
+    }
+    elsif ( $command =~ /^QUIT/ ) {
+        print $command;
+        print $accept "221 Bye\r\n";
+        $quit = 1;
+    }
+}
+
+$accept->close();
+$socket->close();
+

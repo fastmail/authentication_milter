@@ -1,0 +1,97 @@
+#!/usr/bin/perl
+
+# Simple script which accepts a SMTP style connection
+# And dumps it back out to the console
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use IO::Socket::INET;
+
+my $mailer_name;
+my $mail_file;
+my $mail_from;
+my $rcpt_to;
+my $x_name;
+my $x_addr;
+my $x_helo;
+
+GetOptions (
+    'mailer_name=s'  => \$mailer_name,
+    'connect_ip=s'   => \$x_addr,
+    'connect_name=s' => \$x_name,
+    'helo_host=s'    => \$x_helo,
+    'mail_from=s'    => \$mail_from,
+    'rcpt_to=s'      => \$rcpt_to,
+    'mail_file=s'    => \$mail_file,
+) or die "Error in command line arguments\n";
+
+my $mail_data = q{};
+
+if ( $mail_file eq '-' ) {
+    while ( my $l = <> ) {
+        $mail_data .= $l;
+    }
+}
+else {
+    if ( ! -e $mail_file ) {
+        die "Mail file $mail_file does not exist";
+    }
+    open my $inf, '<', $mail_file;
+    my @all = <$inf>;
+    $mail_data = join( q{}, @all );
+    close $inf;
+}
+
+my $sock = IO::Socket::INET->new(
+    'Proto' => 'tcp',
+    'PeerAddr' => 'localhost',
+    'PeerPort' => '12345',
+);
+
+if ( ! $sock ) {
+    die "Could not open outbound SMTP socket";
+    return 0;
+}
+
+my $line = <$sock>;
+
+if ( ! $line =~ /250/ ) {
+    die "Unexpected SMTP response $line";
+    return 0;
+}
+
+send_smtp_packet( $sock, 'HELO ' . $mailer_name,       '250' ) || die;
+
+send_smtp_packet( $sock, 'XFORWARD NAME=' . $x_name,   '250' ) || die;
+send_smtp_packet( $sock, 'XFORWARD ADDR=' . $x_addr,   '250' ) || die;
+send_smtp_packet( $sock, 'XFORWARD HELO=' . $x_helo,   '250' ) || die;
+
+send_smtp_packet( $sock, 'MAIL FROM:' . $mail_from, '250' ) || die;
+send_smtp_packet( $sock, 'RCPT TO:' .   $rcpt_to,   '250' ) || die;
+send_smtp_packet( $sock, 'DATA',                    '354' ) || die;
+
+## TODO handle a . in the email properly
+
+print $sock $mail_data;
+print $sock "\r\n";
+
+send_smtp_packet( $sock, '.',    '250' ) || return;
+send_smtp_packet( $sock, 'QUIT', '221' ) || return;
+
+$sock->close();
+
+sub send_smtp_packet {
+    my ( $socket, $send, $expect ) = @_;
+    print $socket "$send\r\n";
+    my $recv = <$socket>;
+    if ( $recv =~ /^$expect/ ) {
+        return 1;
+    }
+    else {
+        die "SMTP Send expected $expect received $recv when sending $send";
+        return 0;
+    }
+}
+  
