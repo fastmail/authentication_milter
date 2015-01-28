@@ -5,6 +5,8 @@ our $VERSION = 0.6;
 
 use English qw{ -no_match_vars };
 use Email::Date::Format qw{ email_date };
+use Email::Sender::Simple qw(sendmail);
+use Email::Sender::Transport::SMTP ();
 use Email::Simple;
 use Digest::MD5 qw{ md5_base64 };
 use Net::IP;
@@ -75,12 +77,11 @@ sub protocol_process_request {
             last COMMAND;
         }
         else {
+            $self->logerror( "Unknown SMTP command: $command" );
             print $socket "502 I don't understand\r\n";
         }
 
     }
-
-    # Pass on to destination
 
     delete $self->{'smtp'};
     return;
@@ -93,6 +94,7 @@ sub smtp_command_ehlo {
     my $handler = $self->{'handler'}->{'_Handler'};
 
     if ( $smtp->{'has_data'} ) {
+        $self->logerror( "Out of Order SMTP command: $command" );
         print $socket "501 Out of Order\r\n";
         return;
     }
@@ -110,6 +112,7 @@ sub smtp_command_helo {
     my $handler = $self->{'handler'}->{'_Handler'};
 
     if ( $smtp->{'has_data'} ) {
+        $self->logerror( "Out of Order SMTP command: $command" );
         print $socket "501 Out of Order\r\n";
         return;
     }
@@ -125,6 +128,7 @@ sub smtp_command_xforward {
     my $handler = $self->{'handler'}->{'_Handler'};
 
     if ( $smtp->{'has_data'} ) {
+        $self->logerror( "Out of Order SMTP command: $command" );
         print $socket "503 Out of Order\r\n";
         return;
     }
@@ -141,6 +145,7 @@ sub smtp_command_xforward {
             $smtp->{'fwd_helo_host'} = $value;
         }
         else {
+            $self->logerror( "Unknown XForward Entry: $key=$value" );
             # NOP
             ### log it here though
         }
@@ -157,6 +162,7 @@ sub smtp_command_mailfrom {
 
     my $returncode;
     if ( $smtp->{'has_data'} ) {
+        $self->logerror( "Out of Order SMTP command: $command" );
         print $socket "503 Out of Order\r\n";
         return;
     }
@@ -173,6 +179,7 @@ sub smtp_command_mailfrom {
             if ( $returncode == SMFIS_CONTINUE ) {
                 $smtp->{'has_connected'} = 1;
                 my $envfrom = substr( $command,11 );
+                $smtp->{'mail_from'} = $envfrom;
                 $returncode = $handler->top_envfrom_callback( $envfrom );
                 if ( $returncode == SMFIS_CONTINUE ) {
                     print $socket "250 Ok\r\n";
@@ -210,10 +217,12 @@ sub smtp_command_rcptto {
     my $handler = $self->{'handler'}->{'_Handler'};
 
     if ( $smtp->{'has_data'} ) {
+        $self->logerror( "Out of Order SMTP command: $command" );
         print $socket "503 Out of Order\r\n";
         return;
     }
     my $envrcpt = substr( $command,9 );
+    $smtp->{'rcpt_to'} = $envrcpt;
     my $returncode = $handler->top_envrcpt_callback( $envrcpt );
     if ( $returncode == SMFIS_CONTINUE ) {
         print $socket "250 Ok\r\n";
@@ -238,6 +247,7 @@ sub smtp_command_data {
     my $returncode;
 
     if ( $smtp->{'has_data'} ) {
+        $self->logerror( "Repeated SMTP DATA command: $command" );
         print $socket "503 One at a time please\r\n";
         return;
     }
@@ -307,6 +317,7 @@ sub smtp_command_data {
             print $socket "250 Queued as " . $smtp->{'queue_id'} . "\r\n";
         }
         else {
+            $self->logerror( "SMTP Mail Rejected" );
             print $socket "451 That's not right\r\n";
         }
     }
@@ -356,19 +367,37 @@ sub smtp_forward_to_destination {
 
     my $smtp = $self->{'smtp'};
 
-    warn "\n\n\n";
-
     $self->smtp_insert_received_header();
 
-    foreach my $header ( @{ $smtp->{'headers'} } ) {
-        my $key   = $header->{'key'};
-        my $value = $header->{'value'};
-        warn "$key: $value\r\n";
-    }
-    warn "\r\n";
-    warn $smtp->{'body'};
-    warn "\n\n\n";
+    eval {
 
+        my $smtpserver = 'localhost';
+        my $smtpport = '12346';
+
+        ## TODO this DOESNT set MAIL FROM and RCPT TO properly
+
+        my $transport = Email::Sender::Transport::SMTP->new({
+            'host'          => $smtpserver,
+            'port'          => $smtpport,
+        });
+
+        my $email = q{};
+
+        foreach my $header ( @{ $smtp->{'headers'} } ) {
+            my $key   = $header->{'key'};
+            my $value = $header->{'value'};
+            $email .= "$key: $value\r\n";
+        }
+        $email .= "\r\n";
+        $email .= $smtp->{'body'};
+
+        sendmail( $email, { transport => $transport } );
+
+    };
+    if ( my $error = $@ ) {
+        $self->logerror( "Sendmail error: $error" );
+        return 0;
+    }
     return 1;
 }
 
