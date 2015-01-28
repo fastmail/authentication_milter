@@ -33,6 +33,8 @@ build_requires (
 
 requires (
     'Email::Address'        => 0,
+    'Email::Date::Format'   => 0,
+    'Email::Simple'         => 0,
     'English'               => 0,
     'IO::Socket'            => 0,
     'JSON'                  => 0,

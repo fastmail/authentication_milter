@@ -4,6 +4,8 @@ use warnings;
 our $VERSION = 0.6;
 
 use English qw{ -no_match_vars };
+use Email::Date::Format qw{ email_date };
+use Email::Simple;
 use Digest::MD5 qw{ md5_base64 };
 use Net::IP;
 
@@ -11,8 +13,6 @@ use Mail::Milter::Authentication::Constants qw{ :all };
 
 sub protocol_process_request {
     my ( $self ) = @_;
-   
-    my $socket = $self->{'socket'};
 
     $self->{'smtp'} = {
         'fwd_helo_host' => q{},
@@ -21,25 +21,29 @@ sub protocol_process_request {
         'has_data'      => 0,
         'connect_ip'    => $self->{'server'}->{'peeraddr'},
         'connect_host'  => $self->{'server'}->{'peeraddr'}, ## TODO Lookup Name Here
+        'last_command'  => 0,
+        'headers'       => [],
+        'body'          => q{},
     };
 
     my $smtp = $self->{'smtp'};
-
-    my $server_name = 'server.example.com';
+    my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
+
+    $smtp->{'server_name'} = 'server.example.com';
 
     # Get connect host and Connect IP from the connection here!
 
-    print $socket "220 $server_name ESMTP AuthenticationMilter\r\n";
+    print $socket "220 " . $smtp->{'server_name'} . " ESMTP AuthenticationMilter\r\n";
 
-    $handler->set_symbol( 'C', 'j', $server_name );
-    $handler->set_symbol( 'C', '{rcpt_host}', $server_name );
+    $handler->set_symbol( 'C', 'j', $smtp->{'server_name'} );
+    $handler->set_symbol( 'C', '{rcpt_host}', $smtp->{'server_name'} );
 
-    my $queue_id = md5_base64( "Authentication Milter Client $PID " . time() );
-    $handler->set_symbol( 'C', 'i', $queue_id );
+    $smtp->{'queue_id'} = md5_base64( "Authentication Milter Client $PID " . time() );
+    $handler->set_symbol( 'C', 'i', $smtp->{'queue_id'} );
 
     COMMAND:
-    while ( 1 ) {
+    while ( ! $smtp->{'last_command'} ) {
 
         my $command = <$socket> || last COMMAND;
         $command =~ s/\r?\n$//;
@@ -49,125 +53,22 @@ sub protocol_process_request {
         my $returncode = SMFIS_CONTINUE;
 
         if ( $command =~ /^EHLO/ ) {
-            if ( $smtp->{'has_data'} ) {
-                print $socket "501 Out of Order\r\n";
-                last COMMAND;
-            }
-            $smtp->{'helo_host'} = substr( $command,5 );
-            print $socket "250-$server_name\r\n";
-            print $socket "250-XFORWARD NAME ADDR PROTO HELO\r\n";
-            print $socket "250 8BITMIME\r\n";
+            $self->smtp_command_ehlo( $command );
         }
         elsif ( $command =~ /^HELO/ ) {
-            if ( $smtp->{'has_data'} ) {
-                print $socket "501 Out of Order\r\n";
-                last COMMAND;
-            }
-            $smtp->{'helo_host'} = substr( $command,5 );
-            print $socket "250 $server_name Hi " . $smtp->{'helo_host'} . "\r\n";
+            $self->smtp_command_helo( $command );
         }
         elsif ( $command =~ /^XFORWARD/ ) {
-            if ( $smtp->{'has_data'} ) {
-                print $socket "503 Out of Order\r\n";
-                last COMMAND;
-            }
-            my $xdata = substr( $command,9 );
-            foreach my $entry ( split( q{ }, $xdata ) ) {
-                my ( $key, $value ) = split( '=', $entry, 2 );
-                if ( $key eq 'NAME' ) {
-                    $smtp->{'connect_host'} = $value;
-                }
-                elsif ( $key eq 'ADDR' ) {
-                    $smtp->{'connect_ip'} = $value;
-                }
-                elsif ( $key eq 'HELO' ) {
-                    $smtp->{'fwd_helo_host'} = $value;
-                }
-                else {
-                    # NOP
-                    ### log it here though
-                }
-            }
-            print $socket "250 Ok\r\n";
+            $self->smtp_command_xforward( $command );
         }
         elsif ( $command =~ /^MAIL FROM:/ ) {
-            if ( $smtp->{'has_data'} ) {
-                print $socket "503 Out of Order\r\n";
-                last COMMAND;
-            }
-            # Do connect callback here, because of XFORWARD
-            if ( ! $smtp->{'has_connected'} ) {
-                $returncode = $handler->top_connect_callback( $smtp->{'connect_host'}, Net::IP->new( $smtp->{'connect_ip'} ) );
-                if ( $returncode == SMFIS_CONTINUE ) {
-                    $returncode = $handler->top_helo_callback( $smtp->{'helo_host'} );
-                    if ( $returncode == SMFIS_CONTINUE ) {
-                        $smtp->{'has_connected'} = 1;
-                        my $envfrom = substr( $command,11 );
-                        $returncode = $handler->top_envfrom_callback( $envfrom );
-                        if ( $returncode == SMFIS_CONTINUE ) {
-                            print $socket "250 Ok\r\n";
-                        }
-                        else {
-                            print $socket "451 That's not right\r\n";
-                        }
-                    }
-                    else { 
-                        print $socket "451 That's not right\r\n";
-                    }
-                }
-                else { 
-                    print $socket "451 That's not right\r\n";
-                }
-            } 
-            else { 
-                my $envfrom = substr( $command,11 );
-                $returncode = $handler->top_envfrom_callback( $envfrom );
-                if ( $returncode == SMFIS_CONTINUE ) {
-                    print $socket "250 Ok\r\n";
-                }
-                else {
-                    print $socket "451 That's not right\r\n";
-                }
-            }
+            $self->smtp_command_mailfrom( $command );
         }
         elsif ( $command =~ /^RCPT TO:/ ) {
-            if ( $smtp->{'has_data'} ) {
-                print $socket "503 Out of Order\r\n";
-                last COMMAND;
-            }
-            my $envrcpt = substr( $command,9 );
-            $returncode = $handler->top_envrcpt_callback( $envrcpt );
-            if ( $returncode == SMFIS_CONTINUE ) {
-                print $socket "250 Ok\r\n";
-            }
-            else {
-                print $socket "451 That's not right\r\n";
-            }
+            $self->smtp_command_rcptto( $command );
         }
         elsif ( $command =~ /^DATA/ ) {
-            if ( $smtp->{'has_data'} ) {
-                print $socket "503 One at a time please\r\n";
-                last COMMAND;
-            }
-            $smtp->{'has_data'} = 1;
-            print $socket "354 Send body\r\n";
-            DATA:
-            while ( my $dataline = <$socket> ) {
-                $dataline =~ s/\r?\n$//;
-                # Don't forget to deal with encoded . in the message text
-                last DATA if $dataline eq '.';
-            }
-            #$returncode = $handler->top_header_callback( '', '' );
-            #$returncode = $handler->top_eoh_callback();
-            #$returncode = $handler->top_body_callback( '' );
-            #$returncode = $handler->top_eom_callback();
-            if ( $returncode == SMFIS_CONTINUE ) {
-                print $socket "250 Queued as $queue_id\r\n";
-            }
-            else { 
-                print $socket "451 That's not right\r\n";
-            }
-
+            $self->smtp_command_data( $command );
         }
         elsif ( $command =~ /^QUIT/ ){
             print $socket "221 Bye\n";
@@ -179,23 +80,353 @@ sub protocol_process_request {
 
     }
 
-    # Setup Header arrays
-
-    # Process commands
-    
-    # Process header results
-    
     # Pass on to destination
+
+    delete $self->{'smtp'};
+    return;
+}
+
+sub smtp_command_ehlo {
+    my ( $self, $command ) = @_;
+    my $smtp = $self->{'smtp'};
+    my $socket = $self->{'socket'};
+    my $handler = $self->{'handler'}->{'_Handler'};
+
+    if ( $smtp->{'has_data'} ) {
+        print $socket "501 Out of Order\r\n";
+        return;
+    }
+    $smtp->{'helo_host'} = substr( $command,5 );
+    print $socket "250-" . $smtp->{'server_name'} . "\r\n";
+    print $socket "250-XFORWARD NAME ADDR PROTO HELO\r\n";
+    print $socket "250 8BITMIME\r\n";
+    return;
+}
+
+sub smtp_command_helo {
+    my ( $self, $command ) = @_;
+    my $smtp = $self->{'smtp'};
+    my $socket = $self->{'socket'};
+    my $handler = $self->{'handler'}->{'_Handler'};
+
+    if ( $smtp->{'has_data'} ) {
+        print $socket "501 Out of Order\r\n";
+        return;
+    }
+    $smtp->{'helo_host'} = substr( $command,5 );
+    print $socket "250 " . $smtp->{'server_name'} . " Hi " . $smtp->{'helo_host'} . "\r\n";
+    return;
+}
+
+sub smtp_command_xforward {
+    my ( $self, $command ) = @_;
+    my $smtp = $self->{'smtp'};
+    my $socket = $self->{'socket'};
+    my $handler = $self->{'handler'}->{'_Handler'};
+
+    if ( $smtp->{'has_data'} ) {
+        print $socket "503 Out of Order\r\n";
+        return;
+    }
+    my $xdata = substr( $command,9 );
+    foreach my $entry ( split( q{ }, $xdata ) ) {
+        my ( $key, $value ) = split( '=', $entry, 2 );
+        if ( $key eq 'NAME' ) {
+            $smtp->{'connect_host'} = $value;
+        }
+        elsif ( $key eq 'ADDR' ) {
+            $smtp->{'connect_ip'} = $value;
+        }
+        elsif ( $key eq 'HELO' ) {
+            $smtp->{'fwd_helo_host'} = $value;
+        }
+        else {
+            # NOP
+            ### log it here though
+        }
+    }
+    print $socket "250 Ok\r\n";
+    return;
+}
+
+sub smtp_command_mailfrom {
+    my ( $self, $command ) = @_;
+    my $smtp = $self->{'smtp'};
+    my $socket = $self->{'socket'};
+    my $handler = $self->{'handler'}->{'_Handler'};
+
+    my $returncode;
+    if ( $smtp->{'has_data'} ) {
+        print $socket "503 Out of Order\r\n";
+        return;
+    }
+    # Do connect callback here, because of XFORWARD
+    if ( ! $smtp->{'has_connected'} ) {
+        $returncode = $handler->top_connect_callback( $smtp->{'connect_host'}, Net::IP->new( $smtp->{'connect_ip'} ) );
+        if ( $returncode == SMFIS_CONTINUE ) {
+            if ( $smtp->{'fwd_helo_host'} ) {
+                $returncode = $handler->top_helo_callback( $smtp->{'fwd_helo_host'} );
+            }
+            else {
+                $returncode = $handler->top_helo_callback( $smtp->{'helo_host'} );
+            }
+            if ( $returncode == SMFIS_CONTINUE ) {
+                $smtp->{'has_connected'} = 1;
+                my $envfrom = substr( $command,11 );
+                $returncode = $handler->top_envfrom_callback( $envfrom );
+                if ( $returncode == SMFIS_CONTINUE ) {
+                    print $socket "250 Ok\r\n";
+                }
+                else {
+                    print $socket "451 That's not right\r\n";
+                }
+            }
+            else { 
+                print $socket "451 That's not right\r\n";
+            }
+        }
+        else { 
+            print $socket "451 That's not right\r\n";
+        }
+    } 
+    else { 
+        my $envfrom = substr( $command,11 );
+        $returncode = $handler->top_envfrom_callback( $envfrom );
+        if ( $returncode == SMFIS_CONTINUE ) {
+            print $socket "250 Ok\r\n";
+        }
+        else {
+            print $socket "451 That's not right\r\n";
+        }
+    }
     
+    return;
+}
+
+sub smtp_command_rcptto {
+    my ( $self, $command ) = @_;
+    my $smtp = $self->{'smtp'};
+    my $socket = $self->{'socket'};
+    my $handler = $self->{'handler'}->{'_Handler'};
+
+    if ( $smtp->{'has_data'} ) {
+        print $socket "503 Out of Order\r\n";
+        return;
+    }
+    my $envrcpt = substr( $command,9 );
+    my $returncode = $handler->top_envrcpt_callback( $envrcpt );
+    if ( $returncode == SMFIS_CONTINUE ) {
+        print $socket "250 Ok\r\n";
+    }
+    else {
+        print $socket "451 That's not right\r\n";
+    }
+
+    return;
+}
+
+sub smtp_command_data {
+    my ( $self, $command ) = @_;
+    my $smtp = $self->{'smtp'};
+    my $socket = $self->{'socket'};
+    my $handler = $self->{'handler'}->{'_Handler'};
+
+    my $headers = q{};
+    my $body    = q{};
+    my $done    = 0;
+    my $fail    = 0;
+    my $returncode;
+
+    if ( $smtp->{'has_data'} ) {
+        print $socket "503 One at a time please\r\n";
+        return;
+    }
+    $smtp->{'has_data'} = 1;
+    print $socket "354 Send body\r\n";
+
+    HEADERS:
+    while ( my $dataline = <$socket> ) {
+        $dataline =~ s/\r?\n$//;
+        # Don't forget to deal with encoded . in the message text
+        if ( $dataline eq '.' ) {
+            $done = 1;
+            last HEADERS;
+        }
+        if ( $dataline eq q{} ) {
+            last HEADERS;
+        }
+        $headers .= $dataline . "\r\n";
+    }
+
+    {
+        my $message_object = Email::Simple->new( $headers );
+        my $header_object = $message_object->header_obj();
+        my @header_pairs = $header_object->header_pairs();
+        while ( @header_pairs ) {
+            my $key   = shift @header_pairs;
+            my $value = shift @header_pairs;
+            push @{ $smtp->{'headers'} } , {
+                'key'   => $key,
+                'value' => $value,
+            };
+            my $returncode = $handler->top_header_callback( $key, $value );
+            if ( $returncode != SMFIS_CONTINUE ) {
+                $fail = 1;
+            }
+        }
+    }
+
+    $returncode = $handler->top_eoh_callback();
+    if ( $returncode != SMFIS_CONTINUE ) {
+        $fail = 1;
+    }
+
+    if ( ! $done ) {
+        DATA:
+        while ( my $dataline = <$socket> ) {
+            # Don't forget to deal with encoded . in the message text
+            last DATA if $dataline =~  /\.\r\n/;
+            $body .= $dataline;
+        }
+        $returncode = $handler->top_body_callback( $body );
+        if ( $returncode != SMFIS_CONTINUE ) {
+            $fail = 1;
+        }
+    }
+
+    $returncode = $handler->top_eom_callback();
+    if ( $returncode != SMFIS_CONTINUE ) {
+        $fail = 1;
+    }
+
+    if ( ! $fail ) {
+
+        $smtp->{'body'} = $body;
+
+        if ( $self->smtp_forward_to_destination() ) {
+            print $socket "250 Queued as " . $smtp->{'queue_id'} . "\r\n";
+        }
+        else {
+            print $socket "451 That's not right\r\n";
+        }
+    }
+    else { 
+        print $socket "451 That's not right\r\n";
+    }
+
+    return;
+}
+
+sub smtp_insert_received_header {
+    my ( $self ) = @_;
+    my $smtp = $self->{'smtp'};
+
+    my $value = join ( q{},
+
+        'from ',
+        $smtp->{'helo_host'},
+        ' (',
+            $smtp->{'connect_host'}
+        ,
+        ' [',
+            $smtp->{'connect_ip'},
+        '])',
+        "\r\n",
+
+        '    by ',
+        $smtp->{'server_name'},
+        ' (Authentication Milter)',
+        ' with ESMTP;',
+        "\r\n",
+
+        '    ',
+        email_date(),
+
+    );
+
+    splice @{ $smtp->{'headers'} }, 0, 0, {
+        'key'   => 'Received',
+        'value' => $value,
+    };
+    return;
+}
+
+sub smtp_forward_to_destination {
+    my ( $self ) = @_;
+
+    my $smtp = $self->{'smtp'};
+
+    warn "\n\n\n";
+
+    $self->smtp_insert_received_header();
+
+    foreach my $header ( @{ $smtp->{'headers'} } ) {
+        my $key   = $header->{'key'};
+        my $value = $header->{'value'};
+        warn "$key: $value\r\n";
+    }
+    warn "\r\n";
+    warn $smtp->{'body'};
+    warn "\n\n\n";
+
+    return 1;
 }
 
 sub add_header {
+    my ( $self, $header, $value ) = @_;
+    my $smtp = $self->{'smtp'};
+    push @{ $smtp->{'headers'} } , {
+        'key'   => $header,
+        'value' => $value,
+    };
+    return;
 }
 
+## TODO
+# change and insert headers could be
+# affected by previously changed/inserted/deleted headers
+# need to have a test case for this
+
 sub change_header {
+    my ( $self, $header, $index, $value ) = @_;
+    my $smtp = $self->{'smtp'};
+
+    my $header_i = 0;
+    my $search_i  = 0;
+    my $result_i;
+
+    HEADER:
+    foreach my $header_v ( @{ $smtp->{'headers'} } ) {
+        if ( $header_v->{'key'} eq $header ) {
+            $search_i ++;
+            if ( $search_i == $index ) {
+                $result_i = $header_i;
+                last HEADER;
+            }
+        }
+        $header_i ++;
+    }
+
+    if ( $result_i ) {
+        if ( $value eq q{} ) {
+            splice @{ $smtp->{'headers'} }, $result_i, 1;
+        }
+        else {
+            $smtp->{'headers'}->[ $result_i ]->{'value'} = $value;
+            #untested
+        }
+    }
+
 }
 
 sub insert_header {
+    my ( $self, $index, $key, $value ) = @_;
+    my $smtp = $self->{'smtp'};
+    splice @{ $smtp->{'headers'} }, $index - 1, 0, {
+        'key'   => $key,
+        'value' => $value,
+    };
+    return;
 }
 
 1;
