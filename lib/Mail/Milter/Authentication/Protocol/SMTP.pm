@@ -7,7 +7,9 @@ use English qw{ -no_match_vars };
 use Email::Date::Format qw{ email_date };
 use Email::Simple;
 use IO::Socket;
-use Digest::MD5 qw{ md5_base64 };
+use IO::Socket::INET;
+use IO::Socket::UNIX;
+use Digest::MD5 qw{ md5_hex };
 use Net::IP;
 
 use Mail::Milter::Authentication::Constants qw{ :all };
@@ -16,18 +18,23 @@ sub protocol_process_request {
     my ( $self ) = @_;
 
     $self->{'smtp'} = {
-        'fwd_helo_host' => q{},
-        'helo_host'     => q{},
-        'mail_from'     => q{},
-        'rcpt_to'       => [],
-        'has_connected' => 0,
-        'has_data'      => 0,
-        'connect_ip'    => $self->{'server'}->{'peeraddr'},
-        'connect_host'  => $self->{'server'}->{'peeraddr'}, ## TODO Lookup Name Here
-        'last_command'  => 0,
-        'headers'       => [],
-        'body'          => q{},
+        'fwd_helo_host'    => undef,
+        'fwd_connect_ip'   => undef,
+        'fwd_connect_host' => undef,
+        'helo_host'        => q{},
+        'mail_from'        => q{},
+        'rcpt_to'          => [],
+        'has_connected'    => 0,
+        'has_data'         => 0,
+        'connect_ip'       => $self->{'server'}->{'peeraddr'},
+        'connect_host'     => $self->{'server'}->{'peeraddr'}, ## TODO Lookup Name Here
+        'last_command'     => 0,
+        'headers'          => [],
+        'body'             => q{},
     };
+
+    if ( ! $self->{'smtp'}->{'connect_ip'}   ) { $self->{'smtp'}->{'connect_ip'}   = 'localhost'; }
+    if ( ! $self->{'smtp'}->{'connect_host'} ) { $self->{'smtp'}->{'connect_host'} = 'localhost'; }
 
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
@@ -42,7 +49,7 @@ sub protocol_process_request {
     $handler->set_symbol( 'C', 'j', $smtp->{'server_name'} );
     $handler->set_symbol( 'C', '{rcpt_host}', $smtp->{'server_name'} );
 
-    $smtp->{'queue_id'} = md5_base64( "Authentication Milter Client $PID " . time() );
+    $smtp->{'queue_id'} = md5_hex( "Authentication Milter Client $PID " . time() );
     $handler->set_symbol( 'C', 'i', $smtp->{'queue_id'} );
 
     COMMAND:
@@ -69,6 +76,9 @@ sub protocol_process_request {
         }
         elsif ( $command =~ /^RCPT TO:/ ) {
             $self->smtp_command_rcptto( $command );
+        }
+        elsif ( $command =~ /^RSET/ ) {
+            $self->smtp_command_rset( $command );
         }
         elsif ( $command =~ /^DATA/ ) {
             $self->smtp_command_data( $command );
@@ -138,10 +148,10 @@ sub smtp_command_xforward {
     foreach my $entry ( split( q{ }, $xdata ) ) {
         my ( $key, $value ) = split( '=', $entry, 2 );
         if ( $key eq 'NAME' ) {
-            $smtp->{'connect_host'} = $value;
+            $smtp->{'fwd_connect_host'} = $value;
         }
         elsif ( $key eq 'ADDR' ) {
-            $smtp->{'connect_ip'} = $value;
+            $smtp->{'fwd_connect_ip'} = $value;
         }
         elsif ( $key eq 'HELO' ) {
             $smtp->{'fwd_helo_host'} = $value;
@@ -156,9 +166,20 @@ sub smtp_command_xforward {
     return;
 }
 
-## TODO RSET command
-#  resetting XForward variables
-#  this should be done on reset and DATA complete
+sub smtp_command_rset {
+    my ( $self, $command ) = @_;
+    my $smtp = $self->{'smtp'};
+    my $socket = $self->{'socket'};
+    $smtp->{'mail_from'}        = q{};
+    $smtp->{'rcpt_to'}          = [];
+    $smtp->{'headers'}          = [];
+    $smtp->{'body'}             = q{};
+    $smtp->{'has_data'}         = 0;
+    $smtp->{'fwd_connect_host'} = undef;
+    $smtp->{'fwd_connect_ip'}   = undef;
+    $smtp->{'fwd_helo_host'}    = undef;
+    print $socket "250 Ok\r\n";
+}
 
 sub smtp_command_mailfrom {
     my ( $self, $command ) = @_;
@@ -174,14 +195,12 @@ sub smtp_command_mailfrom {
     }
     # Do connect callback here, because of XFORWARD
     if ( ! $smtp->{'has_connected'} ) {
-        $returncode = $handler->top_connect_callback( $smtp->{'connect_host'}, Net::IP->new( $smtp->{'connect_ip'} ) );
+        my $host = $smtp->{'fwd_connect_host'} || $smtp->{'connect_host'};
+        my $ip   = $smtp->{'fwd_connect_ip'}   || $smtp->{'connect_ip'};
+        my $helo = $smtp->{'fwd_helo_host'}    || $smtp->{'helo_host'};
+        $returncode = $handler->top_connect_callback( $host, Net::IP->new( $ip ) );
         if ( $returncode == SMFIS_CONTINUE ) {
-            if ( $smtp->{'fwd_helo_host'} ) {
-                $returncode = $handler->top_helo_callback( $smtp->{'fwd_helo_host'} );
-            }
-            else {
-                $returncode = $handler->top_helo_callback( $smtp->{'helo_host'} );
-            }
+            $returncode = $handler->top_helo_callback( $helo );
             if ( $returncode == SMFIS_CONTINUE ) {
                 $smtp->{'has_connected'} = 1;
                 my $envfrom = substr( $command,10 );
@@ -332,11 +351,14 @@ sub smtp_command_data {
     }
 
     # Reset
-    $smtp->{'mail_from'} = q{};
-    $smtp->{'rcpt_to'}   = [];
-    $smtp->{'headers'}   = [];
-    $smtp->{'body'}      = q{};
-    $smtp->{'has_data'}  = 0;
+    $smtp->{'mail_from'}        = q{};
+    $smtp->{'rcpt_to'}          = [];
+    $smtp->{'headers'}          = [];
+    $smtp->{'body'}             = q{};
+    $smtp->{'has_data'}         = 0;
+    $smtp->{'fwd_connect_host'} = undef;
+    $smtp->{'fwd_connect_ip'}   = undef;
+    $smtp->{'fwd_helo_host'}    = undef;
 
     return;
 }
@@ -382,19 +404,31 @@ sub smtp_forward_to_destination {
 
     $self->smtp_insert_received_header();
 
-    my $smtpserver = 'localhost';
-    my $smtpport = '12346';
+    my $sock_type = 'unix';
+    my $sock_path = 'tmp/authentication_milter_smtp_out.sock';
+
+    #my $sock_type = 'inet';
+    my $sock_host = 'localhost';
+    my $sock_port = '12346';
 
     ## TODO this DOESNT set MAIL FROM and RCPT TO properly
 
-    my $sock = IO::Socket::INET->new(
-        'Proto' => 'tcp',
-        'PeerAddr' => 'localhost',
-        'PeerPort' => '12346',
-    );
+    my $sock;
+    if ( $sock_type eq 'inet' ) {
+       $sock = IO::Socket::INET->new(
+            'Proto' => 'tcp',
+            'PeerAddr' => $sock_host,
+            'PeerPort' => $sock_port,
+        );
+    }
+    elsif ( $sock_type eq 'unix' ) {
+    $sock = IO::Socket::UNIX->new(
+            'Peer' => $sock_path,
+        );
+    }
 
     if ( ! $sock ) {
-        $self->logerror( "Could not open outbound SMTP socket" );
+        $self->logerror( "Could not open outbound SMTP socket: $!" );
         return 0;
     }
 
@@ -449,6 +483,7 @@ sub send_smtp_packet {
 sub add_header {
     my ( $self, $header, $value ) = @_;
     my $smtp = $self->{'smtp'};
+    $value =~ s/\015?\012/\015\012/g;
     push @{ $smtp->{'headers'} } , {
         'key'   => $header,
         'value' => $value,
@@ -486,6 +521,7 @@ sub change_header {
             splice @{ $smtp->{'headers'} }, $result_i, 1;
         }
         else {
+            $value =~ s/\015?\012/\015\012/g;
             $smtp->{'headers'}->[ $result_i ]->{'value'} = $value;
             #untested
         }
@@ -496,6 +532,7 @@ sub change_header {
 sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
     my $smtp = $self->{'smtp'};
+    $value =~ s/\015?\012/\015\012/g;
     splice @{ $smtp->{'headers'} }, $index - 1, 0, {
         'key'   => $key,
         'value' => $value,

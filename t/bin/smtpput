@@ -1,13 +1,14 @@
 #!/usr/bin/perl
 
-# Simple script which accepts a SMTP style connection
-# And dumps it back out to the console
+# Simple script which accepts email parameters
+# and dumps them to a supplied SMTP style connection
 
 use strict;
 use warnings;
 
 use Getopt::Long;
 use IO::Socket::INET;
+use IO::Socket::UNIX;
 
 my $mailer_name;
 my $mail_file;
@@ -17,6 +18,11 @@ my $x_name;
 my $x_addr;
 my $x_helo;
 
+my $sock_type;
+my $sock_path;
+my $sock_host;
+my $sock_port;
+
 GetOptions (
     'mailer_name=s'  => \$mailer_name,
     'connect_ip=s'   => \$x_addr,
@@ -25,6 +31,10 @@ GetOptions (
     'mail_from=s'    => \$mail_from,
     'rcpt_to=s'      => \$rcpt_to,
     'mail_file=s'    => \$mail_file,
+    'sock_type=s'    => \$sock_type,
+    'sock_path=s'    => \$sock_path,
+    'sock_host=s'    => \$sock_host,
+    'sock_port=s'    => \$sock_port,
 ) or die "Error in command line arguments\n";
 
 my $mail_data = q{};
@@ -44,15 +54,18 @@ else {
     close $inf;
 }
 
-my $sock = IO::Socket::INET->new(
-    'Proto' => 'tcp',
-    'PeerAddr' => 'localhost',
-    'PeerPort' => '12345',
-);
-
-if ( ! $sock ) {
-    die "Could not open outbound SMTP socket";
-    return 0;
+my $sock;
+if ( $sock_type eq 'inet' ) {
+   $sock = IO::Socket::INET->new(
+        'Proto' => 'tcp',
+        'PeerAddr' => $sock_host,
+        'PeerPort' => $sock_port,
+    ) || die "could not open outbound SMTP socket: $!";
+}
+elsif ( $sock_type eq 'unix' ) {
+   $sock = IO::Socket::UNIX->new(
+        'Peer' => $sock_path,
+    ) || die "could not open outbound SMTP socket: $!";
 }
 
 my $line = <$sock>;

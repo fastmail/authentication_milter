@@ -11,13 +11,14 @@ if ( ! -e 't/01-results.t' ) {
 
 chdir 't';
 
-plan tests => 8;
+plan tests => 15;
 
 {
     system 'rm -rf tmp';
     mkdir 'tmp';
     mkdir 'tmp/result';
 
+    run_smtp_processing();
     run_milter_processing();
 
 };
@@ -52,6 +53,51 @@ sub stop_milter {
     return;
 }
 
+sub smtp_process {
+    my ( $args ) = @_;
+
+    if ( ! -e $args->{'prefix'} . '/authentication_milter.json' ) {
+        die "Could not find config";
+    }
+    if ( ! -e 'data/source/' . $args->{'source'} ) {
+        die "Could not find source";
+    }
+
+    my $setlib = 'export PERL5LIB=../lib';
+
+    my $cmd = join( q{ },
+        'bin/smtpcat',
+        '--sock_type unix',
+        '--sock_path tmp/authentication_milter_smtp_out.sock',
+        '|', 'sed "7d"',
+        '>', 'tmp/result/' . $args->{'dest'},
+    );
+    unlink 'tmp/authentication_milter_smtp_out.sock';
+    system( $setlib . ';' . $cmd . '&' );
+    sleep 2;
+
+    $cmd = join( q{ },
+        'bin/smtpput',
+        '--sock_type unix',
+        '--sock_path tmp/authentication_milter_test.sock',
+        '--mailer_name test.module',
+        '--connect_ip', $args->{'ip'},
+        '--connect_name', $args->{'name'},
+        '--helo_host', $args->{'name'},
+        '--mail_from', $args->{'from'},
+        '--rcpt_to', $args->{'to'},
+        '--mail_file', 'data/source/' . $args->{'source'},
+    );
+    #warn 'Testing ' . $args->{'source'} . ' > ' . $args->{'dest'} . "\n";
+
+    system( $setlib . ';' . $cmd );
+
+    sleep 1;
+
+    files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, $args->{'desc'} );
+
+    return;
+}
 sub milter_process {
     my ( $args ) = @_;
 
@@ -174,6 +220,92 @@ sub run_milter_processing {
         'prefix' => 'config/normal',
         'source' => 'google_apps_good.eml',
         'dest'   => 'google_apps_good_dryrun.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    stop_milter();
+
+    return;
+}
+
+sub run_smtp_processing {
+
+    start_milter( 'config/normal.smtp' );
+    
+    smtp_process({
+        'desc'   => 'Good message',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    smtp_process({
+        'desc'   => 'SPF Fail',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_spf_fail.smtp.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    smtp_process({
+        'desc'   => 'DKIM Fail',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_bad.eml',
+        'dest'   => 'google_apps_bad.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    smtp_process({
+        'desc'   => 'DKIM/SPF Fail',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_bad.eml',
+        'dest'   => 'google_apps_bad_spf_fail.smtp.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    smtp_process({
+        'desc'   => 'No DKIM',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_nodkim.eml',
+        'dest'   => 'google_apps_nodkim.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    smtp_process({
+        'desc'   => 'No DKIM/SPF Fail',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_nodkim.eml',
+        'dest'   => 'google_apps_nodkim_spf_fail.smtp.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    smtp_process({
+        'desc'   => 'Sanitize Headers',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good_sanitize.eml',
+        'dest'   => 'google_apps_good_sanitize.smtp.eml',
         'ip'     => '74.125.82.171',
         'name'   => 'mail-we0-f171.google.com',
         'from'   => 'marc@marcbradshaw.net',

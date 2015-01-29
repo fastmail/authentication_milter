@@ -6,22 +6,49 @@
 use strict;
 use warnings;
 
+use Getopt::Long;
 use IO::Socket::INET;
+use IO::Socket::UNIX;
 
-my $socket = IO::Socket::INET->new(
-    'Listen'    => 5,
-    'LocalHost' => 'localhost',
-    'LocalPort' => 12346,
-    'Protocol'  => 'tcp',
-) || die "could not open socket: $!";
+my $sock_type;
+my $sock_path;
+my $sock_host;
+my $sock_port;
 
-my $accept = $socket->accept();
+GetOptions (
+    'sock_type=s'    => \$sock_type,
+    'sock_path=s'    => \$sock_path,
+    'sock_host=s'    => \$sock_host,
+    'sock_port=s'    => \$sock_port,
+) or die "Error in command line arguments\n";
+
+my $sock;
+if ( $sock_type eq 'inet' ) {
+   $sock = IO::Socket::INET->new(
+        'Listen'    => 5,
+        'LocalHost' => $sock_host,
+        'LocalPort' => $sock_port,
+        'Protocol'  => 'tcp',
+    ) || die "could not open socket: $!";
+}
+elsif ( $sock_type eq 'unix' ) {
+   $sock = IO::Socket::UNIX->new(
+        'Listen'    => 5,
+        'Local' => $sock_path,
+    ) || die "could not open socket: $!";
+}
+
+my $accept = $sock->accept();
 
 print $accept "220 smtp.cat ESMTP Test\r\n";
+
+local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+alarm( 60 );
 
 my $quit = 0;
 while ( ! $quit ) {
     my $command = <$accept> || { $quit = 1 };
+    alarm( 60 );
 
     if ( $command =~ /^HELO/ ) {
         print $command;
@@ -44,6 +71,7 @@ while ( ! $quit ) {
         print $accept "354 Send\r\n";
         DATA:
         while ( my $line = <$accept> ) {
+            alarm( 60 );
             print $line;
             last DATA if $line eq "\.\r\n";
         }
@@ -57,5 +85,5 @@ while ( ! $quit ) {
 }
 
 $accept->close();
-$socket->close();
+$sock->close();
 
