@@ -74,6 +74,10 @@ while ( ! $quit ) {
             alarm( 60 );
             print $line;
             last DATA if $line eq "\.\r\n";
+            # Handle transparency
+            if ( $line =~ /^\./ ) {
+                $line = substr( $line, 1 );
+            }
         }
         print $accept "250 Ok\r\n";
     }

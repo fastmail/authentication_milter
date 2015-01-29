@@ -54,6 +54,10 @@ else {
     close $inf;
 }
 
+$mail_data =~ s/\015?\012/\015\012/g;
+# Handle transparency
+$mail_data =~ s/\015\012\./\015\012\.\./g;
+
 my $sock;
 if ( $sock_type eq 'inet' ) {
    $sock = IO::Socket::INET->new(
@@ -84,8 +88,6 @@ send_smtp_packet( $sock, 'XFORWARD HELO=' . $x_helo,   '250' ) || die;
 send_smtp_packet( $sock, 'MAIL FROM:' . $mail_from, '250' ) || die;
 send_smtp_packet( $sock, 'RCPT TO:' .   $rcpt_to,   '250' ) || die;
 send_smtp_packet( $sock, 'DATA',                    '354' ) || die;
-
-## TODO handle a . in the email properly
 
 print $sock $mail_data;
 print $sock "\r\n";

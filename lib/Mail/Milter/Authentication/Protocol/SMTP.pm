@@ -282,10 +282,13 @@ sub smtp_command_data {
     HEADERS:
     while ( my $dataline = <$socket> ) {
         $dataline =~ s/\r?\n$//;
-        # Don't forget to deal with encoded . in the message text
         if ( $dataline eq '.' ) {
             $done = 1;
             last HEADERS;
+        }
+        # Handle transparency
+        if ( $dataline =~ /^\./ ) {
+            $dataline = substr( $dataline, 1 );
         }
         if ( $dataline eq q{} ) {
             last HEADERS;
@@ -321,6 +324,10 @@ sub smtp_command_data {
         while ( my $dataline = <$socket> ) {
             # Don't forget to deal with encoded . in the message text
             last DATA if $dataline =~  /\.\r\n/;
+            # Handle transparency
+            if ( $dataline =~ /^\./ ) {
+                $dataline = substr( $dataline, 1 );
+            }
             $body .= $dataline;
         }
         $returncode = $handler->top_body_callback( $body );
@@ -443,8 +450,6 @@ sub smtp_forward_to_destination {
     }
     $self->send_smtp_packet( $sock, 'DATA', '354' ) || return;
 
-    ## TODO handle a . in the email properly
-    
     my $email = q{};
     foreach my $header ( @{ $smtp->{'headers'} } ) {
         my $key   = $header->{'key'};
@@ -452,7 +457,13 @@ sub smtp_forward_to_destination {
         $email .= "$key: $value\r\n";
     }
     $email .= "\r\n";
-    $email .= $smtp->{'body'};
+
+    my $body = $smtp->{'body'};
+    $body =~ s/\015?\012/\015\012/g;
+    $email .= $body;
+    
+    # Handle transparency
+    $email =~ s/\015\012\./\015\012\.\./g;
 
     print $sock $email;
     
