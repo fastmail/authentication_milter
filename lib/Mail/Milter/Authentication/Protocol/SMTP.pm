@@ -404,27 +404,24 @@ sub smtp_forward_to_destination {
 
     $self->smtp_insert_received_header();
 
-    my $sock_type = 'unix';
-    my $sock_path = 'tmp/authentication_milter_smtp_out.sock';
-
-    #my $sock_type = 'inet';
-    my $sock_host = 'localhost';
-    my $sock_port = '12346';
-
-    ## TODO this DOESNT set MAIL FROM and RCPT TO properly
+    my $smtp_conf = $self->{'config'}->{'smtp'};
 
     my $sock;
-    if ( $sock_type eq 'inet' ) {
+    if ( $smtp_conf->{'sock_type'} eq 'inet' ) {
        $sock = IO::Socket::INET->new(
             'Proto' => 'tcp',
-            'PeerAddr' => $sock_host,
-            'PeerPort' => $sock_port,
+            'PeerAddr' => $smtp_conf->{'sock_host'},
+            'PeerPort' => $smtp_conf->{'sock_port'},
         );
     }
-    elsif ( $sock_type eq 'unix' ) {
+    elsif ( $smtp_conf->{'sock_type'} eq 'unix' ) {
     $sock = IO::Socket::UNIX->new(
-            'Peer' => $sock_path,
+            'Peer' => $smtp_conf->{'sock_path'},
         );
+    }
+    else {
+        $self->logerror( 'Outbound SMTP Socket type unknown or undefined: ' . $smtp_conf->{'sock_type'} );
+        return 0;
     }
 
     if ( ! $sock ) {

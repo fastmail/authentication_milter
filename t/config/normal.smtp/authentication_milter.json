@@ -16,6 +16,10 @@
     "tempfail_on_error_trusted"       : 1,
 
     "protocol" : "smtp",
+    "smtp" : {
+        "sock_type" : "unix",
+        "sock_path" : "tmp/authentication_milter_smtp_out.sock"
+    },
 
     "listen_backlog"         : 1,
     "min_children"           : 1,
