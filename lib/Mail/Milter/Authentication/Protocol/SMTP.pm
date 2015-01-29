@@ -11,6 +11,7 @@ use IO::Socket::INET;
 use IO::Socket::UNIX;
 use Digest::MD5 qw{ md5_hex };
 use Net::IP;
+use Sys::Syslog qw{:standard :macros};
 
 use Mail::Milter::Authentication::Constants qw{ :all };
 
@@ -21,6 +22,7 @@ sub protocol_process_request {
         'fwd_helo_host'    => undef,
         'fwd_connect_ip'   => undef,
         'fwd_connect_host' => undef,
+        'fwd_ident'        => undef,
         'helo_host'        => q{},
         'mail_from'        => q{},
         'rcpt_to'          => [],
@@ -35,17 +37,16 @@ sub protocol_process_request {
         'lmtp_rcpt'        => [],
     };
 
-    if ( $self->{'smtp'}->{'connect_host'} eq '127.0.0.1' ) {
+    # If we have a UNIX connection then these will be undef,
+    # Set them to localhost to avoid warnings later.
+    if ( ! $self->{'smtp'}->{'connect_ip'} ) { $self->{'smtp'}->{'connect_ip'} = '127.0.0.1'; }
+
+    if ( $self->{'smtp'}->{'connect_ip'} eq '127.0.0.1' ) {
         $self->{'smtp'}->{'connect_host'} = 'localhost';
     }
     else {
         # TODO do a reverse lookup  here!
     }
-
-    # If we have a UNIX connection then these will be undef,
-    # Set them to localhost to avoid warnings later.
-    if ( ! $self->{'smtp'}->{'connect_ip'}   ) { $self->{'smtp'}->{'connect_ip'}   = '127.0.0.1'; }
-    if ( ! $self->{'smtp'}->{'connect_host'} ) { $self->{'smtp'}->{'connect_host'} = 'localhost'; }
 
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
@@ -58,8 +59,8 @@ sub protocol_process_request {
     $handler->set_symbol( 'C', 'j', $smtp->{'server_name'} );
     $handler->set_symbol( 'C', '{rcpt_host}', $smtp->{'server_name'} );
 
-    $smtp->{'queue_id'} = md5_hex( "Authentication Milter Client $PID " . time() );
-    $handler->set_symbol( 'C', 'i', $smtp->{'queue_id'} );
+    $smtp->{'queue_id'} = substr( uc md5_hex( "Authentication Milter Client $PID " . time() ) , -11 );
+    $handler->set_symbol( 'C', 'i', $self->smtp_queue_id() );
 
     COMMAND:
     while ( ! $smtp->{'last_command'} ) {
@@ -110,6 +111,16 @@ sub protocol_process_request {
     return;
 }
 
+sub smtp_queue_id {
+    my ( $self ) = @_;
+    my $smtp = $self->{'smtp'};
+    my $queue_id = $smtp->{'queue_id'};
+    if ( $smtp->{'fwd_ident'} ) {
+        $queue_id .= '.' . $smtp->{'fwd_ident'};
+    }
+    return $queue_id;
+}
+
 sub smtp_command_lhlo {
     my ( $self, $command ) = @_;
     my $smtp = $self->{'smtp'};
@@ -125,7 +136,7 @@ sub smtp_command_lhlo {
     }
     $smtp->{'helo_host'} = substr( $command,5 );
     print $socket "250-" . $smtp->{'server_name'} . "\r\n";
-    print $socket "250-XFORWARD NAME ADDR PROTO HELO\r\n";
+    print $socket "250-XFORWARD NAME ADDR IDENT HELO\r\n";
     print $socket "250-PIPELINING\r\n";
     print $socket "250-ENHANCEDSTATUSCODES\r\n";
     print $socket "250 8BITMIME\r\n";
@@ -145,7 +156,7 @@ sub smtp_command_ehlo {
     }
     $smtp->{'helo_host'} = substr( $command,5 );
     print $socket "250-" . $smtp->{'server_name'} . "\r\n";
-    print $socket "250-XFORWARD NAME ADDR PROTO HELO\r\n";
+    print $socket "250-XFORWARD NAME ADDR IDENT HELO\r\n";
     print $socket "250-PIPELINING\r\n";
     print $socket "250-ENHANCEDSTATUSCODES\r\n";
     print $socket "250 8BITMIME\r\n";
@@ -191,8 +202,10 @@ sub smtp_command_xforward {
         elsif ( $key eq 'HELO' ) {
             $smtp->{'fwd_helo_host'} = $value;
         }
-        elsif ( $key eq 'PROTO' ) {
-            # We don't care about this one
+        elsif ( $key eq 'IDENT' ) {
+            $smtp->{'fwd_ident'} = $value;
+            $handler->set_symbol( 'C', 'i', $self->smtp_queue_id() );
+            $handler->dbgout( 'Upstream ID', $value, LOG_INFO );
         }
         else {
             # NOP
@@ -216,6 +229,7 @@ sub smtp_command_rset {
     $smtp->{'fwd_connect_host'} = undef;
     $smtp->{'fwd_connect_ip'}   = undef;
     $smtp->{'fwd_helo_host'}    = undef;
+    $smtp->{'fwd_ident'}        = undef;
     $smtp->{'lmtp_rcpt'}        = [];
     print $socket "250 2.0.0 Ok\r\n";
 }
@@ -387,11 +401,11 @@ sub smtp_command_data {
         if ( $self->smtp_forward_to_destination() ) {
             if ( $smtp->{'using_lmtp'} ) {
                 foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
-                    print $socket "250 2.0.0 Queued as " . $smtp->{'queue_id'} . "\r\n";
+                    print $socket "250 2.0.0 Queued as " . $self->smtp_queue_id() . "\r\n";
                 }
             }
             else {
-                print $socket "250 2.0.0 Queued as " . $smtp->{'queue_id'} . "\r\n";
+                print $socket "250 2.0.0 Queued as " . $self->smtp_queue_id() . "\r\n";
             }
         }
         else {
@@ -436,7 +450,12 @@ sub smtp_insert_received_header {
         '    by ',
         $smtp->{'server_name'},
         ' (Authentication Milter)',
-        ' with ESMTP;',
+        ' with ESMTP',
+        "\r\n",
+
+        '    id ',
+        $self->smtp_queue_id(),
+        ';',
         "\r\n",
 
         '    ',
@@ -490,7 +509,21 @@ sub smtp_forward_to_destination {
         return 0;
     }
 
-    $self->send_smtp_packet( $sock, 'HELO ' .      $smtp->{'server_name'}, '250' ) || return;
+    $self->send_smtp_packet( $sock, 'EHLO ' .      $smtp->{'server_name'}, '250' ) || return;
+
+    if ( $smtp->{'fwd_helo_host'} ) {
+        $self->send_smtp_packet( $sock, 'XFORWARD HELO=' . $smtp->{'fwd_helo_host'}, '250' ) || return;
+    }
+    if ( $smtp->{'fwd_connect_ip'} ) {
+        $self->send_smtp_packet( $sock, 'XFORWARD ADDR=' . $smtp->{'fwd_connect_ip'}, '250' ) || return;
+    }
+    if ( $smtp->{'fwd_connect_host'} ) {
+        $self->send_smtp_packet( $sock, 'XFORWARD NAME=' . $smtp->{'fwd_connect_host'}, '250' ) || return;
+    }
+    if ( $smtp->{'fwd_ident'} ) {
+        $self->send_smtp_packet( $sock, 'XFORWARD IDENT=' . $smtp->{'fwd_ident'}, '250' ) || return;
+    }
+
     $self->send_smtp_packet( $sock, 'MAIL FROM:' . $smtp->{'mail_from'},   '250' ) || return;
     foreach my $rcpt_to ( @{ $smtp->{'rcpt_to'} } ) {
         $self->send_smtp_packet( $sock, 'RCPT TO:' .   $rcpt_to, '250' ) || return;
@@ -526,6 +559,11 @@ sub send_smtp_packet {
     my ( $self, $socket, $send, $expect ) = @_;
     print $socket "$send\r\n";
     my $recv = <$socket>;
+
+    while ( $recv =~ /^\d\d\d-/ ) {
+        $recv = <$socket>;
+    }
+
     if ( $recv =~ /^$expect/ ) {
         return 1;
     }
