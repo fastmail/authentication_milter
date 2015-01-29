@@ -534,7 +534,17 @@ sub smtp_forward_to_destination {
         return 0;
     }
 
-    my $line = <$sock>;
+    local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+    alarm( 10 );
+    my $line;
+    eval {
+        $line = <$sock>;
+    };
+    if ( my $error = $@ ) {
+        $self->logerror( "Outbound SMTP Read Error: $error" );
+        return 0;
+    }
+    alarm( 0 );
 
     if ( ! $line =~ /250/ ) {
         $self->logerror( "Unexpected SMTP response $line" );
@@ -590,7 +600,18 @@ sub smtp_forward_to_destination {
 sub send_smtp_packet {
     my ( $self, $socket, $send, $expect ) = @_;
     print $socket "$send\r\n";
-    my $recv = <$socket>;
+
+    local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+    alarm( 10 );
+    my $recv;
+    eval {
+        $recv = <$socket>;
+    };
+    if ( my $error = $@ ) {
+        $self->logerror( "Outbound SMTP Read Error: $error" );
+        return 0;
+    }
+    alarm( 0 );
 
     while ( $recv =~ /^\d\d\d\-/ ) {
         $recv = <$socket>;
