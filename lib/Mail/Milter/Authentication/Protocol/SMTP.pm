@@ -31,6 +31,8 @@ sub protocol_process_request {
         'last_command'     => 0,
         'headers'          => [],
         'body'             => q{},
+        'using_lmtp'       => 0,
+        'lmtp_rcpt'        => [],
     };
 
     if ( ! $self->{'smtp'}->{'connect_ip'}   ) { $self->{'smtp'}->{'connect_ip'}   = 'localhost'; }
@@ -65,6 +67,9 @@ sub protocol_process_request {
         if ( $command =~ /^EHLO/ ) {
             $self->smtp_command_ehlo( $command );
         }
+        elsif ( $command =~ /^LHLO/ ) {
+            $self->smtp_command_lhlo( $command );
+        }
         elsif ( $command =~ /^HELO/ ) {
             $self->smtp_command_helo( $command );
         }
@@ -84,17 +89,39 @@ sub protocol_process_request {
             $self->smtp_command_data( $command );
         }
         elsif ( $command =~ /^QUIT/ ){
-            print $socket "221 Bye\n";
+            print $socket "221 2.0.0 Bye\n";
             last COMMAND;
         }
         else {
             $self->logerror( "Unknown SMTP command: $command" );
-            print $socket "502 I don't understand\r\n";
+            print $socket "502 5.5.2 I don't understand\r\n";
         }
 
     }
 
     delete $self->{'smtp'};
+    return;
+}
+
+sub smtp_command_lhlo {
+    my ( $self, $command ) = @_;
+    my $smtp = $self->{'smtp'};
+    my $socket = $self->{'socket'};
+    my $handler = $self->{'handler'}->{'_Handler'};
+
+    $smtp->{'using_lmtp'} = 1;
+
+    if ( $smtp->{'has_data'} ) {
+        $self->logerror( "Out of Order SMTP command: $command" );
+        print $socket "501 5.5.2 Out of Order\r\n";
+        return;
+    }
+    $smtp->{'helo_host'} = substr( $command,5 );
+    print $socket "250-" . $smtp->{'server_name'} . "\r\n";
+    print $socket "250-XFORWARD NAME ADDR PROTO HELO\r\n";
+    print $socket "250-PIPELINING\r\n";
+    print $socket "250-ENHANCEDSTATUSCODES\r\n";
+    print $socket "250 8BITMIME\r\n";
     return;
 }
 
@@ -106,13 +133,14 @@ sub smtp_command_ehlo {
 
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Out of Order SMTP command: $command" );
-        print $socket "501 Out of Order\r\n";
+        print $socket "501 5.5.2 Out of Order\r\n";
         return;
     }
     $smtp->{'helo_host'} = substr( $command,5 );
     print $socket "250-" . $smtp->{'server_name'} . "\r\n";
     print $socket "250-XFORWARD NAME ADDR PROTO HELO\r\n";
     print $socket "250-PIPELINING\r\n";
+    print $socket "250-ENHANCEDSTATUSCODES\r\n";
     print $socket "250 8BITMIME\r\n";
     return;
 }
@@ -125,7 +153,7 @@ sub smtp_command_helo {
 
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Out of Order SMTP command: $command" );
-        print $socket "501 Out of Order\r\n";
+        print $socket "501 5.5.2 Out of Order\r\n";
         return;
     }
     $smtp->{'helo_host'} = substr( $command,5 );
@@ -141,7 +169,7 @@ sub smtp_command_xforward {
 
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Out of Order SMTP command: $command" );
-        print $socket "503 Out of Order\r\n";
+        print $socket "503 5.5.2 Out of Order\r\n";
         return;
     }
     my $xdata = substr( $command,9 );
@@ -162,7 +190,7 @@ sub smtp_command_xforward {
             ### log it here though
         }
     }
-    print $socket "250 Ok\r\n";
+    print $socket "250 2.0.0 Ok\r\n";
     return;
 }
 
@@ -178,7 +206,8 @@ sub smtp_command_rset {
     $smtp->{'fwd_connect_host'} = undef;
     $smtp->{'fwd_connect_ip'}   = undef;
     $smtp->{'fwd_helo_host'}    = undef;
-    print $socket "250 Ok\r\n";
+    $smtp->{'lmtp_rcpt'}        = [];
+    print $socket "250 2.0.0 Ok\r\n";
 }
 
 sub smtp_command_mailfrom {
@@ -190,7 +219,7 @@ sub smtp_command_mailfrom {
     my $returncode;
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Out of Order SMTP command: $command" );
-        print $socket "503 Out of Order\r\n";
+        print $socket "503 5.5.2 Out of Order\r\n";
         return;
     }
     # Do connect callback here, because of XFORWARD
@@ -207,28 +236,28 @@ sub smtp_command_mailfrom {
                 $smtp->{'mail_from'} = $envfrom;
                 $returncode = $handler->top_envfrom_callback( $envfrom );
                 if ( $returncode == SMFIS_CONTINUE ) {
-                    print $socket "250 Ok\r\n";
+                    print $socket "250 2.0.0 Ok\r\n";
                 }
                 else {
-                    print $socket "451 That's not right\r\n";
+                    print $socket "451 4.0.0 That's not right\r\n";
                 }
             }
             else { 
-                print $socket "451 That's not right\r\n";
+                print $socket "451 4.0.0 That's not right\r\n";
             }
         }
         else { 
-            print $socket "451 That's not right\r\n";
+            print $socket "451 4.0.0 That's not right\r\n";
         }
     } 
     else { 
         my $envfrom = substr( $command,10 );
         $returncode = $handler->top_envfrom_callback( $envfrom );
         if ( $returncode == SMFIS_CONTINUE ) {
-            print $socket "250 Ok\r\n";
+            print $socket "250 2.0.0 Ok\r\n";
         }
         else {
-            print $socket "451 That's not right\r\n";
+            print $socket "451 4.0.0 That's not right\r\n";
         }
     }
     
@@ -243,17 +272,18 @@ sub smtp_command_rcptto {
 
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Out of Order SMTP command: $command" );
-        print $socket "503 Out of Order\r\n";
+        print $socket "503 5.5.2 Out of Order\r\n";
         return;
     }
     my $envrcpt = substr( $command,8 );
     push @{ $smtp->{'rcpt_to'} }, $envrcpt;
     my $returncode = $handler->top_envrcpt_callback( $envrcpt );
     if ( $returncode == SMFIS_CONTINUE ) {
-        print $socket "250 Ok\r\n";
+        push @{ $smtp->{'lmtp_rcpt'} }, $envrcpt;  
+        print $socket "250 2.0.0 Ok\r\n";
     }
     else {
-        print $socket "451 That's not right\r\n";
+        print $socket "451 4.0.0 That's not right\r\n";
     }
 
     return;
@@ -273,11 +303,11 @@ sub smtp_command_data {
 
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Repeated SMTP DATA command: $command" );
-        print $socket "503 One at a time please\r\n";
+        print $socket "503 5.5.2 One at a time please\r\n";
         return;
     }
     $smtp->{'has_data'} = 1;
-    print $socket "354 Send body\r\n";
+    print $socket "354 2.0.0 Send body\r\n";
 
     HEADERS:
     while ( my $dataline = <$socket> ) {
@@ -346,15 +376,22 @@ sub smtp_command_data {
         $smtp->{'body'} = $body;
 
         if ( $self->smtp_forward_to_destination() ) {
-            print $socket "250 Queued as " . $smtp->{'queue_id'} . "\r\n";
+            if ( $smtp->{'using_lmtp'} ) {
+                foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
+                    print $socket "250 2.0.0 Queued as " . $smtp->{'queue_id'} . "\r\n";
+                }
+            }
+            else {
+                print $socket "250 2.0.0 Queued as " . $smtp->{'queue_id'} . "\r\n";
+            }
         }
         else {
             $self->logerror( "SMTP Mail Rejected" );
-            print $socket "451 That's not right\r\n";
+            print $socket "451 4.0.0 That's not right\r\n";
         }
     }
     else { 
-        print $socket "451 That's not right\r\n";
+        print $socket "451 4.0.0 That's not right\r\n";
     }
 
     # Reset
@@ -366,6 +403,7 @@ sub smtp_command_data {
     $smtp->{'fwd_connect_host'} = undef;
     $smtp->{'fwd_connect_ip'}   = undef;
     $smtp->{'fwd_helo_host'}    = undef;
+    $smtp->{'lmtp_rcpt'}        = [];
 
     return;
 }
