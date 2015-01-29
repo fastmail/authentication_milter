@@ -53,6 +53,8 @@ sub protocol_process_request {
     my $handler = $self->{'handler'}->{'_Handler'};
 
     $smtp->{'server_name'} = $self->{'config'}->{'smtp'}->{'server_name'} || 'server.example.com';
+    $smtp->{'smtp_timeout_in'}  = $self->{'config'}->{'smtp'}->{'timeout_in'}  || 10;
+    $smtp->{'smtp_timeout_out'} = $self->{'config'}->{'smtp'}->{'timeout_out'} || 10;
 
     print $socket "220 " . $smtp->{'server_name'} . " ESMTP AuthenticationMilter\r\n";
 
@@ -67,7 +69,7 @@ sub protocol_process_request {
 
         my $command;
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
-        alarm( 10 );
+        alarm( $smtp->{'smtp_timeout_in'} );
         eval {
             $command = <$socket> || last COMMAND;
         };
@@ -347,7 +349,7 @@ sub smtp_command_data {
 
     local $SIG{'ALRM'} = sub{ die "Timeout\n" };
     eval{
-        alarm( 10 );
+        alarm( $smtp->{'smtp_timeout_in'} );
         HEADERS:
         while ( my $dataline = <$socket> ) {
             alarm( 0 ); 
@@ -398,7 +400,7 @@ sub smtp_command_data {
 
     if ( ! $done ) {
         eval {
-            alarm( 10 );
+            alarm( $smtp->{'smtp_timeout_in'} );
             DATA:
             while ( my $dataline = <$socket> ) {
                 alarm( 0 );
@@ -535,7 +537,7 @@ sub smtp_forward_to_destination {
     }
 
     local $SIG{'ALRM'} = sub{ die "Timeout\n" };
-    alarm( 10 );
+    alarm( $smtp->{'smtp_timeout_out'} );
     my $line;
     eval {
         $line = <$sock>;
@@ -601,8 +603,10 @@ sub send_smtp_packet {
     my ( $self, $socket, $send, $expect ) = @_;
     print $socket "$send\r\n";
 
+    my $smtp = $self->{'smtp'};
+
     local $SIG{'ALRM'} = sub{ die "Timeout\n" };
-    alarm( 10 );
+    alarm( $smtp->{'smtp_timeout_out'} );
     my $recv;
     eval {
         $recv = <$socket>;

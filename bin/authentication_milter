@@ -110,7 +110,9 @@ __END__
         "sock_type"   : "inet",                         | Socket type (inet or unix)
         "sock_host"   : "localhost",                    | Host to connect to (when inet)
         "sock_port"   : "2525",                         | Port to connect to (when inet)
-        "sock_path"   : "/var/run/smtp.sock"            | Sockt path to connect to (when unix)
+        "sock_path"   : "/var/run/smtp.sock",           | Socket path to connect to (when unix)
+        "timeout_in"  : "10",                           | Timeout when waiting for inbound SMTP data
+        "timeout_out" : "10"                            | Timeout when waiting for outbound SMTP data
     },
 
                                                         | Timeouts for callbacks, should be slightly lower
