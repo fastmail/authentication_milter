@@ -65,8 +65,20 @@ sub protocol_process_request {
     COMMAND:
     while ( ! $smtp->{'last_command'} ) {
 
-        my $command = <$socket> || last COMMAND;
+        my $command;
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        alarm( 10 );
+        eval {
+            $command = <$socket> || last COMMAND;
+        };
+        if ( my $error = $@ ) {
+            $self->logerror( "Read Error: $error" );
+            last COMMAND;
+        }
+        alarm( 0 );
+
         $command =~ s/\r?\n$//;
+
 
         $self->logdebug( "receive command $command" );
 
@@ -333,22 +345,33 @@ sub smtp_command_data {
     $smtp->{'has_data'} = 1;
     print $socket "354 2.0.0 Send body\r\n";
 
-    HEADERS:
-    while ( my $dataline = <$socket> ) {
-        $dataline =~ s/\r?\n$//;
-        if ( $dataline eq '.' ) {
-            $done = 1;
-            last HEADERS;
+    local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+    eval{
+        alarm( 10 );
+        HEADERS:
+        while ( my $dataline = <$socket> ) {
+            alarm( 0 ); 
+            $dataline =~ s/\r?\n$//;
+            if ( $dataline eq '.' ) {
+                $done = 1;
+                last HEADERS;
+            }
+            # Handle transparency
+            if ( $dataline =~ /^\./ ) {
+                $dataline = substr( $dataline, 1 );
+            }
+            if ( $dataline eq q{} ) {
+                last HEADERS;
+            }
+            $headers .= $dataline . "\r\n";
         }
-        # Handle transparency
-        if ( $dataline =~ /^\./ ) {
-            $dataline = substr( $dataline, 1 );
-        }
-        if ( $dataline eq q{} ) {
-            last HEADERS;
-        }
-        $headers .= $dataline . "\r\n";
+    };
+    if ( my $error = $@ ) {
+        $self->logerror( "Read Error: $error" );
+        $done = 1;
+        $fail = 1;
     }
+    alarm( 0 );
 
     {
         my $message_object = Email::Simple->new( $headers );
@@ -374,19 +397,29 @@ sub smtp_command_data {
     }
 
     if ( ! $done ) {
-        DATA:
-        while ( my $dataline = <$socket> ) {
-            last DATA if $dataline =~  /\.\r\n/;
-            # Handle transparency
-            if ( $dataline =~ /^\./ ) {
-                $dataline = substr( $dataline, 1 );
+        eval {
+            alarm( 10 );
+            DATA:
+            while ( my $dataline = <$socket> ) {
+                alarm( 0 );
+                last DATA if $dataline =~  /\.\r\n/;
+                # Handle transparency
+                if ( $dataline =~ /^\./ ) {
+                    $dataline = substr( $dataline, 1 );
+                }
+                $body .= $dataline;
             }
-            $body .= $dataline;
-        }
-        $returncode = $handler->top_body_callback( $body );
-        if ( $returncode != SMFIS_CONTINUE ) {
+            $returncode = $handler->top_body_callback( $body );
+            if ( $returncode != SMFIS_CONTINUE ) {
+                $fail = 1;
+            }
+        };
+        if ( my $error = $@ ) {
+            $self->logerror( "Read Error: $error" );
+            $done = 1;
             $fail = 1;
         }
+        alarm( 0 );
     }
 
     $returncode = $handler->top_eom_callback();
