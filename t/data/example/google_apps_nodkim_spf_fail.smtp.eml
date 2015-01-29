@@ -1,4 +1,7 @@
-HELO server.example.com
+EHLO server.example.com
+XFORWARD HELO=bad.name.google.com
+XFORWARD ADDR=123.123.123.123
+XFORWARD NAME=bad.name.google.com
 MAIL FROM:marc@marcbradshaw.net
 RCPT TO:marc@fastmail.com
 DATA

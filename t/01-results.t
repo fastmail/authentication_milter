@@ -69,7 +69,7 @@ sub smtp_process {
         'bin/smtpcat',
         '--sock_type unix',
         '--sock_path tmp/authentication_milter_smtp_out.sock',
-        '|', 'sed "7,8d"',
+        '|', 'sed "10,11d"',
         '>', 'tmp/result/' . $args->{'dest'},
     );
     unlink 'tmp/authentication_milter_smtp_out.sock';

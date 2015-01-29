@@ -395,7 +395,6 @@ sub smtp_command_data {
     }
 
     if ( ! $fail ) {
-
         $smtp->{'body'} = $body;
 
         if ( $self->smtp_forward_to_destination() ) {
@@ -560,7 +559,7 @@ sub send_smtp_packet {
     print $socket "$send\r\n";
     my $recv = <$socket>;
 
-    while ( $recv =~ /^\d\d\d-/ ) {
+    while ( $recv =~ /^\d\d\d\-/ ) {
         $recv = <$socket>;
     }
 

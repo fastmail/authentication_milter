@@ -62,6 +62,10 @@ while ( ! $quit ) {
         print $command;
         print $accept "250 Ok\r\n";
     }
+    elsif ( $command =~ /^XFORWARD/ ) {
+        print $command;
+        print $accept "250 Ok\r\n";
+    }
     elsif ( $command =~ /^RCPT/ ) {
         print $command;
         print $accept "250 Ok\r\n";
@@ -85,6 +89,11 @@ while ( ! $quit ) {
         print $command;
         print $accept "221 Bye\r\n";
         $quit = 1;
+    }
+    else {
+        warn "Unknown command $command\n";
+        print $command;
+        print $accept "250 Ok\r\n";
     }
 }
 
