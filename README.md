@@ -17,6 +17,25 @@ Includes 2 additional modules.
 - AddID - add a header to all email (example)
 - ReturnOK - Checks that return addresses have properly configured MX records
 
+Protocol
+--------
+
+Authentication Milter is able to run as a sendmail style milter, or a SMTP style after queue filter.
+
+A very basic subset of SMTP is implemented which allows use as an after queue filter in postfix (and others)
+
+The XFORWARD SMTP extension is supported to allow the original connection details to be passed through to
+the milter.
+
+The milter does NOT store it's current email on disk, all processing is done in memory.
+When running in SMTP mode the milter does not issue a 250 queued response until the destination MTA has also
+done so.
+
+See [Postfix After-Queue Content Filter](http://www.postfix.org/FILTER_README.html)
+
+Note: When running in SMTP mode please do not allow untrusted clients to connect to the milter directly, always
+filter these connections through our usual MTA first.
+
 Design Decisions
 ----------------
 

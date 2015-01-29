@@ -101,6 +101,17 @@ __END__
     "max_spare_children"     : 20,                      | Max number of spare children to maintain
     "max_requests_per_child" : 200,                     | Max number of requests per child process (prefork)
 
+    "protocol"               : "milter",                | The protocol the milter is to use
+                                                        | can be either milter or smtp
+
+
+    "smtp" : {                                          | Parameters for use when protocol is smtp
+        "sock_type" : "inet",                           | Socket type (inet or unix)
+        "sock_host" : "localhost",                      | Host to connect to (when inet)
+        "sock_port" : "2525",                           | Port to connect to (when inet)
+        "sock_path" : "/var/run/smtp.sock"              | Sockt path to connect to (when unix)
+    },
+
                                                         | Timeouts for callbacks, should be slightly lower
                                                         | than the corresponding timeouts in Postfix
                                                         | Timeouts are ignored if missing.

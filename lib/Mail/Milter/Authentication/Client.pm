@@ -38,6 +38,10 @@ sub new {
         }
     }
 
+    if ( $config->{'protocol'} ne 'milter' ) {
+        die 'Client only works with milter protocol mode';
+    }
+
     $self->{'mailer_string'} = 'Testfix 1.00.0';
     $self->{'mailer_name'}   = $args->{'mailer_name'}  || 'test.mta.example.com';
 
