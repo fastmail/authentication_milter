@@ -106,10 +106,11 @@ __END__
 
 
     "smtp" : {                                          | Parameters for use when protocol is smtp
-        "sock_type" : "inet",                           | Socket type (inet or unix)
-        "sock_host" : "localhost",                      | Host to connect to (when inet)
-        "sock_port" : "2525",                           | Port to connect to (when inet)
-        "sock_path" : "/var/run/smtp.sock"              | Sockt path to connect to (when unix)
+        "server_name" : "scan.example.com",             | The server name to use for the server
+        "sock_type"   : "inet",                         | Socket type (inet or unix)
+        "sock_host"   : "localhost",                    | Host to connect to (when inet)
+        "sock_port"   : "2525",                         | Port to connect to (when inet)
+        "sock_path"   : "/var/run/smtp.sock"            | Sockt path to connect to (when unix)
     },
 
                                                         | Timeouts for callbacks, should be slightly lower

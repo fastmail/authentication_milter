@@ -27,7 +27,7 @@ sub protocol_process_request {
         'has_connected'    => 0,
         'has_data'         => 0,
         'connect_ip'       => $self->{'server'}->{'peeraddr'},
-        'connect_host'     => $self->{'server'}->{'peeraddr'}, ## TODO Lookup Name Here
+        'connect_host'     => $self->{'server'}->{'peeraddr'},
         'last_command'     => 0,
         'headers'          => [],
         'body'             => q{},
@@ -35,16 +35,23 @@ sub protocol_process_request {
         'lmtp_rcpt'        => [],
     };
 
-    if ( ! $self->{'smtp'}->{'connect_ip'}   ) { $self->{'smtp'}->{'connect_ip'}   = 'localhost'; }
+    if ( $self->{'smtp'}->{'connect_host'} eq '127.0.0.1' ) {
+        $self->{'smtp'}->{'connect_host'} = 'localhost';
+    }
+    else {
+        # TODO do a reverse lookup  here!
+    }
+
+    # If we have a UNIX connection then these will be undef,
+    # Set them to localhost to avoid warnings later.
+    if ( ! $self->{'smtp'}->{'connect_ip'}   ) { $self->{'smtp'}->{'connect_ip'}   = '127.0.0.1'; }
     if ( ! $self->{'smtp'}->{'connect_host'} ) { $self->{'smtp'}->{'connect_host'} = 'localhost'; }
 
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
 
-    $smtp->{'server_name'} = 'server.example.com';
-
-    # Get connect host and Connect IP from the connection here!
+    $smtp->{'server_name'} = $self->{'config'}->{'smtp'}->{'server_name'} || 'server.example.com';
 
     print $socket "220 " . $smtp->{'server_name'} . " ESMTP AuthenticationMilter\r\n";
 
@@ -184,9 +191,12 @@ sub smtp_command_xforward {
         elsif ( $key eq 'HELO' ) {
             $smtp->{'fwd_helo_host'} = $value;
         }
+        elsif ( $key eq 'PROTO' ) {
+            # We don't care about this one
+        }
         else {
-            $self->logerror( "Unknown XForward Entry: $key=$value" );
             # NOP
+            $self->logerror( "Unknown XForward Entry: $key=$value" );
             ### log it here though
         }
     }
@@ -352,7 +362,6 @@ sub smtp_command_data {
     if ( ! $done ) {
         DATA:
         while ( my $dataline = <$socket> ) {
-            # Don't forget to deal with encoded . in the message text
             last DATA if $dataline =~  /\.\r\n/;
             # Handle transparency
             if ( $dataline =~ /^\./ ) {
@@ -537,11 +546,6 @@ sub add_header {
     return;
 }
 
-## TODO
-# change and insert headers could be
-# affected by previously changed/inserted/deleted headers
-# need to have a test case for this
-
 sub change_header {
     my ( $self, $header, $index, $value ) = @_;
     my $smtp = $self->{'smtp'};
@@ -569,7 +573,7 @@ sub change_header {
         else {
             $value =~ s/\015?\012/\015\012/g;
             $smtp->{'headers'}->[ $result_i ]->{'value'} = $value;
-            #untested
+            #untested.
         }
     }
 
