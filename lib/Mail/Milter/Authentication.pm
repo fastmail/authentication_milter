@@ -17,9 +17,12 @@ use Sys::Syslog qw{:standard :macros};
 
 use vars qw(@ISA);
 
+
 sub pre_loop_hook {
     my ( $self ) = @_;
-    
+
+    $PROGRAM_NAME = '[authentication_milter:master]';
+
     # Load handlers
     my $config = get_config();
     foreach my $name ( @{$config->{'load_handlers'}} ) {
@@ -211,8 +214,6 @@ sub process_request {
 sub start {
     my ($args)     = @_;
 
-    $PROGRAM_NAME = '[authentication_milter:startup]';
-
     my $config                 = get_config();
 
     my $default_connection     = $config->{'connection'}             || die('No connection details given');
@@ -353,8 +354,6 @@ sub start {
 
     $srvargs{'port'} = \@ports;
     $srvargs{'listen'} = $listen_backlog;
-
-    $PROGRAM_NAME = '[authentication_milter:master]';
 
     warn "\nStarting server\n";
     __PACKAGE__->run( %srvargs );
