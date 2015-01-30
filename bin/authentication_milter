@@ -88,7 +88,21 @@ __END__
     "error_log" : "/var/log/authentication_milter.err", | Capture STDERR to logfile
 
     "connection"             : "inet:12345@localhost",  | The connection to use 
-    "umask"                  : "0000",                  | Set umask
+    "umask"                  : "0000",                  | Set umask (for unix socket)
+
+    "connections" : {                                   | Other than the default connection, also bind to
+                                                        | these connections.
+
+        "name_two" : {                                  | Name of connection
+            "connection"   : "unix:/var/sock/a.sock",   | The connection to use 
+            "umask"        : "0000",                    | Set umask
+        }
+        "name_one" : {                                  | Name of connection
+            "connection"   : "inet:12346@localhost",    | The connection to use 
+        }
+    },
+
+
     "runas"                  : "nobody",                | Drop privs and run as this user (root only)
     "rungroup"               : "nogroup",               | Drop privs and run as this group (root daemon only)
     "chroot"                 : "/path/to/chroot"        | Set chroot before forking (root only)
@@ -112,7 +126,30 @@ __END__
         "sock_port"   : "2525",                         | Port to connect to (when inet)
         "sock_path"   : "/var/run/smtp.sock",           | Socket path to connect to (when unix)
         "timeout_in"  : "10",                           | Timeout when waiting for inbound SMTP data
-        "timeout_out" : "10"                            | Timeout when waiting for outbound SMTP data
+        "timeout_out" : "10",                           | Timeout when waiting for outbound SMTP data
+
+        "tcp:12346" : {                                 | Outbound SMTP details can be set per inbound port/socket
+                                                        | This allows outbound SMTP to be routed differently for
+                                                        | different inbound ports. The key is the inbound port specified
+                                                        | as unix:<socket path> or inet:<port>
+                                                        | It is not currently possible to set based on listening host.
+                                                        | If a specific config set is not found them we use the default
+                                                        | set as defined above.
+            "server_name" : "scan.example.com",         | The server name to use for the server
+            "sock_type"   : "inet",                     | Socket type (inet or unix)
+            "sock_host"   : "localhost",                | Host to connect to (when inet)
+            "sock_port"   : "2526",                     | Port to connect to (when inet)
+            "timeout_in"  : "10",                       | Timeout when waiting for inbound SMTP data
+            "timeout_out" : "10"                        | Timeout when waiting for outbound SMTP data
+        },
+        "unix:/var/sock/a.sock" : {
+            "server_name" : "util.example.com",
+            "sock_type"   : "unix",
+            "sock_path"   : "/var/run/smtp.sock",
+            "timeout_in"  : "10",
+            "timeout_out" : "10"
+        }
+
     },
 
                                                         | Timeouts for callbacks, should be slightly lower
