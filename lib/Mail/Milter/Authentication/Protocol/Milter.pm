@@ -153,6 +153,11 @@ sub milter_process_connect {
 
     my ($port, $addr) = unpack('nZ*', $buffer);
 
+    if ( substr( $addr, 0, 5 ) eq 'IPv6:' ) {
+        # Sendmail! you suck!
+        $addr = substr( $addr, 5 );
+    }
+
     if ( ! defined ( $addr ) ) {
         $self->log_error('Unknown IP address format UNDEF');
         $ip = undef;
