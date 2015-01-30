@@ -30,6 +30,25 @@ sub get_smtp_config {
     return $smtp_config;
 }
 
+sub smtp_init {
+    my ( $self ) = @_;    
+
+    return if $self->{'smtp'}->{'init_required'} == 0;
+
+    my $handler = $self->{'handler'}->{'_Handler'};
+    my $smtp = $self->{'smtp'};
+
+    $handler->set_symbol( 'C', 'j', $smtp->{'server_name'} );
+    $handler->set_symbol( 'C', '{rcpt_host}', $smtp->{'server_name'} );
+
+    $smtp->{'queue_id'} = substr( uc md5_hex( "Authentication Milter Client $PID " . time() ) , -11 );
+    $handler->set_symbol( 'C', 'i', $self->smtp_queue_id() );
+    
+    $self->{'smtp'}->{'init_required'} = 0;
+
+    return;
+}
+
 sub protocol_process_request {
     my ( $self ) = @_;
 
@@ -50,6 +69,7 @@ sub protocol_process_request {
         'body'             => q{},
         'using_lmtp'       => 0,
         'lmtp_rcpt'        => [],
+        'init_required'    => 1,
     };
 
     # If we have a UNIX connection then these will be undef,
@@ -74,11 +94,7 @@ sub protocol_process_request {
 
     print $socket "220 " . $smtp->{'server_name'} . " ESMTP AuthenticationMilter\r\n";
 
-    $handler->set_symbol( 'C', 'j', $smtp->{'server_name'} );
-    $handler->set_symbol( 'C', '{rcpt_host}', $smtp->{'server_name'} );
-
-    $smtp->{'queue_id'} = substr( uc md5_hex( "Authentication Milter Client $PID " . time() ) , -11 );
-    $handler->set_symbol( 'C', 'i', $self->smtp_queue_id() );
+    $self->smtp_init();
 
     COMMAND:
     while ( ! $smtp->{'last_command'} ) {
@@ -115,6 +131,7 @@ sub protocol_process_request {
             $self->smtp_command_xforward( $command );
         }
         elsif ( $command =~ /^MAIL FROM:/ ) {
+            $self->smtp_init();
             $self->smtp_command_mailfrom( $command );
         }
         elsif ( $command =~ /^RCPT TO:/ ) {
@@ -215,6 +232,8 @@ sub smtp_command_xforward {
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
 
+    $self->smtp_init();
+
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Out of Order SMTP command: $command" );
         print $socket "503 5.5.2 Out of Order\r\n";
@@ -262,6 +281,10 @@ sub smtp_command_rset {
     $smtp->{'fwd_ident'}        = undef;
     $smtp->{'lmtp_rcpt'}        = [];
     print $socket "250 2.0.0 Ok\r\n";
+    $self->{'handler'}->{'_Handler'}->top_close_callback();
+
+    $smtp->{'init_required'}    = 1;
+    $self->smtp_init();
 }
 
 sub smtp_command_mailfrom {
@@ -477,7 +500,8 @@ sub smtp_command_data {
     $smtp->{'fwd_connect_ip'}   = undef;
     $smtp->{'fwd_helo_host'}    = undef;
     $smtp->{'lmtp_rcpt'}        = [];
-
+    $self->{'handler'}->{'_Handler'}->top_close_callback();
+    $smtp->{'init_required'}    = 1;
     return;
 }
 
