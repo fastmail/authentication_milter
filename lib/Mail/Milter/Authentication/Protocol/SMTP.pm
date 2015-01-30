@@ -15,6 +15,21 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::Milter::Authentication::Constants qw{ :all };
 
+sub get_smtp_config {
+    my ( $self ) = @_;
+    my $client_details = $self->get_client_details();
+    my $smtp_config;
+
+    if ( exists( $self->{'config'}->{'smtp'}->{ $client_details } ) ) {
+        $smtp_config = $self->{'config'}->{'smtp'}->{ $client_details };
+    }
+    else {
+        $smtp_config = $self->{'config'}->{'smtp'};
+    }
+
+    return $smtp_config;
+}
+
 sub protocol_process_request {
     my ( $self ) = @_;
 
@@ -52,9 +67,10 @@ sub protocol_process_request {
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
 
-    $smtp->{'server_name'} = $self->{'config'}->{'smtp'}->{'server_name'} || 'server.example.com';
-    $smtp->{'smtp_timeout_in'}  = $self->{'config'}->{'smtp'}->{'timeout_in'}  || 10;
-    $smtp->{'smtp_timeout_out'} = $self->{'config'}->{'smtp'}->{'timeout_out'} || 10;
+    my $smtp_config = $self->get_smtp_config();
+    $smtp->{'server_name'} = $smtp_config->{'server_name'} || 'server.example.com';
+    $smtp->{'smtp_timeout_in'}  = $smtp_config->{'timeout_in'}  || 10;
+    $smtp->{'smtp_timeout_out'} = $smtp_config->{'timeout_out'} || 10;
 
     print $socket "220 " . $smtp->{'server_name'} . " ESMTP AuthenticationMilter\r\n";
 
@@ -511,7 +527,7 @@ sub smtp_forward_to_destination {
 
     $self->smtp_insert_received_header();
 
-    my $smtp_conf = $self->{'config'}->{'smtp'};
+    my $smtp_conf = $self->get_smtp_config();
 
     my $sock;
     if ( $smtp_conf->{'sock_type'} eq 'inet' ) {

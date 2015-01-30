@@ -117,6 +117,56 @@ sub pre_server_close_hook {
     return;
 }
 
+sub get_client_proto {
+    my ( $self ) = @_;
+    my $socket = $self->{server}{client};
+    if ($socket->isa("Net::Server::Proto")) {
+        my $proto = $socket->NS_proto;
+        $proto = "UNIX" if $proto =~ m/^UNIX/;
+        return $proto;
+    }
+
+    if ($socket->isa("IO::Socket::INET")) {
+        return "TCP";
+    }
+
+    if ($socket->isa("IO::Socket::INET6")) {
+      return "TCP";
+    }
+
+    if ($socket->isa("IO::Socket::UNIX")) {
+        return "UNIX";
+    }
+
+    $self->logerror( "Could not determine connection protocol: " . ref($socket) );
+
+    return;
+}
+
+sub get_client_port {
+    my ( $self ) = @_;
+    my $socket = $self->{server}{client};
+    return $socket->sockport();
+}
+
+sub get_client_path {
+    my ( $self ) = @_;
+    my $socket = $self->{'socket'};
+    return $socket->hostpath();
+}
+
+sub get_client_details {
+    my ( $self ) = @_;
+    my $proto = lc $self->get_client_proto();
+    if ( $proto eq 'tcp' ) {
+        return 'inet:' . $self->get_client_port();
+    }
+    elsif ( $proto eq 'unix' ) {
+        return 'unix:' . $self->get_client_path();
+    }
+    return;
+}
+
 sub process_request {
     my ( $self ) = @_;
 
@@ -165,7 +215,8 @@ sub start {
 
     my $config                 = get_config();
 
-    my $connection             = $config->{'connection'}             || die('No connection details given');
+    my $default_connection     = $config->{'connection'}             || die('No connection details given');
+
     my $pid_file               = $args->{'pid_file'};
 
     my $listen_backlog         = $config->{'listen_backlog'}         || 20;
@@ -238,7 +289,22 @@ sub start {
         warn("Not running as root, could not drop privs - be careful!\n");
     }
 
-    {
+    my $connections = {};
+
+    if ( exists $config->{'connections'} ) {
+        $connections = $config->{'connections'};
+    }
+
+    $connections->{'default'} = {
+        'connection' => $default_connection,
+        'umask'      => $config->{'umask'},
+    };
+
+    my @ports;
+    foreach my $key ( keys %$connections ) {
+        my $connection = $connections->{$key}->{'connection'};
+        my $umask      = $connections->{$key}->{'umask'};
+
         $connection =~ /^([^:]+):([^:@]+)(?:@([^:@]+|\[[0-9a-f:\.]+\]))?$/;
         my $type = $1;
         my $path = $2;
@@ -253,11 +319,12 @@ sub start {
                     "\n",
                 )
             );
-            $srvargs{'host'}   = $host;
-            $srvargs{'port'}   = $path;
-            $srvargs{'ipv'}    = '*';
-            $srvargs{'proto'}  = 'tcp';
-            $srvargs{'listen'} = $listen_backlog;
+            push @ports, {
+                'host'  => $host,
+                'port'  => $path,
+                'ipv'   => '*',
+                'proto' => 'tcp',
+            };
         }
         elsif ( $type eq 'unix' ) {
             warn(
@@ -268,11 +335,11 @@ sub start {
                     "\n",
                 )
             );
-            $srvargs{'port'}   = $path;
-            $srvargs{'proto'}  = 'unix';
-            $srvargs{'listen'} = $listen_backlog;
+            push @ports, {
+                'port'  => $path,
+                'proto' => 'unix',
+            };
 
-            my $umask = $config->{'umask'};
             if ($umask) {
                 umask ( oct( $umask ) );
                 warn( 'setting umask to ' . $umask . "\n" );
@@ -283,6 +350,9 @@ sub start {
             die 'Invalid connection';
         }
     }
+
+    $srvargs{'port'} = \@ports;
+    $srvargs{'listen'} = $listen_backlog;
 
     $PROGRAM_NAME = '[authentication_milter:master]';
 
