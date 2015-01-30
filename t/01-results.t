@@ -11,7 +11,7 @@ if ( ! -e 't/01-results.t' ) {
 
 chdir 't';
 
-plan tests => 15;
+plan tests => 16;
 
 {
     system 'rm -rf tmp';
@@ -94,10 +94,11 @@ sub smtp_process {
 
     sleep 1;
 
-    files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, $args->{'desc'} );
+    files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
 
     return;
 }
+
 sub milter_process {
     my ( $args ) = @_;
 
@@ -125,7 +126,7 @@ sub milter_process {
 
     system( $setlib . ';' . $cmd );
 
-    files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, $args->{'desc'} );
+    files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'milter ' . $args->{'desc'} );
 
     return;
 }
@@ -306,6 +307,21 @@ sub run_smtp_processing {
         'prefix' => 'config/normal.smtp',
         'source' => 'google_apps_good_sanitize.eml',
         'dest'   => 'google_apps_good_sanitize.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    stop_milter();
+    
+    start_milter( 'config/dryrun.smtp' );
+    
+    smtp_process({
+        'desc'   => 'Dry Run Mode',
+        'prefix' => 'config/normal',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_dryrun.smtp.eml',
         'ip'     => '74.125.82.171',
         'name'   => 'mail-we0-f171.google.com',
         'from'   => 'marc@marcbradshaw.net',
