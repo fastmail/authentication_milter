@@ -159,12 +159,12 @@ sub milter_process_connect {
     }
 
     if ( ! defined ( $addr ) ) {
-        $self->log_error('Unknown IP address format UNDEF');
+        $self->logerror('Unknown IP address format UNDEF');
         $ip = undef;
         # Could potentially fail here, connection is likely bad anyway.
     }
     elsif ( length ( $addr ) == 0 ) {
-            $self->log_error('Unknown IP address format NULL');
+            $self->logerror('Unknown IP address format NULL');
             $ip = undef;
             # Could potentially fail here, connection is likely bad anyway.
     }
@@ -173,7 +173,7 @@ sub milter_process_connect {
             $ip = Net::IP->new( $addr );
         };
         if ( my $error = $@ ) {
-            $self->log_error('Unknown IP address format - ' . $addr . ' - ' . $error );
+            $self->logerror('Unknown IP address format - ' . $addr . ' - ' . $error );
             $ip = undef;
             # Could potentially fail here, connection is likely bad anyway.
         }
