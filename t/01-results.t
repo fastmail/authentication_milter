@@ -11,17 +11,54 @@ if ( ! -e 't/01-results.t' ) {
 
 chdir 't';
 
-plan tests => 21;
+plan tests => 22;
 
 {
     system 'rm -rf tmp';
     mkdir 'tmp';
     mkdir 'tmp/result';
 
+    tools_test();
     run_smtp_processing();
     run_milter_processing();
 
 };
+
+sub tools_test {
+
+    my $setlib = 'export PERL5LIB=../lib';
+
+    my $cmd = join( q{ },
+        'bin/smtpcat',
+        '--sock_type unix',
+        '--sock_path tmp/tools_test.sock',
+        '|', 'sed "10,11d"',
+        '>', 'tmp/result/tools_test.eml',
+    );
+    unlink 'tmp/tools_test.sock';
+    system( $setlib . ';' . $cmd . '&' );
+    sleep 2;
+    
+    $cmd = join( q{ },
+        'bin/smtpput',
+        '--sock_type unix',
+        '--sock_path tmp/tools_test.sock',
+        '--mailer_name test.module',
+        '--connect_ip', '123.123.123.123',
+        '--connect_name', 'test.connect.name',
+        '--helo_host', 'test.helo.host',
+        '--mail_from', 'test@mail.from',
+        '--rcpt_to', 'test@rcpt.to',
+        '--mail_file', 'data/source/tools_test.eml',
+    );
+    system( $setlib . ';' . $cmd );
+
+    sleep 1;
+
+    files_eq( 'data/example/tools_test.eml', 'tmp/result/tools_test.eml', 'tools test');
+
+    return;
+}
 
 sub start_milter {
     my ( $prefix ) = @_;
