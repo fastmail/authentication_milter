@@ -443,7 +443,7 @@ sub smtp_command_data {
             DATA:
             while ( my $dataline = <$socket> ) {
                 alarm( 0 );
-                last DATA if $dataline =~  /\.\r\n/;
+                last DATA if $dataline =~  /^\.\r\n/;
                 # Handle transparency
                 if ( $dataline =~ /^\./ ) {
                     $dataline = substr( $dataline, 1 );
