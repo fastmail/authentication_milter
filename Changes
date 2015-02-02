@@ -1,8 +1,14 @@
 Revision history for Mail-Milter-Authentication
 
-0.07    TBC
+0.08    TBC
+
+0.07    2015-02-02
         Fix up some warning output.
         Fixed edge case which caused false DKIM failures.
+        Allow use as an SMTP proxy based after queue filter.
+        More test casese added.
+        Allow listening on multiple ports.
+        Bug Fixes.
 
 0.06    2015-01-13
         First version, released on an unsuspecting world.

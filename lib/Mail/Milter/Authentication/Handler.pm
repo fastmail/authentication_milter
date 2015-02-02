@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Handler;
 use strict;
 use warnings;
-our $VERSION = 0.6;
+our $VERSION = 0.7;
 
 use Email::Address;
 use English qw{ -no_match_vars };

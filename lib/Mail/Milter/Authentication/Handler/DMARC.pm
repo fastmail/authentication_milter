@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::DMARC;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-our $VERSION = 0.6;
+our $VERSION = 0.7;
 
 use Data::Dumper;
 use English qw{ -no_match_vars };
