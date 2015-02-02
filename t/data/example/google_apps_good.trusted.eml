@@ -1,0 +1,39 @@
+Authentication-Results: test.module;
+    dkim=pass (1024-bit rsa key) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3;
+    dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
+    x-trusted-ip=pass
+Return-Path: <marc@marcbradshaw.net>
+Received: by mail-we0-f171.google.com with SMTP id k11so1456187wes.2 for <marc@fastmail.com>; Sat, 24 Jan 2015 19:35:19 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=marcbradshaw.net; s=google; h=mime-version:date:message-id:subject:from:to:content-type; bh=7gvdmshMrcJRxJis+zHrBpu6zyqotJf8vROJvE5OcmA=; b=DU/QdEi3GUUK1jz9pbH4A5UaeGhbPPzrPPTDAbqrn4EABY8kSBqxOVhl8xyIC08Chh 44rMiMlO8RigLW9cBoQybRnKSzviGwP+QuS4xTdVzemM/1Pdat9FteJPsz8MpbHlRrQ7 EpwcaQdYRJRlnrGaQhn9dkPU7xcfN0w+nsabU=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=1e100.net; s=20130820; h=x-gm-message-state:mime-version:date:message-id:subject:from:to :content-type; bh=7gvdmshMrcJRxJis+zHrBpu6zyqotJf8vROJvE5OcmA=; b=aIL04w54Mcpr7cMQUdQrqpI4aUs4gV0Ww5+iyWnf0nMNUlsITzqPY2+5TBL2/l/ob1 nYRBLo+B01xb6HGTx1vATg/O/hrMPqK2pxICsTlIDvMBRpFsSDJbQpu0hQWpJXxF4cuQ 9QRyp3vYB0EWbn8Dxs9gm9V8G+b7nCRVG+X9YGFolXq00PPDRTIIB7adXmwDnHIdPx+u Gb0MegXHP92U3iGZeZsEO1Gq9P6P44tp/v+09h9usq4OhBunjXojilYiB461BoBBYkGx MC7vok22L8D9ssU+z0H6VzSbD/B0tzPuLFQOKmoCVnim22SUpZHzNo05Ui3Bro43J3T0 x9EA==
+X-Gm-Message-State: ALoCoQk+WCmS7pcgC26VeCszzOVzmv40XekPP1BxHJ4oY6p8UbjDcdVNr8WFuchigs3toyPgqHDU
+MIME-Version: 1.0
+X-Received: by 10.194.175.39 with SMTP id bx7mr30495438wjc.22.1422156919049; Sat, 24 Jan 2015 19:35:19 -0800 (PST)
+Received: by 10.217.143.139 with HTTP; Sat, 24 Jan 2015 19:35:19 -0800 (PST)
+Date: Sun, 25 Jan 2015 14:35:19 +1100
+Message-ID: <CAF298RVOajnkzvO0j_DjBwWbCQBwi1a1Z4FAx_tHLFWfA9CJ8w@mail.gmail.com>
+Subject: Authentication Milter Test
+From: Marc Bradshaw <marc@marcbradshaw.net>
+To: marc@fastmail.com
+Content-Type: multipart/alternative; boundary=089e01493adaf9a7a9050d71b56f
+
+--089e01493adaf9a7a9050d71b56f
+Content-Type: text/plain; charset=UTF-8
+
+This is a test email from Google Apps
+
+-- 
+*Marc Bradshaw*
+ http://marcbradshaw.net/
+
+--089e01493adaf9a7a9050d71b56f
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">This is a test email from Google Apps<br clear=3D"all"><di=
+v><br></div>-- <br><div class=3D"gmail_signature"><div dir=3D"ltr"><b>Marc =
+Bradshaw</b><br>=C2=A0<a href=3D"http://marcbradshaw.net/" target=3D"_blank=
+">http://marcbradshaw.net/</a><br></div></div>
+</div>
+
+--089e01493adaf9a7a9050d71b56f--

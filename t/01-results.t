@@ -11,7 +11,7 @@ if ( ! -e 't/01-results.t' ) {
 
 chdir 't';
 
-plan tests => 17;
+plan tests => 21;
 
 {
     system 'rm -rf tmp';
@@ -134,7 +134,30 @@ sub milter_process {
 sub run_milter_processing {
 
     start_milter( 'config/normal' );
-    
+
+    milter_process({
+        'desc'   => 'Good message',
+        'prefix' => 'config/normal',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good.local.eml',
+        'ip'     => '127.0.0.1',
+        'name'   => 'localhost',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    milter_process({
+        'desc'   => 'Good message',
+        'prefix' => 'config/normal',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good.trusted.eml',
+        'ip'     => '59.167.198.153',
+        'name'   => 'mx4.twofiftyeight.ltd.uk',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+
     milter_process({
         'desc'   => 'Good message',
         'prefix' => 'config/normal',
@@ -245,6 +268,27 @@ sub run_smtp_processing {
         'name'   => 'test.example.com',
         'from'   => 'test@example.com',
         'to'     => 'test@example.com',
+    });
+
+    smtp_process({
+        'desc'   => 'Good message',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good.local.smtp.eml',
+        'ip'     => '127.0.0.1',
+        'name'   => 'localhost',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    smtp_process({
+        'desc'   => 'Good message',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good.trusted.smtp.eml',
+        'ip'     => '59.167.198.153',
+        'name'   => 'mx4.twofiftyeight.ltd.uk',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
     });
 
     smtp_process({
