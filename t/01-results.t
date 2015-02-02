@@ -11,7 +11,7 @@ if ( ! -e 't/01-results.t' ) {
 
 chdir 't';
 
-plan tests => 16;
+plan tests => 17;
 
 {
     system 'rm -rf tmp';
@@ -236,6 +236,17 @@ sub run_smtp_processing {
 
     start_milter( 'config/normal.smtp' );
     
+    smtp_process({
+        'desc'   => 'Transparency message',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'transparency.eml',
+        'dest'   => 'transparency.smtp.eml',
+        'ip'     => '1.2.3.4',
+        'name'   => 'test.example.com',
+        'from'   => 'test@example.com',
+        'to'     => 'test@example.com',
+    });
+
     smtp_process({
         'desc'   => 'Good message',
         'prefix' => 'config/normal.smtp',
