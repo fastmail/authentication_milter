@@ -69,7 +69,7 @@ sub new {
     return $self;
 }
 
-sub r {
+sub r { ## no critic [Subroutines::RequireArgUnpacking]
     my $self = shift;
     my @results = @_;
     RESULT:
@@ -107,7 +107,7 @@ sub r {
             warn Dumper $result;
         }
     }
-
+    return;
 }
 
 sub insert_header {
@@ -430,6 +430,8 @@ modified version does the job.
 The full documentation of Net::Milter will follow this paragraph.
 
 =cut
+
+## no critic
 
 package Mail::Milter::Authentication::Net::Milter;
 use strict;

@@ -387,7 +387,7 @@ sub handler_type {
         return $handler_type;
     }
     else {
-        return undef;
+        return undef; ## no critic
     }
 }
 

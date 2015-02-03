@@ -4,6 +4,7 @@ use warnings;
 use base 'Exporter';
 our $VERSION = 0.7;
 
+## no critic [Modules::ProhibitAutomaticExportation]
 
 use constant SMFIA_UNKNOWN      => 'U';
 use constant SMFIA_UNIX         => 'L';

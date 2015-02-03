@@ -285,6 +285,8 @@ sub smtp_command_rset {
 
     $smtp->{'init_required'}    = 1;
     $self->smtp_init();
+
+    return;
 }
 
 sub smtp_command_mailfrom {
@@ -712,6 +714,7 @@ sub change_header {
         }
     }
 
+    return;
 }
 
 sub insert_header {

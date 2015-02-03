@@ -9,6 +9,8 @@ our $VERSION = 0.7;
 
 package Net::DNS::Resolver;
 
+## no critic [Subroutines::RequireArgUnpacking]
+
 {
     my $global_cached_data   = {};
     my $global_cached_errors = {};
@@ -28,7 +30,7 @@ package Net::DNS::Resolver;
     }
 }
 
-sub send {
+sub send { ## no critic
     my ( $self ) = shift;
     my @args = @_;
     return $self->cache_lookup( 'send', @args );

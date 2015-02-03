@@ -360,7 +360,6 @@ sub start {
 
     # Never reaches here.
     die 'Something went horribly wrong';
-    return;
 }
 
 ##### Protocol methods
@@ -369,7 +368,6 @@ sub fatal {
     my ( $self, $error ) = @_;
     $self->logerror( "Child process $PID shutting down due to fatal error: $error" );
     die "$error\n";
-    return;
 }
 
 sub setup_handlers {

@@ -101,6 +101,7 @@ sub _check_address {
     
     $self->add_auth_header($header);
 
+    return;
 }
 
 sub envfrom_callback {
