@@ -747,9 +747,70 @@ Please see Net::Server docs for more detail of the server code.
 
 =over
 
-=item I<protocol_process_command( $command, $buffer )>
+=item I<protocol_process_request( $command, $buffer )>
 
 Process the command from the SMTP protocol stream.
+
+=item I<get_smtp_config()>
+
+Return the SMTP config for the given connection, or
+the default config if no connection specific config
+exists.
+
+=item I<send_smtp_packet( $socket, $send, $expect )>
+
+Send an SMTP command to the protocol stream.
+Expecting a response $expect.
+
+=item I<smtp_command_data( $command )>
+
+Process the SMTP DATA command.
+
+=item I<smtp_command_ehlo( $command )>
+
+Process the SMTP EHLO command.
+
+=item I<smtp_command_helo( $command )>
+
+Process the SMTP HELO command.
+
+=item I<smtp_command_lhlo( $command )>
+
+Process the LMTP LHLO command.
+
+=item I<smtp_command_mailfrom( $command )>
+
+Process the SMTP MAIL FROM command.
+
+=item I<smtp_command_rcptto( $command )>
+
+Process the SMTP RCPT TO command.
+
+=item I<smtp_command_rset( $command )>
+
+Process the SMTP RSET command.
+
+=item I<smtp_command_xforward( $command )>
+
+Process the SMTP XFORWARD command.
+
+=item I<smtp_forward_to_destination()>
+
+Send the received SMTP transaction on to its destination
+with authentication results headers (etc) added.
+
+=item I<smtp_init()>
+
+Initialise transaction data as/when required.
+
+=item I<smtp_insert_received_header()>
+
+Insert a SMTP Received header into the email.
+
+=item I<smtp_queue_id()>
+
+Return a generated Queue ID for the email.
+This can include the received ID from XFORWARD.
 
 =item I<add_header( $header, $value )>
 

@@ -305,6 +305,15 @@ Writa an insert header packet
 
 Write a packet to the protocol stream.
 
+=item I<milter_process_command( $command, $data )>
+
+Process the milter command $command with the data from
+$data.
+
+=item I<protocol_process_request()>
+
+Receive a new command from the protocol stream and process it.
+
 =back
 
 =head1 DEPENDENCIES

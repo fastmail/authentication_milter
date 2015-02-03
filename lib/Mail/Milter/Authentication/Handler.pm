@@ -1054,7 +1054,7 @@ Get the current return code.
 
 Return the current top Handler object.
 
-=item is_handler_loadedi( $name )
+=item is_handler_loaded( $name )
 
 Check if the named handler is loaded.
 

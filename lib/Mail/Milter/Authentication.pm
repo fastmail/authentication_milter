@@ -430,7 +430,6 @@ sub destroy_handler {
     return;
 }
 
-
 sub register_callback {
     my ( $self, $name, $callback ) = @_;
     $self->logdebug( "Register Callback $name:$callback" );
@@ -616,7 +615,7 @@ Setup the $name Handler object
 
 Remove the $name Handler
 
-=item I<resister_callback( $name, $callback )>
+=item I<register_callback( $name, $callback )>
 
 Register the specified callback
 
@@ -643,6 +642,34 @@ Log to the info log.
 =item I<logdebug( $line )>
 
 Log to the debug log.
+
+=item I<child_finish_hook()>
+
+Hook which runs when the child is about to finish.
+
+=item I<get_client_details()>
+
+Get the details of the connecting client.
+
+=item I<get_client_path()>
+
+Get the path of the connecting client.
+
+=item I<get_client_port()>
+
+Get the port of the connecting client.
+
+=item I<get_client_proto()>
+
+Get the protocol of the connecting client.
+
+=item I<pre_loop_hook()>
+
+Hook which runs in the master before looping.
+
+=item I<pre_server_close_hook()>
+
+Hook which runs before the server closes.
 
 =back
 
