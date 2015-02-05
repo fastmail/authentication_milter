@@ -66,6 +66,8 @@ t/data/example/google_apps_good.eml
 t/data/example/google_apps_nodkim_spf_fail.smtp.eml
 t/data/example/google_apps_bad_spf_fail.smtp.eml
 t/data/example/google_apps_good_dryrun.eml
+t/data/example/tools_pipeline_test.eml
+t/data/example/pipelined.smtp.eml
 t/config/normal/authentication_milter.json
 t/config/normal/mail-dmarc.ini
 t/config/dryrun/authentication_milter.json

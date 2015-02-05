@@ -60,7 +60,7 @@ sub protocol_process_request {
         'helo_host'        => q{},
         'mail_from'        => q{},
         'rcpt_to'          => [],
-        'has_connected'    => 0,
+        'has_mail_from'    => 0,
         'has_data'         => 0,
         'connect_ip'       => $self->{'server'}->{'peeraddr'},
         'connect_host'     => $self->{'server'}->{'peeraddr'},
@@ -89,8 +89,8 @@ sub protocol_process_request {
 
     my $smtp_config = $self->get_smtp_config();
     $smtp->{'server_name'} = $smtp_config->{'server_name'} || 'server.example.com';
-    $smtp->{'smtp_timeout_in'}  = $smtp_config->{'timeout_in'}  || 10;
-    $smtp->{'smtp_timeout_out'} = $smtp_config->{'timeout_out'} || 10;
+    $smtp->{'smtp_timeout_in'}  = $smtp_config->{'timeout_in'}  || 60;
+    $smtp->{'smtp_timeout_out'} = $smtp_config->{'timeout_out'} || 60;
 
     print $socket "220 " . $smtp->{'server_name'} . " ESMTP AuthenticationMilter\r\n";
 
@@ -112,7 +112,6 @@ sub protocol_process_request {
         alarm( 0 );
 
         $command =~ s/\r?\n$//;
-
 
         $self->logdebug( "receive command $command" );
 
@@ -153,6 +152,8 @@ sub protocol_process_request {
         }
 
     }
+
+    $self->close_destination_socket();
 
     delete $self->{'smtp'};
     return;
@@ -275,6 +276,7 @@ sub smtp_command_rset {
     $smtp->{'headers'}          = [];
     $smtp->{'body'}             = q{};
     $smtp->{'has_data'}         = 0;
+    $smtp->{'has_mail_from'}    = 0;
     $smtp->{'fwd_connect_host'} = undef;
     $smtp->{'fwd_connect_ip'}   = undef;
     $smtp->{'fwd_helo_host'}    = undef;
@@ -301,43 +303,38 @@ sub smtp_command_mailfrom {
         print $socket "503 5.5.2 Out of Order\r\n";
         return;
     }
+    if ( $smtp->{'has_mail_from'} ) {
+        $self->logerror( "Out of Order SMTP command: $command" );
+        print $socket "503 5.5.1 Nested MAIL Command\r\n";
+        return;
+    }
+
+    $smtp->{'has_mail_from'} = 1;
+
     # Do connect callback here, because of XFORWARD
-    if ( ! $smtp->{'has_connected'} ) {
-        my $host = $smtp->{'fwd_connect_host'} || $smtp->{'connect_host'};
-        my $ip   = $smtp->{'fwd_connect_ip'}   || $smtp->{'connect_ip'};
-        my $helo = $smtp->{'fwd_helo_host'}    || $smtp->{'helo_host'};
-        $returncode = $handler->top_connect_callback( $host, Net::IP->new( $ip ) );
+    my $host = $smtp->{'fwd_connect_host'} || $smtp->{'connect_host'};
+    my $ip   = $smtp->{'fwd_connect_ip'}   || $smtp->{'connect_ip'};
+    my $helo = $smtp->{'fwd_helo_host'}    || $smtp->{'helo_host'};
+    $returncode = $handler->top_connect_callback( $host, Net::IP->new( $ip ) );
+    if ( $returncode == SMFIS_CONTINUE ) {
+        $returncode = $handler->top_helo_callback( $helo );
         if ( $returncode == SMFIS_CONTINUE ) {
-            $returncode = $handler->top_helo_callback( $helo );
+            my $envfrom = substr( $command,10 );
+            $smtp->{'mail_from'} = $envfrom;
+            $returncode = $handler->top_envfrom_callback( $envfrom );
             if ( $returncode == SMFIS_CONTINUE ) {
-                $smtp->{'has_connected'} = 1;
-                my $envfrom = substr( $command,10 );
-                $smtp->{'mail_from'} = $envfrom;
-                $returncode = $handler->top_envfrom_callback( $envfrom );
-                if ( $returncode == SMFIS_CONTINUE ) {
-                    print $socket "250 2.0.0 Ok\r\n";
-                }
-                else {
-                    print $socket "451 4.0.0 That's not right\r\n";
-                }
+                print $socket "250 2.0.0 Ok\r\n";
             }
-            else { 
-                print $socket "451 4.0.0 That's not right\r\n";
+            else {
+                print $socket "451 4.0.0 MAIL - That's not right\r\n";
             }
         }
         else { 
-            print $socket "451 4.0.0 That's not right\r\n";
+            print $socket "451 4.0.0 HELO - That's not right\r\n";
         }
-    } 
+    }
     else { 
-        my $envfrom = substr( $command,10 );
-        $returncode = $handler->top_envfrom_callback( $envfrom );
-        if ( $returncode == SMFIS_CONTINUE ) {
-            print $socket "250 2.0.0 Ok\r\n";
-        }
-        else {
-            print $socket "451 4.0.0 That's not right\r\n";
-        }
+        print $socket "451 4.0.0 Connection - That's not right\r\n";
     }
     
     return;
@@ -555,47 +552,63 @@ sub smtp_forward_to_destination {
 
     my $smtp_conf = $self->get_smtp_config();
 
-    my $sock;
-    if ( $smtp_conf->{'sock_type'} eq 'inet' ) {
-       $sock = IO::Socket::INET->new(
-            'Proto' => 'tcp',
-            'PeerAddr' => $smtp_conf->{'sock_host'},
-            'PeerPort' => $smtp_conf->{'sock_port'},
-        );
-    }
-    elsif ( $smtp_conf->{'sock_type'} eq 'unix' ) {
-    $sock = IO::Socket::UNIX->new(
-            'Peer' => $smtp_conf->{'sock_path'},
-        );
-    }
-    else {
-        $self->logerror( 'Outbound SMTP Socket type unknown or undefined: ' . $smtp_conf->{'sock_type'} );
-        return 0;
-    }
+    my $sock = $smtp->{'destination_sock'};
+
+    my $new_sock = 0;
+
+    my $line;
 
     if ( ! $sock ) {
-        $self->logerror( "Could not open outbound SMTP socket: $!" );
-        return 0;
+        $new_sock = 1;
+
+        if ( $smtp_conf->{'sock_type'} eq 'inet' ) {
+           $sock = IO::Socket::INET->new(
+                'Proto' => 'tcp',
+                'PeerAddr' => $smtp_conf->{'sock_host'},
+                'PeerPort' => $smtp_conf->{'sock_port'},
+            );
+        }
+        elsif ( $smtp_conf->{'sock_type'} eq 'unix' ) {
+        $sock = IO::Socket::UNIX->new(
+                'Peer' => $smtp_conf->{'sock_path'},
+            );
+        }
+        else {
+            $self->logerror( 'Outbound SMTP Socket type unknown or undefined: ' . $smtp_conf->{'sock_type'} );
+            return 0;
+        }
+
+        if ( ! $sock ) {
+            $self->logerror( "Could not open outbound SMTP socket: $!" );
+            return 0;
+        }
+        eval {
+            $line = <$sock>;
+        };
+        if ( my $error = $@ ) {
+            $self->logerror( "Outbound SMTP Read Error: $error" );
+            return 0;
+        }
+        alarm( 0 );
+    
+        if ( ! $line =~ /250/ ) {
+            $self->logerror( "Unexpected SMTP response $line" );
+            return 0;
+        }
+        
+        $smtp->{'destination_sock'} = $sock;
     }
+
 
     local $SIG{'ALRM'} = sub{ die "Timeout\n" };
     alarm( $smtp->{'smtp_timeout_out'} );
-    my $line;
-    eval {
-        $line = <$sock>;
-    };
-    if ( my $error = $@ ) {
-        $self->logerror( "Outbound SMTP Read Error: $error" );
-        return 0;
-    }
-    alarm( 0 );
 
-    if ( ! $line =~ /250/ ) {
-        $self->logerror( "Unexpected SMTP response $line" );
-        return 0;
+    if ( $new_sock ) {
+        $self->send_smtp_packet( $sock, 'EHLO ' .      $smtp->{'server_name'}, '250' ) || return;
     }
-
-    $self->send_smtp_packet( $sock, 'EHLO ' .      $smtp->{'server_name'}, '250' ) || return;
+    else {
+        $self->send_smtp_packet( $sock, 'RSET', '250' ) || return;
+    }
 
     if ( $smtp->{'fwd_helo_host'} ) {
         $self->send_smtp_packet( $sock, 'XFORWARD HELO=' . $smtp->{'fwd_helo_host'}, '250' ) || return;
@@ -634,11 +647,19 @@ sub smtp_forward_to_destination {
     print $sock $email;
     
     $self->send_smtp_packet( $sock, '.',    '250' ) || return;
-    $self->send_smtp_packet( $sock, 'QUIT', '221' ) || return;
-
-    $sock->close();
 
     return 1;
+}
+
+sub close_destination_socket {
+    my ( $self ) = @_;
+    my $smtp = $self->{'smtp'};
+    my $sock = $smtp->{'destination_sock'};
+    return if ! $sock;
+    $self->send_smtp_packet( $sock, 'QUIT', '221' ) || return;
+    $sock->close();
+    delete $smtp->{'destination_sock'};
+    return;
 }
 
 sub send_smtp_packet {
@@ -801,6 +822,10 @@ Process the SMTP XFORWARD command.
 
 Send the received SMTP transaction on to its destination
 with authentication results headers (etc) added.
+
+=item I<close_destination_socket()>
+
+QUIT and close the destination socket if open.
 
 =item I<smtp_init()>
 
