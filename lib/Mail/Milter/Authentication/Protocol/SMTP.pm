@@ -103,13 +103,18 @@ sub protocol_process_request {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         alarm( $smtp->{'smtp_timeout_in'} );
         eval {
-            $command = <$socket> || last COMMAND;
+            $command = <$socket>;
         };
         if ( my $error = $@ ) {
             $self->logerror( "Read Error: $error" );
             last COMMAND;
         }
         alarm( 0 );
+
+        if ( ! $command ) {
+            $self->logdebug( "receive NULL command" );
+            last COMMAND;
+        }
 
         $command =~ s/\r?\n$//;
 
