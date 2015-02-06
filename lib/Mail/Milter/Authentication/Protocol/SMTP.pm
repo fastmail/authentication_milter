@@ -320,6 +320,12 @@ sub smtp_command_mailfrom {
     my $host = $smtp->{'fwd_connect_host'} || $smtp->{'connect_host'};
     my $ip   = $smtp->{'fwd_connect_ip'}   || $smtp->{'connect_ip'};
     my $helo = $smtp->{'fwd_helo_host'}    || $smtp->{'helo_host'};
+    
+    if ( substr( $ip, 0, 5 ) eq 'IPv6:' ) {
+        $ip = substr( $ip, 5 );
+    }
+
+    $self->logdebug( "Inbound IP Address $ip" );
     $returncode = $handler->top_connect_callback( $host, Net::IP->new( $ip ) );
     if ( $returncode == SMFIS_CONTINUE ) {
         $returncode = $handler->top_helo_callback( $helo );

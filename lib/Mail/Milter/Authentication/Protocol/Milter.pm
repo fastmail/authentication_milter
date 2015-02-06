@@ -154,7 +154,6 @@ sub milter_process_connect {
     my ($port, $addr) = unpack('nZ*', $buffer);
 
     if ( substr( $addr, 0, 5 ) eq 'IPv6:' ) {
-        # Sendmail! you suck!
         $addr = substr( $addr, 5 );
     }
 
