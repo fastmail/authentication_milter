@@ -3,6 +3,7 @@
     "debug"                           : 0,
     "dryrun"                          : 0,
     "logtoerr"                        : 0,
+    "error_log"                       : "tmp/milter.err",
     "connection"                      : "unix:tmp/authentication_milter_test.sock",
     "umask"                           : "0000",
     "oldrunas"                        : "nobody",
