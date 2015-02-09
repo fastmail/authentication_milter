@@ -9,6 +9,10 @@ our $VERSION = 0.7;
 
 package Net::DNS::Resolver;
 
+use JSON;
+use Data::Dumper;
+use MIME::Base64;
+
 ## no critic [Subroutines::RequireArgUnpacking]
 
 {
@@ -26,6 +30,7 @@ package Net::DNS::Resolver;
         $self->{'cached_errors_index'} = $global_errors_index;
         $self->{'cache_timeout'}       = $args{'cache_timeout'}     || 120;
         $self->{'cache_error_limit'}   = $args{'cache_error_limit'} || 3;
+        $self->{'static_cache'}        = $args{'static_cache'}      || undef;
         return $self;
     }
 }
@@ -76,10 +81,21 @@ sub cache_lookup {
     my $cached_errors = $self->{'cached_errors'};
     my $cached_data   = $self->{'cached_data'};
     my $cache_timeout = $self->{'cache_timeout'};
+    my $static_cache  = $self->{'static_cache'};
 
     $self->cache_cleanup();
 
     my $return;
+
+    if ( exists ( $static_cache->{$key} ) ) {
+        my $packet = $static_cache->{$key}->[0];
+        my $error  = $static_cache->{$key}->[1];
+        my $data   = decode_base64( $packet );
+        my $return_packet = Net::DNS::Packet->new( \$data );
+        $self->errorstring( $error );
+        return $return_packet;
+    }
+
     if ( exists ( $cached_data->{$key} ) ) {
         my $cached = $cached_data->{$key};
         my $data   = $cached->{'data'};
@@ -87,6 +103,7 @@ sub cache_lookup {
         $self->errorstring( $error );
         return $data;
     }
+
     if ( $type eq 'search' ) {
         $return = $self->SUPER::search(@args);
     }
@@ -101,6 +118,7 @@ sub cache_lookup {
     }
     my $cacheable;
     if ( $return ) { $cacheable = 1; }
+
     if ( $self->errorstring eq 'NOERROR'  ) { $cacheable = 1; }
     if ( $self->errorstring eq 'NXDOMAIN' ) { $cacheable = 1; }
     
@@ -121,6 +139,28 @@ sub cache_lookup {
             'data'  => $return,
             'error' => $self->errorstring,
         };
+
+## This block can be used to generate a static cache entry for
+## entry into the config.
+#        {
+#            my $string = q{};
+#            if ( $return ) {
+#                $string = encode_base64( $return->data(), q{} );
+#            }
+#            my $static_data = join( q{},
+#                '        ',
+#                '"',
+#                $key,
+#                '" : [ "',
+#                $string,
+#                '", "',
+#                $self->errorstring(),
+#                '" ],',
+#                "\n",
+#            );
+#            warn $static_data;
+#        }
+
     }
     else {
         $cached_errors->{ $self->{'cached_errors_index'}++ } = {

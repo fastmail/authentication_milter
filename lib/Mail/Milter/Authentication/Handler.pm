@@ -466,12 +466,14 @@ sub get_object {
             my $cache_timeout     = $config->{'dns_cache_timeout'}     || 240;
             my $cache_error_limit = $config->{'dns_cache_error_limit'} || 3;
             my $dns_retry         = $config->{'dns_retry'}             || 2;
+            my $static_cache      = $config->{'dns_static_cache'};
             $object = Net::DNS::Resolver->new(
                 'udp_timeout'       => $timeout,
                 'tcp_timeout'       => $timeout,
                 'cache_timeout'     => $cache_timeout,
                 'cache_error_limit' => $cache_error_limit,
                 'retry'             => $dns_retry,
+                'static_cache'      => $static_cache,
             );
             $object->udppacketsize(1240);
             $object->persistent_udp(1);

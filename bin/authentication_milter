@@ -163,6 +163,21 @@ __END__
     "dns_retry"             : 2,                        | Number of times a lookup will retry per call
     "dns_cache_error_limit" : 3,                        | Number of errors before we use the cache
 
+                                                        | A static DNS override is proviced for testing, this
+                                                        | should not be used in production unless you know what
+                                                        | you are doing!
+    "dns_static_cache"      : {                         | Array of static encoded DNS reply packets
+                                                        | intended to be used in either a test scenario, or
+                                                        | when there are frequent known lookups which do not change.
+        "query:search.example.com:AAAA" : [             | Cached results for lookup_type:search_string:rr_type
+            "encoded reply packet",                     | Base 64 Encoded raw reply packet from Net::DNS
+            "error string"                              | Error string
+        ],
+        "search:foo.bar.com:MX" : [
+            "encoded reply packet", "error string"
+        ]
+    },
+
     "tempfail_on_error"               : "1",            | Tempfail on errors
     "tempfail_on_error_authenticated" : "0",            | Tempfail on errors for Authenticated IP Connections
     "tempfail_on_error_local"         : "0",            | Tempfail on errors for Local IP Connections
