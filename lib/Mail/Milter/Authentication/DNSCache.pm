@@ -87,21 +87,29 @@ sub cache_lookup {
 
     my $return;
 
-    if ( exists ( $static_cache->{$key} ) ) {
-        my $packet = $static_cache->{$key}->[0];
-        my $error  = $static_cache->{$key}->[1];
-        my $data   = decode_base64( $packet );
-        my $return_packet = Net::DNS::Packet->new( \$data );
-        $self->errorstring( $error );
-        return $return_packet;
-    }
-
     if ( exists ( $cached_data->{$key} ) ) {
         my $cached = $cached_data->{$key};
         my $data   = $cached->{'data'};
         my $error  = $cached->{'error'};
         $self->errorstring( $error );
         return $data;
+    }
+
+    if ( exists ( $static_cache->{$key} ) ) {
+        my $packet = $static_cache->{$key}->[0];
+        my $error  = $static_cache->{$key}->[1];
+        my $data   = decode_base64( $packet );
+        my $return_packet = Net::DNS::Packet->new( \$data );
+        $self->errorstring( $error );
+
+        # Cache the object.
+        $cached_data->{$key} = {
+            'stamp' => time + 31536000,
+            'data'  => $return_packet,
+            'error' => $error,
+        };
+
+        return $return_packet;
     }
 
     if ( $type eq 'search' ) {
