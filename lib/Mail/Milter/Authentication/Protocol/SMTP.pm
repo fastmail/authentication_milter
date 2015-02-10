@@ -70,6 +70,7 @@ sub protocol_process_request {
         'using_lmtp'       => 0,
         'lmtp_rcpt'        => [],
         'init_required'    => 1,
+        'error'            => q{},
     };
 
     # If we have a UNIX connection then these will be undef,
@@ -287,6 +288,7 @@ sub smtp_command_rset {
     $smtp->{'fwd_helo_host'}    = undef;
     $smtp->{'fwd_ident'}        = undef;
     $smtp->{'lmtp_rcpt'}        = [];
+    $smtp->{'error'}            = q{};
     print $socket "250 2.0.0 Ok\r\n";
     $self->{'handler'}->{'_Handler'}->top_close_callback();
 
@@ -494,7 +496,19 @@ sub smtp_command_data {
         }
         else {
             $self->logerror( "SMTP Mail Rejected" );
-            print $socket "451 4.0.0 That's not right\r\n";
+            my $error =  '451 4.0.0 That\'s not right';
+            my $upstream_error = $smtp->{'error'};
+            if ( $upstream_error =~ /^451 / ) {
+                $error = $upstream_error;
+            }
+            elsif ( $upstream_error =~ /^554 / ) {
+                # Also pass back rejects
+                $error = $upstream_error;
+            }
+            else {
+                $error .= ': ' . $upstream_error;
+            }
+            print $socket "$error\r\n";
         }
     }
     else { 
@@ -511,6 +525,7 @@ sub smtp_command_data {
     $smtp->{'fwd_connect_ip'}   = undef;
     $smtp->{'fwd_helo_host'}    = undef;
     $smtp->{'lmtp_rcpt'}        = [];
+    $smtp->{'error'}            = q{};
     $self->{'handler'}->{'_Handler'}->top_close_callback();
     $smtp->{'init_required'}    = 1;
     return;
@@ -688,6 +703,7 @@ sub send_smtp_packet {
     };
     if ( my $error = $@ ) {
         $self->logerror( "Outbound SMTP Read Error: $error" );
+        $smtp->{'error'} = $error;
         return 0;
     }
     alarm( 0 );
@@ -697,10 +713,12 @@ sub send_smtp_packet {
     }
 
     if ( $recv =~ /^$expect/ ) {
+        $smtp->{'error'} = q{};
         return 1;
     }
     else {
         $self->logerror( "SMTP Send expected $expect received $recv when sending $send" );
+        $smtp->{'error'} = $recv;
         return 0;
     }
 }
