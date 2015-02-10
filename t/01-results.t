@@ -17,7 +17,7 @@ sub set_lib {
     return 'export PERL5LIB=' . $base_dir . '/lib';
 }
 
-plan tests => 24;
+plan tests => 25;
 
 {
     system 'rm -rf tmp';
@@ -432,6 +432,17 @@ sub run_smtp_processing {
         'name'   => 'test.example.com',
         'from'   => 'test@example.com',
         'to'     => 'test@example.com',
+    });
+    
+    smtp_process({
+        'desc'   => '8BITMIME message',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good.8bit.smtp.eml',
+        'ip'     => '127.0.0.1',
+        'name'   => 'localhost',
+        'from'   => '"<marc@marcbradshaw.net> BODY=8BITMIME"',
+        'to'     => 'marc@fastmail.com',
     });
 
     smtp_process({

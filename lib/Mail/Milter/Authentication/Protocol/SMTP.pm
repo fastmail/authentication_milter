@@ -332,6 +332,7 @@ sub smtp_command_mailfrom {
         if ( $returncode == SMFIS_CONTINUE ) {
             my $envfrom = substr( $command,10 );
             $smtp->{'mail_from'} = $envfrom;
+            $envfrom =~ s/ BODY=8BITMIME$//;
             $returncode = $handler->top_envfrom_callback( $envfrom );
             if ( $returncode == SMFIS_CONTINUE ) {
                 print $socket "250 2.0.0 Ok\r\n";
