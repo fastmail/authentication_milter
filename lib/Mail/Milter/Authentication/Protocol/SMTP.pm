@@ -41,10 +41,13 @@ sub smtp_init {
     $handler->set_symbol( 'C', 'j', $smtp->{'server_name'} );
     $handler->set_symbol( 'C', '{rcpt_host}', $smtp->{'server_name'} );
 
-    $smtp->{'queue_id'} = substr( uc md5_hex( "Authentication Milter Client $PID " . time() ) , -11 );
+    $smtp->{'queue_id'} = substr( uc md5_hex( "Authentication Milter Client $PID " . time() . rand(100) ) , -11 );
     $handler->set_symbol( 'C', 'i', $self->smtp_queue_id() );
-    
-    $self->{'smtp'}->{'init_required'} = 0;
+   
+    $smtp->{'count'}++ ;
+    $handler->dbgout( 'SMTP Transaction count', $smtp->{'count'} , LOG_INFO );
+
+    $smtp->{'init_required'} = 0;
 
     return;
 }
@@ -71,6 +74,7 @@ sub protocol_process_request {
         'lmtp_rcpt'        => [],
         'init_required'    => 1,
         'string'           => q{},
+        'count'            => 0,
     };
 
     # If we have a UNIX connection then these will be undef,
