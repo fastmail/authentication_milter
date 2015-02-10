@@ -70,7 +70,7 @@ sub protocol_process_request {
         'using_lmtp'       => 0,
         'lmtp_rcpt'        => [],
         'init_required'    => 1,
-        'error'            => q{},
+        'string'           => q{},
     };
 
     # If we have a UNIX connection then these will be undef,
@@ -288,7 +288,7 @@ sub smtp_command_rset {
     $smtp->{'fwd_helo_host'}    = undef;
     $smtp->{'fwd_ident'}        = undef;
     $smtp->{'lmtp_rcpt'}        = [];
-    $smtp->{'error'}            = q{};
+    $smtp->{'string'}           = q{};
     print $socket "250 2.0.0 Ok\r\n";
     $self->{'handler'}->{'_Handler'}->top_close_callback();
 
@@ -485,6 +485,9 @@ sub smtp_command_data {
         $smtp->{'body'} = $body;
 
         if ( $self->smtp_forward_to_destination() ) {
+
+            $handler->dbgout( 'Accept string', $smtp->{'string'}, LOG_INFO );
+
             if ( $smtp->{'using_lmtp'} ) {
                 foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
                     print $socket "250 2.0.0 Queued as " . $self->smtp_queue_id() . "\r\n";
@@ -497,7 +500,7 @@ sub smtp_command_data {
         else {
             $self->logerror( "SMTP Mail Rejected" );
             my $error =  '451 4.0.0 That\'s not right';
-            my $upstream_error = $smtp->{'error'};
+            my $upstream_error = $smtp->{'string'};
             if ( $upstream_error =~ /^451 / ) {
                 $error = $upstream_error;
             }
@@ -525,7 +528,7 @@ sub smtp_command_data {
     $smtp->{'fwd_connect_ip'}   = undef;
     $smtp->{'fwd_helo_host'}    = undef;
     $smtp->{'lmtp_rcpt'}        = [];
-    $smtp->{'error'}            = q{};
+    $smtp->{'string'}           = q{};
     $self->{'handler'}->{'_Handler'}->top_close_callback();
     $smtp->{'init_required'}    = 1;
     return;
@@ -703,7 +706,7 @@ sub send_smtp_packet {
     };
     if ( my $error = $@ ) {
         $self->logerror( "Outbound SMTP Read Error: $error" );
-        $smtp->{'error'} = $error;
+        $smtp->{'string'} = $error;
         return 0;
     }
     alarm( 0 );
@@ -712,13 +715,15 @@ sub send_smtp_packet {
         $recv = <$socket>;
     }
 
+    $smtp->{'string'} = $recv;
+    $smtp->{'string'} =~ s/\r//g;
+    $smtp->{'string'} =~ s/\n//g;
+
     if ( $recv =~ /^$expect/ ) {
-        $smtp->{'error'} = q{};
         return 1;
     }
     else {
         $self->logerror( "SMTP Send expected $expect received $recv when sending $send" );
-        $smtp->{'error'} = $recv;
         return 0;
     }
 }
