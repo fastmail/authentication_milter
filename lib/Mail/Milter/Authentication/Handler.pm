@@ -467,6 +467,7 @@ sub get_object {
             my $cache_error_limit = $config->{'dns_cache_error_limit'} || 3;
             my $dns_retry         = $config->{'dns_retry'}             || 2;
             my $static_cache      = $config->{'dns_static_cache'};
+            my $resolvers         = $config->{'dns_resolvers'}         || [];
             $object = Net::DNS::Resolver->new(
                 'udp_timeout'       => $timeout,
                 'tcp_timeout'       => $timeout,
@@ -474,6 +475,7 @@ sub get_object {
                 'cache_error_limit' => $cache_error_limit,
                 'retry'             => $dns_retry,
                 'static_cache'      => $static_cache,
+                'nameservers'       => @$resolvers
             );
             $object->udppacketsize(1240);
             $object->persistent_udp(1);

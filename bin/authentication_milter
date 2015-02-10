@@ -157,7 +157,12 @@ __END__
                                                         | Timeouts are ignored if missing.
     "connect_timeout"       : 30,                       | Timeout for Connect callbacks
     "command_timeout"       : 30,                       | Timeout for Helo,Mail,Rcpt,Data and Unknown callbacks
-    "content_timeout"       : 300,                      | Timeout for Header,Eoh, Body and Eom callbacks
+    "content_timeout"       : 300,                      | Timeout for Header,Eoh, Body and Eom callbacksa
+
+    "dns_resolvers"         : [                         | Explicit list of DNS resolvers to use
+        "8.8.8.8",
+        "127.0.0.1"
+    ],
     "dns_timeout"           : 10,                       | Timeout for DNS lookups
     "dns_cache_timeout"     : 240,                      | Timeout for cached DNS lookups
     "dns_retry"             : 2,                        | Number of times a lookup will retry per call
