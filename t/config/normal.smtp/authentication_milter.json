@@ -29,6 +29,7 @@
     "max_spare_children"     : 1,
     "max_requests_per_child" : 1000,
 
+    "dns_resolvers" : [ "127.0.0.1" ],
     "dns_static_cache" : {
         "query:123.123.123.123:PTR" : [ "", "NXDOMAIN" ],
         "query:1.2.3.4:PTR" : [ "", "NXDOMAIN" ],

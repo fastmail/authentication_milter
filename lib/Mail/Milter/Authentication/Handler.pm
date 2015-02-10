@@ -475,7 +475,7 @@ sub get_object {
                 'cache_error_limit' => $cache_error_limit,
                 'retry'             => $dns_retry,
                 'static_cache'      => $static_cache,
-                'nameservers'       => @$resolvers
+                'nameservers'       => $resolvers
             );
             $object->udppacketsize(1240);
             $object->persistent_udp(1);
