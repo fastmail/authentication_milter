@@ -55,6 +55,7 @@ sub search {
 
 sub cache_cleanup {
     my ($self) = @_;
+    return if $self->{'cache_timeout'} == 0;
     my $cached_data   = $self->{'cached_data'};
     my $cached_errors = $self->{'cached_errors'};
     my $cache_timeout = $self->{'cache_timeout'};
@@ -103,11 +104,13 @@ sub cache_lookup {
         $self->errorstring( $error );
 
         # Cache the object.
-        $cached_data->{$key} = {
-            'stamp' => time + 31536000,
-            'data'  => $return_packet,
-            'error' => $error,
-        };
+        if ( $self->{'cache_timeout'} != 0 ) {
+            $cached_data->{$key} = {
+                'stamp' => time + 31536000,
+                'data'  => $return_packet,
+                'error' => $error,
+            };
+        }
 
         return $return_packet;
     }
@@ -129,55 +132,60 @@ sub cache_lookup {
 
     if ( $self->errorstring eq 'NOERROR'  ) { $cacheable = 1; }
     if ( $self->errorstring eq 'NXDOMAIN' ) { $cacheable = 1; }
-    
-    if ( ! $cacheable ) {
-        my $errors_found = 0;
-        foreach my $item ( keys %{$cached_errors} ) {
-            my $cached = $cached_errors->{$item};
-            if ( $cached->{'key'} eq $key ) {
-                $errors_found++;
-            }
-        }
-        $cacheable = 1 if $errors_found > $self->{'cache_error_limit'};
-    }
 
-    if ( $cacheable ) {
-        $cached_data->{$key} = {
-            'stamp' => time,
-            'data'  => $return,
-            'error' => $self->errorstring,
-        };
+    if ( $self->{'cache_timeout'} != 0 ) {
+
+        if ( ! $cacheable ) {
+            my $errors_found = 0;
+            foreach my $item ( keys %{$cached_errors} ) {
+                my $cached = $cached_errors->{$item};
+                if ( $cached->{'key'} eq $key ) {
+                    $errors_found++;
+                }
+            }
+            $cacheable = 1 if $errors_found > $self->{'cache_error_limit'};
+        }
+    
+        if ( $cacheable ) {
+            $cached_data->{$key} = {
+                'stamp' => time,
+                'data'  => $return,
+                'error' => $self->errorstring,
+            };
 
 ## This block can be used to generate a static cache entry for
 ## entry into the config.
-#        {
-#            my $string = q{};
-#            if ( $return ) {
-#                $string = encode_base64( $return->data(), q{} );
+#            {
+#                my $string = q{};
+#                if ( $return ) {
+#                    $string = encode_base64( $return->data(), q{} );
+#                }
+#                my $static_data = join( q{},
+#                    '        ',
+#                    '"',
+#                    $key,
+#                    '" : [ "',
+#                    $string,
+#                    '", "',
+#                    $self->errorstring(),
+#                    '" ],',
+#                    "\n",
+#                );
+#                warn $static_data;
 #            }
-#            my $static_data = join( q{},
-#                '        ',
-#                '"',
-#                $key,
-#                '" : [ "',
-#                $string,
-#                '", "',
-#                $self->errorstring(),
-#                '" ],',
-#                "\n",
-#            );
-#            warn $static_data;
-#        }
+
+        }
+        else {
+            $cached_errors->{ $self->{'cached_errors_index'}++ } = {
+                'key'   => $key,
+                'stamp' => time,
+                'data'  => $return,
+                'error' => $self->errorstring,
+            };
+        }
 
     }
-    else {
-        $cached_errors->{ $self->{'cached_errors_index'}++ } = {
-            'key'   => $key,
-            'stamp' => time,
-            'data'  => $return,
-            'error' => $self->errorstring,
-        };
-    }
+
     return $return;
 }
 

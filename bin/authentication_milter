@@ -164,7 +164,7 @@ __END__
         "127.0.0.1"
     ],
     "dns_timeout"           : 10,                       | Timeout for DNS lookups
-    "dns_cache_timeout"     : 240,                      | Timeout for cached DNS lookups
+    "dns_cache_timeout"     : 240,                      | Timeout for cached DNS lookups - 0 to disable cache
     "dns_retry"             : 2,                        | Number of times a lookup will retry per call
     "dns_cache_error_limit" : 3,                        | Number of errors before we use the cache
 
