@@ -17,7 +17,7 @@ sub set_lib {
     return 'export PERL5LIB=' . $base_dir . '/lib';
 }
 
-plan tests => 25;
+plan tests => 26;
 
 {
     system 'rm -rf tmp';
@@ -205,11 +205,14 @@ sub smtp_process_multi {
     # If you change the source email then change the awk
     # numbers here too.
     # This could be better!
+    my $sed_filter = $args->{'sed_filter'};
     my $cmd = join( q{ },
         'bin/smtpcat',
         '--sock_type unix',
         '--sock_path tmp/authentication_milter_smtp_out.sock',
-        '|', 'sed "10,11d;45,46d;97,98d"',
+        '|', 'sed "',
+        $sed_filter,
+        '"',
         '>', 'tmp/result/' . $args->{'dest'},
     );
     unlink 'tmp/authentication_milter_smtp_out.sock';
@@ -289,7 +292,7 @@ sub run_milter_processing {
     start_milter( 'config/normal' );
 
     milter_process({
-        'desc'   => 'Good message',
+        'desc'   => 'Good message local',
         'prefix' => 'config/normal',
         'source' => 'google_apps_good.eml',
         'dest'   => 'google_apps_good.local.eml',
@@ -300,7 +303,7 @@ sub run_milter_processing {
     });
 
     milter_process({
-        'desc'   => 'Good message',
+        'desc'   => 'Good message trusted',
         'prefix' => 'config/normal',
         'source' => 'google_apps_good.eml',
         'dest'   => 'google_apps_good.trusted.eml',
@@ -413,14 +416,27 @@ sub run_smtp_processing {
     start_milter( 'config/normal.smtp' );
 
     smtp_process_multi({
-        'desc'   => 'Pipelined messages',
-        'prefix' => 'config/normal.smtp',
-        'source' => [ 'transparency.eml', 'google_apps_good.eml','google_apps_bad.eml', ],
-        'dest'   => 'pipelined.smtp.eml',
-        'ip'     => [ '1.2.3.4', '127.0.0.1', '123.123.123.123', ],
-        'name'   => [ 'test.example.com', 'localhost', 'bad.name.google.com', ],
-        'from'   => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
-        'to'     => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
+        'desc'       => 'Pipelined messages',
+        'prefix'     => 'config/normal.smtp',
+        'source'     => [ 'transparency.eml', 'google_apps_good.eml','google_apps_bad.eml', ],
+        'dest'       => 'pipelined.smtp.eml',
+        'ip'         => [ '1.2.3.4', '127.0.0.1', '123.123.123.123', ],
+        'name'       => [ 'test.example.com', 'localhost', 'bad.name.google.com', ],
+        'from'       => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
+        'to'         => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
+        'sed_filter' => "10,11d;45,46d;97,98d",
+    });
+
+    smtp_process_multi({
+        'desc'       => 'Pipelined messages limit',
+        'prefix'     => 'config/normal.smtp',
+        'source'     => [ 'transparency.eml', 'google_apps_good.eml', 'google_apps_bad.eml', 'transparency.eml', 'google_apps_good.eml','google_apps_bad.eml', ],
+        'dest'       => 'pipelined.limit.smtp.eml',
+        'ip'         => [ '1.2.3.4', '127.0.0.1', '123.123.123.123', '1.2.3.4', '127.0.0.1', '123.123.123.123', ],
+        'name'       => [ 'test.example.com', 'localhost', 'bad.name.google.com', 'test.example.com', 'localhost', 'bad.name.google.com', ],
+        'from'       => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
+        'to'         => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
+        'sed_filter' => "10,11d;45,46d;97,98d;154,155d",
     });
 
     smtp_process({
@@ -446,7 +462,7 @@ sub run_smtp_processing {
     });
 
     smtp_process({
-        'desc'   => 'Good message',
+        'desc'   => 'Good message local',
         'prefix' => 'config/normal.smtp',
         'source' => 'google_apps_good.eml',
         'dest'   => 'google_apps_good.local.smtp.eml',
@@ -456,7 +472,7 @@ sub run_smtp_processing {
         'to'     => 'marc@fastmail.com',
     });
     smtp_process({
-        'desc'   => 'Good message',
+        'desc'   => 'Good message trusted',
         'prefix' => 'config/normal.smtp',
         'source' => 'google_apps_good.eml',
         'dest'   => 'google_apps_good.trusted.smtp.eml',

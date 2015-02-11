@@ -120,13 +120,14 @@ __END__
 
 
     "smtp" : {                                          | Parameters for use when protocol is smtp
-        "server_name" : "scan.example.com",             | The server name to use for the server
-        "sock_type"   : "inet",                         | Socket type (inet or unix)
-        "sock_host"   : "localhost",                    | Host to connect to (when inet)
-        "sock_port"   : "2525",                         | Port to connect to (when inet)
-        "sock_path"   : "/var/run/smtp.sock",           | Socket path to connect to (when unix)
-        "timeout_in"  : "10",                           | Timeout when waiting for inbound SMTP data
-        "timeout_out" : "10",                           | Timeout when waiting for outbound SMTP data
+        "server_name"    : "scan.example.com",          | The server name to use for the server
+        "sock_type"      : "inet",                      | Socket type (inet or unix)
+        "sock_host"      : "localhost",                 | Host to connect to (when inet)
+        "sock_port"      : "2525",                      | Port to connect to (when inet)
+        "sock_path"      : "/var/run/smtp.sock",        | Socket path to connect to (when unix)
+        "timeout_in"     : "10",                        | Timeout when waiting for inbound SMTP data
+        "timeout_out"    : "10",                        | Timeout when waiting for outbound SMTP data
+        "pipeline_limit" : "50",                        | Limit the number of transactions accepted in an SMTP pipeline
 
         "tcp:12346" : {                                 | Outbound SMTP details can be set per inbound port/socket
                                                         | This allows outbound SMTP to be routed differently for

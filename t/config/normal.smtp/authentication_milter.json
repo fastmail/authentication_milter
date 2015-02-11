@@ -19,7 +19,8 @@
     "protocol" : "smtp",
     "smtp" : {
         "sock_type" : "unix",
-        "sock_path" : "tmp/authentication_milter_smtp_out.sock"
+        "sock_path" : "tmp/authentication_milter_smtp_out.sock",
+        "pipeline_limit" : "4"
     },
 
     "listen_backlog"         : 1,
