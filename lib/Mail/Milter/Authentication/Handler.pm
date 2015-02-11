@@ -351,6 +351,11 @@ sub top_close_callback {
 sub status {
     my ($self, $status) = @_;
     my $count = $self->{'thischild'}->{'count'};
+    if ( exists ( $self->{'thischild'}->{'smtp'} ) ) {
+        if ( $self->{'thischild'}->{'smtp'}->{'count'} ) {
+            $count .= '.' . $self->{'thischild'}->{'smtp'}->{'count'};
+        }
+    }
     if ( $status ) {
         $PROGRAM_NAME = '[authentication_milter:processing:' . $status . '(' . $count . ')]';
     }
