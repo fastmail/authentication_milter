@@ -298,7 +298,6 @@ sub smtp_command_rset {
     $smtp->{'init_required'}    = 1;
     $self->smtp_init();
 
-
     my $smtp_conf = $self->get_smtp_config();
     my $handler = $self->{'handler'}->{'_Handler'};
         if ( $smtp_conf->{'pipeline_limit'} ) {
