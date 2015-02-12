@@ -525,6 +525,10 @@ sub smtp_command_data {
                 # Also pass back rejects
                 $error = $upstream_error;
             }
+            elsif ( $upstream_error =~ /^501 / ) {
+                # Also pass back rejects
+                $error = $upstream_error;
+            }
             else {
                 $error .= ': ' . $upstream_error;
             }
