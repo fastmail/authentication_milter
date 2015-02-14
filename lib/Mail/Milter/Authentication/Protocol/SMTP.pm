@@ -449,7 +449,7 @@ sub smtp_command_data {
             $value .= "\r\n" . $header_line;
         }
         else {
-            if ( $value ne q{} ) {
+            if ( $value ) {
                 push @{ $smtp->{'headers'} } , $value;
                 my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
                 $hvalue =~ s/^ //;
@@ -461,7 +461,7 @@ sub smtp_command_data {
             $value = $header_line;
         }
     }
-    if ( $value ne q{} ) {
+    if ( $value ) {
         push @{ $smtp->{'headers'} } , $value;
         my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
         $hvalue =~ s/^ //;
