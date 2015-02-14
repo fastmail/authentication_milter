@@ -44,6 +44,7 @@ t/data/source/tools_test.eml
 t/data/source/google_apps_bad.eml
 t/data/source/google_apps_nodkim.eml
 t/data/source/google_apps_good.eml
+t/data/source/google_apps_headers.eml,
 t/data/example/google_apps_good.local.eml
 t/data/example/google_apps_good.trusted.smtp.eml
 t/data/example/google_apps_nodkim_spf_fail.eml
@@ -70,6 +71,7 @@ t/data/example/tools_pipeline_test.eml
 t/data/example/pipelined.limit.smtp.eml
 t/data/example/pipelined.smtp.eml
 t/data/example/google_apps_good.8bit.smtp.eml
+t/data/example/google_apps_headers.smtp.eml,
 t/config/normal/authentication_milter.json
 t/config/normal/mail-dmarc.ini
 t/config/dryrun/authentication_milter.json
