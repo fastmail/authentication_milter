@@ -126,32 +126,32 @@ sub protocol_process_request {
 
         my $returncode = SMFIS_CONTINUE;
 
-        if ( $command =~ /^EHLO/ ) {
+        if ( uc $command =~ /^EHLO/ ) {
             $self->smtp_command_ehlo( $command );
         }
-        elsif ( $command =~ /^LHLO/ ) {
+        elsif ( uc $command =~ /^LHLO/ ) {
             $self->smtp_command_lhlo( $command );
         }
-        elsif ( $command =~ /^HELO/ ) {
+        elsif ( uc $command =~ /^HELO/ ) {
             $self->smtp_command_helo( $command );
         }
-        elsif ( $command =~ /^XFORWARD/ ) {
+        elsif ( uc $command =~ /^XFORWARD/ ) {
             $self->smtp_command_xforward( $command );
         }
-        elsif ( $command =~ /^MAIL FROM:/ ) {
+        elsif ( uc $command =~ /^MAIL FROM:/ ) {
             $self->smtp_init();
             $self->smtp_command_mailfrom( $command );
         }
-        elsif ( $command =~ /^RCPT TO:/ ) {
+        elsif ( uc $command =~ /^RCPT TO:/ ) {
             $self->smtp_command_rcptto( $command );
         }
-        elsif ( $command =~ /^RSET/ ) {
+        elsif ( uc $command =~ /^RSET/ ) {
             $self->smtp_command_rset( $command );
         }
-        elsif ( $command =~ /^DATA/ ) {
+        elsif ( uc $command =~ /^DATA/ ) {
             $self->smtp_command_data( $command );
         }
-        elsif ( $command =~ /^QUIT/ ){
+        elsif ( uc $command =~ /^QUIT/ ){
             print $socket "221 2.0.0 Bye\n";
             last COMMAND;
         }
@@ -172,7 +172,7 @@ sub smtp_queue_id {
     my ( $self ) = @_;
     my $smtp = $self->{'smtp'};
     my $queue_id = $smtp->{'queue_id'};
-    if ( $smtp->{'fwd_ident'} ) {
+    if ( $smtp->{'fwd_ident'} && $smtp->{'fwd_ident'} ne '[UNAVAILABLE]' ) {
         $queue_id .= '.' . $smtp->{'fwd_ident'};
     }
     return $queue_id;
