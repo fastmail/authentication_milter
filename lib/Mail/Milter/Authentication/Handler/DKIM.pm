@@ -351,6 +351,7 @@ sub _check_error {
     elsif ( $error =~ /^no domain to fetch policy for$/
             or $error =~ /^policy syntax error$/
             or $error =~ /^empty domain label/
+            or $error =~ /^invalid name /
     ){
         $self->log_error( 'Perm DKIM Error - ' . $error );
         $self->add_auth_header('dkim=permerror (' . $error . ')');
