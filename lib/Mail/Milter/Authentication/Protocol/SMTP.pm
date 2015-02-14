@@ -5,6 +5,7 @@ our $VERSION = 0.7;
 
 use English qw{ -no_match_vars };
 use Email::Date::Format qw{ email_date };
+use Email::Simple;
 use IO::Socket;
 use IO::Socket::INET;
 use IO::Socket::UNIX;
@@ -401,10 +402,10 @@ sub smtp_command_data {
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
 
+    my $headers = q{};
     my $body    = q{};
     my $done    = 0;
     my $fail    = 0;
-    my @header_split;
     my $returncode;
 
     if ( $smtp->{'has_data'} ) {
@@ -433,7 +434,7 @@ sub smtp_command_data {
             if ( $dataline eq q{} ) {
                 last HEADERS;
             }
-            push @header_split, $dataline;
+            $headers .= $dataline . "\r\n";
         }
     };
     if ( my $error = $@ ) {
@@ -443,33 +444,24 @@ sub smtp_command_data {
     }
     alarm( 0 );
 
-    my $value = q{};
-    foreach my $header_line ( @header_split ) {
-        if ( $header_line =~ /^ / ) {
-            $value .= "\r\n" . $header_line;
-        }
-        else {
-            if ( $value ) {
-                push @{ $smtp->{'headers'} } , $value;
-                my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
-                $hvalue =~ s/^ //;
-                my $returncode = $handler->top_header_callback( $hkey, $hvalue );
-                if ( $returncode != SMFIS_CONTINUE ) {
-                    $fail = 1;
-                }
+    {
+        my $message_object = Email::Simple->new( $headers );
+        my $header_object = $message_object->header_obj();
+        my @header_pairs = $header_object->header_pairs();
+        while ( @header_pairs ) {
+            my $key   = shift @header_pairs;
+            my $value = shift @header_pairs;
+            push @{ $smtp->{'headers'} } , {
+                'key'   => $key,
+                'value' => $value,
+            };
+            my $returncode = $handler->top_header_callback( $key, $value );
+            if ( $returncode != SMFIS_CONTINUE ) {
+                $fail = 1;
             }
-            $value = $header_line;
         }
     }
-    if ( $value ) {
-        push @{ $smtp->{'headers'} } , $value;
-        my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
-        $hvalue =~ s/^ //;
-        my $returncode = $handler->top_header_callback( $hkey, $hvalue );
-        if ( $returncode != SMFIS_CONTINUE ) {
-            $fail = 1;
-        }
-    }
+
     $returncode = $handler->top_eoh_callback();
     if ( $returncode != SMFIS_CONTINUE ) {
         $fail = 1;
@@ -595,7 +587,10 @@ sub smtp_insert_received_header {
 
     );
 
-    splice @{ $smtp->{'headers'} }, 0, 0, 'Received: '. $value;
+    splice @{ $smtp->{'headers'} }, 0, 0, {
+        'key'   => 'Received',
+        'value' => $value,
+    };
     return;
 }
 
@@ -687,7 +682,9 @@ sub smtp_forward_to_destination {
 
     my $email = q{};
     foreach my $header ( @{ $smtp->{'headers'} } ) {
-        $email .= "$header\r\n";
+        my $key   = $header->{'key'};
+        my $value = $header->{'value'};
+        $email .= "$key: $value\r\n";
     }
     $email .= "\r\n";
 
@@ -756,7 +753,10 @@ sub add_header {
     my ( $self, $header, $value ) = @_;
     my $smtp = $self->{'smtp'};
     $value =~ s/\015?\012/\015\012/g;
-    push @{ $smtp->{'headers'} } , "$header: $value";
+    push @{ $smtp->{'headers'} } , {
+        'key'   => $header,
+        'value' => $value,
+    };
     return;
 }
 
@@ -770,7 +770,7 @@ sub change_header {
 
     HEADER:
     foreach my $header_v ( @{ $smtp->{'headers'} } ) {
-        if ( substr( $header_v, 0, length($header) + 1 )  eq "$header:" ) {
+        if ( $header_v->{'key'} eq $header ) {
             $search_i ++;
             if ( $search_i == $index ) {
                 $result_i = $header_i;
@@ -786,7 +786,7 @@ sub change_header {
         }
         else {
             $value =~ s/\015?\012/\015\012/g;
-            $smtp->{'headers'}->[ $result_i ] = "$header: $value";
+            $smtp->{'headers'}->[ $result_i ]->{'value'} = $value;
             #untested.
         }
     }
@@ -798,7 +798,10 @@ sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
     my $smtp = $self->{'smtp'};
     $value =~ s/\015?\012/\015\012/g;
-    splice @{ $smtp->{'headers'} }, $index - 1, 0, "$key: $value";
+    splice @{ $smtp->{'headers'} }, $index - 1, 0, {
+        'key'   => $key,
+        'value' => $value,
+    };
     return;
 }
 
