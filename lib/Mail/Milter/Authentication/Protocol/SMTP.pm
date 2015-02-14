@@ -458,7 +458,8 @@ sub smtp_command_data {
             }
             my $returncode = $handler->top_header_callback( $key, $value );
 
-            ( $key, $value ) = split( ": ", $header_line, 2 );
+            ( $key, $value ) = split( ":", $header_line, 2 );
+            $value =~ s/^ //;
             if ( $returncode != SMFIS_CONTINUE ) {
                 $fail = 1;
             }
