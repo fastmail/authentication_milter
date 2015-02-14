@@ -5,7 +5,6 @@ our $VERSION = 0.7;
 
 use English qw{ -no_match_vars };
 use Email::Date::Format qw{ email_date };
-use Email::Simple;
 use IO::Socket;
 use IO::Socket::INET;
 use IO::Socket::UNIX;
@@ -402,10 +401,10 @@ sub smtp_command_data {
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
 
-    my $headers = q{};
     my $body    = q{};
     my $done    = 0;
     my $fail    = 0;
+    my @header_split;
     my $returncode;
 
     if ( $smtp->{'has_data'} ) {
@@ -434,7 +433,7 @@ sub smtp_command_data {
             if ( $dataline eq q{} ) {
                 last HEADERS;
             }
-            $headers .= $dataline . "\r\n";
+            push @header_split, $dataline;
         }
     };
     if ( my $error = $@ ) {
@@ -444,24 +443,37 @@ sub smtp_command_data {
     }
     alarm( 0 );
 
-    {
-        my $message_object = Email::Simple->new( $headers );
-        my $header_object = $message_object->header_obj();
-        my @header_pairs = $header_object->header_pairs();
-        while ( @header_pairs ) {
-            my $key   = shift @header_pairs;
-            my $value = shift @header_pairs;
-            push @{ $smtp->{'headers'} } , {
-                'key'   => $key,
-                'value' => $value,
-            };
+    my $key   = q{};
+    my $value = q{};
+    foreach my $header_line ( @header_split ) {
+        if ( $header_line =~ /^ / ) {
+            $value .= "\r\n" . $header_line;
+        }
+        else {
+            if ( $key ne q{} ) {
+                push @{ $smtp->{'headers'} } , {
+                    'key'   => $key,
+                    'value' => $value,
+                };
+            }
             my $returncode = $handler->top_header_callback( $key, $value );
+
+            ( $key, $value ) = split( ": ", $header_line, 2 );
             if ( $returncode != SMFIS_CONTINUE ) {
                 $fail = 1;
             }
         }
     }
-
+    if ( $key ne q{} ) {
+        push @{ $smtp->{'headers'} } , {
+            'key'   => $key,
+            'value' => $value,
+        };            
+        my $returncode = $handler->top_header_callback( $key, $value );
+        if ( $returncode != SMFIS_CONTINUE ) {
+            $fail = 1;
+        }
+    }
     $returncode = $handler->top_eoh_callback();
     if ( $returncode != SMFIS_CONTINUE ) {
         $fail = 1;
