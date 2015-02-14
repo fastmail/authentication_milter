@@ -17,7 +17,7 @@ sub set_lib {
     return 'export PERL5LIB=' . $base_dir . '/lib';
 }
 
-plan tests => 26;
+plan tests => 27;
 
 {
     system 'rm -rf tmp';
@@ -462,6 +462,17 @@ sub run_smtp_processing {
     });
 
     smtp_process({
+        'desc'   => 'Header checks',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_headers.eml',
+        'dest'   => 'google_apps_headers.smtp.eml',
+        'ip'     => '127.0.0.1',
+        'name'   => 'localhost',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    smtp_process({
         'desc'   => 'Good message local',
         'prefix' => 'config/normal.smtp',
         'source' => 'google_apps_good.eml',
@@ -471,6 +482,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
+
     smtp_process({
         'desc'   => 'Good message trusted',
         'prefix' => 'config/normal.smtp',
