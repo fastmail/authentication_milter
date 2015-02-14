@@ -443,34 +443,29 @@ sub smtp_command_data {
     }
     alarm( 0 );
 
-    my $key   = q{};
     my $value = q{};
     foreach my $header_line ( @header_split ) {
         if ( $header_line =~ /^ / ) {
             $value .= "\r\n" . $header_line;
         }
         else {
-            if ( $key ne q{} ) {
-                push @{ $smtp->{'headers'} } , {
-                    'key'   => $key,
-                    'value' => $value,
-                };
+            if ( $value ne q{} ) {
+                push @{ $smtp->{'headers'} } , $value;
+                my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
+                $hvalue =~ s/^ //;
+                my $returncode = $handler->top_header_callback( $hkey, $hvalue );
+                if ( $returncode != SMFIS_CONTINUE ) {
+                    $fail = 1;
+                }
             }
-            my $returncode = $handler->top_header_callback( $key, $value );
-
-            ( $key, $value ) = split( ":", $header_line, 2 );
-            $value =~ s/^ //;
-            if ( $returncode != SMFIS_CONTINUE ) {
-                $fail = 1;
-            }
+            $value = $header_line;
         }
     }
-    if ( $key ne q{} ) {
-        push @{ $smtp->{'headers'} } , {
-            'key'   => $key,
-            'value' => $value,
-        };            
-        my $returncode = $handler->top_header_callback( $key, $value );
+    if ( $value ne q{} ) {
+        push @{ $smtp->{'headers'} } , $value;
+        my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
+        $hvalue =~ s/^ //;
+        my $returncode = $handler->top_header_callback( $hkey, $hvalue );
         if ( $returncode != SMFIS_CONTINUE ) {
             $fail = 1;
         }
@@ -600,10 +595,7 @@ sub smtp_insert_received_header {
 
     );
 
-    splice @{ $smtp->{'headers'} }, 0, 0, {
-        'key'   => 'Received',
-        'value' => $value,
-    };
+    splice @{ $smtp->{'headers'} }, 0, 0, 'Received: '. $value;
     return;
 }
 
@@ -695,9 +687,7 @@ sub smtp_forward_to_destination {
 
     my $email = q{};
     foreach my $header ( @{ $smtp->{'headers'} } ) {
-        my $key   = $header->{'key'};
-        my $value = $header->{'value'};
-        $email .= "$key: $value\r\n";
+        $email .= "$header\r\n";
     }
     $email .= "\r\n";
 
@@ -766,10 +756,7 @@ sub add_header {
     my ( $self, $header, $value ) = @_;
     my $smtp = $self->{'smtp'};
     $value =~ s/\015?\012/\015\012/g;
-    push @{ $smtp->{'headers'} } , {
-        'key'   => $header,
-        'value' => $value,
-    };
+    push @{ $smtp->{'headers'} } , "$header: $value";
     return;
 }
 
@@ -783,7 +770,7 @@ sub change_header {
 
     HEADER:
     foreach my $header_v ( @{ $smtp->{'headers'} } ) {
-        if ( $header_v->{'key'} eq $header ) {
+        if ( substr( $header_v, 0, length($header) + 1 )  eq "$header:" ) {
             $search_i ++;
             if ( $search_i == $index ) {
                 $result_i = $header_i;
@@ -799,7 +786,7 @@ sub change_header {
         }
         else {
             $value =~ s/\015?\012/\015\012/g;
-            $smtp->{'headers'}->[ $result_i ]->{'value'} = $value;
+            $smtp->{'headers'}->[ $result_i ] = "$header: $value";
             #untested.
         }
     }
@@ -811,10 +798,7 @@ sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
     my $smtp = $self->{'smtp'};
     $value =~ s/\015?\012/\015\012/g;
-    splice @{ $smtp->{'headers'} }, $index - 1, 0, {
-        'key'   => $key,
-        'value' => $value,
-    };
+    splice @{ $smtp->{'headers'} }, $index - 1, 0, "$key: $value";
     return;
 }
 
