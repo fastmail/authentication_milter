@@ -354,7 +354,7 @@ sub _check_error {
             or $error =~ /^invalid name /
     ){
         $self->log_error( 'Perm DKIM Error - ' . $error );
-        $self->add_auth_header('dkim=permerror (' . $error . ')');
+        $self->add_auth_header('dkim=permerror (syntax or domain error)');
     }
     else {
         $self->log_error( 'Unexpected DKIM Error - ' . $error );
