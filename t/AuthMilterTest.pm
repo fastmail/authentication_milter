@@ -1,35 +1,16 @@
-#!perl
-use 5.006;
+package AuthMilterTest;
+
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 use Test::More;
 use Test::File::Contents;
 use Cwd qw{ cwd };
 
 my $base_dir = cwd();
-if ( ! -e 't/01-results.t' ) {
-    die 'Could not find required files, are we in the correct directory?';
-}
-
-chdir 't';
 
 sub set_lib {
     return 'export PERL5LIB=' . $base_dir . '/lib';
 }
-
-plan tests => 27;
-
-{
-    system 'rm -rf tmp';
-    mkdir 'tmp';
-    mkdir 'tmp/result';
-
-    tools_test();
-    tools_pipeline_test();
-    run_smtp_processing();
-    run_milter_processing();
-
-};
 
 sub tools_test {
 
@@ -591,3 +572,4 @@ sub run_smtp_processing {
     return;
 }
 
+1;
