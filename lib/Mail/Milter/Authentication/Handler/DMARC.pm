@@ -10,6 +10,19 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::DMARC::PurePerl;
 
+sub pre_loop_setup {
+    my ( $self ) = @_;
+    my $dmarc = Mail::DMARC::PurePerl->new();
+    my $psl = eval { $dmarc->get_public_suffix_list(); };
+    if ( $psl ) {
+        $self->{'thischild'}->loginfo( 'Preloaded PSL' );
+    }
+    else {
+        $self->{'thischild'}->logerror( 'Could not preload PSL' );
+    }
+    return;
+}
+
 sub get_dmarc_object {
     my ( $self, $env_from ) = @_;
     $self->{'failmode'} = 0;

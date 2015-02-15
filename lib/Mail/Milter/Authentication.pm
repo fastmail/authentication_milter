@@ -27,6 +27,13 @@ sub pre_loop_hook {
     my $config = get_config();
     foreach my $name ( @{$config->{'load_handlers'}} ) {
         $self->load_handler( $name );
+
+        my $package = "Mail::Milter::Authentication::Handler::$name";
+        my $object = $package->new( $self );
+        if ( $object->can( 'pre_loop_setup' ) ) {
+            $object->pre_loop_setup();
+        }
+
     }
 
     if ( $config->{'error_log'} ) {
