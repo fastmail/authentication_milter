@@ -256,12 +256,17 @@ sub eom_callback {
         # Try as best we can to save a report, but don't stress if it fails.
         my $rua = eval { $dmarc_result->published()->rua(); };
         if ($rua) {
-            eval {
-                $self->dbgout( 'DMARCReportTo', $rua, LOG_INFO );
-                $dmarc->save_aggregate();
-            };
-            if ( my $error = $@ ) {
-                $self->log_error( 'DMARC Report Error ' . $error );
+            if ( ! $config->{'no_report'} ) {
+                eval {
+                    $self->dbgout( 'DMARCReportTo', $rua, LOG_INFO );
+                    $dmarc->save_aggregate();
+                };
+                if ( my $error = $@ ) {
+                    $self->log_error( 'DMARC Report Error ' . $error );
+                }
+            }
+            else {
+                $self->dbgout( 'DMARCReportTo (skipped)', $rua, LOG_INFO );
             }
         }
     };

@@ -207,9 +207,10 @@ __END__
         "DMARC" : {                                     | Config for the DMARC Module
                                                         | Requires DKIM and SPF
             "hide_none"      : 0,                       | Hide auth line if the result is 'none'
-            "detect_list_id" : "1"                      | Detect a list ID and modify the DMARC authentication header
+            "detect_list_id" : "1",                     | Detect a list ID and modify the DMARC authentication header
                                                         | to note this, useful when making rules for junking email
                                                         | as mailing lists frequently cause false DMARC failures.
+            "no_report" : "1"                           | If set then we will not attempt to store DMARC reports.
         },
 
         "PTR" : {},                                     | Config for the PTR Module
