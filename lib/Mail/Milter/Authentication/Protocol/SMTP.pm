@@ -29,6 +29,13 @@ sub get_smtp_config {
     return $smtp_config;
 }
 
+sub smtp_status {
+    my ( $self, $status ) = @_;
+    my $smtp = $self->{'smtp'};
+    $PROGRAM_NAME = '[authentication_milter:' . $status . '(' . $self->{'count'} . '.' . $smtp->{'count'} . ')]';
+    return;
+}
+
 sub smtp_init {
     my ( $self ) = @_;    
 
@@ -152,15 +159,19 @@ sub protocol_process_request {
             $self->smtp_command_data( $command );
         }
         elsif ( uc $command =~ /^QUIT/ ){
+            $self->smtp_status('smtp.i.quit');
             print $socket "221 2.0.0 Bye\n";
             last COMMAND;
         }
         else {
+            $self->smtp_status('smtp.i.unknown');
             $self->logerror( "Unknown SMTP command: $command" );
             print $socket "502 5.5.2 I don't understand\r\n";
         }
 
     }
+
+    $self->smtp_status('smtp.close');
 
     $self->close_destination_socket();
 
@@ -183,6 +194,7 @@ sub smtp_command_lhlo {
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
+    $self->smtp_status('smtp.i.lhlo');
 
     $smtp->{'using_lmtp'} = 1;
 
@@ -205,6 +217,7 @@ sub smtp_command_ehlo {
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
+    $self->smtp_status('smtp.i.ehlo');
 
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Out of Order SMTP command: $command" );
@@ -225,6 +238,7 @@ sub smtp_command_helo {
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
+    $self->smtp_status('smtp.i.helo');
 
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Out of Order SMTP command: $command" );
@@ -241,6 +255,7 @@ sub smtp_command_xforward {
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
+    $self->smtp_status('smtp.i.xforward');
 
     $self->smtp_init();
 
@@ -280,6 +295,7 @@ sub smtp_command_rset {
     my ( $self, $command ) = @_;
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
+    $self->smtp_status('smtp.i.rset');
     $smtp->{'mail_from'}        = q{};
     $smtp->{'rcpt_to'}          = [];
     $smtp->{'headers'}          = [];
@@ -319,6 +335,7 @@ sub smtp_command_mailfrom {
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
+    $self->smtp_status('smtp.i.mailfrom');
 
     my $returncode;
     if ( $smtp->{'has_data'} ) {
@@ -375,6 +392,7 @@ sub smtp_command_rcptto {
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
+    $self->smtp_status('smtp.i.rcptto');
 
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Out of Order SMTP command: $command" );
@@ -400,6 +418,7 @@ sub smtp_command_data {
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
     my $handler = $self->{'handler'}->{'_Handler'};
+    $self->smtp_status('smtp.i.data');
 
     my $body    = q{};
     my $done    = 0;
@@ -443,6 +462,7 @@ sub smtp_command_data {
     }
     alarm( 0 );
 
+    $self->smtp_status('smtp.i.data.process');
     my $value = q{};
     foreach my $header_line ( @header_split ) {
         if ( $header_line =~ /^\s/ ) {
@@ -475,6 +495,7 @@ sub smtp_command_data {
         $fail = 1;
     }
 
+    $self->smtp_status('smtp.i.body');
     if ( ! $done ) {
         eval {
             alarm( $smtp->{'smtp_timeout_in'} );
@@ -505,6 +526,7 @@ sub smtp_command_data {
     if ( $returncode != SMFIS_CONTINUE ) {
         $fail = 1;
     }
+    $self->smtp_status('smtp.i.data.received');
 
     if ( ! $fail ) {
         $smtp->{'body'} = $body;
@@ -546,6 +568,7 @@ sub smtp_command_data {
     else { 
         print $socket "451 4.0.0 That's not right\r\n";
     }
+    $self->smtp_status('smtp.i.data.done');
 
     # Reset
     $smtp->{'mail_from'}        = q{};
@@ -601,6 +624,7 @@ sub smtp_insert_received_header {
 
 sub smtp_forward_to_destination {
     my ( $self ) = @_;
+    $self->smtp_status('smtp.o');
 
     my $smtp = $self->{'smtp'};
 
@@ -616,6 +640,7 @@ sub smtp_forward_to_destination {
 
     if ( ! $sock ) {
         $new_sock = 1;
+        $self->smtp_status('smtp.o.open');
 
         if ( $smtp_conf->{'sock_type'} eq 'inet' ) {
            $sock = IO::Socket::INET->new(
@@ -655,9 +680,7 @@ sub smtp_forward_to_destination {
         $smtp->{'destination_sock'} = $sock;
     }
 
-
-    local $SIG{'ALRM'} = sub{ die "Timeout\n" };
-    alarm( $smtp->{'smtp_timeout_out'} );
+    $self->loginfo( 'Sending envelope to destination' );
 
     if ( $new_sock ) {
         $self->send_smtp_packet( $sock, 'EHLO ' .      $smtp->{'server_name'}, '250' ) || return;
@@ -683,8 +706,11 @@ sub smtp_forward_to_destination {
     foreach my $rcpt_to ( @{ $smtp->{'rcpt_to'} } ) {
         $self->send_smtp_packet( $sock, 'RCPT TO:' .   $rcpt_to, '250' ) || return;
     }
+
+    $self->loginfo( 'Sending data to destination' );
     $self->send_smtp_packet( $sock, 'DATA', '354' ) || return;
 
+    $self->smtp_status('smtp.o.body');
     my $email = q{};
     foreach my $header ( @{ $smtp->{'headers'} } ) {
         $email .= "$header\r\n";
@@ -699,8 +725,11 @@ sub smtp_forward_to_destination {
     $email =~ s/\015\012\./\015\012\.\./g;
 
     print $sock $email;
-    
+
+    $self->loginfo( 'Sending end to destination' );
     $self->send_smtp_packet( $sock, '.',    '250' ) || return;
+    $self->loginfo( 'Sent to destination' );
+    $self->smtp_status('smtp.o.done');
 
     return 1;
 }
@@ -718,15 +747,26 @@ sub close_destination_socket {
 
 sub send_smtp_packet {
     my ( $self, $socket, $send, $expect ) = @_;
+    my $smtp = $self->{'smtp'};
+    
+    my $status = lc $send;
+    $status =~ s/^([^ ]+) .*$/\1/;
+    $status = 'dot' if $status eq '.';
+    $self->smtp_status('smtp.o.' . $status);
+
     print $socket "$send\r\n";
 
-    my $smtp = $self->{'smtp'};
+    $self->smtp_status('smtp.o.' . $status . '.wait');
 
     local $SIG{'ALRM'} = sub{ die "Timeout\n" };
     alarm( $smtp->{'smtp_timeout_out'} );
     my $recv;
     eval {
         $recv = <$socket>;
+        while ( $recv =~ /^\d\d\d\-/ ) {
+            $self->smtp_status('smtp.o.' . $status . '.waitext');
+            $recv = <$socket>;
+        }
     };
     if ( my $error = $@ ) {
         $self->logerror( "Outbound SMTP Read Error: $error" );
@@ -734,10 +774,7 @@ sub send_smtp_packet {
         return 0;
     }
     alarm( 0 );
-
-    while ( $recv =~ /^\d\d\d\-/ ) {
-        $recv = <$socket>;
-    }
+    $self->smtp_status('smtp.o');
 
     $smtp->{'string'} = $recv;
     $smtp->{'string'} =~ s/\r//g;
@@ -906,6 +943,10 @@ Change a header
 Insert a header
 
 =back
+
+=itemI<smtp_status( $status )>
+
+Update the process name status line
 
 =head1 DEPENDENCIES
 
