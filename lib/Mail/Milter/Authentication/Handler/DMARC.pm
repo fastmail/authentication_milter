@@ -221,7 +221,9 @@ sub eom_callback {
             $dmarc->dkim( $self->get_object('dkim') );
         }
         else {
-            $dmarc->dkim( [] );
+            # Workaround reporting issue
+            $dmarc->{'dkim'} = [];
+#           $dmarc->dkim( $empty_dkim );
         }
         my $dmarc_result = $dmarc->validate();
         my $dmarc_code   = $dmarc_result->result;
