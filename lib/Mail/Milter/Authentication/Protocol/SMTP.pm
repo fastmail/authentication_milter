@@ -638,6 +638,13 @@ sub smtp_forward_to_destination {
 
     my $line;
 
+    if ( $sock ) { 
+        if ( ! $sock->connected() ) {
+            $self->logerror( "Outbound SMTP socket was disconnected by remote end" );
+            undef $sock;
+        }
+    }
+
     if ( ! $sock ) {
         $new_sock = 1;
         $self->smtp_status('smtp.o.open');
@@ -750,7 +757,7 @@ sub send_smtp_packet {
     my $smtp = $self->{'smtp'};
     
     my $status = lc $send;
-    $status =~ s/^([^ ]+) .*$/\1/;
+    $status =~ s/^([^ ]+) .*$/$1/;
     $status = 'dot' if $status eq '.';
     $self->smtp_status('smtp.o.' . $status);
 
@@ -776,7 +783,7 @@ sub send_smtp_packet {
     alarm( 0 );
     $self->smtp_status('smtp.o');
 
-    $smtp->{'string'} = $recv;
+    $smtp->{'string'} = $recv || q{};
     $smtp->{'string'} =~ s/\r//g;
     $smtp->{'string'} =~ s/\n//g;
 
@@ -942,11 +949,11 @@ Change a header
 
 Insert a header
 
-=back
-
-=itemI<smtp_status( $status )>
+=item I<smtp_status( $status )>
 
 Update the process name status line
+
+=back
 
 =head1 DEPENDENCIES
 
