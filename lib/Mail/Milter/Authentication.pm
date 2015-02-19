@@ -538,6 +538,11 @@ sub destroy_objects {
 sub logerror {
     my ($self,$line) = @_;
     my $config = $self->{'config'} || get_config();
+    if ( exists ( $self->{'smtp'} ) ) {
+        if ( $self->{'smtp'}->{'queue_id'} ) {
+            $line = $self->{'smtp'}->{'queue_id'} . ': ' . $line;
+        }
+    }
     warn "$PID: $line\n" if $config->{'logtoerr'};
     syslog( LOG_ERR, $line );
     return;
@@ -546,6 +551,11 @@ sub logerror {
 sub loginfo {
     my ($self,$line) = @_;
     my $config = $self->{'config'} || get_config();
+    if ( exists ( $self->{'smtp'} ) ) {
+        if ( $self->{'smtp'}->{'queue_id'} ) {
+            $line = $self->{'smtp'}->{'queue_id'} . ': ' . $line;
+        }
+    }
     warn "$PID: $line\n" if $config->{'logtoerr'};
     syslog( LOG_INFO, $line );
     return;
@@ -554,6 +564,11 @@ sub loginfo {
 sub logdebug {
     my ($self,$line) = @_;
     my $config = $self->{'config'} || get_config();
+    if ( exists ( $self->{'smtp'} ) ) {
+        if ( $self->{'smtp'}->{'queue_id'} ) {
+            $line = $self->{'smtp'}->{'queue_id'} . ': ' . $line;
+        }
+    }
     warn "$PID: $line\n" if $config->{'logtoerr'};
     if ( $config->{'debug'} ) {
         syslog( LOG_DEBUG, $line );
