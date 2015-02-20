@@ -189,6 +189,15 @@ sub smtp_queue_id {
     return $queue_id;
 }
 
+sub command_param {
+    my ( $command, $index ) = @_;
+    my $p = q{};
+    if ( length( $command ) >= $index ) {
+        $p = substr( $command, $index );
+    }
+    return $p;
+}
+
 sub smtp_command_lhlo {
     my ( $self, $command ) = @_;
     my $smtp = $self->{'smtp'};
@@ -203,7 +212,7 @@ sub smtp_command_lhlo {
         print $socket "501 5.5.2 Out of Order\r\n";
         return;
     }
-    $smtp->{'helo_host'} = substr( $command,5 );
+    $smtp->{'helo_host'} = command_param( $command,5 );
     print $socket "250-" . $smtp->{'server_name'} . "\r\n";
     print $socket "250-XFORWARD NAME ADDR IDENT HELO\r\n";
     print $socket "250-PIPELINING\r\n";
@@ -224,7 +233,7 @@ sub smtp_command_ehlo {
         print $socket "501 5.5.2 Out of Order\r\n";
         return;
     }
-    $smtp->{'helo_host'} = substr( $command,5 );
+    $smtp->{'helo_host'} = command_param( $command,5 );
     print $socket "250-" . $smtp->{'server_name'} . "\r\n";
     print $socket "250-XFORWARD NAME ADDR IDENT HELO\r\n";
     print $socket "250-PIPELINING\r\n";
@@ -245,7 +254,7 @@ sub smtp_command_helo {
         print $socket "501 5.5.2 Out of Order\r\n";
         return;
     }
-    $smtp->{'helo_host'} = substr( $command,5 );
+    $smtp->{'helo_host'} = command_param( $command,5 );
     print $socket "250 " . $smtp->{'server_name'} . " Hi " . $smtp->{'helo_host'} . "\r\n";
     return;
 }
@@ -264,7 +273,7 @@ sub smtp_command_xforward {
         print $socket "503 5.5.2 Out of Order\r\n";
         return;
     }
-    my $xdata = substr( $command,9 );
+    my $xdata = command_param( $command,9 );
     foreach my $entry ( split( q{ }, $xdata ) ) {
         my ( $key, $value ) = split( '=', $entry, 2 );
         if ( $key eq 'NAME' ) {
@@ -365,7 +374,7 @@ sub smtp_command_mailfrom {
     if ( $returncode == SMFIS_CONTINUE ) {
         $returncode = $handler->top_helo_callback( $helo );
         if ( $returncode == SMFIS_CONTINUE ) {
-            my $envfrom = substr( $command,10 );
+            my $envfrom = command_param( $command,10 );
             $smtp->{'mail_from'} = $envfrom;
             $envfrom =~ s/ BODY=8BITMIME$//;
             $returncode = $handler->top_envfrom_callback( $envfrom );
@@ -399,7 +408,7 @@ sub smtp_command_rcptto {
         print $socket "503 5.5.2 Out of Order\r\n";
         return;
     }
-    my $envrcpt = substr( $command,8 );
+    my $envrcpt = command_param( $command,8 );
     push @{ $smtp->{'rcpt_to'} }, $envrcpt;
     my $returncode = $handler->top_envrcpt_callback( $envrcpt );
     if ( $returncode == SMFIS_CONTINUE ) {
@@ -814,7 +823,7 @@ sub change_header {
 
     HEADER:
     foreach my $header_v ( @{ $smtp->{'headers'} } ) {
-        if ( substr( $header_v, 0, length($header) + 1 )  eq "$header:" ) {
+        if ( substr( $header_v, 0, length($header) + 1 ) eq "$header:" ) {
             $search_i ++;
             if ( $search_i == $index ) {
                 $result_i = $header_i;
@@ -863,6 +872,16 @@ A PERL implemtation of email authentication standards rolled up into a single ea
 Subclass of Net::Server::PreFork for bringing up the main server process for authentication_milter.
 
 Please see Net::Server docs for more detail of the server code.
+
+=head1 FUNCTIONS
+
+=over
+
+=item I<command_param( $command, $index )>
+
+Extract parameters from a SMTP command line.
+
+=back
 
 =head1 METHODS
 
