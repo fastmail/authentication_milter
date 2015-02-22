@@ -41,12 +41,13 @@ Limitations: SMTP protocol does not yet support detection of Authenticated conne
 Design Decisions
 ----------------
 
+- Works as either a milter, and a SMTP filter.
 - Do not reject mail during normal operation.
   - Add headers to allow filtering as required.
 - Try and handle failures gracefully.
 - Handle IPv4 and IPv6 properly
 - Detect Internal/Private IP addresses and skip IP checks.
-- Detect authenticated connections and skip irrelevant checks.
+- Detect authenticated connections and skip irrelevant checks (milter mode only).
   - It is assumed that this milter runs after DKIM signatures are generated, these are still validated.
 - DMARC reporting should be possible.
 - Modular design to allow new checks to be implemented easily.

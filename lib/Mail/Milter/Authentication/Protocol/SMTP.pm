@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Protocol::SMTP;
 use strict;
 use warnings;
-our $VERSION = 0.7;
+our $VERSION = 0.8;
 
 use English qw{ -no_match_vars };
 use Email::Date::Format qw{ email_date };

@@ -1,7 +1,10 @@
 Revision history for Mail-Milter-Authentication
 
-0.08    TBC
-        ToDo Fix header unwrapping issue
+0.08    2015-02-23
+        Fixes header unwrapping issue
+        Allow DMARC reporting to be disabled
+        DMARC: preload the PSL where possible
+        Better SMTP pipeline handling
 
 0.07    2015-02-02
         Fix up some warning output.

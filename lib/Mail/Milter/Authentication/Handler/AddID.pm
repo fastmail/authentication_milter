@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::AddID;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-our $VERSION = 0.7;
+our $VERSION = 0.8;
 
 use Sys::Syslog qw{:standard :macros};
 
