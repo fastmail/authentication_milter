@@ -747,7 +747,9 @@ sub dbgout {
     $key   = q{--} if ! defined $key;
     $value = q{--} if ! defined $value;
 
-    warn "$PID: $queue_id: $key: $value\n" if $self->config()->{'logtoerr'};
+    if ( $self->config()->{'logtoerr'} ) {
+        Mail::Milter::Authentication::_warn( scalar localtime . "[$PID] $queue_id: $key: $value\n" );
+    }
 
     my $config = $self->config();
     if (
