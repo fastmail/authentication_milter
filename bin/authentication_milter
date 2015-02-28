@@ -210,6 +210,10 @@ __END__
             "detect_list_id" : "1",                     | Detect a list ID and modify the DMARC authentication header
                                                         | to note this, useful when making rules for junking email
                                                         | as mailing lists frequently cause false DMARC failures.
+            "report_skip_to" : [                        | Do not send DMARC reports for emails to these addresses.
+                "dmarc@yourdomain.com",                 | This can be used to avoid report loops for email sent to
+                "dmarc@example.com"                     | your report from addresses.
+            ],
             "no_report" : "1"                           | If set then we will not attempt to store DMARC reports.
         },
 

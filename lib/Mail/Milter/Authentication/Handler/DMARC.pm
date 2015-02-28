@@ -25,8 +25,6 @@ sub pre_loop_setup {
 
 sub get_dmarc_object {
     my ( $self, $env_from ) = @_;
-    $self->{'failmode'} = 0;
-    $self->{'is_list'}  = 0;
     my $dmarc = $self->get_object('dmarc');
     if ( $dmarc ) {
         return $dmarc;
@@ -73,8 +71,10 @@ sub envfrom_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     delete $self->{'from_header'};
-    delete $self->{'is_list'};
-    $self->{'failmode'} = 0;
+    $self->{'failmode'}     = 0;
+    $self->{'is_list'}      = 0;
+    $self->{'skip_report'}  = 0;
+    $self->{'failmode'}     = 0;
     $self->destroy_object('dmarc');
 
     $env_from = q{} if $env_from eq '<>';
@@ -139,12 +139,26 @@ sub envfrom_callback {
     return;
 }
 
+sub check_skip_address {
+    my ( $self, $env_to ) = @_;
+    my $config = $self->handler_config();
+    return 0 if not exists( $config->{'report_skip_to'} );
+    foreach my $address ( @{ $config->{'report_skip_to'} } ) {
+        if ( lc $address eq lc $env_to ) {
+            $self->dbgout( 'DMARCReportSkip', 'Skip address detected: ' . $env_to, LOG_INFO );
+            $self->{'skip_report'} = 1;
+        }
+    }
+    return;
+}
+
 sub envrcpt_callback {
     my ( $self, $env_to ) = @_;
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
+    $self->check_skip_address( $env_to );
     my $dmarc       = $self->get_dmarc_object();
     return if ( $self->{'failmode'} );
     my $envelope_to = $self->get_domain_from($env_to);
@@ -259,12 +273,17 @@ sub eom_callback {
         my $rua = eval { $dmarc_result->published()->rua(); };
         if ($rua) {
             if ( ! $config->{'no_report'} ) {
-                eval {
-                    $self->dbgout( 'DMARCReportTo', $rua, LOG_INFO );
-                    $dmarc->save_aggregate();
-                };
-                if ( my $error = $@ ) {
-                    $self->log_error( 'DMARC Report Error ' . $error );
+                if ( ! $self->{'skip_report'} ) {
+                    eval {
+                        $self->dbgout( 'DMARCReportTo', $rua, LOG_INFO );
+                        $dmarc->save_aggregate();
+                    };
+                    if ( my $error = $@ ) {
+                        $self->log_error( 'DMARC Report Error ' . $error );
+                    }
+                }
+                else {
+                    $self->dbgout( 'DMARCReportTo (skipped flag)', $rua, LOG_INFO );
                 }
             }
             else {
@@ -313,6 +332,7 @@ sub close_callback {
     my ( $self ) = @_;
     delete $self->{'helo_name'};
     delete $self->{'failmode'};
+    delete $self->{'skip_report'};
     delete $self->{'is_list'};
     delete $self->{'from_header'};
     $self->destroy_object('dmarc');
