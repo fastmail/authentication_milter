@@ -2,6 +2,7 @@ Revision history for Mail-Milter-Authentication
 
 0.09    TBC
         Catch warnings and report in log with context.
+        Skip DMARC reporting for specified addresses.
 
 0.08    2015-02-23
         Fixes header unwrapping issue
