@@ -66,6 +66,7 @@ t/data/example/google_apps_nodkim.eml
 t/data/example/google_apps_nodkim.smtp.eml
 t/data/example/google_apps_nodkim_spf_fail.eml
 t/data/example/google_apps_nodkim_spf_fail.smtp.eml
+t/data/example/list.smtp.eml
 t/data/example/pipelined.limit.smtp.eml
 t/data/example/pipelined.smtp.eml
 t/data/example/tools_pipeline_test.eml
@@ -76,6 +77,7 @@ t/data/source/google_apps_good.eml
 t/data/source/google_apps_good_sanitize.eml
 t/data/source/google_apps_headers.eml
 t/data/source/google_apps_nodkim.eml
+t/data/source/list.eml
 t/data/source/tools_test.eml
 t/data/source/transparency.eml
 t/dev-boilerplate.t

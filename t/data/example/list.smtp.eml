@@ -1,0 +1,26 @@
+EHLO server.example.com
+XFORWARD HELO=test.example.com
+XFORWARD ADDR=1.2.3.4
+XFORWARD NAME=test.example.com
+MAIL FROM:test@example.com
+RCPT TO:test@example.com
+DATA
+Received: from test.module (localhost [127.0.0.1])
+    by server.example.com (Authentication Milter) with ESMTP
+Authentication-Results: server.example.com;
+    dkim=none (no signatures found);
+    dmarc=fail (p=none;has-list-id=yes) header.from=example.com;
+    iprev=fail policy.iprev=1.2.3.4 (NOT FOUND);
+    spf=fail smtp.mailfrom=test@example.com smtp.helo=test.example.com;
+    x-ptr=fail x-ptr-helo=test.example.com x-ptr-lookup=
+Received-SPF: fail (example.com: Sender is not authorized by default to use 'test@example.com' in 'mfrom' identity (mechanism '-all' matched)) receiver=server.example.com; identity=mailfrom; envelope-from="test@example.com"; helo=test.example.com; client-ip=1.2.3.4
+From: test@example.com
+To: test@example.com
+List-ID: <test.list.example.com>
+Subject: This is a test
+
+Email List Detection Test
+
+
+.
+QUIT

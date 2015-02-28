@@ -443,6 +443,17 @@ sub run_smtp_processing {
     });
 
     smtp_process({
+        'desc'   => 'List message',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'list.eml',
+        'dest'   => 'list.smtp.eml',
+        'ip'     => '1.2.3.4',
+        'name'   => 'test.example.com',
+        'from'   => 'test@example.com',
+        'to'     => 'test@example.com',
+    });
+
+    smtp_process({
         'desc'   => 'Header checks',
         'prefix' => 'config/normal.smtp',
         'source' => 'google_apps_headers.eml',
