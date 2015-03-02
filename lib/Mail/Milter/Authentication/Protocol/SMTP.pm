@@ -696,7 +696,7 @@ sub smtp_forward_to_destination {
         $smtp->{'destination_sock'} = $sock;
     }
 
-    $self->loginfo( 'Sending envelope to destination' );
+    $self->logdebug( 'Sending envelope to destination' );
 
     if ( $new_sock ) {
         $self->send_smtp_packet( $sock, 'EHLO ' .      $smtp->{'server_name'}, '250' ) || return;
@@ -723,7 +723,7 @@ sub smtp_forward_to_destination {
         $self->send_smtp_packet( $sock, 'RCPT TO:' .   $rcpt_to, '250' ) || return;
     }
 
-    $self->loginfo( 'Sending data to destination' );
+    $self->logdebug( 'Sending data to destination' );
     $self->send_smtp_packet( $sock, 'DATA', '354' ) || return;
 
     $self->smtp_status('smtp.o.body');
@@ -742,9 +742,9 @@ sub smtp_forward_to_destination {
 
     print $sock $email;
 
-    $self->loginfo( 'Sending end to destination' );
+    $self->logdebug( 'Sending end to destination' );
     $self->send_smtp_packet( $sock, '.',    '250' ) || return;
-    $self->loginfo( 'Sent to destination' );
+    $self->logdebug( 'Sent to destination' );
     $self->smtp_status('smtp.o.done');
 
     return 1;
