@@ -372,6 +372,17 @@ sub run_milter_processing {
         'to'     => 'marc@fastmail.com',
     });
     
+    milter_process({
+        'desc'   => 'Long Lines',
+        'prefix' => 'config/normal',
+        'source' => 'longlines.eml',
+        'dest'   => 'longlines.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
     stop_milter();
     
     start_milter( 'config/dryrun' );
@@ -557,6 +568,17 @@ sub run_smtp_processing {
         'prefix' => 'config/normal.smtp',
         'source' => 'google_apps_good_sanitize.eml',
         'dest'   => 'google_apps_good_sanitize.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    smtp_process({
+        'desc'   => 'Long Lines',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'longlines.eml',
+        'dest'   => 'longlines.smtp.eml',
         'ip'     => '74.125.82.171',
         'name'   => 'mail-we0-f171.google.com',
         'from'   => 'marc@marcbradshaw.net',
