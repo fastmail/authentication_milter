@@ -722,7 +722,7 @@ sub get_address_from {
         $self->log_error('Could not parse address $address : $error');
     }
 
-  return $parsed;
+    return $parsed;
 }
 
 sub get_my_hostname {

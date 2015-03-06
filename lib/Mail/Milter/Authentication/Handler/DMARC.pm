@@ -141,6 +141,7 @@ sub envfrom_callback {
 
 sub check_skip_address {
     my ( $self, $env_to ) = @_;
+    $env_to = lc $self->get_address_from( $env_to );
     my $config = $self->handler_config();
     return 0 if not exists( $config->{'report_skip_to'} );
     foreach my $address ( @{ $config->{'report_skip_to'} } ) {
