@@ -10,8 +10,11 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::DMARC::PurePerl;
 
+my $PSL_CHECKED_TIME;
+
 sub pre_loop_setup {
     my ( $self ) = @_;
+    $PSL_CHECKED_TIME = time;
     my $dmarc = Mail::DMARC::PurePerl->new();
     my $psl = eval { $dmarc->get_public_suffix_list(); };
     if ( $psl ) {
@@ -21,6 +24,27 @@ sub pre_loop_setup {
         $self->{'thischild'}->logerror( 'Could not preload PSL' );
     }
     return;
+}
+
+sub pre_fork_setup {
+    my ( $self ) = @_;
+    my $now = time;
+    my $dmarc = Mail::DMARC::PurePerl->new();
+    my $check_time = 60*10; # Check no more often than every 10 minutes
+    if ( $now > $PSL_CHECKED_TIME + $check_time ) {
+        $PSL_CHECKED_TIME = $now;
+        if ( $dmarc->can( 'check_public_suffix_list' ) ) {
+            if ( $dmarc->check_public_suffix_list() ) {
+                $self->{'thischild'}->loginfo( 'DMARC PSL file has changed and has been reloaded' );
+            }
+            else {
+                $self->{'thischild'}->loginfo( 'DMARC PSL file has not changed since last loaded' );
+            }
+        }
+        else {
+            $self->{'thischild'}->loginfo( 'DMARC PSL file update checking not available' );
+        }
+    }
 }
 
 sub get_dmarc_object {

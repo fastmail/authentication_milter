@@ -50,6 +50,24 @@ sub pre_loop_hook {
 
 }
 
+sub run_n_children_hook {
+    my ( $self ) = @_;
+
+    # Load handlers
+    my $config = get_config();
+    foreach my $name ( @{$config->{'load_handlers'}} ) {
+
+        my $package = "Mail::Milter::Authentication::Handler::$name";
+        my $object = $package->new( $self );
+        if ( $object->can( 'pre_fork_setup' ) ) {
+            $object->pre_fork_setup();
+        }
+
+    }
+
+    return;
+}
+
 sub child_init_hook {
     my ( $self ) = @_;
 
@@ -615,6 +633,10 @@ Please see Net::Server docs for more detail of the server code.
 =item I<child_init_hook()>
 
 Hook which runs after forking, sets up per process items.
+
+=item I<run_n_children_hook()>
+
+Hook which runs in parent before it forks children.
 
 =item I<process_request()>
 
