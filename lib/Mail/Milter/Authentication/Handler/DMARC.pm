@@ -18,10 +18,10 @@ sub pre_loop_setup {
     my $dmarc = Mail::DMARC::PurePerl->new();
     my $psl = eval { $dmarc->get_public_suffix_list(); };
     if ( $psl ) {
-        $self->{'thischild'}->loginfo( 'Preloaded PSL' );
+        $self->{'thischild'}->loginfo( 'DMARC Preloaded PSL' );
     }
     else {
-        $self->{'thischild'}->logerror( 'Could not preload PSL' );
+        $self->{'thischild'}->logerror( 'DMARC Could not preload PSL' );
     }
     return;
 }
