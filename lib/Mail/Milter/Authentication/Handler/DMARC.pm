@@ -45,6 +45,7 @@ sub pre_fork_setup {
             $self->{'thischild'}->loginfo( 'DMARC PSL file update checking not available' );
         }
     }
+    return;
 }
 
 sub get_dmarc_object {
