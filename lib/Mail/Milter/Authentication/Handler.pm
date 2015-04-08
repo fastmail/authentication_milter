@@ -357,10 +357,10 @@ sub status {
         }
     }
     if ( $status ) {
-        $PROGRAM_NAME = '[authentication_milter:processing:' . $status . '(' . $count . ')]';
+        $PROGRAM_NAME = 'authentication_milter:processing:' . $status . '(' . $count . ')';
     }
     else {
-        $PROGRAM_NAME = '[authentication_milter:processing(' . $count . ')]';
+        $PROGRAM_NAME = 'authentication_milter:processing(' . $count . ')';
     }
     return;
 }

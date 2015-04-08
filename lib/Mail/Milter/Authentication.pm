@@ -26,7 +26,7 @@ sub _warn {
 sub pre_loop_hook {
     my ( $self ) = @_;
 
-    $PROGRAM_NAME = '[authentication_milter:master]';
+    $PROGRAM_NAME = 'authentication_milter:master';
 
     # Load handlers
     my $config = get_config();
@@ -85,7 +85,7 @@ sub child_init_hook {
     }
 
     $self->loginfo( "Child process $PID starting up" );
-    $PROGRAM_NAME = '[authentication_milter:starting]';
+    $PROGRAM_NAME = 'authentication_milter:starting';
 
     my $base;
     if ( $config->{'protocol'} eq 'milter' ) {
@@ -134,7 +134,7 @@ sub child_init_hook {
 
     $self->setup_handlers();
 
-    $PROGRAM_NAME = '[authentication_milter:waiting(0)]';
+    $PROGRAM_NAME = 'authentication_milter:waiting(0)';
     return;
 }
 
@@ -207,7 +207,7 @@ sub process_request {
     $self->{'count'}++;
     my $count = $self->{'count'};
     my $config = $self->{'config'};
-    $PROGRAM_NAME = '[authentication_milter:processing(' . $count . ')]';
+    $PROGRAM_NAME = 'authentication_milter:processing(' . $count . ')';
     $self->logdebug( 'Processing request ' . $self->{'count'} );
     $self->{'socket'} = $self->{'server'}->{'client'}; 
 
@@ -234,7 +234,7 @@ sub process_request {
 
     delete $self->{'handler'}->{'_Handler'}->{'return_code'};
     delete $self->{'socket'};
-    $PROGRAM_NAME = '[authentication_milter:waiting(' . $count . ')]';
+    $PROGRAM_NAME = 'authentication_milter:waiting(' . $count . ')';
     $self->logdebug( 'Request processing completed' );
     return;
 }

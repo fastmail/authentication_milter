@@ -32,7 +32,7 @@ sub get_smtp_config {
 sub smtp_status {
     my ( $self, $status ) = @_;
     my $smtp = $self->{'smtp'};
-    $PROGRAM_NAME = '[authentication_milter:' . $status . '(' . $self->{'count'} . '.' . $smtp->{'count'} . ')]';
+    $PROGRAM_NAME = 'authentication_milter:' . $status . '(' . $self->{'count'} . '.' . $smtp->{'count'} . ')';
     return;
 }
 
