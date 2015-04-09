@@ -186,10 +186,46 @@ sub load_mail {
     elsif ( $self->{'mail_data'} ) {
         $mail_data = $self->{'mail_data'};
     }
+    
+    my @header_pairs;
+    my @header_split;
+
+    HEADERS:
+    foreach my $dataline ( split ( "\n", $mail_data ) ) {
+        $dataline =~ s/\r?\n$//;
+        # Handle transparency
+        if ( $dataline =~ /^\./ ) {
+            $dataline = substr( $dataline, 1 );
+        }
+        if ( $dataline eq q{} ) {
+            last HEADERS;
+        }
+        push @header_split, $dataline;
+    }
+    
+    my $value = q{};
+    foreach my $header_line ( @header_split ) {
+        if ( $header_line =~ /^\s/ ) {
+            $value .= "\r\n" . $header_line;
+        }
+        else {
+            if ( $value ) {
+                my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
+                $hvalue =~ s/^ //;
+                push @header_pairs , $hkey;
+                push @header_pairs , $hvalue;
+            }
+            $value = $header_line;
+        }
+    }
+    if ( $value ) {
+        my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
+        $hvalue =~ s/^ //;
+        push @header_pairs , $hkey;
+        push @header_pairs , $hvalue;
+    }
 
     my $message_object = Email::Simple->new( $mail_data );
-    my $header_object = $message_object->header_obj();
-    our @header_pairs = $header_object->header_pairs();
     $self->{'message_object'} = $message_object;
     $self->{'header_pairs'}   = \@header_pairs;
     return;
