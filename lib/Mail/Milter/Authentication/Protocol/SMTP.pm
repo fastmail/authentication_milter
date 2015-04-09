@@ -823,7 +823,7 @@ sub change_header {
 
     HEADER:
     foreach my $header_v ( @{ $smtp->{'headers'} } ) {
-        if ( substr( $header_v, 0, length($header) + 1 ) eq "$header:" ) {
+        if ( substr( lc $header_v, 0, length($header) + 1 ) eq lc "$header:" ) {
             $search_i ++;
             if ( $search_i == $index ) {
                 $result_i = $header_i;

@@ -54,7 +54,7 @@ sub header_callback {
     my $config = $self->handler_config();
     return if ( $self->is_trusted_ip_address() );
     return if ( lc $config->{'remove_headers'} eq 'no' );
-    if ( $header eq 'Authentication-Results' ) {
+    if ( lc $header eq 'authentication-results' ) {
         if ( !exists $self->{'auth_result_header_index'} ) {
             $self->{'auth_result_header_index'} = 0;
         }

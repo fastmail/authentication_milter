@@ -139,7 +139,7 @@ sub replace_header {
     while ( @process_header ) {
         my $key = shift @process_header;
         my $evalue = shift @process_header;
-        if ( $key eq $header ) {
+        if ( lc $key eq lc $header ) {
             if ( $i == $index ) {
                 if ( $value eq q{} ) {
                     # NOP
