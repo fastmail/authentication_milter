@@ -207,7 +207,11 @@ sub header_callback {
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
     if ( lc $header eq 'list-id' ) {
-        $self->dbgout( 'DMARCListId', 'List detected: ' . $value, LOG_INFO );
+        $self->dbgout( 'DMARCListId', 'List ID detected: ' . $value, LOG_INFO );
+        $self->{'is_list'} = 1;
+    }
+    if ( lc $header eq 'list-post' ) {
+        $self->dbgout( 'DMARCListId', 'List Post detected: ' . $value, LOG_INFO );
         $self->{'is_list'} = 1;
     }
     if ( $header eq 'From' ) {
