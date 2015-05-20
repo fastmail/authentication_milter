@@ -30,10 +30,10 @@ sub header_callback {
     $dkim_chunk =~ s/\015?\012/$EOL/g;
     push @{$self->{'headers'}} , $dkim_chunk;
 
-    if ( $header eq 'DKIM-Signature' ) {
+    if ( lc($header) eq 'dkim-signature' ) {
         $self->{'has_dkim'} = 1;
     }
-    if ( $header eq 'DomainKey-Signature' ) {
+    if ( lc($header) eq 'domainkey-signature' ) {
         $self->{'has_dkim'} = 1;
     }
 
