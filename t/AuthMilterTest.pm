@@ -284,6 +284,17 @@ sub run_milter_processing {
     });
 
     milter_process({
+        'desc'   => 'Good message dkim case local',
+        'prefix' => 'config/normal',
+        'source' => 'google_apps_good_case.eml',
+        'dest'   => 'google_apps_good_case.local.eml',
+        'ip'     => '127.0.0.1',
+        'name'   => 'localhost',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    milter_process({
         'desc'   => 'Good message trusted',
         'prefix' => 'config/normal',
         'source' => 'google_apps_good.eml',
@@ -480,6 +491,17 @@ sub run_smtp_processing {
         'prefix' => 'config/normal.smtp',
         'source' => 'google_apps_good.eml',
         'dest'   => 'google_apps_good.local.smtp.eml',
+        'ip'     => '127.0.0.1',
+        'name'   => 'localhost',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    smtp_process({
+        'desc'   => 'Good message dkim case',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good_case.eml',
+        'dest'   => 'google_apps_good_case.local.smtp.eml',
         'ip'     => '127.0.0.1',
         'name'   => 'localhost',
         'from'   => 'marc@marcbradshaw.net',

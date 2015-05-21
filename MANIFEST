@@ -49,6 +49,8 @@ t/data/example/google_apps_bad.smtp.eml
 t/data/example/google_apps_bad_spf_fail.eml
 t/data/example/google_apps_bad_spf_fail.smtp.eml
 t/data/example/google_apps_good.8bit.smtp.eml
+t/data/example/google_apps_good_case.local.eml
+t/data/example/google_apps_good_case.local.smtp.eml
 t/data/example/google_apps_good_dryrun.eml
 t/data/example/google_apps_good_dryrun.smtp.eml
 t/data/example/google_apps_good.eml
@@ -75,6 +77,7 @@ t/data/example/tools_pipeline_test.eml
 t/data/example/tools_test.eml
 t/data/example/transparency.smtp.eml
 t/data/source/google_apps_bad.eml
+t/data/source/google_apps_good_case.eml
 t/data/source/google_apps_good.eml
 t/data/source/google_apps_good_sanitize.eml
 t/data/source/google_apps_headers.eml
