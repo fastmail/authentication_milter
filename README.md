@@ -34,14 +34,14 @@ done so.
 See [Postfix After-Queue Content Filter](http://www.postfix.org/FILTER_README.html)
 
 Note: When running in SMTP mode please do not allow untrusted clients to connect to the milter directly, always
-filter these connections through our usual MTA first.
+filter these connections through your usual MTA first.
 
 Limitations: SMTP protocol does not yet support detection of Authenticated connections.
 
 Design Decisions
 ----------------
 
-- Works as either a milter, and a SMTP filter.
+- Works as either a milter or a SMTP filter.
 - Do not reject mail during normal operation.
   - Add headers to allow filtering as required.
 - Try and handle failures gracefully.
