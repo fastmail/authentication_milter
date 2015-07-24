@@ -37,7 +37,7 @@ See [Postfix After-Queue Content Filter](http://www.postfix.org/FILTER_README.ht
 Note: When running in SMTP mode please do not allow untrusted clients to connect to the milter directly, always
 filter these connections through your usual MTA first.
 
-Limitations: SMTP protocol does not yet support detection of Authenticated connections.
+Limitations: SMTP protocol does not yet support detection of Authenticated or Encrypted connections.
 
 Design Decisions
 ----------------
