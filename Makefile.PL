@@ -24,6 +24,7 @@ resources (
 
 configure_requires (
    'Module::Install' => 0,
+   'version'         => 0,
 );
 
 build_requires (

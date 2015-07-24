@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Constants;
 use strict;
 use warnings;
 use base 'Exporter';
-our $VERSION = 0.8;
+use version; our $VERSION = version->declare('v0.1.0');
 
 ## no critic [Modules::ProhibitAutomaticExportation]
 

@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::IPRev;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-our $VERSION = 0.8;
+use version; our $VERSION = version->declare('v0.1.0');
 
 use Net::DNS;
 use Net::IP;

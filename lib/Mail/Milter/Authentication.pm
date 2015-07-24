@@ -2,7 +2,7 @@ package Mail::Milter::Authentication;
 use strict;
 use warnings;
 use base 'Net::Server::PreFork';
-our $VERSION = 0.8;
+use version; our $VERSION = version->declare('v0.1.0');
 
 use English qw{ -no_match_vars };
 use Mail::Milter::Authentication::Config qw{ get_config };
