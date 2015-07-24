@@ -24,7 +24,13 @@ sub tools_test {
         '>', 'tmp/result/tools_test.eml',
     );
     unlink 'tmp/tools_test.sock';
-    system( $setlib . ';' . $cmd . '&' );
+
+    my $cat_pid = fork();
+    die "unable to fork: $!" unless defined($cat_pid);
+    if (!$cat_pid) {
+        exec ( $setlib . ';' . $cmd );
+        die "unable to exec: $!";
+    }
     sleep 2;
     
     $cmd = join( q{ },
@@ -39,9 +45,16 @@ sub tools_test {
         '--rcpt_to', 'test@rcpt.to',
         '--mail_file', 'data/source/tools_test.eml',
     );
-    system( $setlib . ';' . $cmd );
 
-    sleep 1;
+    my $put_pid = fork();
+    die "unable to fork: $!" unless defined($put_pid);
+    if (!$put_pid) {
+        exec ( $setlib . ';' . $cmd );
+        die "unable to exec: $!";
+    }
+
+    waitpid( $put_pid,0 );
+    waitpid( $cat_pid,0 );
 
     files_eq( 'data/example/tools_test.eml', 'tmp/result/tools_test.eml', 'tools test');
 
@@ -60,7 +73,12 @@ sub tools_pipeline_test {
         '>', 'tmp/result/tools_pipeline_test.eml',
     );
     unlink 'tmp/tools_test.sock';
-    system( $setlib . ';' . $cmd . '&' );
+    my $cat_pid = fork();
+    die "unable to fork: $!" unless defined($cat_pid);
+    if (!$cat_pid) {
+        exec ( $setlib . ';' . $cmd );
+        die "unable to exec: $!";
+    }
     sleep 2;
     
     $cmd = join( q{ },
@@ -87,7 +105,16 @@ sub tools_pipeline_test {
         '--rcpt_to', 'test@rcpt.to2',
         '--mail_file', 'data/source/google_apps_nodkim.eml',
     );
-    system( $setlib . ';' . $cmd );
+    
+    my $put_pid = fork();
+    die "unable to fork: $!" unless defined($put_pid);
+    if (!$put_pid) {
+        exec ( $setlib . ';' . $cmd );
+        die "unable to exec: $!";
+    }
+
+    waitpid( $put_pid,0 );
+    waitpid( $cat_pid,0 );
 
     sleep 1;
 
@@ -96,35 +123,57 @@ sub tools_pipeline_test {
     return;
 }
 
-sub start_milter {
-    my ( $prefix ) = @_;
+{
+    my $milter_pid;
 
-    if ( ! -e $prefix . '/authentication_milter.json' ) {
-        die "Could not find config";
+    sub start_milter {
+        my ( $prefix ) = @_;
+
+        return if $milter_pid;
+
+        if ( ! -e $prefix . '/authentication_milter.json' ) {
+            die "Could not find config";
+        }
+    
+        system "cp $prefix/mail-dmarc.ini .";
+    
+        my $setlib = set_lib();
+    
+        my $cmd = join( q{ },
+            '../bin/authentication_milter',
+            '--prefix',
+            $prefix,
+            '--pidfile tmp/authentication_milter.pid',
+        );
+        
+        $milter_pid = fork();
+        die "unable to fork: $!" unless defined($milter_pid);
+        if (!$milter_pid) {
+            exec ( $setlib . ';' . $cmd );
+            die "unable to exec: $!";
+        }
+        sleep 5;
+        open my $pid_file, '<', 'tmp/authentication_milter.pid';
+        $milter_pid = <$pid_file>;
+        close $pid_file;
+        print "Milter started at pid $milter_pid\n";
+        return;
     }
 
-    system "cp $prefix/mail-dmarc.ini .";
+    sub stop_milter {
+        return if ! $milter_pid;
+        kill( 'HUP', $milter_pid );
+        waitpid ($milter_pid,0);
+        print "Milter killed at pid $milter_pid\n";
+        undef $milter_pid;
+        unlink 'tmp/authentication_milter.pid';
+        unlink 'mail-dmarc.ini';
+        return;
+    }
 
-    my $setlib = set_lib();
-
-    my $cmd = join( q{ },
-        '../bin/authentication_milter',
-        '--prefix',
-        $prefix,
-        '--pidfile tmp/authentication_milter.pid',
-        '&',
-    );
-    system( $setlib . ';' . $cmd );
-    sleep 5;
-    return;
-}
-
-sub stop_milter {
-    system( 'kill `cat tmp/authentication_milter.pid`' );
-    unlink 'tmp/authentication_milter.pid';
-    unlink 'mail-dmarc.ini';
-    sleep 5;
-    return;
+    END {
+        stop_milter();
+    }
 }
 
 sub smtp_process {
@@ -147,7 +196,12 @@ sub smtp_process {
         '>', 'tmp/result/' . $args->{'dest'},
     );
     unlink 'tmp/authentication_milter_smtp_out.sock';
-    system( $setlib . ';' . $cmd . '&' );
+    my $cat_pid = fork();
+    die "unable to fork: $!" unless defined($cat_pid);
+    if (!$cat_pid) {
+        exec ( $setlib . ';' . $cmd );
+        die "unable to exec: $!";
+    }
     sleep 2;
 
     $cmd = join( q{ },
@@ -164,9 +218,15 @@ sub smtp_process {
     );
     #warn 'Testing ' . $args->{'source'} . ' > ' . $args->{'dest'} . "\n";
 
-    system( $setlib . ';' . $cmd );
+    my $put_pid = fork();
+    die "unable to fork: $!" unless defined($put_pid);
+    if (!$put_pid) {
+        exec ( $setlib . ';' . $cmd );
+        die "unable to exec: $!";
+    }
 
-    sleep 1;
+    waitpid( $put_pid,0 );
+    waitpid( $cat_pid,0 );
 
     files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
 
@@ -197,7 +257,12 @@ sub smtp_process_multi {
         '>', 'tmp/result/' . $args->{'dest'},
     );
     unlink 'tmp/authentication_milter_smtp_out.sock';
-    system( $setlib . ';' . $cmd . '&' );
+    my $cat_pid = fork();
+    die "unable to fork: $!" unless defined($cat_pid);
+    if (!$cat_pid) {
+        exec ( $setlib . ';' . $cmd );
+        die "unable to exec: $!";
+    }
     sleep 2;
 
     $cmd = join( q{ },
@@ -227,9 +292,15 @@ sub smtp_process_multi {
     }
     #warn 'Testing ' . $args->{'source'} . ' > ' . $args->{'dest'} . "\n";
 
-    system( $setlib . ';' . $cmd );
+    my $put_pid = fork();
+    die "unable to fork: $!" unless defined($put_pid);
+    if (!$put_pid) {
+        exec ( $setlib . ';' . $cmd );
+        die "unable to exec: $!";
+    }
 
-    sleep 1;
+    waitpid( $put_pid,0 );
+    waitpid( $cat_pid,0 );
 
     files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
 
@@ -396,7 +467,7 @@ sub run_milter_processing {
     
     stop_milter();
     
-    start_milter( 'config/dryrun' );
+    start_milter( 'config/dryrun' ); 
     
     milter_process({
         'desc'   => 'Dry Run Mode',
@@ -409,6 +480,26 @@ sub run_milter_processing {
         'to'     => 'marc@fastmail.com',
     });
     
+    stop_milter();
+
+    return;
+}
+
+sub run_milter_processing_spam {
+
+    start_milter( 'config/spam' );
+
+    milter_process({
+        'desc'   => 'Gtube',
+        'prefix' => 'config/spam',
+        'source' => 'gtube.eml',
+        'dest'   => 'gtube.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
     stop_milter();
 
     return;
@@ -626,5 +717,26 @@ sub run_smtp_processing {
 
     return;
 }
+
+sub run_smtp_processing_spam {
+
+    start_milter( 'config/spam.smtp' );
+
+    smtp_process({
+        'desc'   => 'Gtube',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'gtube.eml',
+        'dest'   => 'gtube.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    stop_milter();
+
+    return;
+}
+
 
 1;
