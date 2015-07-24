@@ -144,3 +144,28 @@ sub close_callback {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+  Authentication Milter - IPRev Module
+
+=head1 DESCRIPTION
+
+Check reverse IP lookups.
+
+=head1 SYNOPSIS
+
+=head1 AUTHORS
+
+Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2015
+
+This library is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.
+
+

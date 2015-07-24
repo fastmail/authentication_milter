@@ -8,6 +8,7 @@ use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
 use Mail::Milter::Authentication::Config qw{ get_config };
+use Module::Load;
 use Pod::Usage;
 
 # CONFIG
@@ -19,12 +20,16 @@ my $prefix;
 GetOptions (
     "daemon"    => \$daemon,
     "pidfile=s" => \$pid_file,
-    "help"      => \$help,
+    "help:s"    => \$help,
     "prefix=s"  => \$prefix,
 ) or die "Error in command line arguments\n";
 
-if ( $help ) {
+if ( $help eq q{} ) {
     usage();
+    exit 0;
+}
+elsif ( $help ) {
+    module_usage( $help );
     exit 0;
 }
 
@@ -39,6 +44,30 @@ Mail::Milter::Authentication::start({
 
 sub usage {
     pod2usage( -verbose => 2 );
+    return;
+}
+
+sub module_usage {
+    my ( $module ) = @_;
+    $module =~ s/[^a-zA-Z0-9]//g;
+    my $full_module = 'Mail::Milter::Authentication::Handler::' . $module;
+    eval {
+        load $full_module;
+    };
+    if ( my $error = $@ ) {
+        die "Could not find help for $module";
+    }
+
+    my $part_path = $full_module;
+    $part_path =~ s/::/\//g;
+    $part_path .= '.pm';
+
+    my $module_file = $INC{ $part_path };
+    if ( ! $module_file ) {
+        die "Could not find help for $module";
+    }
+    pod2usage( -input => $module_file, -verbose => 2 );
+
     return;
 }
 
@@ -59,6 +88,15 @@ __END__
 =item -h|--help
 
   Show this help.
+
+=item -h|--help <ModuleName>
+
+  Show help for a particular Module.
+
+  Modules installed by default include the following.
+
+  AddID Auth DKIM DMARC IPRev LocalIP PTR ReturnOK
+  Sanitize SenderID SpamAssassin SPF TrustedIP
 
 =item -d|--daemon
 
