@@ -16,6 +16,7 @@ lib/Mail/Milter/Authentication/Handler/PTR.pm
 lib/Mail/Milter/Authentication/Handler/ReturnOK.pm
 lib/Mail/Milter/Authentication/Handler/Sanitize.pm
 lib/Mail/Milter/Authentication/Handler/SenderID.pm
+lib/Mail/Milter/Authentication/Handler/TLS.pm
 lib/Mail/Milter/Authentication/Handler/SPF.pm
 lib/Mail/Milter/Authentication/Handler/TrustedIP.pm
 lib/Mail/Milter/Authentication.pm

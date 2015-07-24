@@ -14,6 +14,7 @@ This milter verifies using the following standards.
 
 Includes 2 additional modules.
 
+- TLS (milter protocol only) - identifies TLS protected connections
 - AddID - add a header to all email (example)
 - ReturnOK - Checks that return addresses have properly configured MX records
 

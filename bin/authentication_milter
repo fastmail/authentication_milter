@@ -96,7 +96,7 @@ __END__
   Modules installed by default include the following.
 
   AddID Auth DKIM DMARC IPRev LocalIP PTR ReturnOK
-  Sanitize SenderID SpamAssassin SPF TrustedIP
+  Sanitize SenderID SpamAssassin SPF TrustedIP TLS
 
 =item -d|--daemon
 
@@ -230,6 +230,8 @@ __END__
     "handlers" : {                                      | Config for each handlers, can be prefixed with !
                                                         | to disable that handler without having to remove
                                                         | its config.
+
+        "TLS" : {},                                     | TLS Detection Module. No config required.
 
         "SPF" : {                                       | Config for the SPF Module
             "hide_none" : 0                             | Hide auth line if the result is 'none'
