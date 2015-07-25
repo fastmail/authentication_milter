@@ -107,6 +107,11 @@ Who is using this?
 
 [FastMail](https://www.fastmail.com/) are using this to perform SPF/DKIM/DMARC checks on email.
 
+Code Climate
+------------
+
+master branch [![Build Status](https://travis-ci.org/fastmail/authentication_milter.svg?branch=master)](https://travis-ci.org/fastmail/authentication_milter)
+
 Contributing
 ------------
 
