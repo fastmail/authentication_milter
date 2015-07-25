@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # Simple script which accepts email parameters
 # and dumps them to a supplied SMTP style connection

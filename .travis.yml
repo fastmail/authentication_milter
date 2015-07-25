@@ -1,0 +1,27 @@
+language: perl
+perl:
+  - "5.20"
+  - "5.18"
+  - "5.16"
+  - "5.14"
+  - "5.12"
+  - "5.10"
+
+#branches:
+#  only:
+#    - releases
+
+before_install:
+   - git config --global user.name "TravisCI"
+
+install:
+    - cpanm --quiet --notest Mail::SPF --install-args="--install-path sbin=/tmp"
+    - cpanm --quiet --notest Test::More Test::File::Contents Test::Perl::Critic
+    - cpanm --quiet --notest Test::CheckManifest Test::Pod::Coverage Test::Pod
+    - cpanm --quiet --notest Cwd Email::Address Email::Date::Format Email::Simple
+    - cpanm --quiet --notest English IO::Socket JSON Mail::DKIM::Verifier Mail::DKIM
+    - cpanm --quiet --notest Mail::DMARC
+    - cpanm --quiet --notest MIME::Base64 Module::Load Module::Loaded
+    - cpanm --quiet --notest Net::DNS Net::IP Net::Server
+    - cpanm --quiet --notest Pod::Usage Proc::ProcessTable Socket Sys::Hostname Sys::Syslog
+

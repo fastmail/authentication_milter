@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # Simple script which accepts a SMTP style connection
 # And dumps it back out to the console
