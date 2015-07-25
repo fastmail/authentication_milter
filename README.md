@@ -12,7 +12,7 @@ This milter verifies using the following standards.
 - IPRev
 - Check HELO matches it's IP address
 
-Includes 2 additional modules.
+Includes 3 additional modules.
 
 - TLS (milter protocol only) - identifies TLS protected connections
 - AddID - add a header to all email (example)
