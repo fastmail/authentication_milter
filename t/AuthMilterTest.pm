@@ -6,6 +6,8 @@ use Test::More;
 use Test::File::Contents;
 use Cwd qw{ cwd };
 
+use Module::Load;
+
 my $base_dir = cwd();
 
 sub set_lib {
@@ -136,22 +138,22 @@ sub tools_pipeline_test {
         }
     
         system "cp $prefix/mail-dmarc.ini .";
-    
-        my $setlib = set_lib();
-    
-        my $cmd = join( q{ },
-            '../bin/authentication_milter',
-            '--prefix',
-            $prefix,
-            '--pidfile tmp/authentication_milter.pid',
-        );
         
         $milter_pid = fork();
         die "unable to fork: $!" unless defined($milter_pid);
         if (!$milter_pid) {
-            exec ( $setlib . ';' . $cmd );
-            die "unable to exec: $!";
+            autoload Mail::Milter::Authentication;
+            autoload Mail::Milter::Authentication::Protocol::Milter;
+            autoload Mail::Milter::Authentication::Protocol::SMTP;
+            autoload Mail::Milter::Authentication::Config;
+            $Mail::Milter::Authentication::Config::PREFIX = $prefix;
+            Mail::Milter::Authentication::start({
+               'pid_file'   => 'tmp/authentication_milter.pid',
+                'daemon'     => 0,
+            });
+            die;
         }
+
         sleep 5;
         open my $pid_file, '<', 'tmp/authentication_milter.pid';
         $milter_pid = <$pid_file>;
