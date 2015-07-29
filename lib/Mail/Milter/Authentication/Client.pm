@@ -52,7 +52,7 @@ sub new {
     $self->{'connect_type'}  = $args->{'connect_type'} || 'tcp4';
 
     $self->{'helo_host'}     = $args->{'helo_host'}    || 'test.host.example.com';
-    $self->{'mail_from'}     = $args->{'mail_from'}    || 'test@from.example.com';
+    $self->{'mail_from'}     = $args->{'mail_from'}    || '';
     $self->{'rcpt_to'}       = $args->{'rcpt_to'}      || 'test@to.example.com';
 
     # Generate a unique Queue ID

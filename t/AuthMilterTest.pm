@@ -9,6 +9,12 @@ use Cwd qw{ cwd };
 use IO::Socket::INET;
 use IO::Socket::UNIX;
 use Module::Load;
+        
+use Mail::Milter::Authentication;
+use Mail::Milter::Authentication::Client;
+use Mail::Milter::Authentication::Config;
+use Mail::Milter::Authentication::Protocol::Milter;
+use Mail::Milter::Authentication::Protocol::SMTP;
 
 my $base_dir = cwd();
 
@@ -122,10 +128,6 @@ sub tools_pipeline_test {
         $milter_pid = fork();
         die "unable to fork: $!" unless defined($milter_pid);
         if (!$milter_pid) {
-            autoload Mail::Milter::Authentication;
-            autoload Mail::Milter::Authentication::Protocol::Milter;
-            autoload Mail::Milter::Authentication::Protocol::SMTP;
-            autoload Mail::Milter::Authentication::Config;
             $Mail::Milter::Authentication::Config::PREFIX = $prefix;
             Mail::Milter::Authentication::start({
                'pid_file'   => 'tmp/authentication_milter.pid',
@@ -271,22 +273,17 @@ sub milter_process {
         die "Could not find source";
     }
 
-    my $setlib = set_lib();
-    my $cmd = join( q{ },
-        '../bin/authentication_milter_client',
-        '--prefix', $args->{'prefix'},
-        '--mailer_name test.module',
-        '--mail_file', 'data/source/' . $args->{'source'},
-        '--connect_ip', $args->{'ip'},
-        '--connect_name', $args->{'name'},
-        '--helo_host', $args->{'name'},
-        '--mail_from', $args->{'from'},
-        '--rcpt_to', $args->{'to'},
-        '>', 'tmp/result/' . $args->{'dest'},
-    );
-    #warn 'Testing ' . $args->{'source'} . ' > ' . $args->{'dest'} . "\n";
-
-    system( $setlib . ';' . $cmd );
+    client({
+        'prefix'       => $args->{'prefix'},
+        'mailer_name'  => 'test.module',
+        'mail_file'    => 'data/source/' . $args->{'source'},
+        'connect_ip'   => $args->{'ip'},
+        'connect_name' => $args->{'name'},
+        'helo_host'    => $args->{'name'},
+        'mail_from'    => $args->{'from'},
+        'rcpt_to'      => $args->{'to'},
+        'output'       => 'tmp/result/' . $args->{'dest'},
+    });
 
     files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'milter ' . $args->{'desc'} );
 
@@ -330,6 +327,16 @@ sub run_milter_processing {
         'to'     => 'marc@fastmail.com',
     });
 
+    milter_process({
+        'desc'   => 'Good message no from',
+        'prefix' => 'config/normal',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_nofrom.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'marcbradshaw.net',
+        'from'   =>  '',
+        'to'     => 'marc@fastmail.com',
+    });
 
     milter_process({
         'desc'   => 'Good message',
@@ -561,6 +568,17 @@ sub run_smtp_processing {
         'ip'     => '59.167.198.153',
         'name'   => 'mx4.twofiftyeight.ltd.uk',
         'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    smtp_process({
+        'desc'   => 'Good message no from',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_nofrom.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'marcbradshaw.net',
+        'from'   => '',
         'to'     => 'marc@fastmail.com',
     });
 
@@ -919,5 +937,30 @@ sub smtpcat {
     exit 0;
 }
 
+sub client {
+    my ( $args ) = @_;
+    my $pid = fork();
+    die "unable to fork: $!" unless defined($pid);
+    if ( ! $pid ) {
+
+        my $output = $args->{'output'};
+        delete $args->{'output'};
+
+        $Mail::Milter::Authentication::Config::PREFIX = $args->{'prefix'};
+        delete $args->{'prefix'};
+
+        my $client = Mail::Milter::Authentication::Client->new( $args );
+
+        $client->process();
+
+        open my $file, '>', $output;
+        print $file $client->result();
+        close $file;
+        exit 0;
+
+    }
+    waitpid( $pid, 0 );
+    return;
+}
 
 1;
