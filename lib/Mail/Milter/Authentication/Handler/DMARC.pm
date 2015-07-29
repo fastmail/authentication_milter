@@ -115,29 +115,26 @@ sub envfrom_callback {
         return;
     }
 
-    my $domain_from;
-    if ( !$env_from ) {
-        $domain_from = lc $self->{'helo_name'};
-    }
-    else {
-        $domain_from = $self->get_domain_from($env_from);
-    }
-
     my $dmarc = $self->get_dmarc_object();
-    eval {
-        $dmarc->envelope_from($domain_from);
-    };
-    if ( my $error = $@ ) {
-        if ( $error =~ /invalid envelope_from at / ) {
-            $self->log_error( 'DMARC Invalid envelope from <' . $domain_from . '>' );
-            $self->add_auth_header( 'dmarc=permerror' );
+
+    my $domain_from;
+    if ( $env_from ) {
+        $domain_from = $self->get_domain_from($env_from);
+        eval {
+            $dmarc->envelope_from($domain_from);
+        };
+        if ( my $error = $@ ) {
+            if ( $error =~ /invalid envelope_from at / ) {
+                $self->log_error( 'DMARC Invalid envelope from <' . $domain_from . '>' );
+                $self->add_auth_header( 'dmarc=permerror' );
+            }
+            else {
+                $self->log_error( 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
+                $self->add_auth_header('dmarc=temperror');
+            }
+            $self->{'failmode'} = 1;
+            return;
         }
-        else {
-            $self->log_error( 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
-            $self->add_auth_header('dmarc=temperror');
-        }
-        $self->{'failmode'} = 1;
-        return;
     }
 
     my $spf_handler = $self->get_handler('SPF');
