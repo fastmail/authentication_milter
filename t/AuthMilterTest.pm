@@ -4,8 +4,10 @@ use strict;
 use warnings;
 use Test::More;
 use Test::File::Contents;
-use Cwd qw{ cwd };
 
+use Cwd qw{ cwd };
+use IO::Socket::INET;
+use IO::Socket::UNIX;
 use Module::Load;
 
 my $base_dir = cwd();
@@ -35,27 +37,18 @@ sub tools_test {
     }
     sleep 2;
     
-    $cmd = join( q{ },
-        'bin/smtpput',
-        '--sock_type unix',
-        '--sock_path tmp/tools_test.sock',
-        '--mailer_name test.module',
-        '--connect_ip', '123.123.123.123',
-        '--connect_name', 'test.connect.name',
-        '--helo_host', 'test.helo.host',
-        '--mail_from', 'test@mail.from',
-        '--rcpt_to', 'test@rcpt.to',
-        '--mail_file', 'data/source/tools_test.eml',
-    );
+    smtpput({
+        'sock_type'    => 'unix',
+        'sock_path'    => 'tmp/tools_test.sock',
+        'mailer_name'  => 'test.module',
+        'connect_ip'   => ['123.123.123.123'],
+        'connect_name' => ['test.connect.name'],
+        'helo_host'    => ['test.helo.host'],
+        'mail_from'    => ['test@mail.from'],
+        'rcpt_to'      => ['test@rcpt.to'],
+        'mail_file'    => ['data/source/tools_test.eml'],
+    });
 
-    my $put_pid = fork();
-    die "unable to fork: $!" unless defined($put_pid);
-    if (!$put_pid) {
-        exec ( $setlib . ';' . $cmd );
-        die "unable to exec: $!";
-    }
-
-    waitpid( $put_pid,0 );
     waitpid( $cat_pid,0 );
 
     files_eq( 'data/example/tools_test.eml', 'tmp/result/tools_test.eml', 'tools test');
@@ -83,39 +76,41 @@ sub tools_pipeline_test {
     }
     sleep 2;
     
-    $cmd = join( q{ },
-        'bin/smtpput',
-        '--sock_type unix',
-        '--sock_path tmp/tools_test.sock',
-        '--mailer_name test.module',
-        '--connect_ip', '123.123.123.123',
-        '--connect_name', 'test.connect.name',
-        '--helo_host', 'test.helo.host',
-        '--mail_from', 'test@mail.from',
-        '--rcpt_to', 'test@rcpt.to',
-        '--mail_file', 'data/source/tools_test.eml',
-        '--connect_ip', '1.2.3.4',
-        '--connect_name', 'test.connect.example.com',
-        '--helo_host', 'test.helo.host.example.com',
-        '--mail_from', 'test@mail.again.from',
-        '--rcpt_to', 'test@rcpt.again.to',
-        '--mail_file', 'data/source/transparency.eml',
-        '--connect_ip', '123.123.123.124',
-        '--connect_name', 'test.connect.name2',
-        '--helo_host', 'test.helo.host2',
-        '--mail_from', 'test@mail.from2',
-        '--rcpt_to', 'test@rcpt.to2',
-        '--mail_file', 'data/source/google_apps_nodkim.eml',
-    );
-    
-    my $put_pid = fork();
-    die "unable to fork: $!" unless defined($put_pid);
-    if (!$put_pid) {
-        exec ( $setlib . ';' . $cmd );
-        die "unable to exec: $!";
-    }
+    my $putargs = {
+        'sock_type'    => 'unix',
+        'sock_path'    => 'tmp/tools_test.sock',
+        'mailer_name'  => 'test.module',
+        'connect_ip'   => [],
+        'connect_name' => [],
+        'helo_host'    => [],
+        'mail_from'    => [],
+        'rcpt_to'      => [],
+        'mail_file'    => [],
+    };
 
-    waitpid( $put_pid,0 );
+    push @{$putargs->{'connect_ip'}},   '123.123.123.123';
+    push @{$putargs->{'connect_name'}}, 'test.connect.name';
+    push @{$putargs->{'helo_host'}},    'test.helo.host';
+    push @{$putargs->{'mail_from'}},    'test@mail.from';
+    push @{$putargs->{'rcpt_to'}},      'test@rcpt.to';
+    push @{$putargs->{'mail_file'}},    'data/source/tools_test.eml';
+
+    push @{$putargs->{'connect_ip'}},   '1.2.3.4';
+    push @{$putargs->{'connect_name'}}, 'test.connect.example.com';
+    push @{$putargs->{'helo_host'}},    'test.helo.host.example.com';
+    push @{$putargs->{'mail_from'}},    'test@mail.again.from';
+    push @{$putargs->{'rcpt_to'}},      'test@rcpt.again.to';
+    push @{$putargs->{'mail_file'}},    'data/source/transparency.eml';
+
+    push @{$putargs->{'connect_ip'}},   '123.123.123.124';
+    push @{$putargs->{'connect_name'}}, 'test.connect.name2';
+    push @{$putargs->{'helo_host'}},    'test.helo.host2';
+    push @{$putargs->{'mail_from'}},    'test@mail.from2';
+    push @{$putargs->{'rcpt_to'}},      'test@rcpt.to2';
+    push @{$putargs->{'mail_file'}},    'data/source/google_apps_nodkim.eml';
+
+    smtpput( $putargs );
+
     waitpid( $cat_pid,0 );
 
     sleep 1;
@@ -206,28 +201,18 @@ sub smtp_process {
     }
     sleep 2;
 
-    $cmd = join( q{ },
-        'bin/smtpput',
-        '--sock_type unix',
-        '--sock_path tmp/authentication_milter_test.sock',
-        '--mailer_name test.module',
-        '--connect_ip', $args->{'ip'},
-        '--connect_name', $args->{'name'},
-        '--helo_host', $args->{'name'},
-        '--mail_from', $args->{'from'},
-        '--rcpt_to', $args->{'to'},
-        '--mail_file', 'data/source/' . $args->{'source'},
-    );
-    #warn 'Testing ' . $args->{'source'} . ' > ' . $args->{'dest'} . "\n";
+    smtpput({
+        'sock_type'    => 'unix',
+        'sock_path'    => 'tmp/authentication_milter_test.sock',
+        'mailer_name'  => 'test.module',
+        'connect_ip'   => [ $args->{'ip'} ],
+        'connect_name' => [ $args->{'name'} ],
+        'helo_host'    => [ $args->{'name'} ],
+        'mail_from'    => [ $args->{'from'} ],
+        'rcpt_to'      => [ $args->{'to'} ],
+        'mail_file'    => [ 'data/source/' . $args->{'source'} ],
+    });
 
-    my $put_pid = fork();
-    die "unable to fork: $!" unless defined($put_pid);
-    if (!$put_pid) {
-        exec ( $setlib . ';' . $cmd );
-        die "unable to exec: $!";
-    }
-
-    waitpid( $put_pid,0 );
     waitpid( $cat_pid,0 );
 
     files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
@@ -266,42 +251,41 @@ sub smtp_process_multi {
         die "unable to exec: $!";
     }
     sleep 2;
-
-    $cmd = join( q{ },
-        'bin/smtpput',
-        '--sock_type unix',
-        '--sock_path tmp/authentication_milter_test.sock',
-        '--mailer_name test.module',
-    );
+    
+    my $putargs = {
+        'sock_type'    => 'unix',
+        'sock_path'    => 'tmp/authentication_milter_test.sock',
+        'mailer_name'  => 'test.module',
+        'connect_ip'   => [],
+        'connect_name' => [],
+        'helo_host'    => [],
+        'mail_from'    => [],
+        'rcpt_to'      => [],
+        'mail_file'    => [],
+    };
 
     foreach my $item ( @{$args->{'ip'}} ) {
-        $cmd .= ' --connect_ip ' . $item;
+        push @{$putargs->{'connect_ip'}}, $item;
     }
     foreach my $item ( @{$args->{'name'}} ) {
-        $cmd .= ' --connect_name ' . $item;
+        push @{$putargs->{'connect_name'}}, $item;
     }
     foreach my $item ( @{$args->{'name'}} ) {
-        $cmd .= ' --helo_host ' . $item;
+        push @{$putargs->{'helo_host'}}, $item;
     }
     foreach my $item ( @{$args->{'from'}} ) {
-        $cmd .= ' --mail_from ' . $item;
+        push @{$putargs->{'mail_from'}}, $item;
     }
     foreach my $item ( @{$args->{'to'}} ) {
-        $cmd .= ' --rcpt_to ' . $item;
+        push @{$putargs->{'rcpt_to'}}, $item;
     }
     foreach my $item ( @{$args->{'source'}} ) {
-        $cmd .= ' --mail_file data/source/' . $item;
+        push @{$putargs->{'mail_file'}}, 'data/source/' . $item;
     }
     #warn 'Testing ' . $args->{'source'} . ' > ' . $args->{'dest'} . "\n";
 
-    my $put_pid = fork();
-    die "unable to fork: $!" unless defined($put_pid);
-    if (!$put_pid) {
-        exec ( $setlib . ';' . $cmd );
-        die "unable to exec: $!";
-    }
+    smtpput( $putargs );
 
-    waitpid( $put_pid,0 );
     waitpid( $cat_pid,0 );
 
     files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
@@ -553,7 +537,7 @@ sub run_smtp_processing {
         'dest'   => 'google_apps_good.8bit.smtp.eml',
         'ip'     => '127.0.0.1',
         'name'   => 'localhost',
-        'from'   => '"<marc@marcbradshaw.net> BODY=8BITMIME"',
+        'from'   => '<marc@marcbradshaw.net> BODY=8BITMIME',
         'to'     => 'marc@fastmail.com',
     });
 
@@ -740,5 +724,121 @@ sub run_smtp_processing_spam {
     return;
 }
 
+sub smtpput {
+    my ( $args ) = @_;
+
+    my $mailer_name  = $args->{'mailer_name'};
+    
+    my $mail_file_a  = $args->{'mail_file'};
+    my $mail_from_a  = $args->{'mail_from'};
+    my $rcpt_to_a    = $args->{'rcpt_to'};
+    my $x_name_a     = $args->{'connect_name'};
+    my $x_addr_a     = $args->{'connect_ip'};
+    my $x_helo_a     = $args->{'helo_host'};
+    
+    my $sock_type    = $args->{'sock_type'};
+    my $sock_path    = $args->{'sock_path'};
+    my $sock_host    = $args->{'sock_host'};
+    my $sock_port    = $args->{'sock_port'};
+    
+    my $sock;
+    if ( $sock_type eq 'inet' ) {
+       $sock = IO::Socket::INET->new(
+            'Proto' => 'tcp',
+            'PeerAddr' => $sock_host,
+            'PeerPort' => $sock_port,
+        ) || die "could not open outbound SMTP socket: $!";
+    }
+    elsif ( $sock_type eq 'unix' ) {
+       $sock = IO::Socket::UNIX->new(
+            'Peer' => $sock_path,
+        ) || die "could not open outbound SMTP socket: $!";
+    }
+    
+    my $line = <$sock>;
+    
+    if ( ! $line =~ /250/ ) {
+        die "Unexpected SMTP response $line";
+        return 0;
+    }
+    
+    send_smtp_packet( $sock, 'EHLO ' . $mailer_name,       '250' ) || die;
+    
+    my $first_time = 1;
+   
+    while ( @$mail_from_a ) {
+    
+        if ( ! $first_time ) {
+            if ( ! send_smtp_packet( $sock, 'RSET', '250' ) ) {
+                $sock->close();
+                return;
+            };
+        }
+        $first_time = 0;
+    
+        my $mail_file = shift @$mail_file_a;
+        my $mail_from = shift @$mail_from_a; 
+        my $rcpt_to   = shift @$rcpt_to_a;
+        my $x_name    = shift @$x_name_a;
+        my $x_addr    = shift @$x_addr_a;
+        my $x_helo    = shift @$x_helo_a;
+        
+        my $mail_data = q{};
+        
+        if ( $mail_file eq '-' ) {
+            while ( my $l = <> ) {
+                $mail_data .= $l;
+            }
+        }
+        else {
+            if ( ! -e $mail_file ) {
+                die "Mail file $mail_file does not exist";
+            }
+            open my $inf, '<', $mail_file;
+            my @all = <$inf>;
+            $mail_data = join( q{}, @all );
+            close $inf;
+        }
+        
+        $mail_data =~ s/\015?\012/\015\012/g;
+        # Handle transparency
+        $mail_data =~ s/\015\012\./\015\012\.\./g;
+        
+        send_smtp_packet( $sock, 'XFORWARD NAME=' . $x_name,   '250' ) || die;
+        send_smtp_packet( $sock, 'XFORWARD ADDR=' . $x_addr,   '250' ) || die;
+        send_smtp_packet( $sock, 'XFORWARD HELO=' . $x_helo,   '250' ) || die;
+        
+        send_smtp_packet( $sock, 'MAIL FROM:' . $mail_from, '250' ) || die;
+        send_smtp_packet( $sock, 'RCPT TO:' .   $rcpt_to,   '250' ) || die;
+        send_smtp_packet( $sock, 'DATA',                    '354' ) || die;
+        
+        print $sock $mail_data;
+        print $sock "\r\n";
+        
+        send_smtp_packet( $sock, '.',    '250' ) || return;
+    
+    }
+        
+    send_smtp_packet( $sock, 'QUIT', '221' ) || return;
+    $sock->close();
+
+    return;
+}
+
+sub send_smtp_packet {
+    my ( $socket, $send, $expect ) = @_;
+    print $socket "$send\r\n";
+    my $recv = <$socket>;
+    while ( $recv =~ /^\d\d\d\-/ ) {
+        $recv = <$socket>;
+    }
+    if ( $recv =~ /^$expect/ ) {
+        return 1;
+    }
+    else {
+        warn "SMTP Send expected $expect received $recv when sending $send";
+        return 0;
+    }
+}
 
 1;
