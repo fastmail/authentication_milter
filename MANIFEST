@@ -16,8 +16,8 @@ lib/Mail/Milter/Authentication/Handler/PTR.pm
 lib/Mail/Milter/Authentication/Handler/ReturnOK.pm
 lib/Mail/Milter/Authentication/Handler/Sanitize.pm
 lib/Mail/Milter/Authentication/Handler/SenderID.pm
-lib/Mail/Milter/Authentication/Handler/TLS.pm
 lib/Mail/Milter/Authentication/Handler/SPF.pm
+lib/Mail/Milter/Authentication/Handler/TLS.pm
 lib/Mail/Milter/Authentication/Handler/TrustedIP.pm
 lib/Mail/Milter/Authentication.pm
 lib/Mail/Milter/Authentication/Protocol/Milter.pm
@@ -55,6 +55,8 @@ t/data/example/google_apps_good_dryrun.smtp.eml
 t/data/example/google_apps_good.eml
 t/data/example/google_apps_good.local.eml
 t/data/example/google_apps_good.local.smtp.eml
+t/data/example/google_apps_good_nofrom.eml
+t/data/example/google_apps_good_nofrom.smtp.eml
 t/data/example/google_apps_good_sanitize.eml
 t/data/example/google_apps_good_sanitize.smtp.eml
 t/data/example/google_apps_good.smtp.eml
