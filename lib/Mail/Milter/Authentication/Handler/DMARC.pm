@@ -224,7 +224,8 @@ sub header_callback {
         $self->{'from_header'} = $value;
         my $dmarc = $self->get_dmarc_object();
         return if ( $self->{'failmode'} );
-        eval { $dmarc->header_from_raw( $header . ': ' . $value ) };
+        my $header_domain = $self->get_domain_from( $value );
+        eval { $dmarc->header_from( $header_domain ) };
         if ( my $error = $@ ) {
             $self->log_error( 'DMARC Header From Error ' . $error );
             $self->add_auth_header('dmarc=temperror');

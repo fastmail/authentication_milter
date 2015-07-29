@@ -45,6 +45,8 @@ t/config/normal.smtp/authentication_milter.json
 t/config/normal.smtp/mail-dmarc.ini
 t/data/example/google_apps_bad.eml
 t/data/example/google_apps_bad.smtp.eml
+t/data/example/google_apps_bad_space.eml
+t/data/example/google_apps_bad_space.smtp.eml
 t/data/example/google_apps_bad_spf_fail.eml
 t/data/example/google_apps_bad_spf_fail.smtp.eml
 t/data/example/google_apps_good.8bit.smtp.eml
@@ -78,6 +80,7 @@ t/data/example/tools_pipeline_test.eml
 t/data/example/tools_test.eml
 t/data/example/transparency.smtp.eml
 t/data/source/google_apps_bad.eml
+t/data/source/google_apps_bad_space.eml
 t/data/source/google_apps_good_case.eml
 t/data/source/google_apps_good.eml
 t/data/source/google_apps_good_sanitize.eml

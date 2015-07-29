@@ -702,6 +702,7 @@ sub get_domain_from {
     if ( $address =~ /\@/ ) {
         ($domain) = $address =~ /.*\@(.*)/;
     }
+    $domain =~ s/\s//g;
     return lc $domain;
 }
 

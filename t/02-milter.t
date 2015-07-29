@@ -13,7 +13,7 @@ if ( ! -e 't/01-tools.t' ) {
 
 chdir 't';
 
-plan tests => 13;
+plan tests => 14;
 
 {
     system 'rm -rf tmp';

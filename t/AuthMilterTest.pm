@@ -361,6 +361,17 @@ sub run_milter_processing {
     });
     
     milter_process({
+        'desc'   => 'DKIM Fail Domain Space',
+        'prefix' => 'config/normal',
+        'source' => 'google_apps_bad_space.eml',
+        'dest'   => 'google_apps_bad_space.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@ marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    milter_process({
         'desc'   => 'DKIM Fail',
         'prefix' => 'config/normal',
         'source' => 'google_apps_bad.eml',
@@ -604,6 +615,16 @@ sub run_smtp_processing {
         'to'     => 'marc@fastmail.com',
     });
     
+    smtp_process({
+        'desc'   => 'DKIM Fail Domain Space',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_bad_space.eml',
+        'dest'   => 'google_apps_bad_space.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@ marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
     smtp_process({
         'desc'   => 'DKIM Fail',
         'prefix' => 'config/normal.smtp',
