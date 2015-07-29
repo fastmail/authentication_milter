@@ -12,29 +12,22 @@ use Module::Load;
 
 my $base_dir = cwd();
 
+our $MASTER_PROCESS_PID = $$;
+
 sub set_lib {
     return 'export PERL5LIB=' . $base_dir . '/lib';
 }
 
 sub tools_test {
 
-    my $setlib = set_lib();
-
-    my $cmd = join( q{ },
-        'bin/smtpcat',
-        '--sock_type unix',
-        '--sock_path tmp/tools_test.sock',
-        '|', 'sed "10,11d"',
-        '>', 'tmp/result/tools_test.eml',
-    );
+    my $catargs = {
+        'sock_type' => 'unix',
+        'sock_path' => 'tmp/tools_test.sock',
+        'remove'    => [10],
+        'output'    => 'tmp/result/tools_test.eml',
+    };
     unlink 'tmp/tools_test.sock';
-
-    my $cat_pid = fork();
-    die "unable to fork: $!" unless defined($cat_pid);
-    if (!$cat_pid) {
-        exec ( $setlib . ';' . $cmd );
-        die "unable to exec: $!";
-    }
+    my $cat_pid = smtpcat( $catargs );
     sleep 2;
     
     smtpput({
@@ -58,22 +51,14 @@ sub tools_test {
 
 sub tools_pipeline_test {
 
-    my $setlib = set_lib();
-
-    my $cmd = join( q{ },
-        'bin/smtpcat',
-        '--sock_type unix',
-        '--sock_path tmp/tools_test.sock',
-        '|', 'sed "10,11d"',
-        '>', 'tmp/result/tools_pipeline_test.eml',
-    );
+    my $catargs = {
+        'sock_type' => 'unix',
+        'sock_path' => 'tmp/tools_test.sock',
+        'remove'    => [10],
+        'output'    => 'tmp/result/tools_pipeline_test.eml',
+    };
     unlink 'tmp/tools_test.sock';
-    my $cat_pid = fork();
-    die "unable to fork: $!" unless defined($cat_pid);
-    if (!$cat_pid) {
-        exec ( $setlib . ';' . $cmd );
-        die "unable to exec: $!";
-    }
+    my $cat_pid = smtpcat( $catargs );
     sleep 2;
     
     my $putargs = {
@@ -169,6 +154,7 @@ sub tools_pipeline_test {
     }
 
     END {
+        return if $MASTER_PROCESS_PID != $$;
         stop_milter();
     }
 }
@@ -183,22 +169,14 @@ sub smtp_process {
         die "Could not find source";
     }
 
-    my $setlib = set_lib();
-
-    my $cmd = join( q{ },
-        'bin/smtpcat',
-        '--sock_type unix',
-        '--sock_path tmp/authentication_milter_smtp_out.sock',
-        '|', 'sed "10,11d"',
-        '>', 'tmp/result/' . $args->{'dest'},
-    );
+    my $catargs = {
+        'sock_type' => 'unix',
+        'sock_path' => 'tmp/authentication_milter_smtp_out.sock',
+        'remove'    => [10,11],
+        'output'    => 'tmp/result/' . $args->{'dest'},
+    };
     unlink 'tmp/authentication_milter_smtp_out.sock';
-    my $cat_pid = fork();
-    die "unable to fork: $!" unless defined($cat_pid);
-    if (!$cat_pid) {
-        exec ( $setlib . ';' . $cmd );
-        die "unable to exec: $!";
-    }
+    my $cat_pid = smtpcat( $catargs );
     sleep 2;
 
     smtpput({
@@ -227,29 +205,19 @@ sub smtp_process_multi {
         die "Could not find config";
     }
 
-    my $setlib = set_lib();
-
     # Hardcoded lines to remove in subsequent messages
     # If you change the source email then change the awk
     # numbers here too.
     # This could be better!
-    my $sed_filter = $args->{'sed_filter'};
-    my $cmd = join( q{ },
-        'bin/smtpcat',
-        '--sock_type unix',
-        '--sock_path tmp/authentication_milter_smtp_out.sock',
-        '|', 'sed "',
-        $sed_filter,
-        '"',
-        '>', 'tmp/result/' . $args->{'dest'},
-    );
+
+    my $catargs = {
+        'sock_type' => 'unix',
+        'sock_path' => 'tmp/authentication_milter_smtp_out.sock',
+        'remove'    => $args->{'filter'},
+        'output'    => 'tmp/result/' . $args->{'dest'},
+    };
     unlink 'tmp/authentication_milter_smtp_out.sock';
-    my $cat_pid = fork();
-    die "unable to fork: $!" unless defined($cat_pid);
-    if (!$cat_pid) {
-        exec ( $setlib . ';' . $cmd );
-        die "unable to exec: $!";
-    }
+    my $cat_pid = smtpcat( $catargs );
     sleep 2;
     
     my $putargs = {
@@ -496,27 +464,27 @@ sub run_smtp_processing {
     start_milter( 'config/normal.smtp' );
 
     smtp_process_multi({
-        'desc'       => 'Pipelined messages',
-        'prefix'     => 'config/normal.smtp',
-        'source'     => [ 'transparency.eml', 'google_apps_good.eml','google_apps_bad.eml', ],
-        'dest'       => 'pipelined.smtp.eml',
-        'ip'         => [ '1.2.3.4', '127.0.0.1', '123.123.123.123', ],
-        'name'       => [ 'test.example.com', 'localhost', 'bad.name.google.com', ],
-        'from'       => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
-        'to'         => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
-        'sed_filter' => "10,11d;45,46d;115,116d",
+        'desc'   => 'Pipelined messages',
+        'prefix' => 'config/normal.smtp',
+        'source' => [ 'transparency.eml', 'google_apps_good.eml','google_apps_bad.eml', ],
+        'dest'   => 'pipelined.smtp.eml',
+        'ip'     => [ '1.2.3.4', '127.0.0.1', '123.123.123.123', ],
+        'name'   => [ 'test.example.com', 'localhost', 'bad.name.google.com', ],
+        'from'   => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
+        'to'     => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
+        'filter' => [10,11,45,46,115,116],
     });
 
     smtp_process_multi({
-        'desc'       => 'Pipelined messages limit',
-        'prefix'     => 'config/normal.smtp',
-        'source'     => [ 'transparency.eml', 'google_apps_good.eml', 'google_apps_bad.eml', 'transparency.eml', 'google_apps_good.eml','google_apps_bad.eml', ],
-        'dest'       => 'pipelined.limit.smtp.eml',
-        'ip'         => [ '1.2.3.4', '127.0.0.1', '123.123.123.123', '1.2.3.4', '127.0.0.1', '123.123.123.123', ],
-        'name'       => [ 'test.example.com', 'localhost', 'bad.name.google.com', 'test.example.com', 'localhost', 'bad.name.google.com', ],
-        'from'       => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
-        'to'         => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
-        'sed_filter' => "10,11d;45,46d;115,116d;190,191d",
+        'desc'   => 'Pipelined messages limit',
+        'prefix' => 'config/normal.smtp',
+        'source' => [ 'transparency.eml', 'google_apps_good.eml', 'google_apps_bad.eml', 'transparency.eml', 'google_apps_good.eml','google_apps_bad.eml', ],
+        'dest'   => 'pipelined.limit.smtp.eml',
+        'ip'     => [ '1.2.3.4', '127.0.0.1', '123.123.123.123', '1.2.3.4', '127.0.0.1', '123.123.123.123', ],
+        'name'   => [ 'test.example.com', 'localhost', 'bad.name.google.com', 'test.example.com', 'localhost', 'bad.name.google.com', ],
+        'from'   => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
+        'to'     => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
+        'filter' => [10,11,45,46,115,116,190,191],
     });
 
     smtp_process({
@@ -840,5 +808,116 @@ sub send_smtp_packet {
         return 0;
     }
 }
+
+sub smtpcat {
+    my ( $args ) = @_;
+    
+    my $cat_pid = fork();
+    die "unable to fork: $!" unless defined($cat_pid);
+    return $cat_pid if $cat_pid; 
+    
+    my $sock_type = $args->{'sock_type'};
+    my $sock_path = $args->{'sock_path'};
+    my $sock_host = $args->{'sock_host'};
+    my $sock_port = $args->{'sock_port'};
+    
+    my $remove = $args->{'remove'};
+    my $output = $args->{'output'};
+   
+    my @out_lines;
+
+    my $sock;
+    if ( $sock_type eq 'inet' ) {
+       $sock = IO::Socket::INET->new(
+            'Listen'    => 5,
+            'LocalHost' => $sock_host,
+            'LocalPort' => $sock_port,
+            'Protocol'  => 'tcp',
+        ) || die "could not open socket: $!";
+    }
+    elsif ( $sock_type eq 'unix' ) {
+       $sock = IO::Socket::UNIX->new(
+            'Listen'    => 5,
+            'Local' => $sock_path,
+        ) || die "could not open socket: $!";
+    }
+    
+    my $accept = $sock->accept();
+    
+    print $accept "220 smtp.cat ESMTP Test\r\n";
+    
+    local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+    alarm( 60 );
+    
+    my $quit = 0;
+    while ( ! $quit ) {
+        my $command = <$accept> || { $quit = 1 };
+        alarm( 60 );
+    
+        if ( $command =~ /^HELO/ ) {
+            push @out_lines, $command;
+            print $accept "250 HELO Ok\r\n";
+        }
+        elsif ( $command =~ /^EHLO/ ) {
+            push @out_lines, $command;
+            print $accept "250 EHLO Ok\r\n";
+        }
+        elsif ( $command =~ /^MAIL/ ) {
+            push @out_lines, $command;
+            print $accept "250 MAIL Ok\r\n";
+        }
+        elsif ( $command =~ /^XFORWARD/ ) {
+            push @out_lines, $command;
+            print $accept "250 XFORWARD Ok\r\n";
+        }
+        elsif ( $command =~ /^RCPT/ ) {
+            push @out_lines, $command;
+            print $accept "250 RCPT Ok\r\n";
+        }
+        elsif ( $command =~ /^RSET/ ) {
+            push @out_lines, $command;
+            print $accept "250 RSET Ok\r\n";
+        }
+        elsif ( $command =~ /^DATA/ ) {
+            push @out_lines, $command;
+            print $accept "354 Send\r\n";
+            DATA:
+            while ( my $line = <$accept> ) {
+                alarm( 60 );
+                push @out_lines, $line;
+                last DATA if $line eq ".\r\n";
+                # Handle transparency
+                if ( $line =~ /^\./ ) {
+                    $line = substr( $line, 1 );
+                }
+            }
+            print $accept "250 DATA Ok\r\n";
+        }
+        elsif ( $command =~ /^QUIT/ ) {
+            push @out_lines, $command;
+            print $accept "221 Bye\r\n";
+            $quit = 1;
+        }
+        else {
+            push @out_lines, $command;
+            print $accept "250 Unknown Ok\r\n";
+        }
+    }
+
+    open my $file, '>', $output;
+    my $i = 0;
+    foreach my $line ( @out_lines ) {
+        $i++;
+        next if grep { $i == $_ } @$remove;
+        print $file $line;
+    }
+    close $file;
+
+    $accept->close();
+    $sock->close();
+
+    exit 0;
+}
+
 
 1;

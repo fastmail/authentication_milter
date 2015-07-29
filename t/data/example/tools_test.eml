@@ -7,6 +7,7 @@ RCPT TO:test@rcpt.to
 DATA
 Return-Path: <marc@marcbradshaw.net>
 Received: by mail-we0-f171.google.com with SMTP id k11so1456187wes.2
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=marcbradshaw.net; s=google;
         h=mime-version:date:message-id:subject:from:to:content-type;
         bh=7gvdmshMrcJRxJis+zHrBpu6zyqotJf8vROJvE5OcmA=;

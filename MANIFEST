@@ -35,7 +35,6 @@ t/01-tools.t
 t/02-milter.t
 t/02-smtp.t
 t/AuthMilterTest.pm
-t/bin/smtpcat
 t/config/dryrun/authentication_milter.json
 t/config/dryrun/mail-dmarc.ini
 t/config/dryrun.smtp/authentication_milter.json
