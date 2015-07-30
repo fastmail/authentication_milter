@@ -8,6 +8,14 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
+sub wrap_header {
+    my ( $self, $value ) = @_;
+    $value =~ s/ /\n    /;
+    $value =~ s/\) /\)\n    /;
+    $value =~ s/; /;\n    /g;
+    return $value;
+}
+
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'failmode'} = 0;
@@ -86,6 +94,7 @@ sub envfrom_callback {
         if ( !( $config->{'skip_none'} && $result_code eq 'none' ) ) {
             my $result_header = $spf_result->received_spf_header();
             my ( $header, $value ) = split( ': ', $result_header, 2 );
+            $value = $self->wrap_header( $value );
             $self->prepend_header( $header, $value );
             $self->dbgout( 'SPFHeader', $result_header, LOG_DEBUG );
         }
