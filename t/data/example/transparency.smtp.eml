@@ -13,7 +13,13 @@ Authentication-Results: server.example.com;
     iprev=fail policy.iprev=1.2.3.4 (NOT FOUND);
     spf=fail smtp.mailfrom=test@example.com smtp.helo=test.example.com;
     x-ptr=fail x-ptr-helo=test.example.com x-ptr-lookup=
-Received-SPF: fail (example.com: Sender is not authorized by default to use 'test@example.com' in 'mfrom' identity (mechanism '-all' matched)) receiver=server.example.com; identity=mailfrom; envelope-from="test@example.com"; helo=test.example.com; client-ip=1.2.3.4
+Received-SPF: fail
+    (example.com: Sender is not authorized by default to use 'test@example.com' in 'mfrom' identity (mechanism '-all' matched))
+    receiver=server.example.com;
+    identity=mailfrom;
+    envelope-from="test@example.com";
+    helo=test.example.com;
+    client-ip=1.2.3.4
 From: test@example.com
 To: test@example.com
 Subject: This is a test

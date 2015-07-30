@@ -6,7 +6,13 @@ Authentication-Results: test.module;
     iprev=pass policy.iprev=74.125.82.171 (mail-we0-f171.google.com);
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com;
     x-ptr=pass x-ptr-helo=mail-we0-f171.google.com x-ptr-lookup=mail-we0-f171.google.com
-Received-SPF: pass (marcbradshaw.net: Sender is authorized to use 'marc@marcbradshaw.net' in 'mfrom' identity (mechanism 'include:_spf.google.com' matched)) receiver=test.module; identity=mailfrom; envelope-from="marc@marcbradshaw.net"; helo=mail-we0-f171.google.com; client-ip=74.125.82.171
+Received-SPF: pass
+    (marcbradshaw.net: Sender is authorized to use 'marc@marcbradshaw.net' in 'mfrom' identity (mechanism 'include:_spf.google.com' matched))
+    receiver=test.module;
+    identity=mailfrom;
+    envelope-from="marc@marcbradshaw.net";
+    helo=mail-we0-f171.google.com;
+    client-ip=74.125.82.171
 Return-Path: <marc@marcbradshaw.net>
 Received: by mail-we0-f171.google.com with SMTP id k11so1456187wes.2
         for <marc@fastmail.com>; Sat, 24 Jan 2015 19:35:19 -0800 (PST)

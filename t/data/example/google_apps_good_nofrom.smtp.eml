@@ -15,7 +15,12 @@ Authentication-Results: server.example.com;
     iprev=pass policy.iprev=74.125.82.171 (mail-we0-f171.google.com);
     spf=pass smtp.mailfrom= smtp.helo=marcbradshaw.net;
     x-ptr=fail x-ptr-helo=marcbradshaw.net x-ptr-lookup=mail-we0-f171.google.com
-Received-SPF: pass (marcbradshaw.net: Sender is authorized to use 'marcbradshaw.net' in 'helo' identity (mechanism 'include:_spf.google.com' matched)) receiver=server.example.com; identity=helo; helo=marcbradshaw.net; client-ip=74.125.82.171
+Received-SPF: pass
+    (marcbradshaw.net: Sender is authorized to use 'marcbradshaw.net' in 'helo' identity (mechanism 'include:_spf.google.com' matched))
+    receiver=server.example.com;
+    identity=helo;
+    helo=marcbradshaw.net;
+    client-ip=74.125.82.171
 Return-Path: <marc@marcbradshaw.net>
 Received: by mail-we0-f171.google.com with SMTP id k11so1456187wes.2
         for <marc@fastmail.com>; Sat, 24 Jan 2015 19:35:19 -0800 (PST)

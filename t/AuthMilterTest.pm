@@ -490,7 +490,7 @@ sub run_smtp_processing {
         'name'   => [ 'test.example.com', 'localhost', 'bad.name.google.com', ],
         'from'   => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
         'to'     => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
-        'filter' => [10,11,45,46,115,116],
+        'filter' => [10,11,51,52,121,122],
     });
 
     smtp_process_multi({
@@ -502,7 +502,7 @@ sub run_smtp_processing {
         'name'   => [ 'test.example.com', 'localhost', 'bad.name.google.com', 'test.example.com', 'localhost', 'bad.name.google.com', ],
         'from'   => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
         'to'     => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
-        'filter' => [10,11,45,46,115,116,190,191],
+        'filter' => [10,11,51,52,121,122,202,203],
     });
 
     smtp_process({
