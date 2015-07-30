@@ -6,6 +6,15 @@ our $VERSION = 0.8;
 
 use Sys::Syslog qw{:standard :macros};
 
+sub pre_loop_setup {
+    my ( $self ) = @_;
+    my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
+    if ( $protocol ne 'milter' ) {
+        warn 'The TLS handler only works with the milter protocol';
+    }
+    return;
+}
+
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
 

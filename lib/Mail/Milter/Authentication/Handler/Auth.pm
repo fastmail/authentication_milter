@@ -6,6 +6,15 @@ use version; our $VERSION = version->declare('v0.1.0');
 
 use Sys::Syslog qw{:standard :macros};
 
+sub pre_loop_setup {
+    my ( $self ) = @_;
+    my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
+    if ( $protocol ne 'milter' ) {
+        warn 'The Auth handler only works with the milter protocol';
+    }
+    return;
+}
+
 sub get_auth_name {
     my ($self) = @_;
     my $name = $self->get_symbol('{auth_authen}');
