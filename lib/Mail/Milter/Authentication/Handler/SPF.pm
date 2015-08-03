@@ -8,6 +8,31 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
+sub connect_callback {
+    my ( $self, $hostname, $ip ) = @_;
+    $self->set_object_maker( 'spf_server' , sub {
+        my ( $self, $name ) = @_;
+        my $thischild = $self->{'thischild'};
+        $self->dbgout( 'Object created', $name, LOG_DEBUG );
+        my $object;
+        eval {
+            my $resolver = $self->get_object('resolver');
+            $object = Mail::SPF::Server->new(
+                'hostname'     => $self->get_my_hostname(),
+                'dns_resolver' => $resolver,
+            );
+        };
+        if ( my $error = $@ ) {
+            $self->log_error( 'SPF Object Setup Error ' . $error );
+        }
+        $thischild->{'object'}->{$name} = {
+            'object'  => $object,
+            'destroy' => 0,
+        };
+    });
+    return;
+}
+
 sub wrap_header {
     my ( $self, $value ) = @_;
     $value =~ s/ /\n    /;

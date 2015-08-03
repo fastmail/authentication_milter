@@ -439,6 +439,14 @@ sub get_callbacks {
     return $thischild->{'callbacks_list'}->{$callback};
 }
 
+sub set_object_maker {
+    my ( $self, $name, $ref ) = @_;
+    my $thischild = $self->{'thischild'};
+    return if $thischild->{'object_maker'}->{$name};
+    $thischild->{'object_maker'}->{$name} = $ref;
+    return;
+}
+
 sub get_object {
     my ( $self, $name ) = @_;
 
@@ -446,25 +454,12 @@ sub get_object {
     my $object = $thischild->{'object'}->{$name};
     if ( ! $object ) {
 
-        if ( $name eq 'spf_server' ) {
-            $self->dbgout( 'Object created', $name, LOG_DEBUG );
-            eval {
-                my $resolver = $self->get_object('resolver');
-                $object = Mail::SPF::Server->new(
-                    'hostname'     => $self->get_my_hostname(),
-                    'dns_resolver' => $resolver,
-                );
-            };
-            if ( my $error = $@ ) {
-                $self->log_error( 'SPF Object Setup Error ' . $error );
-            }
-            $thischild->{'object'}->{$name} = {
-                'object'  => $object,
-                'destroy' => 0,
-            };
+        if ( exists( $thischild->{'object_maker'}->{$name} ) ) {
+            my $maker = $thischild->{'object_maker'}->{$name};
+            &$maker( $self, $name );
         }
 
-        if ( $name eq 'resolver' ) {
+        elsif ( $name eq 'resolver' ) {
             $self->dbgout( 'Object created', $name, LOG_DEBUG );
             my $config = $self->config();
             my $timeout           = $config->{'dns_timeout'}           || 8;
@@ -1078,13 +1073,19 @@ Return the named handler object.
 
 Return the list of handlers which have callbacks for the given event in the order they must be called in.
 
+=item set_object_maker( $name, $ref )
+
+Register an object maker for type 'name'
+
 =item get_object( $name )
 
 Return the named object from the object store.
 
 Object 'resolver' will be created if it does not already exist.
 
-Object 'spf_server' will be created if it does not already exist.
+Object 'spf_server' will be created by the SPF handler if it does not already exist.
+
+Handlers may register makers for other types as required.
 
 =item set_object( $name, $object, $destroy )
 

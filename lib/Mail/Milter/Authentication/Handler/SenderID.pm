@@ -8,6 +8,15 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
+use Mail::Milter::Authentication::Handler::SPF;
+
+sub connect_callback {
+    my ( $self, $hostname, $ip ) = @_;
+    # Call connect_callback from SPF handler to setup object creation
+    # Required if SenderID is enabled but SPF is disabled.
+    return Mail::Milter::Authentication::Handler::SPF::connect_callback( $self, $hostname, $ip );
+}
+
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'helo_name'} = $helo_host;

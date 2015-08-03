@@ -124,6 +124,7 @@ sub child_init_hook {
     my $callbacks      = {};
     my $handler        = {};
     my $object         = {};
+    my $object_maker   = {};
     my $count          = 0;
 
     $self->{'callbacks_list'} = $callbacks_list;
@@ -131,6 +132,7 @@ sub child_init_hook {
     $self->{'count'}          = $count;
     $self->{'handler'}        = $handler;
     $self->{'object'}         = $object;
+    $self->{'object_maker'}   = $object_maker;
 
     $self->setup_handlers();
 
