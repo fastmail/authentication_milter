@@ -25,6 +25,20 @@ sub new {
 
 # Top Level Callbacks
 
+sub top_setup_callback {
+
+    my ( $self ) = @_;
+    $self->status('setup');
+    $self->dbgout( 'CALLBACK', 'Setup', LOG_DEBUG );
+    $self->set_return( $self->smfis_continue() );
+    my $callbacks = $self->get_callbacks( 'setup' );
+    foreach my $handler ( @$callbacks ) {
+        $self->get_handler($handler)->setup_callback();
+    }
+    $self->status('postsetup');
+    return;
+}
+
 sub top_connect_callback {
 
     # On Connect
@@ -992,6 +1006,10 @@ and creates a new handler object.
 =head1 METHODS
 
 =over 
+
+=item top_setup_callback()
+
+Top level handler for handler setup.
 
 =item top_connect_callback( $hostname, $ip )
 

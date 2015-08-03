@@ -10,11 +10,11 @@ use Mail::SPF;
 
 use Mail::Milter::Authentication::Handler::SPF;
 
-sub connect_callback {
-    my ( $self, $hostname, $ip ) = @_;
+sub setup_callback {
+    my ( $self ) = @_;
     # Call connect_callback from SPF handler to setup object creation
     # Required if SenderID is enabled but SPF is disabled.
-    return Mail::Milter::Authentication::Handler::SPF::connect_callback( $self, $hostname, $ip );
+    return Mail::Milter::Authentication::Handler::SPF::setup_callback( $self );
 }
 
 sub helo_callback {

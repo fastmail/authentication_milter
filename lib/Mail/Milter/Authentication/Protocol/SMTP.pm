@@ -60,6 +60,9 @@ sub smtp_init {
 
 sub protocol_process_request {
     my ( $self ) = @_;
+    
+    my $handler = $self->{'handler'}->{'_Handler'};
+    $handler->top_setup_callback();
 
     $self->{'smtp'} = {
         'fwd_helo_host'    => undef,
@@ -96,7 +99,6 @@ sub protocol_process_request {
 
     my $smtp = $self->{'smtp'};
     my $socket = $self->{'socket'};
-    my $handler = $self->{'handler'}->{'_Handler'};
 
     my $smtp_config = $self->get_smtp_config();
     $smtp->{'server_name'} = $smtp_config->{'server_name'} || 'server.example.com';

@@ -11,6 +11,9 @@ use Mail::Milter::Authentication::Constants qw{ :all };
 sub protocol_process_request {
     my ( $self ) = @_;
 
+    my $handler = $self->{'handler'}->{'_Handler'};
+    $handler->top_setup_callback();
+
     COMMAND:
     while ( 1 ) {
 

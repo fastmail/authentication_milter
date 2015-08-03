@@ -450,7 +450,7 @@ sub setup_handler {
     my $object = $package->new( $self );
     $self->{'handler'}->{$name} = $object;
 
-    foreach my $callback ( qw { connect helo envfrom envrcpt header eoh body eom abort close } ) {
+    foreach my $callback ( qw { setup connect helo envfrom envrcpt header eoh body eom abort close } ) {
         if ( $object->can( $callback . '_callback' ) ) {
             $self->register_callback( $name, $callback );
         }
@@ -481,7 +481,7 @@ sub register_callback {
 
 sub sort_all_callbacks {
     my ($self) = @_;
-    foreach my $callback ( qw { connect helo envfrom envrcpt header eoh body eom abort close } ) {
+    foreach my $callback ( qw { setup connect helo envfrom envrcpt header eoh body eom abort close } ) {
         $self->sort_callbacks( $callback );
     }
     return;

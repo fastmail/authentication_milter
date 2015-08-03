@@ -8,8 +8,9 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
-sub connect_callback {
-    my ( $self, $hostname, $ip ) = @_;
+sub setup_callback {
+    my ( $self ) = @_;
+
     $self->set_object_maker( 'spf_server' , sub {
         my ( $self, $name ) = @_;
         my $thischild = $self->{'thischild'};
