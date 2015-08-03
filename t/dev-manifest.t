@@ -21,6 +21,8 @@ ok_manifest(
             qr/\/inc\/Module\/Install/,
             qr/\.swp/,
             qr/\/local_files\//,
+            qr/\/\.travis\.yml/,
+            qr/\/cover_db/,
         ],
     }
 );
