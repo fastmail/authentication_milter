@@ -6,7 +6,7 @@ use inc::Module::Install;
 name     'Mail-Milter-Authentication';
 all_from 'lib/Mail/Milter/Authentication.pm';
 author   q{Marc Bradshaw <marc@marcbradshaw.net>};
-license  'artistic2';
+license  'perl';
 
 perl_version 5.006;
 
@@ -15,11 +15,9 @@ tests_recursive('t');
 resources (
    #homepage   => '',
    #IRC        => 'irc://irc.perl.org/#Mail-Milter-Authentication',
-   license    => 'http://www.perlfoundation.org/artistic_license_2_0',
-   #repository => 'https://gitlab.com/marcbradshaw/authentication-milter/',
-   #bugtracker => 'https://gitlab.com/marcbradshaw/authentication-milter/issues/',
-   repository => 'https://github.com/marcbradshaw/authentication-milter/',
-   bugtracker => 'https://github.com/marcbradshaw/authentication-milter/issues/',
+   license    => 'http://dev.perl.org/licenses/',
+   repository => 'https://github.com/fastmail/authentication_milter/',
+   bugtracker => 'https://github.com/fastmail/authentication_milter/issues/',
 );
 
 configure_requires (
