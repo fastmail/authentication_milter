@@ -1,13 +1,14 @@
 package Mail::Milter::Authentication::DNSCache;
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v0.1.0');
+use version; our $VERSION = version->declare('v0.1.1');
 
 # Package to override Net::DNS::Resolver and add cache features
 
 1;
 
-package Net::DNS::Resolver;
+package # hide from pause
+    Net::DNS::Resolver;
 
 use JSON;
 use Data::Dumper;

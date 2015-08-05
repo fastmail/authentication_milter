@@ -1,5 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
+0.1.1   2015-08-05
+        Released to CPAN
+
 0.1.0   2015-07-21
         Catch warnings and report in log with context.
         Skip DMARC reporting for specified addresses.
