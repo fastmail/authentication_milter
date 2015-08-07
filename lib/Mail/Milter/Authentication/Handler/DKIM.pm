@@ -379,6 +379,15 @@ __END__
 
 Module for validation of DKIM and DomainKeys signatures, and application of ADSP policies.
 
+=head1 CONFIGURATION
+
+        "DKIM" : {                                      | Config for the DKIM Module
+            "hide_none"         : 0,                    | Hide auth line if the result is 'none'
+            "check_adsp"        : 1,                    | Also check for ADSP
+            "show_default_adsp" : 0,                    | Show the default ADSP result
+            "adsp_hide_none"    : 0                     | Hide auth ADSP if the result is 'none'
+        },
+
 =head1 SYNOPSIS
 
 =head1 AUTHORS

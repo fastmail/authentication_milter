@@ -111,6 +111,21 @@ __END__
 
 Remove unauthorized (forged) Authentication-Results headers from processed email.
 
+=head1 CONFIGURATION
+
+        "Sanitize" : {                                  | Config for the Sanitize Module
+                                                        | Remove conflicting Auth-results headers from inbound mail
+            "hosts_to_remove" : [                       | Hostnames (including subdomains thereof) for which we
+                "example.com",                          | want to remove existing authentication results headers.
+                "example.net"
+            ],
+            "remove_headers" : "yes"                    | Remove headers with conflicting host names (as defined above)
+                                                        | "no" : do not remove
+                                                        | "yes" : remove and add a header for each one
+                                                        | "silent" : remove silently
+                                                        | Does not run for trusted IP address connections
+        }
+
 =head1 SYNOPSIS
 
 =head1 AUTHORS

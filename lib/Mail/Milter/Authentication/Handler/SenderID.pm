@@ -119,6 +119,12 @@ __END__
 
 Implements the SenderID standard checks.
 
+=head1 CONFIGURATION
+
+        "SenderID" : {                                  | Config for the SenderID Module
+            "hide_none" : 1                             | Hide auth line if the result is 'none'
+        },
+
 =head1 SYNOPSIS
 
 =head1 AUTHORS

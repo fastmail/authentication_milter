@@ -69,6 +69,10 @@ __END__
 
 Detect a Local IP address and act accordingly.
 
+=head1 CONFIGURATION
+
+No configuration options exist for this handler.
+
 =head1 SYNOPSIS
 
 =head1 AUTHORS

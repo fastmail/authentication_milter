@@ -54,6 +54,12 @@ __END__
 
 Check DNS PTR Records match.
 
+This handler requires the IPRev handler to be installed and active.
+
+=head1 CONFIGURATION
+
+No configuration options exist for this handler.
+
 =head1 SYNOPSIS
 
 =head1 AUTHORS

@@ -131,6 +131,10 @@ __END__
 
 Check that return addresses have valid MX records.
 
+=head1 CONFIGURATION
+
+No configuration options exist for this handler.
+
 =head1 SYNOPSIS
 
 =head1 AUTHORS

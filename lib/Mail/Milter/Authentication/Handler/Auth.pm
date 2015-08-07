@@ -61,6 +61,10 @@ __END__
 
 Module which identifies email that was sent via an authenticated connection.
 
+=head1 CONFIGURATION
+
+No configuration options exist for this handler.
+
 =head1 SYNOPSIS
 
 =head1 AUTHORS

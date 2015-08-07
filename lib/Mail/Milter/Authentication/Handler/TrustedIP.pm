@@ -57,6 +57,17 @@ __END__
 
 Detect a trusted IP address and act accordingly.
 
+=head1 CONFIGURATION
+
+        "TrustedIP" : {                                 | Config the the TruetedIP Module
+                                                        | Check for TrustedIP Addresses
+            "trusted_ip_list" : [                       | List of IP Addresses considered to be trusted
+                "100.200.100.2",                        | CIDR Ranges are valid syntax
+                "2001:44c2:3881:aa00::/56",
+                "2001:44b8:3021:123:dead:beef:abcd:1234"
+            ],
+        },
+
 =head1 SYNOPSIS
 
 =head1 AUTHORS

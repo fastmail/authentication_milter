@@ -156,6 +156,12 @@ __END__
 
 Implements the SPF standard checks.
 
+=head1 CONFIGURATION
+
+        "SPF" : {                                       | Config for the SPF Module
+            "hide_none" : 0                             | Hide auth line if the result is 'none'
+        },
+
 =head1 SYNOPSIS
 
 =head1 AUTHORS

@@ -26,6 +26,12 @@ __END__
 
 Simple module which adds a header to all email processed.
 
+This is meant as an example only.
+
+=head1 CONFIGURATION
+
+No configuration options exist for this handler.
+
 =head1 SYNOPSIS
 
 =head1 AUTHORS

@@ -628,6 +628,8 @@ Subclass of Net::Server::PreFork for bringing up the main server process for aut
 
 Please see Net::Server docs for more detail of the server code.
 
+Please see the output of 'authentication_milter --help' for usage help.
+
 =head1 METHODS
 
 =over
