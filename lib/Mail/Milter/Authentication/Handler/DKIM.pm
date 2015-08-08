@@ -12,6 +12,15 @@ use Mail::DKIM;
 use Mail::DKIM::Verifier;
 use Mail::DKIM::DNS;
 
+sub default_config {
+    return {
+        'hide_none'         => 0,
+        'check_adsp'        => 1,
+        'show default_adsp' => 0,
+        'adsp_hide_none'    => 0,
+    };
+}
+
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     $self->{'failmode'}     = 0;

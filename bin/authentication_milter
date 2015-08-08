@@ -3,13 +3,13 @@
 use strict;
 use warnings;
 
-use ExtUtils::Installed;
 use Getopt::Long;
+use JSON;
 use List::MoreUtils qw{ uniq };
 use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
-use Mail::Milter::Authentication::Config qw{ get_config };
+use Mail::Milter::Authentication::Config qw{ get_config default_config };
 use Module::Load;
 use Pod::Usage;
 
@@ -33,6 +33,9 @@ if ( $help eq q{} ) {
 elsif ( $help ) {
     if ( $help eq 'installed' ) {
         modules_installed();
+    }
+    elsif ( $help eq 'default_config' ) {
+        show_default_config();
     }
     else {
         module_usage( $help );
@@ -79,23 +82,23 @@ sub module_usage {
 }
 
 sub modules_installed {
-    my @installed_handlers;
-    my $installed = ExtUtils::Installed->new( 'skip_cwd' => 1 );
-    foreach my $module ( grep { /Mail::Milter::Authentication/ } $installed->modules() ) {
-        FILE:
-        foreach my $file ( grep { /Mail\/Milter\/Authentication\/Handler\/\w+\.pm$/ } $installed->files( $module ) ) {
-            next FILE if ! -e $file;
-            my ( $handler ) = reverse split '/', $file;
-            $handler =~ s/\.pm$//;
-            push @installed_handlers, $handler;
-        }
-    }
+    my $installed_handlers = Mail::Milter::Authentication::get_installed_handlers();
     print "Authentication Milter\n\n";
     print join( "\n    ",
         'Installed handlers:',
-        uniq sort @installed_handlers,
+        uniq sort @$installed_handlers,
     );
     print "\n\n";
+    return;
+}
+
+sub show_default_config {
+    my $default_config = default_config();
+    my $json = JSON->new();
+    $json->pretty();
+    $json->canonical( 1 );
+    print $json->encode( $default_config );
+    exit 0;
     return;
 }
 
@@ -116,6 +119,11 @@ __END__
 =item -h|--help
 
   Show this help.
+
+=item -h|--help default_config
+
+  Output an example default configuration, including
+  config for all installed handler modules.
 
 =item -h|--help installed
 

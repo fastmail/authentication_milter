@@ -7,6 +7,10 @@ use version; our $VERSION = version->declare('v0.1.1');
 use Net::DNS;
 use Sys::Syslog qw{:standard :macros};
 
+sub default_config {
+    return {};
+}
+
 sub _check_address {
     my ( $self, $address, $type ) = @_;
 

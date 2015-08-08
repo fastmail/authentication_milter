@@ -7,6 +7,12 @@ use version; our $VERSION = version->declare('v0.1.1');
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
+sub default_config {
+    return {
+        'trusted_ip_list' => [],
+    };
+}
+
 sub is_trusted_ip_address {
     my ( $self, $ip_obj ) = @_;
     my $config = $self->handler_config();

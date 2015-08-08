@@ -6,6 +6,13 @@ use version; our $VERSION = version->declare('v0.1.1');
 
 use Sys::Syslog qw{:standard :macros};
 
+sub default_config {
+    return {
+        'hosts_to_remove' => [ 'example.com', 'example.net' ],
+        'remove_headeres' => 'yes',
+    };
+}
+
 sub is_hostname_mine {
     my ( $self, $check_hostname ) = @_;
     my $config = $self->handler_config();

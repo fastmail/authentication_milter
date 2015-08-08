@@ -6,6 +6,10 @@ our $VERSION = 0.8;
 
 use Sys::Syslog qw{:standard :macros};
 
+sub default_config {
+    return {};
+}
+
 sub pre_loop_setup {
     my ( $self ) = @_;
     my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};

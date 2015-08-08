@@ -6,6 +6,10 @@ use version; our $VERSION = version->declare('v0.1.1');
 
 use Sys::Syslog qw{:standard :macros};
 
+sub default_config {
+    return {};
+}
+
 sub is_local_ip_address {
     my ( $self, $ip ) = @_;
     my $ip_address = $ip->ip();

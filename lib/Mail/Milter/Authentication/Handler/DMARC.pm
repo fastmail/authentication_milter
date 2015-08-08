@@ -12,6 +12,15 @@ use Mail::DMARC::PurePerl;
 
 my $PSL_CHECKED_TIME;
 
+sub default_config {
+    return {
+        'hide_none'      => 0,
+        'detect_list_id' => 1,
+        'report_skip_to' => [ 'my_report_from_address@example.com' ],
+        'no_report'      => 0,
+    };
+}
+
 sub pre_loop_setup {
     my ( $self ) = @_;
     $PSL_CHECKED_TIME = time;

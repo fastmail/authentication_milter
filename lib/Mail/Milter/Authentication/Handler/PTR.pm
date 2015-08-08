@@ -6,6 +6,10 @@ use version; our $VERSION = version->declare('v0.1.1');
 
 use Sys::Syslog qw{:standard :macros};
 
+sub default_config {
+    return {};
+}
+
 sub helo_callback {
 
     # On HELO

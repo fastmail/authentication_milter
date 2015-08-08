@@ -10,6 +10,12 @@ use Mail::SPF;
 
 use Mail::Milter::Authentication::Handler::SPF;
 
+sub default_config {
+    return {
+        'hide_none' => 1,
+    };
+}
+
 sub setup_callback {
     my ( $self ) = @_;
     # Call connect_callback from SPF handler to setup object creation

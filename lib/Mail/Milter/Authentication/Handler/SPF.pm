@@ -8,6 +8,12 @@ use Sys::Syslog qw{:standard :macros};
 
 use Mail::SPF;
 
+sub default_config {
+    return {
+        'hide_none' => 0,
+    };
+}
+
 sub setup_callback {
     my ( $self ) = @_;
 

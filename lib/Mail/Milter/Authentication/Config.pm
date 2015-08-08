@@ -3,14 +3,65 @@ use strict;
 use warnings;
 use version; our $VERSION = version->declare('v0.1.1');
 
+use Mail::Milter::Authentication;
+use Module::Load;
+
 use Exporter qw{ import };
 our @EXPORT_OK = qw{
   get_config
+  default_config
 };
 
 use JSON;
 
 our $PREFIX = '/etc';
+
+sub default_config {
+    my $config = {
+        'debug'                           => 0,
+        'dryrun'                          => 0,
+        'logtoerr'                        => 0,
+        'error_log'                       => '/var/log/authentication_milter.err',
+        'connection'                      => 'inet:12345@localhost',
+        'umask'                           => '0000',
+        'runas'                           => 'nobody',
+        'rungroup'                        => 'nogroup',
+        'listen_backlog'                  => 20,
+        'min_children'                    => 20,
+        'max_children'                    => 200,
+        'min_spare_children'              => 10,
+        'max_spare_children'              => 20,
+        'max_requests_per_child'          => 200,
+        'protocol'                        => 'milter',
+        'connect_timeout'                 => 30,
+        'command_timeout'                 => 30,
+        'content_timeout'                 => 300,
+        'dns_timeout'                     => 10,
+        'dns_cache_timeout'               => 240,
+        'dns_retry'                       => 2,
+        'dns_cache_error_limit'           => 3,
+        'tempfail_on_error'               => '1',
+        'tempfail_on_error_authenticated' => '0',
+        'tempfail_on_error_local'         => '0',
+        'tempfail_on_error_trusted'       => '0',
+        'handlers'                        => {}
+    };
+
+    my $installed_handlers = Mail::Milter::Authentication::get_installed_handlers();
+    foreach my $handler ( @$installed_handlers ) {
+        my $handler_module = 'Mail::Milter::Authentication::Handler::' . $handler;
+        load $handler_module;
+        if ( $handler_module->can( 'default_config' ) ) {
+            $config->{'handlers'}->{ $handler } = $handler_module->default_config();
+        }
+        else {
+            $config->{'handlers'}->{ $handler } = {};
+        }
+    }
+
+    return $config;
+
+}
 
 sub load_file {
     my ( $file ) = @_;
@@ -93,6 +144,10 @@ will be read from the supplied directory rather than /etc/
 =head1 FUNCTIONS
 
 =over
+
+=item I<default_config()>
+
+Return a default configuration including defaults from handler modules.
 
 =item I<load_file()>
 

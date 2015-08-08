@@ -5,6 +5,7 @@ use base 'Net::Server::PreFork';
 use version; our $VERSION = version->declare('v0.1.1');
 
 use English qw{ -no_match_vars };
+use ExtUtils::Installed;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::DNSCache;
@@ -21,6 +22,21 @@ sub _warn {
     my ( $msg ) = @_;
     print STDERR $msg;
     return;
+}
+
+sub get_installed_handlers {
+    my @installed_handlers;
+    my $installed = ExtUtils::Installed->new( 'skip_cwd' => 1 );
+    foreach my $module ( grep { /Mail::Milter::Authentication/ } $installed->modules() ) {
+        FILE:
+        foreach my $file ( grep { /Mail\/Milter\/Authentication\/Handler\/\w+\.pm$/ } $installed->files( $module ) ) {
+            next FILE if ! -e $file;
+            my ( $handler ) = reverse split '/', $file;
+            $handler =~ s/\.pm$//;
+            push @installed_handlers, $handler;
+        }
+    }
+    return \@installed_handlers;
 }
 
 sub pre_loop_hook {
@@ -629,6 +645,16 @@ Subclass of Net::Server::PreFork for bringing up the main server process for aut
 Please see Net::Server docs for more detail of the server code.
 
 Please see the output of 'authentication_milter --help' for usage help.
+
+=head1 FUNCTIONS
+
+=over
+
+=item I<get_installed_handlers()>
+
+Return an array ref of installed handler modules.
+
+=back
 
 =head1 METHODS
 

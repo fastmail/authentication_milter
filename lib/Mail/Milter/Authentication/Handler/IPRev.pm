@@ -8,6 +8,10 @@ use Net::DNS;
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
+sub default_config {
+    return {};
+}
+
 sub _dns_error {
     my ( $self, $type, $data, $error ) = @_;
     if ( $error eq 'NXDOMAIN' ) {
