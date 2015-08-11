@@ -427,6 +427,14 @@ sub fatal {
     die "$error\n";
 }
 
+sub fatal_global {
+    my ( $self, $error ) = @_;
+    $self->logerror( "Child process $PID signalling global shut down due to fatal error: $error" );
+    my $ppid = $self->{'server'}->{'ppid'};
+    kill 'HUP', $ppid;
+    die "$error\n";
+}
+
 sub setup_handlers {
     my ( $self ) = @_;
 
@@ -553,7 +561,7 @@ sub sort_callbacks {
 
         my $defer_count = scalar @defer;
         if ( $defer_count == $todo_count ) {
-            $self->fatal('Could not build order list');
+            $self->fatal_global('Could not build order list');
         }
         $todo_count = $defer_count;
         @todo = @defer;
@@ -683,7 +691,11 @@ Start the server. This method does not return.
 
 =item I<fatal($error)>
 
-Log a fatal error and die
+Log a fatal error and die in child
+
+=item I<fatal_global($error)>
+
+Log a fatal error and die in child and parent
 
 =item I<setup_handlers()>
 
