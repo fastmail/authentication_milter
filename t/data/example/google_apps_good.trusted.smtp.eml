@@ -1,6 +1,6 @@
 EHLO server.example.com
 XFORWARD HELO=mx4.twofiftyeight.ltd.uk
-XFORWARD ADDR=59.167.198.153
+XFORWARD ADDR=123.123.12.3
 XFORWARD NAME=mx4.twofiftyeight.ltd.uk
 MAIL FROM:marc@marcbradshaw.net
 RCPT TO:marc@fastmail.com

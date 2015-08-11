@@ -6,8 +6,6 @@
     "error_log"                       : "tmp/smtp.err",
     "connection"                      : "unix:tmp/authentication_milter_test.sock",
     "umask"                           : "0000",
-    "oldrunas"                        : "nobody",
-    "dispatcher"                      : "prefork",
     "connect_timeout"                 : 55,
     "command_timeout"                 : 55,
     "content_timeout"                 : 595,
@@ -89,24 +87,14 @@
         "LocalIP" : {},
         "TrustedIP" : {
             "trusted_ip_list" : [
-                "59.167.198.153",
-                "2001:44b8:4162:bb00::/56",
-                "2001:44b8:4030:fef:3631:c4ff:fe4f:add7",
-                "106.187.51.197",
-                "2400:8900::f03c:91ff:fe6e:84c7",
-                "178.79.176.97",
-                "2a01:7e00::f03c:91ff:fe93:1cd"
+                "123.123.12.3"
             ]
         },
         "!AddID" : {},
         "!ReturnOK" : {},
         "Sanitize" : {
             "hosts_to_remove" : [
-                "test.module",
-                "electric-dreams.org",
-                "twofiftyeight.ltd.uk",
-                "fastmail.com",
-                "fastmail.com"
+                "test.module"
             ],
             "remove_headers" : "yes"
         }
