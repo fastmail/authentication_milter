@@ -473,8 +473,8 @@ The full documentation of Net::Milter will follow this paragraph.
 package Mail::Milter::Authentication::Net::Milter;
 use strict;
 use Carp;
-use vars qw($VERSION $DEBUG);
-$VERSION='0.09';
+use vars qw($DEBUG);
+use version; our $VERSION = version->declare('v0.1.1');
 $DEBUG=0;
 
 use constant PROTOCOL_NEGATION => 0; 
