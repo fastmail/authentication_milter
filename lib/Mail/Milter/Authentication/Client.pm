@@ -331,7 +331,7 @@ sub result {
 
 =head1 NAME
 
-Mail::Milter::Authentication::Client - A client to the PERL Mail Authentication Milter
+Mail::Milter::Authentication::Client - A client to the Perl Mail Authentication Milter
 
 =head1 DESCRIPTION
 

@@ -1,7 +1,7 @@
 Authentication Milter
 ---------------------
 
-A PERL implemtation of email authentication standards rolled up into a single easy to use milter.
+A Perl implementation of email authentication standards rolled up into a single easy to use milter.
 
 This milter verifies using the following standards.
 
