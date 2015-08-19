@@ -1,5 +1,11 @@
 Revision history for Mail-Milter-Authentication
 
+0.1.2   FUTURE
+        Cleaned up CPANTS errors
+        Fixed inconsistent versions
+        Moved handler config docs into handlers
+        Fixed possible dependency loop when misconfigured
+
 0.1.1   2015-08-05
         Released to CPAN
 

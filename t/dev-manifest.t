@@ -23,6 +23,7 @@ ok_manifest(
             qr/\/local_files\//,
             qr/\/\.travis\.yml/,
             qr/\/cover_db/,
+            qr/\/Docker/,
         ],
     }
 );

@@ -73,7 +73,15 @@ Trust Model
 Installation
 ------------
 
-To install this module, run the following commands:
+### CPAN
+
+To install the latest version released to CPAN, run the following commands:
+
+ - cpanm Mail::Milter::Authentication
+
+### From source
+
+To install this module from source, run the following commands:
 
  - perl Makefile.PL
  - make
@@ -111,6 +119,8 @@ Code Climate
 ------------
 
 master branch [![Build Status](https://travis-ci.org/fastmail/authentication_milter.svg?branch=master)](https://travis-ci.org/fastmail/authentication_milter)
+
+[CPANTS](http://cpants.cpanauthors.org/dist/Mail-Milter-Authentication)
 
 Contributing
 ------------
