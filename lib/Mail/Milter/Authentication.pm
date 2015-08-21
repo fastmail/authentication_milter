@@ -20,7 +20,11 @@ use vars qw(@ISA);
 
 sub _warn {
     my ( $msg ) = @_;
-    print STDERR $msg;
+    my @parts = split "\n", $msg;
+    foreach my $part ( @parts ) {
+        next if $part eq q{};
+        print STDERR scalar localtime . " authentication_milter[$PID] $part\n";
+    }
     return;
 }
 
@@ -266,7 +270,7 @@ sub start {
     local $SIG{__WARN__} = sub {
         foreach my $msg ( @_ ) {
             syslog( LOG_ERR, "Warning: $msg" );
-            warn scalar localtime . " [$PID] Warning: $msg";
+            _warn( "Warning: $msg" );
         }
         return;
     };
@@ -296,14 +300,13 @@ sub start {
                     "servers=$min_children/$max_children",
                     "spares=$min_spare_children/$max_spare_children",
                     "requests=$max_requests_per_child",
-                    "\n",
                 )
             );
             $srvargs{'background'}        = 1;
             $srvargs{'setsid'}            = 1;
         }
         else {
-            _warn("Not running as root, daemonize ignored!\n");
+            _warn("Not running as root, daemonize ignored!");
         }
     }
     $srvargs{'pid_file'}          = $pid_file;
@@ -322,12 +325,12 @@ sub start {
         my $user  = $config->{'runas'};
         my $group = $config->{'rungroup'};
         if ( $user && $group ) {
-        _warn("run as user=$user group=$group\n");
+        _warn("run as user=$user group=$group");
             $srvargs{'user'}  = $user;
             $srvargs{'group'} = $group;
         }
         else {
-            _warn("No runas details supplied, could not drop privs - be careful!\n");
+            _warn("No runas details supplied, could not drop privs - be careful!");
         }
         # Note, Chroot requires a chroot environment which is out of scope at present
         if ( $config->{'error_log'} ) {
@@ -339,12 +342,12 @@ sub start {
             chown $uid, $gid, $config->{'error_log'};
         }
         if ( exists( $config->{'chroot'} ) ) {
-            _warn('Chroot to ' . $config->{'chroot'} . "\n");
+            _warn('Chroot to ' . $config->{'chroot'});
             $srvargs{'chroot'} = $config->{'chroot'};
         }
     }
     else {
-        _warn("Not running as root, could not drop privs - be careful!\n");
+        _warn("Not running as root, could not drop privs - be careful!");
     }
 
     my $connections = {};
@@ -374,7 +377,6 @@ sub start {
                     "host=$host",
                     "port=$path",
                     "backlog=$listen_backlog",
-                    "\n",
                 )
             );
             push @ports, {
@@ -390,7 +392,6 @@ sub start {
                     'listening on unix',
                     "socket=$path",
                     "backlog=$listen_backlog",
-                    "\n",
                 )
             );
             push @ports, {
@@ -400,7 +401,7 @@ sub start {
 
             if ($umask) {
                 umask ( oct( $umask ) );
-                _warn( 'setting umask to ' . $umask . "\n" );
+                _warn( 'setting umask to ' . $umask );
             }
 
         }
@@ -412,7 +413,7 @@ sub start {
     $srvargs{'port'} = \@ports;
     $srvargs{'listen'} = $listen_backlog;
 
-    _warn "\nStarting server\n";
+    _warn "==========\nStarting server\n==========";
     __PACKAGE__->run( %srvargs );
 
     # Never reaches here.
@@ -601,7 +602,7 @@ sub logerror {
             $line = $self->{'smtp'}->{'queue_id'} . ': ' . $line;
         }
     }
-    _warn( scalar localtime . " [$PID] $line\n" ) if $config->{'logtoerr'};
+    _warn( $line ) if $config->{'logtoerr'};
     syslog( LOG_ERR, $line );
     return;
 }
@@ -614,7 +615,7 @@ sub loginfo {
             $line = $self->{'smtp'}->{'queue_id'} . ': ' . $line;
         }
     }
-    _warn( scalar localtime . " [$PID] $line\n" ) if $config->{'logtoerr'};
+    _warn( $line ) if $config->{'logtoerr'};
     syslog( LOG_INFO, $line );
     return;
 }
@@ -627,8 +628,8 @@ sub logdebug {
             $line = $self->{'smtp'}->{'queue_id'} . ': ' . $line;
         }
     }
-    _warn( scalar localtime . " [$PID] $line\n" ) if $config->{'logtoerr'};
     if ( $config->{'debug'} ) {
+        _warn( $line ) if $config->{'logtoerr'};
         syslog( LOG_DEBUG, $line );
     }
     return;

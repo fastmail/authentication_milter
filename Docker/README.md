@@ -30,6 +30,9 @@ DMARC Report Sending
 
 If using DMARC reporting, you will need to setup outgoing report emails.
 
+If you have configured reporting to DKIM sign messages you will need to
+pass in the private signing key using a volume.
+
 TODO: A cron job to be automatically enabled if DMARC is enabled in config.
 
 Public Suffix List Updates

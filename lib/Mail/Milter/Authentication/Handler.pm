@@ -757,10 +757,6 @@ sub dbgout {
     $key   = q{--} if ! defined $key;
     $value = q{--} if ! defined $value;
 
-    if ( $self->config()->{'logtoerr'} ) {
-        Mail::Milter::Authentication::_warn( scalar localtime . "[$PID] $queue_id: $key: $value\n" );
-    }
-
     my $config = $self->config();
     if (
         $priority == LOG_DEBUG
@@ -768,6 +764,10 @@ sub dbgout {
         ! $config->{'debug'}
     ) {
         return;
+    }
+
+    if ( $self->config()->{'logtoerr'} ) {
+        Mail::Milter::Authentication::_warn( "$queue_id: $key: $value" );
     }
 
     my $top_handler = $self->get_top_handler();
