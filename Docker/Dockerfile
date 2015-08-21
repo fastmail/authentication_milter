@@ -40,5 +40,5 @@ RUN DEBIAN_FRONTEND=noninteractive \
     apt-get clean
 
 ADD startup.pl /opt/startup.pl
-CMD [ "perlbrew", "exec", "--with=perl-5.20.0", "/opt/startup.pl" ]
+CMD [ "/perl5/perlbrew/perls/perl-5.20.0/bin/perl", "/opt/startup.pl" ]
 

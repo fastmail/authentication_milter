@@ -18,7 +18,8 @@ These configuration files should be passed in using volumes.
 Logs
 ----
 
-To be written.
+Enable logtoerr in the authentication_milter.json configuration and do not set
+the error_log setting to enable logs to be written to the STDERR stream.
 
 Database
 --------
