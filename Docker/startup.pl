@@ -18,10 +18,12 @@ $ENV{'PATH'} = "$perl_path:$PATH";
 our $PARENT_PID = $PID;
 our $CHILDREN = {};
 sub handle_shutdown {
+    my $input = shift;
+    out( $input ) if $input;
     exit 0 if $PID != $PARENT_PID;
     out( 'Exiting' );
     kill( 'INT', $CHILDREN->{'milter'} ) if exists $CHILDREN->{'milter'};
-    kill( 'INT', $CHILDREN->{'cron'} ) if exists $CHILDREN->{'milter'};
+    kill( 'INT', $CHILDREN->{'cron'} ) if exists $CHILDREN->{'cron'};
     foreach my $process ( keys %$CHILDREN ) {
         out( "Waiting for $process" );
         waitpid( $CHILDREN->{$process}, 0 );
@@ -29,6 +31,8 @@ sub handle_shutdown {
     exit 0;
 }
 sub handle_reload {
+    my $input = shift;
+    out( $input ) if $input;
     exit 0 if $PID != $PARENT_PID;
     out( 'Reloading' );
     kill( 'INT', $CHILDREN->{'milter'} ) if exists $CHILDREN->{'milter'};
