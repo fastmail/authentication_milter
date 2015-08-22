@@ -71,7 +71,7 @@ sub start_authentication_milter {
         my $milter_pid = fork();
         die "unable to fork: $!" unless defined($milter_pid);
         if (!$milter_pid) {
-            exec('authentication_milter', '--pidfile', '/var/run/authentication_milter.pid');
+            exec('authentication_milter', '--pidfile', '/var/run/authentication_milter.pid') or die "Failed to exec milter: $!";
             exit 0;
         }
         $CHILDREN->{'milter'} = $milter_pid;
@@ -117,7 +117,7 @@ sub dmarc_setup_cron {
     my $cron_pid = fork();
     die "unable to fork: $!" unless defined($cron_pid);
     if (!$cron_pid) {
-        exec('cron', '-f');
+        exec('cron', '-f') || die "Failed to exec cron: $!";
         exit 0;
     }
     $CHILDREN->{'cron'} = $cron_pid;
