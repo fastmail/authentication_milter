@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::Sanitize;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v0.1.1');
+use version; our $VERSION = version->declare('v1.0.0');
 
 use Sys::Syslog qw{:standard :macros};
 
