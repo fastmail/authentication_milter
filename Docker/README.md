@@ -20,6 +20,7 @@ Logs
 
 Enable logtoerr in the authentication_milter.json configuration and do not set
 the error_log setting to enable logs to be written to the STDERR stream.
+The docker image runs in UTC.
 
 Database
 --------

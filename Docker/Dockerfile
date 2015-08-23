@@ -32,11 +32,7 @@ RUN perlbrew exec cpanm \
         Mail::Milter::Authentication
 
 # Cleanup
-RUN DEBIAN_FRONTEND=noninteractive \
-    apt-get purge -y \
-        libssl-dev \
-        libxml2-dev && \
-    perlbrew clean && \
+RUN perlbrew clean && \
     apt-get clean
 
 ADD startup.pl /opt/startup.pl
