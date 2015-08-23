@@ -31,6 +31,10 @@ RUN perlbrew exec cpanm \
         DBD::mysql \
         Mail::Milter::Authentication
 
+# Install older IO::Socket::SSL to avoid X509_V_FLAG_TRUSTED_FIRST issue
+RUN perlbrew exec cpanm \
+    SULLR/IO-Socket-SSL-2.015.tar.gz
+
 # Cleanup
 RUN perlbrew clean && \
     apt-get clean
