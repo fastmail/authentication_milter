@@ -1,5 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
+1.0.1   Future
+
 1.0.0   2015-08-22
         - Version bump to avoid confusion with old unreleased versions
         - Cleaned up CPANTS errors

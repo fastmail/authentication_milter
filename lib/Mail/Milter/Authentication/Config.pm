@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Config;
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v1.0.0');
+use version; our $VERSION = version->declare('v1.0.1');
 
 use Mail::Milter::Authentication;
 use Module::Load;
