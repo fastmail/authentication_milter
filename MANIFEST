@@ -26,8 +26,6 @@ LICENCE
 Makefile.PL
 MANIFEST			This list of files
 META.yml
-MYMETA.json
-MYMETA.yml
 README.md
 share/authentication_milter.init
 share/authentication_milter.json
