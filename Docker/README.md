@@ -35,7 +35,7 @@ If using DMARC reporting, you will need to setup outgoing report emails.
 If you have configured reporting to DKIM sign messages you will need to
 pass in the private signing key using a volume.
 
-TODO: A cron job to be automatically enabled if DMARC is enabled in config.
+A cron job for this is automatically enabled if DMARC is enabled in config.
 
 Public Suffix List Updates
 --------------------------
@@ -50,6 +50,16 @@ Connection to MTA
 -----------------
 
 To be written
+
+Environment
+-----------
+
+The following environment variables can be passed to the image
+
+- NO_PSL_DOWNLOAD   do not download the psl file on startup
+- NO_PSL_CRON       do not setup a cron job to download the psl file
+- NO_REPORT_CRON    do not setup a cron job to send dmarc reports
+- NO_DATABASE       do not check database connection on startup
 
 Example execution
 -----------------

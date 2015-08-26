@@ -39,7 +39,6 @@ sub handle_reload {
     return;
 }
 local $SIG{ 'INT' }     = \&handle_shutdown;
-local $SIG{ '__DIE__' } = \&handle_shutdown;
 local $SIG{ 'TERM' }    = \&handle_shutdown;
 local $SIG{ 'HUP' }     = \&handle_reload;
 
@@ -73,9 +72,9 @@ sub start_authentication_milter {
         $start_time = time;
 
         my $milter_pid = fork();
-        die "unable to fork: $!" unless defined($milter_pid);
+        handle_shutdown( "unable to fork: $!" ) unless defined($milter_pid);
         if (!$milter_pid) {
-            exec('authentication_milter', '--pidfile', '/var/run/authentication_milter.pid') or die "Failed to exec milter: $!";
+            exec('authentication_milter', '--pidfile', '/var/run/authentication_milter.pid') or handle_shutdown( "Failed to exec milter: $!" );
             exit 0;
         }
         $CHILDREN->{'milter'} = $milter_pid;
@@ -85,8 +84,7 @@ sub start_authentication_milter {
         out( 'Server exited, restarting...' );
         if ( $start_time > ( time - 60 ) ) {
             if ( $quick_restart_count++ > 4 ) {
-                out( 'Problems restarting daemon, exiting.' );
-                die;
+                handle_shutdown( 'Problems restarting daemon, exiting.' );
             }
             out( 'Last start time was within the last minute, delaying restart...' );
             sleep 10;
@@ -100,6 +98,10 @@ sub start_authentication_milter {
 
 sub dmarc_check_psl_file {
     my ( $dmarc ) = @_;
+    if ( $ENV{'NO_PSL_DOWNLOAD'} ) {
+        out( 'Skipping PSL file check' );
+        return;
+    }
     my $psl_file = $dmarc->config->{dns}{public_suffix_list};
     $psl_file = $dmarc->find_psl_file if ! $psl_file;
     if ( ! -e $psl_file ) {
@@ -108,7 +110,14 @@ sub dmarc_check_psl_file {
         close $h;
         my $time = time()-2592000;
         utime($time,$time,$psl_file);
-        $dmarc->update_psl_file();
+        {
+            eval { 
+                $dmarc->update_psl_file();
+            };
+            if ( my $error = $@ ) {
+                handle_shutdown( "PSL Download error: $error" );
+            }
+        }
     }
     return;
 }
@@ -116,31 +125,51 @@ sub dmarc_check_psl_file {
 sub dmarc_setup_cron {
     my ( $perl_bin ) = @_;
     # Setup cron for updating PSL file
-    out( 'Setting up PSL update cron job' );
+    out( 'Setting up DMARC cron jobs' );
 
-    my $cron_pid = fork();
-    die "unable to fork: $!" unless defined($cron_pid);
-    if (!$cron_pid) {
-        exec('cron', '-f') || die "Failed to exec cron: $!";
-        exit 0;
+    my @crontab;
+
+    if ( ! $ENV{'NO_PSL_CRON'} ) {
+        push @crontab, "0 0 * * 0 $perl_bin dmarc_update_public_suffix_list --random";
     }
-    $CHILDREN->{'cron'} = $cron_pid;
-        
-    open my $cron, '|-', 'crontab';
-    print $cron "0 0 * * 0 $perl_bin dmarc_update_public_suffix_list --random\n";
-    close $cron;
+
+    if ( ! $ENV{'NO_REPORT_CRON'} ) {
+        ## ToDo logging for sending
+        #push @crontab, "10 0 * * * $perl_bin dmarc_send_reports";
+    }
+
+    if ( @crontab ) {    
+        my $cron_pid = fork();
+        handle_shutdown( "unable to fork: $!" ) unless defined($cron_pid);
+        if (!$cron_pid) {
+            exec('cron', '-f') || handle_shutdown( "Failed to exec cron: $!" );
+            exit 0;
+        }
+        $CHILDREN->{'cron'} = $cron_pid;
+
+        open my $cron, '|-', 'crontab';
+        print $cron join( "\n", @crontab );
+        close $cron;
+    }
+    else {
+        out( 'Cron not required' );
+    }
+
     return;
 }
 
 sub dmarc_check_db_connection {
+    if ( $ENV{'NO_DATABASE'} ) {
+        out( 'Skipping database check' );
+        return;
+    }
     out( 'Checking database connection' );
     my $backend = Mail::DMARC::Report->new()->store()->backend();
     eval {
         $backend->db_connect();
     };
     if ( my $error = $@ ) {
-        out( "Could not connect to database:\n$error" );
-        die;
+        handle_shutdown( "Could not connect to database:\n$error" );
     }
     return;
 }
