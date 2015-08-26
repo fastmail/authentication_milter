@@ -263,7 +263,7 @@ Mail::Milter::Authentication::Protocol::Milter - Milter protocol specific method
 
 =head1 DESCRIPTION
 
-A PERL implemtation of email authentication standards rolled up into a single easy to use milter.
+A Perl implementation of email authentication standards rolled up into a single easy to use milter.
 
 =head1 SYNOPSIS
 
