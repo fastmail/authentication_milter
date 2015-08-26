@@ -867,7 +867,7 @@ Mail::Milter::Authentication::Protocol::SMTP - SMTP protocol specific methods
 
 =head1 DESCRIPTION
 
-A PERL implemtation of email authentication standards rolled up into a single easy to use milter.
+A Perl implenmetation of email authentication standards rolled up into a single easy to use milter.
 
 =head1 SYNOPSIS
 
