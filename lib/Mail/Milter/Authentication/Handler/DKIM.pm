@@ -191,12 +191,6 @@ sub eom_callback {
                     $self->log_error( "TIMEOUT DETECTED: in DKIM result: $timeout_domain" );
                     $signature_result_detail = "DNS query timeout for $timeout_domain";
                 }
-                if ( $signature_result_detail =~ /public key: panic:/ ) {
-                    $self->log_error( "PANIC DETECTED: in DKIM result: $signature_result_detail" );
-                    $self->exit_on_close();
-                    $self->tempfail_on_error();
-                    return;
-                }
             }
 
             my $result_comment = q{};
@@ -327,31 +321,7 @@ sub close_callback {
 
 sub _check_error {
     my ( $self, $error ) = @_;
-
-    if ( $error =~ / on an undefined value at /
-            or $error =~ / as a HASH ref while /
-            or $error =~ / as an ARRAY reference at /
-            or $error =~ / as a subroutine ref while /
-            or $error =~ / on unblessed reference at /
-            or $error =~ /^Cannot convert a reference to /
-            or $error =~ /^Not a HASH reference at /
-            or $error =~ /^Not a CODE reference at /
-            or $error =~ /^Cannot copy to HASH in sassign at /
-            or $error =~ /^Cannot copy to ARRAY in sassign at /
-            or $error =~ /^Undefined subroutine /
-            or $error =~ /^invalid protocol/
-            or $error =~ / locate object method /
-            or $error =~ /^panic: /
-    ) {
-        $self->log_error( "PANIC DETECTED: in DKIM method: $error" );
-        $self->exit_on_close();
-        $self->tempfail_on_error();
-        $self->add_auth_header('dkim=temperror (internal error)');
-
-        delete $self->{'headers'};
-        return;
-    }
-    elsif ( $error =~ /^DNS error: query timed out/
+    if ( $error =~ /^DNS error: query timed out/
             or $error =~ /^DNS query timeout/
     ){
         $self->log_error( 'Temp DKIM Error - ' . $error );

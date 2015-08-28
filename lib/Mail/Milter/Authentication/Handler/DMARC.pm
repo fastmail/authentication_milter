@@ -329,30 +329,7 @@ sub eom_callback {
         }
     };
     if ( my $error = $@ ) {
-        if ( $error =~ / on an undefined value at /
-                or $error =~ / as a HASH ref while /
-                or $error =~ / as an ARRAY reference at /
-                or $error =~ / as a subroutine ref while /
-                or $error =~ / on unblessed reference at /
-                or $error =~ /^Cannot convert a reference to /
-                or $error =~ /^Not a HASH reference at /
-                or $error =~ /^Not a CODE reference at /
-                or $error =~ /^Cannot copy to HASH in sassign at /
-                or $error =~ /^Cannot copy to ARRAY in sassign at /
-                or $error =~ /^Undefined subroutine /
-                or $error =~ /^invalid protocol/
-                or $error =~ / locate object method /
-                or $error =~ /^panic: /
-        ) {
-            $self->log_error( "PANIC DETECTED: in DMARC method: $error" );
-            $self->exit_on_close();
-            $self->tempfail_on_error();
-            $self->add_auth_header('dmarc=temperror (internal error)');
-
-            $self->destroy_object('dmarc');
-            return;
-        }
-        elsif ( $error =~ /invalid header_from at / ) {
+        if ( $error =~ /invalid header_from at / ) {
             $self->log_error( 'DMARC Error invalid header_from <' . $self->{'from_header'} . '>' );
             $self->add_auth_header('dmarc=permerror');
         }
