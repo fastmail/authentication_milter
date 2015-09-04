@@ -1,3 +1,4 @@
+# Test configuration for auth milter smtp dryrun
 {
 
     "debug"                           : 0,
@@ -17,7 +18,7 @@
     "protocol" : "smtp",
     "smtp" : {
         "sock_type" : "unix",
-        "sock_path" : "tmp/authentication_milter_smtp_out.sock"
+        "sock_path" : "tmp/authentication_milter_smtp_out.sock",
     },
 
     "listen_backlog"         : 1,

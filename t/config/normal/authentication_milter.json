@@ -1,3 +1,4 @@
+# Test configuration for auth milter
 {
 
     "debug"                           : 0,

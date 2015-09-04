@@ -80,6 +80,7 @@ sub load_file {
     }
 
     my $json = JSON->new();
+    $json->relaxed(1);
     my $data = $json->decode($text)
       || die "Error parsing config file $file";
 
