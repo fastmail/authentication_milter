@@ -1,5 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
+1.0.2   FUTURE
+
 1.0.1   2015-09-11
         - Removed unrequired error handling
         - Fixed some typos (sergeyromanov)

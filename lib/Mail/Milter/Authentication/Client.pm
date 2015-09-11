@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Client;
 
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v1.0.1');
+use version; our $VERSION = version->declare('v1.0.2');
 
 use Data::Dumper;
 use Digest::MD5 qw{ md5_base64 };
@@ -474,7 +474,7 @@ package Mail::Milter::Authentication::Net::Milter;
 use strict;
 use Carp;
 use vars qw($DEBUG);
-use version; our $VERSION = version->declare('v1.0.1');
+use version; our $VERSION = version->declare('v1.0.2');
 $DEBUG=0;
 
 use constant PROTOCOL_NEGATION => 0; 
