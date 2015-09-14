@@ -148,7 +148,7 @@ sub dmarc_setup_cron {
         $CHILDREN->{'cron'} = $cron_pid;
 
         open my $cron, '|-', 'crontab';
-        print $cron join( "\n", @crontab );
+        print $cron join( "\n", @crontab ) . "\n";
         close $cron;
     }
     else {
