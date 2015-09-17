@@ -18,6 +18,11 @@ Includes 3 additional modules.
 - AddID - add a header to all email (example)
 - ReturnOK - Checks that return addresses have properly configured MX records
 
+Badges
+------
+
+[![Code on GitHub](https://img.shields.io/badge/github-repo-blue.svg)](https://github.com/fastmail/authentication_milter) [![Build Status](https://travis-ci.org/fastmail/authentication_milter.svg?branch=master)](https://travis-ci.org/fastmail/authentication_milter) [![Open Issues](https://img.shields.io/github/issues/fastmail/authentication_milter.svg)](https://github.com/fastmail/authentication_milter/issues) [![Dist on CPAN](https://img.shields.io/cpan/v/Mail-Milter-Authentication.svg)](https://metacpan.org/release/Mail-Milter-Authentication) [![CPANTS](https://img.shields.io/badge/cpants-kwalitee-blue.svg)](http://cpants.cpanauthors.org/dist/Mail-Milter-Authentication)
+
 Protocol
 --------
 
@@ -114,13 +119,6 @@ Who is using this?
 ------------------
 
 [FastMail](https://www.fastmail.com/) are using this to perform SPF/DKIM/DMARC checks on email.
-
-Code Climate
-------------
-
-master branch [![Build Status](https://travis-ci.org/fastmail/authentication_milter.svg?branch=master)](https://travis-ci.org/fastmail/authentication_milter)
-
-[CPANTS](http://cpants.cpanauthors.org/dist/Mail-Milter-Authentication)
 
 Contributing
 ------------
