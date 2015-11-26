@@ -10,7 +10,6 @@ my @modules = qw {
     Mail::Milter::Authentication::Client
     Mail::Milter::Authentication::Config
     Mail::Milter::Authentication::Constants
-    Mail::Milter::Authentication::DNSCache
     Mail::Milter::Authentication::Handler
     Mail::Milter::Authentication::Protocol::Milter
     Mail::Milter::Authentication::Protocol::SMTP

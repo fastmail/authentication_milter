@@ -2,6 +2,7 @@ package AuthMilterTest;
 
 use strict;
 use warnings;
+use AuthMilterTestDNSCache;
 use Test::More;
 use Test::File::Contents;
 
@@ -9,7 +10,7 @@ use Cwd qw{ cwd };
 use IO::Socket::INET;
 use IO::Socket::UNIX;
 use Module::Load;
-        
+
 use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Client;
 use Mail::Milter::Authentication::Config;
@@ -19,10 +20,6 @@ use Mail::Milter::Authentication::Protocol::SMTP;
 my $base_dir = cwd();
 
 our $MASTER_PROCESS_PID = $$;
-
-sub set_lib {
-    return 'export PERL5LIB=' . $base_dir . '/lib';
-}
 
 sub tools_test {
 
@@ -35,7 +32,7 @@ sub tools_test {
     unlink 'tmp/tools_test.sock';
     my $cat_pid = smtpcat( $catargs );
     sleep 2;
-    
+
     smtpput({
         'sock_type'    => 'unix',
         'sock_path'    => 'tmp/tools_test.sock',
@@ -66,7 +63,7 @@ sub tools_pipeline_test {
     unlink 'tmp/tools_test.sock';
     my $cat_pid = smtpcat( $catargs );
     sleep 2;
-    
+
     my $putargs = {
         'sock_type'    => 'unix',
         'sock_path'    => 'tmp/tools_test.sock',
@@ -122,15 +119,16 @@ sub tools_pipeline_test {
         if ( ! -e $prefix . '/authentication_milter.json' ) {
             die "Could not find config";
         }
-    
+
         system "cp $prefix/mail-dmarc.ini .";
-        
+
         $milter_pid = fork();
         die "unable to fork: $!" unless defined($milter_pid);
         if (!$milter_pid) {
             $Mail::Milter::Authentication::Config::PREFIX = $prefix;
+            $Mail::Milter::Authentication::Handler::TestResolver = AuthMilterTestDNSCache->new(),
             Mail::Milter::Authentication::start({
-               'pid_file'   => 'tmp/authentication_milter.pid',
+                'pid_file'   => 'tmp/authentication_milter.pid',
                 'daemon'     => 0,
             });
             die;

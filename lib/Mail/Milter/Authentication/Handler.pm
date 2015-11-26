@@ -11,8 +11,9 @@ use Net::DNS::Resolver;
 use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 
-use Mail::Milter::Authentication::DNSCache;
 use Mail::Milter::Authentication::Constants qw { :all };
+
+our $TestResolver; # For Testing
 
 sub new {
     my ( $class, $thischild ) = @_;
@@ -477,22 +478,23 @@ sub get_object {
             $self->dbgout( 'Object created', $name, LOG_DEBUG );
             my $config = $self->config();
             my $timeout           = $config->{'dns_timeout'}           || 8;
-            my $cache_timeout     = $config->{'dns_cache_timeout'}     || 240;
-            my $cache_error_limit = $config->{'dns_cache_error_limit'} || 3;
             my $dns_retry         = $config->{'dns_retry'}             || 2;
-            my $static_cache      = $config->{'dns_static_cache'};
             my $resolvers         = $config->{'dns_resolvers'}         || [];
-            $object = Net::DNS::Resolver->new(
-                'udp_timeout'       => $timeout,
-                'tcp_timeout'       => $timeout,
-                'cache_timeout'     => $cache_timeout,
-                'cache_error_limit' => $cache_error_limit,
-                'retry'             => $dns_retry,
-                'static_cache'      => $static_cache,
-                'nameservers'       => $resolvers
-            );
-            $object->udppacketsize(1240);
-            $object->persistent_udp(1);
+            if ( defined $TestResolver ) {
+                $object = $TestResolver;
+                warn "Using FAKE TEST DNS Resolver - I Hope this isn't production!";
+                # If it is you better know what you're doing!
+            }
+            else {
+                $object = Net::DNS::Resolver->new(
+                    'udp_timeout'       => $timeout,
+                    'tcp_timeout'       => $timeout,
+                    'retry'             => $dns_retry,
+                    'nameservers'       => $resolvers,
+                );
+                $object->udppacketsize(1240);
+                $object->persistent_udp(1);
+            }
             $thischild->{'object'}->{$name} = {
                 'object'  => $object,
                 'destroy' => 0,

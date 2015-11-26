@@ -21,9 +21,7 @@
     "command_timeout"       : 30,
     "content_timeout"       : 300,
     "dns_timeout"           : 10,
-    "dns_cache_timeout"     : 240,
     "dns_retry"             : 2,
-    "dns_cache_error_limit" : 3,
 
     "tempfail_on_error"               : "1",
     "tempfail_on_error_authenticated" : "0",

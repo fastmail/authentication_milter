@@ -1,0 +1,106 @@
+package AuthMilterTestDNSCache;
+use strict;
+use warnings;
+use version; our $VERSION = version->declare('v1.0.2');
+
+use base 'Net::DNS::Resolver';
+
+use JSON;
+use Data::Dumper;
+use MIME::Base64;
+
+## no critic [Subroutines::RequireArgUnpacking]
+
+{
+
+    sub new {
+        my $class = shift;
+        my %args = @_;
+        my $self = $class->SUPER::new( @_ );
+
+        $self->{'static_cache'} = {
+
+            "query:123.123.123.123:PTR" => [ "", "NXDOMAIN" ],
+            "query:1.2.3.4:PTR" => [ "", "NXDOMAIN" ],
+            "query:74.125.82.171:PTR" => [ "dAOBgAABAAEAAAAAAzE3MQI4MgMxMjUCNzQHaW4tYWRkcgRhcnBhAAAMAAHADAAMAAEAAPI0ABoNbWFpbC13ZTAtZjE3MQZnb29nbGUDY29tAA==", "NOERROR" ] ,
+            "query:example.com:A" => [ "Y2aBgAABAAEAAAAAB2V4YW1wbGUDY29tAAABAAHADAABAAEAAO3UAARduNgi", "NOERROR" ],
+            "query:example.com:MX" => [ "", "NOERROR" ],
+            "query:example.com:NS" => [ "Ao6BgAABAAIAAAACB2V4YW1wbGUDY29tAAACAAHADAACAAEAAIEAABQBYgxpYW5hLXNlcnZlcnMDbmV0AMAMAAIAAQAAgQAABAFhwCvAKQABAAEAAAbkAATHK4U1wEkAAQABAAAG5AAExyuENQ==", "NOERROR" ],
+            "query:mail-we0-f171.google.com.:A" => [ "EZSBgAABAAEAAAAADW1haWwtd2UwLWYxNzEGZ29vZ2xlA2NvbQAAAQABwAwAAQABAADcPwAESn1Sqw==", "NOERROR" ] ,
+            "query:marcbradshaw.net:MX" => [ "blWBgAABAAcAAAAHDG1hcmNicmFkc2hhdwNuZXQAAA8AAcAMAA8AAQAA8bsAGQAeBkFTUE1YMgpHT09HTEVNQUlMA0NPTQDADAAPAAEAAPG7AAsAHgZBU1BNWDXAN8AMAA8AAQAA8bsACwAeBkFTUE1YNMA3wAwADwABAADxuwAYABQEQUxUMgVBU1BNWAFMBkdPT0dMRcBCwAwADwABAADxuwAEAArAiMAMAA8AAQAA8bsACQAUBEFMVDHAiMAMAA8AAQAA8bsACwAeBkFTUE1YM8A3wDAAAQABAAAAeQAEQOmoGsBVAAEAAQAAAHwABEp9FhvAgwABAAEAAADvAARKfY4awLcAAQABAAAA7wAESn0ZGsDMAAEAAQAAALAABEp9jhvAbAABAAEAAAB8AARA6bkbwIgAAQABAAAA7wAESn3LGg==", "NOERROR" ] ,
+            "query:marcbradshaw.net:NS" => [ "6VSBgAABAAcAAAAHDG1hcmNicmFkc2hhdwNuZXQAAAIAAcAMAAIAAQAA8bcAGgNuczUNdHdvZmlmdHllaWdodANsdGQCdWsAwAwAAgABAADxtwAQA25zMwZsaW5vZGUDY29tAMAMAAIAAQAA8bcABgNuczLAWMAMAAIAAQAA8bcABgNuczTAWMAMAAIAAQAA8bcABgNuczbAMsAMAAIAAQAA8bcABgNuczHAWMAMAAIAAQAA8bcABgNuczXAWMCmAAEAAQABUV8ABEVdfwrAggABAAEAAVFfAATPwEYKwC4AAQABAADMhgAEarszxcBUAAEAAQABUV8ABEt/YArAuAABAAEAAVFfAARtSsIKwHAAAQABAAFRXwAEQROyCsCUAAEAAQAAzIYABLJPsGE=", "NOERROR" ] ,
+            "send:123.123.123.123:PTR" => [ "dAOBgwABAAAAAQAAAzEyMwMxMjMDMTIzAzEyMwdpbi1hZGRyBGFycGEAAAwAAcAUAAYAAQAADhAAKgJucwNidGEDbmV0AmNuAARyb290wDp3oLggAABw4wAAHCAACTqAAAFRgA==", "NXDOMAIN" ] ,
+            "send:1.2.3.4:PTR" => [ "doiBgwABAAAAAQAAATQBMwEyATEHaW4tYWRkcgRhcnBhAAAMAAHAEgAGAAEAAA27AE0DbnMxBWFwbmljA25ldAAncmVhZC10eHQtcmVjb3JkLW9mLXpvbmUtZmlyc3QtZG5zLWFkbWluwDYAABPuAAAcIAAABwgACTqAAAKjAA==", "NXDOMAIN" ] ,
+            "send:20130820._domainkey.1e100.net:TXT" => [ "I8CBgAABAAEAAAAACDIwMTMwODIwCl9kb21haW5rZXkFMWUxMDADbmV0AAAQAAHADAAQAAEAAPICAZPJaz1yc2E7IHA9TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFuT3Y2K1R4eXorU0VjN21UNzE5UVF0T2o2ZzJNanBFcllVR1ZyUkdHYzdmNXJtRTFjUlAxbGh3eDhQVm9IT2l1Unp5b2s3SXFqdkF1YjlrazlmQm9FOXVYSkIxUWFSZE1uS3o3Vy9VaFdlbUs1VEVVZ1cxeFQ1cXRCZlVJcEZSTDM0aDZGYkhiZXlzYjRzemk3YVRnyGVyeEkxNW83M2NQNUJvUFZrUWo0QlFLa2ZUUVlHTkgwM0o1RGI5dU1xVy9OTko4ZktDTEtXTzVDMWUrTlExbEQ2dXdGQ2pKNlBXRm1BSWVVdTkrTGZZVzg5VHoxTm53dFNrRkM5Nk9reTFjbW5sQmY0ZGhaL1VwL0ZNWm1COWw3VEE2Z0xFdTZKaWpsRHJObXgxbzUwV0FEUGpqTjRyR0VMTHQzVnVYbjA5eTJwaUJQbFpQVTJTSWlEUUMwcVgwSldRSURBUUFC", "NOERROR" ] ,
+            "send:74.125.82.171:PTR" => [ "dAOBgAABAAEAAAAAAzE3MQI4MgMxMjUCNzQHaW4tYWRkcgRhcnBhAAAMAAHADAAMAAEAAPI0ABoNbWFpbC13ZTAtZjE3MQZnb29nbGUDY29tAA==", "NOERROR" ] ,
+            "send:_adsp._domainkey.marcbradshaw.net:TXT" => [ "eNuBgAABAAEAAAAABV9hZHNwCl9kb21haW5rZXkMbWFyY2JyYWRzaGF3A25ldAAAEAABwAwAEAABAADyAwANDGRraW09dW5rbm93bg==", "NOERROR" ] ,
+            "send:_dmarc.example.com:TXT" => [ "kWiBgwABAAAAAQAABl9kbWFyYwdleGFtcGxlA2NvbQAAEAABwBMABgABAAAL3QAtA3NucwNkbnMFaWNhbm4Db3JnAANub2PANHgNDWwAABwgAAAOEAASdQAAAA4Q", "NXDOMAIN" ],
+            "send:_dmarc.marcbradshaw.net:TXT" => [ "MvGBgAABAAEAAAAABl9kbWFyYwxtYXJjYnJhZHNoYXcDbmV0AAAQAAHADAAQAAEAAPHLAFdWdj1ETUFSQzE7IHA9bm9uZTsgcnVhPW1haWx0bzpkbWFyYy5yZXBvcnRzQG9wcy50d29maWZ0eWVpZ2h0Lmx0ZC51azsgcmY9YWZyZjsgcGN0PTEwMDs=", "NOERROR" ] ,
+            "send:_domainkey.marcbradshaw.net:TXT" => [ "1BWBgAABAAAAAQAACl9kb21haW5rZXkMbWFyY2JyYWRzaGF3A25ldAAAEAABwBcABgABAAAOEABOA25zNQ10d29maWZ0eWVpZ2h0A2x0ZAJ1awAKaG9zdG1hc3Rlcg9lbGVjdHJpYy1kcmVhbXMDb3JnAHgMvm0AAHCAAAAcIAAk6gAAAVGA", "NOERROR" ] ,
+            "send:example.com:A" => [ "Y2aBgAABAAEAAAAAB2V4YW1wbGUDY29tAAABAAHADAABAAEAAO3PAARduNgi", "NOERROR" ],
+            "send:example.com:MX" => [ "BUyBgAABAAAAAQAAB2V4YW1wbGUDY29tAAAPAAHADAAGAAEAAAvdAC0Dc25zA2RucwVpY2FubgNvcmcAA25vY8AteA0NbAAAHCAAAA4QABJ1AAAADhA=", "NOERROR" ],
+            "send:example.com:NS" => [ "Ao6BgAABAAIAAAACB2V4YW1wbGUDY29tAAACAAHADAACAAEAAIEAABQBYgxpYW5hLXNlcnZlcnMDbmV0AMAMAAIAAQAAgQAABAFhwCvAKQABAAEAAAbkAATHK4U1wEkAAQABAAAG5AAExyuENQ==", "NOERROR" ],
+            "send:example.com:TXT" => [ "xluBgAABAAIAAAAAB2V4YW1wbGUDY29tAAAQAAHADAAQAAEAAAA3AAwLdj1zcGYxIC1hbGzADAAQAAEAAAA3ADU0JElkOiBleGFtcGxlLmNvbSAzMjgwIDIwMTQtMTItMTAgMDA6MTU6MTJaIHNwb3dlbGwgJA==", "NOERROR" ],
+            "send:google._domainkey.marcbradshaw.net:TXT" => [ "doiBgAABAAEAAAAABmdvb2dsZQpfZG9tYWlua2V5DG1hcmNicmFkc2hhdwNuZXQAABAAAcAMABAAAQAA8hEA8O92PURLSU0xOyBrPXJzYTsgdD15OyBwPU1JR2ZNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0R05BRENCaVFLQmdRQzV6bDVTWGlsc0ZLZXZRR2lxQmxheUxlTCtiQnppNE45OFJqVi95aU0rdW56KzMxN2JXaFRVNjNiaVJ5SGJ2MERaNDMxdXFqOG1QVVJnbkxlZitTQk9Za0VEdi9kaGl6Y3FOVldIV0hKb3UvSS9vWHBqUFdKcVZJQnUyNDJ3eE5MSTNSOTJMaExHS2cwVy9KKytQb3NRdmxaM29nWWRtRE5ZK3dtUllGUEpsd0lEQVFBQg==", "NOERROR" ] ,
+            "send:mail-we0-f171.google.com.:A" => [ "EZSBgAABAAEAAAAADW1haWwtd2UwLWYxNzEGZ29vZ2xlA2NvbQAAAQABwAwAAQABAADcPwAESn1Sqw==", "NOERROR" ] ,
+            "send:marcbradshaw.net:MX" => [ "blWBgAABAAcAAAAHDG1hcmNicmFkc2hhdwNuZXQAAA8AAcAMAA8AAQAA8bsAGQAeBkFTUE1YMgpHT09HTEVNQUlMA0NPTQDADAAPAAEAAPG7AAsAHgZBU1BNWDXAN8AMAA8AAQAA8bsACwAeBkFTUE1YNMA3wAwADwABAADxuwAYABQEQUxUMgVBU1BNWAFMBkdPT0dMRcBCwAwADwABAADxuwAEAArAiMAMAA8AAQAA8bsACQAUBEFMVDHAiMAMAA8AAQAA8bsACwAeBkFTUE1YM8A3wDAAAQABAAAAeQAEQOmoGsBVAAEAAQAAAHwABEp9FhvAgwABAAEAAADvAARKfY4awLcAAQABAAAA7wAESn0ZGsDMAAEAAQAAALAABEp9jhvAbAABAAEAAAB8AARA6bkbwIgAAQABAAAA7wAESn3LGg==", "NOERROR" ] ,
+            "send:marcbradshaw.net:NS" => [ "6VSBgAABAAcAAAAHDG1hcmNicmFkc2hhdwNuZXQAAAIAAcAMAAIAAQAA8bcAGgNuczUNdHdvZmlmdHllaWdodANsdGQCdWsAwAwAAgABAADxtwAQA25zMwZsaW5vZGUDY29tAMAMAAIAAQAA8bcABgNuczLAWMAMAAIAAQAA8bcABgNuczTAWMAMAAIAAQAA8bcABgNuczbAMsAMAAIAAQAA8bcABgNuczHAWMAMAAIAAQAA8bcABgNuczXAWMCmAAEAAQABUV8ABEVdfwrAggABAAEAAVFfAATPwEYKwC4AAQABAADMhgAEarszxcBUAAEAAQABUV8ABEt/YArAuAABAAEAAVFfAARtSsIKwHAAAQABAAFRXwAEQROyCsCUAAEAAQAAzIYABLJPsGE=", "NOERROR" ] ,
+            "send:marcbradshaw.net:TXT" => [ "9WyBgAABAAEAAAAADG1hcmNicmFkc2hhdwNuZXQAABAAAcAMABAAAQAA8ewA1tV2PXNwZjEgaW5jbHVkZTpzcGYubWFuZHJpbGxhcHAuY29tIGluY2x1ZGU6X3NwZi5nb29nbGUuY29tIGlwNDoxNzguNzkuMTc2Ljk3IGlwNjoyYTAxOjdlMDA6OmYwM2M6OTFmZjpmZTkzOjFjZCBpcDQ6MTA2LjE4Ny41MS4xOTcgaXA2OjI0MDA6ODkwMDo6ZjAzYzo5MWZmOmZlNmU6ODRjNyBpcDQ6NTkuMTY3LjE5OC4xNTMgaXA2OjIwMDE6NDRiODo2MjpjMDo6LzY0IH5hbGw=", "NOERROR" ] ,
+            "send:_netblocks2.google.com:TXT" => [ "9fyBgAABAAEAAAAAC19uZXRibG9ja3MyBmdvb2dsZQNjb20AABAAAcAMABAAAQAAC9EAm5p2PXNwZjEgaXA2OjIwMDE6NDg2MDo0MDAwOjovMzYgaXA2OjI0MDQ6NjgwMDo0MDAwOjovMzYgaXA2OjI2MDc6ZjhiMDo0MDAwOjovMzYgaXA2OjI4MDA6M2YwOjQwMDA6Oi8zNiBpcDY6MmEwMDoxNDUwOjQwMDA6Oi8zNiBpcDY6MmMwZjpmYjUwOjQwMDA6Oi8zNiB+YWxs", "NOERROR" ],
+            "send:_netblocks3.google.com:TXT" => [ "BXKBgAABAAEAAAAAC19uZXRibG9ja3MzBmdvb2dsZQNjb20AABAAAcAMABAAAQAAC1IADAt2PXNwZjEgfmFsbA==", "NOERROR" ],
+            "send:_netblocks.google.com:TXT" => [ "3iGBgAABAAEAAAAACl9uZXRibG9ja3MGZ29vZ2xlA2NvbQAAEAABwAwAEAABAAAFjwDf3nY9c3BmMSBpcDQ6NjQuMTguMC4wLzIwIGlwNDo2NC4yMzMuMTYwLjAvMTkgaXA0OjY2LjEwMi4wLjAvMjAgaXA0OjY2LjI0OS44MC4wLzIwIGlwNDo3Mi4xNC4xOTIuMC8xOCBpcDQ6NzQuMTI1LjAuMC8xNiBpcDQ6MTczLjE5NC4wLjAvMTYgaXA0OjIwNy4xMjYuMTQ0LjAvMjAgaXA0OjIwOS44NS4xMjguMC8xNyBpcDQ6MjE2LjU4LjIwOC4wLzIwIGlwNDoyMTYuMjM5LjMyLjAvMTkgfmFsbA==", "NOERROR" ] ,
+            "send:_policy._domainkey.marcbradshaw.net:TXT" => [ "luaBgwABAAAAAQAAB19wb2xpY3kKX2RvbWFpbmtleQxtYXJjYnJhZHNoYXcDbmV0AAAQAAHAHwAGAAEAAA4QAE4DbnM1DXR3b2ZpZnR5ZWlnaHQDbHRkAnVrAApob3N0bWFzdGVyD2VsZWN0cmljLWRyZWFtcwNvcmcAeAy+bQAAcIAAABwgACTqAAABUYA=", "NXDOMAIN" ] ,
+            "send:_spf.google.com:TXT" => [ "aoWBgAABAAEAAAAABF9zcGYGZ29vZ2xlA2NvbQAAEAABwAwAEAABAAAA8gBoZ3Y9c3BmMSBpbmNsdWRlOl9uZXRibG9ja3MuZ29vZ2xlLmNvbSBpbmNsdWRlOl9uZXRibG9ja3MyLmdvb2dsZS5jb20gaW5jbHVkZTpfbmV0YmxvY2tzMy5nb29nbGUuY29tIH5hbGw=", "NOERROR" ] ,
+            "send:spf.mandrillapp.com:TXT" => [ "ItSBgAABAAEAAAAAA3NwZgttYW5kcmlsbGFwcANjb20AABAAAcAMABAAAQAAeVMAiol2PXNwZjEgaXA0OjE5OC4yLjEyOC4wLzI0IGlwNDoxOTguMi4xMzIuMC8yMiBpcDQ6MjA1LjIwMS4xMzEuMTI4LzI1IGlwNDoyMDUuMjAxLjEzNC4xMjgvMjUgaXA0OjIwNS4yMDEuMTM2LjAvMjMgaXA0OjIwNS4yMDEuMTM5LjAvMjQgP2FsbA==", "NOERROR" ],
+        };
+
+        return $self;
+    }
+}
+
+sub send { ## no critic
+    my ( $self ) = shift;
+    my @args = @_;
+    return $self->cache_lookup( 'send', @args );
+}
+
+sub query {
+    my ( $self ) = shift;
+    my @args = @_;
+    return $self->cache_lookup( 'query', @args );
+}
+
+sub search {
+    my ( $self ) = shift;
+    my @args = @_;
+    return $self->cache_lookup( 'search', @args );
+}
+
+sub cache_lookup {
+    my $self = shift;
+    my $type = shift;
+    my @args = @_;
+    my $key = join(":" , $type, @args);
+    my $static_cache  = $self->{'static_cache'};
+
+    warn "FAKE DNS Lookup $key";
+
+    my $return;
+
+    if ( exists ( $static_cache->{$key} ) ) {
+        my $packet = $static_cache->{$key}->[0];
+        my $error  = $static_cache->{$key}->[1];
+        my $data   = decode_base64( $packet );
+        my $return_packet = Net::DNS::Packet->new( \$data );
+        $self->errorstring( $error );
+
+        return $return_packet;
+    }
+
+    warn "LOOKUP FAILED";
+    die;
+    return;
+}
+
+1;
+

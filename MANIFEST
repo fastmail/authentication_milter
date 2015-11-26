@@ -4,7 +4,6 @@ Changes
 lib/Mail/Milter/Authentication/Client.pm
 lib/Mail/Milter/Authentication/Config.pm
 lib/Mail/Milter/Authentication/Constants.pm
-lib/Mail/Milter/Authentication/DNSCache.pm
 lib/Mail/Milter/Authentication/Handler/AddID.pm
 lib/Mail/Milter/Authentication/Handler/Auth.pm
 lib/Mail/Milter/Authentication/Handler/DKIM.pm
@@ -36,6 +35,7 @@ t/01-tools.t
 t/02-milter.t
 t/02-smtp.t
 t/AuthMilterTest.pm
+t/AuthMilterTestDNSCache.pm
 t/config/dryrun/authentication_milter.json
 t/config/dryrun/mail-dmarc.ini
 t/config/dryrun.smtp/authentication_milter.json
