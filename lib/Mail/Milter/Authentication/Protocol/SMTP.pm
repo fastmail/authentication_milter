@@ -589,6 +589,7 @@ sub smtp_command_data {
         }
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+        ## ToDo Expand for LMTP?
         print $socket $reject_reason . "\r\n";
     }
     else { 

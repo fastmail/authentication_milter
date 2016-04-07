@@ -176,10 +176,13 @@ sub smtp_process {
         'output'    => 'tmp/result/' . $args->{'dest'},
     };
     unlink 'tmp/authentication_milter_smtp_out.sock';
-    my $cat_pid = smtpcat( $catargs );
-    sleep 2;
+    my $cat_pid;
+    if ( ! $args->{'no_cat'} ) {
+        $cat_pid = smtpcat( $catargs );
+        sleep 2;
+    }
 
-    smtpput({
+    my $return = smtpput({
         'sock_type'    => 'unix',
         'sock_path'    => 'tmp/authentication_milter_test.sock',
         'mailer_name'  => 'test.module',
@@ -189,11 +192,16 @@ sub smtp_process {
         'mail_from'    => [ $args->{'from'} ],
         'rcpt_to'      => [ $args->{'to'} ],
         'mail_file'    => [ 'data/source/' . $args->{'source'} ],
+        'eom_expect'   => $args->{'eom_expect'},
     });
 
-    waitpid( $cat_pid,0 );
-
-    files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
+    if ( ! $args->{'no_cat'} ) {
+        waitpid( $cat_pid,0 );
+        files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
+    }
+    else {
+        is( $return, 1, 'SMTP Put Returned ok' );
+    }
 
     return;
 }
@@ -750,6 +758,8 @@ sub run_smtp_processing {
         'name'   => 'bad.name.google.com',
         'from'   => 'test@goestheweasel.com',
         'to'     => 'marc@fastmail.com',
+        'eom_expect' => '541',
+        'no_cat' => 1,
     });
     
     smtp_process({
@@ -819,7 +829,9 @@ sub smtpput {
     my $sock_path    = $args->{'sock_path'};
     my $sock_host    = $args->{'sock_host'};
     my $sock_port    = $args->{'sock_port'};
-    
+
+    my $eom_expect   = $args->{'eom_expect'} || '250';
+
     my $sock;
     if ( $sock_type eq 'inet' ) {
        $sock = IO::Socket::INET->new(
@@ -894,14 +906,14 @@ sub smtpput {
         print $sock $mail_data;
         print $sock "\r\n";
         
-        send_smtp_packet( $sock, '.',    '250' ) || return;
+        send_smtp_packet( $sock, '.',    $eom_expect ) || return 0;
     
     }
         
-    send_smtp_packet( $sock, 'QUIT', '221' ) || return;
+    send_smtp_packet( $sock, 'QUIT', '221' ) || return 0;
     $sock->close();
 
-    return;
+    return 1;
 }
 
 sub send_smtp_packet {
@@ -1041,6 +1053,7 @@ sub client {
 
         $Mail::Milter::Authentication::Config::PREFIX = $args->{'prefix'};
         delete $args->{'prefix'};
+        $args->{'testing'} = 1;
 
         my $client = Mail::Milter::Authentication::Client->new( $args );
 
