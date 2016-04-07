@@ -435,6 +435,43 @@ sub run_milter_processing {
         'to'     => 'marc@fastmail.com',
     });
     
+    milter_process({
+        'desc'   => 'DMARC Reject',
+        'prefix' => 'config/normal',
+        'source' => 'dmarc_reject.eml',
+        'dest'   => 'dmarc_reject.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'test@goestheweasel.com',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    stop_milter();
+    
+    start_milter( 'config/dmarc_reject' );
+    
+    milter_process({
+        'desc'   => 'DMARC Reject Hard',
+        'prefix' => 'config/dmarc_reject',
+        'source' => 'dmarc_reject.eml',
+        'dest'   => 'dmarc_reject_hard.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'test@goestheweasel.com',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    milter_process({
+        'desc'   => 'DKIM/SPF Fail Hard',
+        'prefix' => 'config/dmarc_reject',
+        'source' => 'google_apps_bad.eml',
+        'dest'   => 'google_apps_bad_spf_fail_hard.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+ 
     stop_milter();
     
     start_milter( 'config/dryrun' ); 
@@ -689,6 +726,43 @@ sub run_smtp_processing {
         'to'     => 'marc@fastmail.com',
     });
     
+    smtp_process({
+        'desc'   => 'DMARC Reject',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'dmarc_reject.eml',
+        'dest'   => 'dmarc_reject.smtp.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'test@goestheweasel.com',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    stop_milter();
+    
+    start_milter( 'config/dmarc_reject.smtp' );
+    
+    smtp_process({
+        'desc'   => 'DMARC Reject Hard',
+        'prefix' => 'config/dmarc_reject.smtp',
+        'source' => 'dmarc_reject.eml',
+        'dest'   => 'dmarc_reject_hard.smtp.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'test@goestheweasel.com',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    smtp_process({
+        'desc'   => 'DKIM/SPF Fail Hard',
+        'prefix' => 'config/dmarc_reject.smtp',
+        'source' => 'google_apps_bad.eml',
+        'dest'   => 'google_apps_bad_spf_fail_hard.smtp.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+   
     stop_milter();
     
     start_milter( 'config/dryrun.smtp' );

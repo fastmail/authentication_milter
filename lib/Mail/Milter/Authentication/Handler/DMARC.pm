@@ -15,6 +15,7 @@ my $PSL_CHECKED_TIME;
 sub default_config {
     return {
         'hide_none'      => 0,
+        'hard_reject'    => 0,
         'detect_list_id' => 1,
         'report_skip_to' => [ 'my_report_from_address@example.com' ],
         'no_report'      => 0,
@@ -279,6 +280,7 @@ sub eom_callback {
         my $dmarc_result = $dmarc->validate();
         my $dmarc_code   = $dmarc_result->result;
         $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
+
         if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
             my $dmarc_policy;
             if ( $dmarc_code ne 'pass' ) {
@@ -287,6 +289,14 @@ sub eom_callback {
                     $self->log_error( 'DMARCPolicyError ' . $error );
                 }
                 $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
+                if ( $dmarc_code eq 'fail' && $dmarc_policy eq 'reject' ) {
+                    if ( $config->{'hard_reject'} ) {
+                        $self->reject_mail( '541 5.7.0 DMARC policy violation' );
+                        $self->dbgout( 'DMARCReject', "Policy reject", LOG_INFO );
+                        warn "REJECT";
+                    }
+                }
+
             }
             my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
             my $is_list_entry = q{};
@@ -371,6 +381,7 @@ This handler requires the SPF and DKIM handlers to be installed and active.
 
         "DMARC" : {                                     | Config for the DMARC Module
                                                         | Requires DKIM and SPF
+            "hard_reject"    : 0,                       | Reject mail which fails with a reject policy
             "hide_none"      : 0,                       | Hide auth line if the result is 'none'
             "detect_list_id" : "1",                     | Detect a list ID and modify the DMARC authentication header
                                                         | to note this, useful when making rules for junking email
