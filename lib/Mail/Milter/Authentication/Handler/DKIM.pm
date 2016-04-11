@@ -46,14 +46,6 @@ sub header_callback {
         $self->{'has_dkim'} = 1;
     }
 
-    # Add Google signatures to the mix.
-    # Is this wise?
-    if ( $header eq 'X-Google-DKIM-Signature' ) {
-        my $x_dkim_chunk = 'DKIM-Signature: ' . $value . $EOL;
-        $x_dkim_chunk =~ s/\015?\012/$EOL/g;
-        push @{$self->{'headers'}} , $x_dkim_chunk;
-        $self->{'has_dkim'} = 1;
-    }
     return;
 }
 
