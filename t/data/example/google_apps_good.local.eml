@@ -1,6 +1,6 @@
 Authentication-Results: test.module;
     dkim=pass (1024-bit rsa key) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3;
-    dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
+    x-google-dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
     x-local-ip=pass
 Return-Path: <marc@marcbradshaw.net>
 Received: by mail-we0-f171.google.com with SMTP id k11so1456187wes.2

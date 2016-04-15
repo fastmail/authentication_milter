@@ -64,7 +64,7 @@ sub eoh_callback {
         $self->dbgout( 'XGoogleDKIMResult', 'No X-Google-DKIM headers', LOG_INFO );
         if ( !( $config->{'hide_none'} ) ) {
             $self->add_auth_header(
-                $self->format_header_entry( 'dkim', 'none' )
+                $self->format_header_entry( 'x-google-dkim', 'none' )
                 . ' (no signatures found)' );
         }
         delete $self->{'headers'};
@@ -211,38 +211,20 @@ sub eom_callback {
                     $key_data = $key->size() . '-bit ' . $key->type() . ' key';
                 };
 
-                if ( $type eq 'domainkeys' ) {
-                    ## DEBUGGING
-                    my $header = join(
-                        q{ },
-                        $self->format_header_entry( $type, $signature_result ),
-                        '('
-                          . $self->format_header_comment(
-                              $result_comment
-                              . $key_data
-                            )
-                          . ')',
-                        $self->format_header_entry( 'header.d', $signature->domain() ),
-                        $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
-                    );
-                    $self->add_auth_header($header);
-                }
-                else {
-                    my $header = join(
-                        q{ },
-                        $self->format_header_entry( $type, $signature_result ),
-                        '('
-                          . $self->format_header_comment(
-                            $result_comment
-                            . $key_data
-                          )
-                          . ')',
-                        $self->format_header_entry( 'header.d', $signature->domain() ),
-                        $self->format_header_entry( 'header.i', $signature->identity() ),
-                        $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
-                    );
-                    $self->add_auth_header($header);
-                }
+                my $header = join(
+                    q{ },
+                    $self->format_header_entry( 'x-google-dkim', $signature_result ),
+                    '('
+                      . $self->format_header_comment(
+                        $result_comment
+                        . $key_data
+                      )
+                      . ')',
+                    $self->format_header_entry( 'header.d', $signature->domain() ),
+                    $self->format_header_entry( 'header.i', $signature->identity() ),
+                    $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
+                );
+                $self->add_auth_header($header);
             }
         }
 

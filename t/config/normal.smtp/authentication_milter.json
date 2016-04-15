@@ -39,6 +39,9 @@
             "hide_none" : 0,
             "detect_list_id" : 1
         },
+        "XGoogleDKIM" : {
+            "hide_none" : 0
+        },
         "DKIM" : {
             "hide_none" : 0,
             "show_default_adsp" : 0,

@@ -1,10 +1,10 @@
 Authentication-Results: test.module;
     dkim-adsp=pass (ADSP policy from marcbradshaw.net);
     dkim=pass (1024-bit rsa key) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3;
-    dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
     dmarc=pass header.from=marcbradshaw.net;
     iprev=pass policy.iprev=74.125.82.171 (mail-we0-f171.google.com);
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com;
+    x-google-dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
     x-ptr=pass x-ptr-helo=mail-we0-f171.google.com x-ptr-lookup=mail-we0-f171.google.com
 Received-SPF: pass
     (marcbradshaw.net: Sender is authorized to use 'marc@marcbradshaw.net' in 'mfrom' identity (mechanism 'include:_spf.google.com' matched))
