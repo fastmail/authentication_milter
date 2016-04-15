@@ -585,15 +585,35 @@ sub smtp_command_data {
             else {
                 $error .= ': ' . $upstream_error;
             }
-            print $socket "$error\r\n";
+            if ( $smtp->{'using_lmtp'} ) {
+                foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
+                    print $socket "$error\r\n";
+                }
+            }
+            else {
+                print $socket "$error\r\n";
+            }
         }
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
-        ## ToDo Expand for LMTP?
-        print $socket $reject_reason . "\r\n";
+        if ( $smtp->{'using_lmtp'} ) {
+            foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
+                print $socket $reject_reason . "\r\n";
+            }
+        }
+        else {
+            print $socket $reject_reason . "\r\n";
+        }
     }
     else { 
-        print $socket "451 4.0.0 That's not right\r\n";
+        if ( $smtp->{'using_lmtp'} ) {
+            foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
+                print $socket "451 4.0.0 That's not right\r\n";
+            }
+        }
+        else {
+            print $socket "451 4.0.0 That's not right\r\n";
+        }
     }
     $self->smtp_status('smtp.i.data.done');
 
