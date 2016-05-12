@@ -212,7 +212,7 @@ sub load_mail {
         else {
             if ( $value ) {
                 my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
-                $hvalue =~ s/^ //;
+                $hvalue =~ s/^ // if defined $hvalue;
                 push @header_pairs , $hkey;
                 push @header_pairs , $hvalue;
             }
@@ -221,7 +221,7 @@ sub load_mail {
     }
     if ( $value ) {
         my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
-        $hvalue =~ s/^ //;
+        $hvalue =~ s/^ // if defined $hvalue;
         push @header_pairs , $hkey;
         push @header_pairs , $hvalue;
     }
@@ -310,6 +310,7 @@ sub process {
         while ( @process_header ) {
             my $key = shift @process_header;
             my $value = shift @process_header;
+            $value //= '';
             $header_string .= "$key: $value\015\012";
         }
         my $header_obj = Email::Simple::Header->new( $header_string );
