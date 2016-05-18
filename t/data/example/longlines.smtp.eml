@@ -9,7 +9,7 @@ Received: from test.module (localhost [127.0.0.1])
     by server.example.com (Authentication Milter) with ESMTP
 Authentication-Results: server.example.com;
     dkim=none (no signatures found);
-    dmarc=fail (p=none) header.from=example.com;
+    dmarc=none (p=none) header.from=example.com;
     iprev=pass policy.iprev=74.125.82.171 (mail-we0-f171.google.com);
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com;
     x-google-dkim=none (no signatures found);
