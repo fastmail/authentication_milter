@@ -254,6 +254,7 @@ sub process_request {
         }
     }
 
+    delete $self->{'handler'}->{'_Handler'}->{'reject_mail'};
     delete $self->{'handler'}->{'_Handler'}->{'return_code'};
     delete $self->{'socket'};
     $PROGRAM_NAME = 'authentication_milter:waiting(' . $count . ')';

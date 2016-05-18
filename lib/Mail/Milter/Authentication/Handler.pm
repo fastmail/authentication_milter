@@ -61,6 +61,7 @@ sub top_connect_callback {
         my $callbacks = $self->get_callbacks( 'connect' );
         foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->connect_callback( $hostname, $ip );
+            last if defined $self->get_reject_mail();
         }
         alarm(0);
     };
@@ -94,6 +95,7 @@ sub top_helo_callback {
             my $callbacks = $self->get_callbacks( 'helo' );
             foreach my $handler ( @$callbacks ) {
                 $self->get_handler($handler)->helo_callback($helo_host);
+                last if defined $self->get_reject_mail();
             }
         }
         else {
@@ -135,6 +137,7 @@ sub top_envfrom_callback {
         my $callbacks = $self->get_callbacks( 'envfrom' );
         foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->envfrom_callback($env_from);
+            last if defined $self->get_reject_mail();
         }
         alarm(0);
     };
@@ -165,6 +168,7 @@ sub top_envrcpt_callback {
         my $callbacks = $self->get_callbacks( 'envrcpt' );
         foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->envrcpt_callback($env_to);
+            last if defined $self->get_reject_mail();
         }
         alarm(0);
     };
@@ -194,6 +198,7 @@ sub top_header_callback {
         my $callbacks = $self->get_callbacks( 'header' );
         foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->header_callback( $header, $value );
+            last if defined $self->get_reject_mail();
         }
         alarm(0);
     };
@@ -222,6 +227,7 @@ sub top_eoh_callback {
         my $callbacks = $self->get_callbacks( 'eoh' );
         foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->eoh_callback();
+            last if defined $self->get_reject_mail();
         }
         alarm(0);
     };
@@ -251,6 +257,7 @@ sub top_body_callback {
         my $callbacks = $self->get_callbacks( 'body' );
         foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->body_callback( $body_chunk );
+            last if defined $self->get_reject_mail();
         }
         alarm(0);
     };
@@ -280,6 +287,7 @@ sub top_eom_callback {
         my $callbacks = $self->get_callbacks( 'eom' );
         foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->eom_callback();
+            last if defined $self->get_reject_mail();
         }
         alarm(0);
     };
@@ -421,8 +429,18 @@ sub set_return {
 sub get_return {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
+    if ( defined $self->get_reject_mail() ) {
+        return $self->smfis_reject();
+    }
     return $top_handler->{'return_code'};
 }
+
+sub get_reject_mail {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    return $top_handler->{'reject_mail'};
+}
+
 
 sub get_top_handler {
     my ($self) = @_;
@@ -545,6 +563,13 @@ sub exit_on_close {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     $top_handler->{'exit_on_close'} = 1;
+    return;
+}
+
+sub reject_mail {
+    my ( $self, $reason ) = @_;
+    my $top_handler = $self->get_top_handler();
+    $top_handler->{'reject_mail'} = $reason;
     return;
 }
 
@@ -1077,6 +1102,10 @@ Set the return code to be passed back to the MTA.
 
 Get the current return code.
 
+=item get_reject_mail()
+
+Get the reject mail reason (or undef)
+
 =item get_top_handler()
 
 Return the current top Handler object.
@@ -1126,6 +1155,10 @@ Certain objects (resolver and spf_server) are not destroyed for performance reas
 =item exit_on_close()
 
 Exit this child once it has completed, do not process further requests with this child.
+
+=item reject_mail( $reason )
+
+Reject mail with the given reason
 
 =item clear_all_symbols()
 

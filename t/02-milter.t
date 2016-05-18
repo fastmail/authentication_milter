@@ -14,10 +14,10 @@ if ( ! -e 't/01-tools.t' ) {
 
 chdir 't';
 
-plan tests => 14;
+plan tests => 17;
 
 {
-    system 'rm -rf tmp';
+#    system 'rm -rf tmp';
     mkdir 'tmp';
     mkdir 'tmp/result';
 

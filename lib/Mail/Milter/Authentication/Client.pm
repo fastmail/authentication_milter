@@ -64,6 +64,8 @@ sub new {
         die 'No mail file or data supplied';
     }
 
+    $self->{'testing'}       = $args->{'testing'};
+
     $self->{'milter'} = Mail::Milter::Authentication::Net::Milter->new();
 
     bless($self,$class);
@@ -101,7 +103,12 @@ sub r { ## no critic [Subroutines::RequireArgUnpacking]
         }
         elsif ( $action eq 'reject' ) {
             my $value = $result->{'value'} || q{};
-            die "Message rejected with code : $value\n";
+            if ( $self->{'testing'} ) {
+                $self->{'rejected'} = "Message rejected with code : $value";
+            }
+            else {
+                die "Message rejected with code : $value\n";
+            }
         }
         else {
             warn "Unknown Action\n";
@@ -322,6 +329,7 @@ sub process {
 
 sub result {
     my ( $self ) = @_;
+    return $self->{'rejected'} if $self->{'rejected'} && $self->{'testing'};
     return $self->{'result'};
 }
 

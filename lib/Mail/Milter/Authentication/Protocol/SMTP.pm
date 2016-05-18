@@ -383,13 +383,22 @@ sub smtp_command_mailfrom {
             if ( $returncode == SMFIS_CONTINUE ) {
                 print $socket "250 2.0.0 Ok\r\n";
             }
+            elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+                print $socket $reject_reason . "\r\n";
+            }
             else {
                 print $socket "451 4.0.0 MAIL - That's not right\r\n";
             }
         }
+        elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+            print $socket $reject_reason . "\r\n";
+        }
         else { 
             print $socket "451 4.0.0 HELO - That's not right\r\n";
         }
+    }
+    elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+        print $socket $reject_reason . "\r\n";
     }
     else { 
         print $socket "451 4.0.0 Connection - That's not right\r\n";
@@ -416,6 +425,9 @@ sub smtp_command_rcptto {
     if ( $returncode == SMFIS_CONTINUE ) {
         push @{ $smtp->{'lmtp_rcpt'} }, $envrcpt;  
         print $socket "250 2.0.0 Ok\r\n";
+    }
+    elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+        print $socket $reject_reason . "\r\n";
     }
     else {
         print $socket "451 4.0.0 That's not right\r\n";
@@ -573,11 +585,35 @@ sub smtp_command_data {
             else {
                 $error .= ': ' . $upstream_error;
             }
-            print $socket "$error\r\n";
+            if ( $smtp->{'using_lmtp'} ) {
+                foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
+                    print $socket "$error\r\n";
+                }
+            }
+            else {
+                print $socket "$error\r\n";
+            }
+        }
+    }
+    elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+        if ( $smtp->{'using_lmtp'} ) {
+            foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
+                print $socket $reject_reason . "\r\n";
+            }
+        }
+        else {
+            print $socket $reject_reason . "\r\n";
         }
     }
     else { 
-        print $socket "451 4.0.0 That's not right\r\n";
+        if ( $smtp->{'using_lmtp'} ) {
+            foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
+                print $socket "451 4.0.0 That's not right\r\n";
+            }
+        }
+        else {
+            print $socket "451 4.0.0 That's not right\r\n";
+        }
     }
     $self->smtp_status('smtp.i.data.done');
 
