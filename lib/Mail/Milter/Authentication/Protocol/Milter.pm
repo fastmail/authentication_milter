@@ -112,6 +112,10 @@ sub milter_process_command {
         $self->fatal("Unknown milter command $command");
     }
 
+    if ( my $reject_reason = $handler->get_reject_mail() ) {
+        $returncode = SMFIS_REJECT;
+    }
+
     if (defined $returncode) {
         if ( $returncode == SMFIS_CONTINUE ) {
             $returncode = SMFIR_CONTINUE;

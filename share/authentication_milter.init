@@ -34,40 +34,69 @@ test -f $DAEMON || exit 0
 
 set -e
 
+if [ -f $PIDFILE ] ; then
+    CURRENTPID=$(cat $PIDFILE)
+    case $CURRENTPID in
+    ''|*[!0-9]*)
+        echo "pidfile $PIDFILE is invalid"
+        echo "Please stop any running milters and remove pidfile"
+        exit 1
+        ;;
+    *)
+        CURRENTPROCESS=$(ps axo pid,command|grep "^$CURRENTPID ")
+        if [ ! "$CURRENTPROCESS" = "$CURRENTPID authentication_milter:master" ] ; then
+            echo "Process in $PIDFILE is not an authentication milter master process"
+            echo "Please stop any running milters and remove pidfile"
+            exit 1
+        fi
+        ;;
+    esac
+fi
+
 case "$1" in
   start)
 	echo -n "Starting $DESC: "
-	start-stop-daemon --start --pidfile $PIDFILE --exec $XNAME \
-	    $NICE --oknodo --startas $DAEMON -- $OPTIONS $DOPTIONS
-	echo "$NAME."
+        if [ -f $PIDFILE ] ; then
+            echo "$DESC is already running: $CURRENTPROCESS"
+        else
+            $DAEMON --daemon --pidfile $PIDFILE
+        fi
+        echo "$NAME."
 	;;
 
   stop)
 	echo -n "Stopping $DESC: "
-	start-stop-daemon --stop --pidfile $PIDFILE --exec $XNAME --oknodo
-        /bin/rm $PIDFILE
+        if [ -f $PIDFILE ] ; then
+            kill $CURRENTPID
+            /bin/rm $PIDFILE
+        else
+            echo "Failed"
+        fi
         echo "$NAME."
 	;;
 
   reload|force-reload)
 	echo -n "Reloading $DESC: "
-	start-stop-daemon --stop --pidfile $PIDFILE --signal HUP --exec $XNAME
+        if [ -f $PIDFILE ] ; then
+            kill -HUP $CURRENTPID
+        else
+            echo "Failed"
+        fi
 	echo "$NAME."
 	;;
 
   restart)
 	echo -n "Restarting $DESC: "
-	start-stop-daemon --stop --pidfile $PIDFILE --exec $XNAME \
-	    --retry 5 --oknodo
+        kill $CURRENTPID
         /bin/rm $PIDFILE
-	start-stop-daemon --start --pidfile $PIDFILE --exec $XNAME \
-	    $NICE --oknodo --startas $DAEMON -- $OPTIONS $DOPTIONS
-
+        $DAEMON --daemon --pidfile $PIDFILE
 	echo "$NAME."
 	;;
+
   status)
         status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
         ;;
+
   *)
 	N=/etc/init.d/$SNAME
 	echo "Usage: $N {start|stop|restart|reload|force-reload|status}" >&2

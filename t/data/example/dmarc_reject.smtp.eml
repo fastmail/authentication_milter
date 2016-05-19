@@ -1,0 +1,32 @@
+EHLO server.example.com
+XFORWARD HELO=bad.name.google.com
+XFORWARD ADDR=123.123.123.123
+XFORWARD NAME=bad.name.google.com
+MAIL FROM:test@goestheweasel.com
+RCPT TO:marc@fastmail.com
+DATA
+Received: from test.module (localhost [127.0.0.1])
+    by server.example.com (Authentication Milter) with ESMTP
+Authentication-Results: server.example.com;
+    dkim=none (no signatures found);
+    dmarc=fail (p=reject) header.from=goestheweasel.com;
+    iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
+    spf=fail smtp.mailfrom=test@goestheweasel.com smtp.helo=bad.name.google.com;
+    x-google-dkim=none (no signatures found);
+    x-ptr=fail x-ptr-helo=bad.name.google.com x-ptr-lookup=
+Received-SPF: fail
+    (goestheweasel.com: Sender is not authorized by default to use 'test@goestheweasel.com' in 'mfrom' identity (mechanism '-all' matched))
+    receiver=server.example.com;
+    identity=mailfrom;
+    envelope-from="test@goestheweasel.com";
+    helo=bad.name.google.com;
+    client-ip=123.123.123.123
+From: test@goestheweasel.com
+To: test@example.com
+Subject: This is a test
+
+This should be a DMARC fail with a reject policy.
+
+
+.
+QUIT
