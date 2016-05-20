@@ -114,7 +114,7 @@ sub milter_process_command {
 
     my $reject_reason;
     if ( $reject_reason = $handler->get_reject_mail() ) {
-        $returncode = SMFIR_REPLYCODE;
+        $returncode = SMFIR_REJECT;
     }
 
     if (defined $returncode) {
@@ -150,12 +150,8 @@ sub milter_process_command {
                     $self->write_packet(SMFIR_TEMPFAIL );
                 }
                 else {
-                    $self->write_packet( $returncode,
-                        $rcode
-                        . "\0"
-                        . $xcode
-                        . "\0"
-                        . $message
+                    $self->write_packet( SMFIR_REPLYCODE,
+                        $reject_reason
                         . "\0"
                     );
                 }
