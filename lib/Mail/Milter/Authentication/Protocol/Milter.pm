@@ -114,7 +114,7 @@ sub milter_process_command {
 
     my $reject_reason;
     if ( $reject_reason = $handler->get_reject_mail() ) {
-        $returncode = SMFIR_REJECT;
+        $returncode = SMFIS_REJECT;
     }
 
     if (defined $returncode) {
