@@ -103,6 +103,7 @@ sub r { ## no critic [Subroutines::RequireArgUnpacking]
         }
         elsif ( $action eq 'reject' ) {
             my $value = $result->{'value'} || q{};
+            $value =~ s/\0/ /g;
             if ( $self->{'testing'} ) {
                 $self->{'rejected'} = "Message rejected with code : $value";
             }
