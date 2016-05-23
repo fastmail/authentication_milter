@@ -296,7 +296,7 @@ sub eom_callback {
                             $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
                         }
                         else {
-                            $self->reject_mail( '541 5.7.0 DMARC policy violation' );
+                            $self->reject_mail( '550 5.7.0 DMARC policy violation' );
                             $self->dbgout( 'DMARCReject', "Policy reject", LOG_INFO );
                         }
                     }
