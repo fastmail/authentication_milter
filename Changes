@@ -1,7 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 1.0.2   FUTURE
-        - Option to reject DMARC p-reject failures
+        - Allow email to be rejected by handlers
+        - Option to reject DMARC p=reject failures
         - Split X-Google-DKIM checks into own handler
 
 1.0.1   2015-09-11
