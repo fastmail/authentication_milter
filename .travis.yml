@@ -1,5 +1,7 @@
 language: perl
 perl:
+  - "5.24"
+  - "5.22"
   - "5.20"
   - "5.18"
   - "5.16"
@@ -13,6 +15,10 @@ perl:
 
 before_install:
    - git config --global user.name "TravisCI"
+   - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
+   - source ~/travis-perl-helpers/init
+   - build-perl
+   - perl -V
 
 install:
     - cpanm --quiet --notest Mail::SPF --install-args="--install-path sbin=/tmp"
