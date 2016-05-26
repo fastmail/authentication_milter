@@ -150,6 +150,7 @@ sub milter_process_command {
                     $self->write_packet(SMFIR_TEMPFAIL );
                 }
                 else {
+                    $self->loginfo ( "SMTPReject: $reject_reason" );
                     $self->write_packet( SMFIR_REPLYCODE,
                         $reject_reason
                         . "\0"

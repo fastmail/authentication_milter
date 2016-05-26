@@ -384,6 +384,7 @@ sub smtp_command_mailfrom {
                 print $socket "250 2.0.0 Ok\r\n";
             }
             elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+                $self->loginfo ( "SMTPReject: $reject_reason" );
                 print $socket $reject_reason . "\r\n";
             }
             else {
@@ -391,6 +392,7 @@ sub smtp_command_mailfrom {
             }
         }
         elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+            $self->loginfo ( "SMTPReject: $reject_reason" );
             print $socket $reject_reason . "\r\n";
         }
         else { 
@@ -398,6 +400,7 @@ sub smtp_command_mailfrom {
         }
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+        $self->loginfo ( "SMTPReject: $reject_reason" );
         print $socket $reject_reason . "\r\n";
     }
     else { 
@@ -427,6 +430,7 @@ sub smtp_command_rcptto {
         print $socket "250 2.0.0 Ok\r\n";
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+        $self->loginfo ( "SMTPReject: $reject_reason" );
         print $socket $reject_reason . "\r\n";
     }
     else {
@@ -598,10 +602,12 @@ sub smtp_command_data {
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
         if ( $smtp->{'using_lmtp'} ) {
             foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
+                $self->loginfo ( "SMTPReject: $reject_reason" );
                 print $socket $reject_reason . "\r\n";
             }
         }
         else {
+            $self->loginfo ( "SMTPReject: $reject_reason" );
             print $socket $reject_reason . "\r\n";
         }
     }
