@@ -48,9 +48,9 @@ Design Decisions
 ----------------
 
 - Works as either a milter or a SMTP filter.
-- Do not reject mail during normal operation.
+- Do not reject mail during normal operation unless configured to do so.
   - Add headers to allow filtering as required.
-- Try and handle failures gracefully.
+- Try to handle failures gracefully.
 - Handle IPv4 and IPv6 properly
 - Detect Internal/Private IP addresses and skip IP checks.
 - Detect authenticated connections and skip irrelevant checks (milter mode only).
@@ -67,6 +67,8 @@ and result in legitimate email being quarantined or rejected.
 
 This milter can optionally detect messages with a List-Id header, and include a flag in the resulting DMARC failure in the
 Authentication-Results header.  This header can then be used to apply a more lenient filter.
+
+DMARC failures with p=reject can optionally be rejected, and emails with a detected list id can be exempted from this rejection.
 
 Trust Model
 -----------
