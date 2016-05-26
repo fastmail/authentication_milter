@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::SPF;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.0.2');
+use version; our $VERSION = version->declare('v1.1.0');
 
 use Sys::Syslog qw{:standard :macros};
 

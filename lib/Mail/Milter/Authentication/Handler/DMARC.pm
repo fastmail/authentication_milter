@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::DMARC;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.0.2');
+use version; our $VERSION = version->declare('v1.1.0');
 
 use Data::Dumper;
 use English qw{ -no_match_vars };
@@ -296,7 +296,7 @@ sub eom_callback {
                             $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
                         }
                         else {
-                            $self->reject_mail( '541 5.7.0 DMARC policy violation' );
+                            $self->reject_mail( '550 5.7.0 DMARC policy violation' );
                             $self->dbgout( 'DMARCReject', "Policy reject", LOG_INFO );
                         }
                     }

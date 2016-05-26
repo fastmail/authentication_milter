@@ -758,7 +758,7 @@ sub run_smtp_processing {
         'name'   => 'bad.name.google.com',
         'from'   => 'test@goestheweasel.com',
         'to'     => 'marc@fastmail.com',
-        'eom_expect' => '541',
+        'eom_expect' => '550',
         'no_cat' => 1,
     });
     

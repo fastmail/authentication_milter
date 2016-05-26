@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Protocol::Milter;
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v1.0.2');
+use version; our $VERSION = version->declare('v1.1.0');
 
 use English qw{ -no_match_vars };
 use Net::IP;
@@ -112,7 +112,8 @@ sub milter_process_command {
         $self->fatal("Unknown milter command $command");
     }
 
-    if ( my $reject_reason = $handler->get_reject_mail() ) {
+    my $reject_reason;
+    if ( $reject_reason = $handler->get_reject_mail() ) {
         $returncode = SMFIS_REJECT;
     }
 
@@ -142,7 +143,22 @@ sub milter_process_command {
         }
 
         if ( $command ne SMFIC_ABORT ) {
-            $self->write_packet($returncode);
+            if ( $reject_reason ) {
+                my ( $rcode, $xcode, $message ) = split( ' ', $reject_reason, 3 );
+                if ($rcode !~ /^[45]\d\d$/ || $xcode !~ /^[45]\.\d\.\d$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
+                    $self->loginfo ( "Invalid reject message $reject_reason - setting to TempFail" );
+                    $self->write_packet(SMFIR_TEMPFAIL );
+                }
+                else {
+                    $self->write_packet( SMFIR_REPLYCODE,
+                        $reject_reason
+                        . "\0"
+                    );
+                }
+            }
+            else {
+                $self->write_packet($returncode);
+            }
         }
     } 
  
