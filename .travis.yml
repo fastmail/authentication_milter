@@ -21,6 +21,7 @@ before_install:
    - perl -V
 
 install:
+    - cpanm --quiet --notest Module::Install
     - cpanm --quiet --notest Mail::SPF --install-args="--install-path sbin=/tmp"
     - cpanm --quiet --notest Test::More Test::File::Contents Test::Perl::Critic
     - cpanm --quiet --notest List::MoreUtils
