@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use version; our $VERSION = version->declare('v1.1.0');
 
+use Digest::MD5 qw{ md5_hex };
 use Email::Address;
 use English qw{ -no_match_vars };
 use Mail::SPF;
@@ -818,7 +819,8 @@ sub dbgoutwrite {
     my ($self) = @_;
     eval {
         my $config = $self->config();
-        my $queue_id = $self->get_symbol('i') || q{--};
+        my $queue_id = $self->get_symbol('i') ||
+            'NOQUEUE.' . substr( uc md5_hex( "Authentication Milter Client $PID " . time() . rand(100) ) , -11 );
         my $top_handler = $self->get_top_handler();
         if ( exists( $top_handler->{'dbgout'} ) ) {
             LOGENTRY:
