@@ -44,7 +44,7 @@ if [ -f $PIDFILE ] ; then
         ;;
     *)
         CURRENTPROCESS=$(ps axo pid,command|grep "^$CURRENTPID ")
-        if [ ! "$CURRENTPROCESS" = "$CURRENTPID authentication_milter:master" ] ; then
+        if [ ! "$CURRENTPROCESS" == "$CURRENTPID authentication_milter:master" ] ; then
             echo "Process in $PIDFILE is not an authentication milter master process"
             echo "Please stop any running milters and remove pidfile"
             exit 1
