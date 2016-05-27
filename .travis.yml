@@ -27,8 +27,8 @@ install:
     - cpanm --quiet --notest Test::CheckManifest Test::Pod::Coverage Test::Pod
     - cpanm --quiet --notest Cwd Email::Address Email::Date::Format Email::Simple
     - cpanm --quiet --notest English IO::Socket JSON Mail::DKIM::Verifier Mail::DKIM
-    - cpanm --quiet --notest Mail::DMARC
     - cpanm --quiet --notest MIME::Base64 Module::Load Module::Loaded
     - cpanm --quiet --notest Net::DNS Net::IP Net::Server
     - cpanm --quiet --notest Pod::Usage Proc::ProcessTable Socket Sys::Hostname Sys::Syslog
+    - cpanm --quiet --notest cpanm git://github.com/fastmailops/mail-dmarc.git@fastmail
 
