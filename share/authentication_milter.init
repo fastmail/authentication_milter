@@ -35,39 +35,47 @@ test -f $DAEMON || exit 0
 
 
 if [ -f $PIDFILE ] ; then
+
     CURRENTPID=$(cat $PIDFILE)
+
     case $CURRENTPID in
     ''|*[!0-9]*)
         echo "pidfile $PIDFILE is invalid"
         echo "Please stop any running milters and remove pidfile"
         exit 1
         ;;
-    *)
-        CURRENTPROCESS=$(ps axo pid,command|grep "^$CURRENTPID ")
-        if [ ! "$CURRENTPROCESS" == "$CURRENTPID authentication_milter:master" ] ; then
-            echo "Process in $PIDFILE is not an authentication milter master process"
-            echo "Please stop any running milters and remove pidfile"
-            exit 1
-        fi
-        ;;
     esac
+
+    CURRENTPROCESS=$(ps axo pid,command|grep "^$CURRENTPID ")
+
+    if [ -z "$CURRENTPROCESS" ] ; then
+        echo "Stale pidfile in $PIDFILE"
+        echo "Removing";
+        /bin/rm $PIDFILE
+    elif [ ! "$CURRENTPROCESS" == "$CURRENTPID authentication_milter:master" ] ; then
+        echo "Process in $PIDFILE is not an authentication milter master process"
+        echo "Please stop any running milters and remove pidfile"
+        exit 1
+    fi
+
 fi
 
 set -e
 
 case "$1" in
+
   start)
-	echo -n "Starting $DESC: "
+        echo -n "Starting $DESC: "
         if [ -f $PIDFILE ] ; then
             echo "$DESC is already running: $CURRENTPROCESS"
         else
             $DAEMON --daemon --pidfile $PIDFILE
         fi
         echo "$NAME."
-	;;
+        ;;
 
   stop)
-	echo -n "Stopping $DESC: "
+        echo -n "Stopping $DESC: "
         if [ -f $PIDFILE ] ; then
             kill $CURRENTPID
             /bin/rm $PIDFILE
@@ -75,37 +83,38 @@ case "$1" in
             echo "Failed"
         fi
         echo "$NAME."
-	;;
+        ;;
 
   reload|force-reload)
-	echo -n "Reloading $DESC: "
+        echo -n "Reloading $DESC: "
         if [ -f $PIDFILE ] ; then
             kill -HUP $CURRENTPID
         else
             echo "Failed"
         fi
-	echo "$NAME."
-	;;
+        echo "$NAME."
+        ;;
 
   restart)
-	echo -n "Restarting $DESC: "
+        echo -n "Restarting $DESC: "
         if [ -f $PIDFILE ] ; then
             kill $CURRENTPID
             /bin/rm $PIDFILE
         fi
         $DAEMON --daemon --pidfile $PIDFILE
-	echo "$NAME."
-	;;
+        echo "$NAME."
+        ;;
 
   status)
         status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
         ;;
 
   *)
-	N=/etc/init.d/$SNAME
-	echo "Usage: $N {start|stop|restart|reload|force-reload|status}" >&2
-	exit 1
-	;;
+        N=/etc/init.d/$SNAME
+        echo "Usage: $N {start|stop|restart|reload|force-reload|status}" >&2
+        exit 1
+        ;;
+
 esac
 
 exit 0
