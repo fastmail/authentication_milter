@@ -18,6 +18,7 @@ PIDFILE="/run/$NAME.pid"
 XNAME=/usr/bin/perl
 
 export TMPDIR=/tmp
+cd $TMPDIR
 
 . /lib/lsb/init-functions
 
@@ -88,8 +89,10 @@ case "$1" in
 
   restart)
 	echo -n "Restarting $DESC: "
-        kill $CURRENTPID
-        /bin/rm $PIDFILE
+        if [ -f $PIDFILE ] ; then
+            kill $CURRENTPID
+            /bin/rm $PIDFILE
+        fi
         $DAEMON --daemon --pidfile $PIDFILE
 	echo "$NAME."
 	;;
