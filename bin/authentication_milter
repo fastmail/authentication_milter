@@ -18,9 +18,11 @@ my $pid_file = '/run/authentication_milter.pid';
 my $daemon = 0;
 my $help   = 0;
 my $prefix;
+my $control;
 
 GetOptions (
     "daemon"    => \$daemon,
+    "control=s" => \$control,
     "pidfile=s" => \$pid_file,
     "help:s"    => \$help,
     "prefix=s"  => \$prefix,
@@ -45,6 +47,14 @@ elsif ( $help ) {
 
 if ( $prefix ) {
     $Mail::Milter::Authentication::Config::PREFIX = $prefix;
+}
+
+if ( $control ) {
+    Mail::Milter::Authentication::control({
+        'command'    => $control,
+        'pid_file'   => $pid_file,
+    });
+    exit 0;
 }
 
 Mail::Milter::Authentication::start({
@@ -110,11 +120,32 @@ __END__
 
 =head1 USAGE
 
-  authentication_milter [-d|--daemon] [-p|--pidfile <file>] [-h|--help] [--prefix <dir>]
+  authentication_milter [-c|--control <command>] [-d|--daemon] [--pidfile <file>] [-h|--help] [--prefix <dir>]
 
 =head1 OPTIONS
 
 =over
+
+=item -c|--control <command>
+
+  Control a running daemon process or start a new one.
+
+  start|restart
+
+    Start a new daemon process, or restart an existing process.
+
+  stop
+
+    Stop an already running daemon process.
+
+  status
+
+    Show the status of a running daemon process.
+
+
+  Control implies --daemon, and takes account of --pidfile
+  If no valid data is found in the pidfile then control will
+  search the process list for a master process.
 
 =item -h|--help
 
@@ -142,7 +173,7 @@ __END__
 
   detatch from shell and run as a daemon
 
-=item -p|--pidfile <file>
+=item --pidfile <file>
 
   Write the process PID to the given file.
   defaults to /run/authentication_milter.pid

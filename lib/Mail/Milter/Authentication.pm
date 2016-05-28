@@ -265,6 +265,88 @@ sub process_request {
 
 
 
+
+sub get_valid_pid {
+    my ( $pid_file ) = @_;
+    if ( ! $pid_file ) {
+        return undef;
+    }
+    if ( ! -e $pid_file ) {
+        return undef;
+    }
+
+    open my $inf, '<', $pid_file || return undef;
+    my $pid = <$inf>;
+    close $inf;
+
+    my $process_table = Proc::ProcessTable->new();
+    foreach my $process ( @{$process_table->table} ) {
+        if ( $process->pid == $pid ) {
+            if ( $process->cmndline eq 'authentication_milter:master' ) {
+                return $pid;
+            }
+        }
+    }
+    return undef;
+}
+
+sub find_process {
+    my $process_table = Proc::ProcessTable->new();
+    foreach my $process ( @{$process_table->table} ) {
+        if ( $process->cmndline eq 'authentication_milter:master' ) {
+            return $process->pid;
+        }
+    }
+    return undef;
+}
+
+sub control {
+    my ( $args ) = @_;
+    my $pid_file = $args->{'pid_file'};
+    my $command  = $args->{'command'};
+
+    if ( $command eq 'stop' ) {
+        my $pid = get_valid_pid( $pid_file ) || find_process();
+        if ( $pid ) {
+            print "Process found, stopping\n";
+            kill 'QUIT', $pid;
+        }
+        else {
+            print "No process found\n";
+        }
+    }
+    elsif ( $command eq 'restart' || $command eq 'start' ) {
+        my $pid = get_valid_pid( $pid_file ) || find_process();
+        if ( $pid ) {
+            print "Process found, restarting\n";
+            kill 'HUP', $pid;
+        }
+        else {
+            print "No process found, starting up\n";
+            start({
+                'pid_file'   => $pid_file,
+                'daemon'     => 1,
+            });
+        }
+    }
+    elsif ( $command eq 'status' ) {
+        my $pid = get_valid_pid( $pid_file ) || find_process();
+        if ( $pid ) {
+            print "Process running with pid $pid\n";
+            if ( ! get_valid_pid( $pid_file ) ) {
+                print "pid file $pid_file is invalid\n";
+            }
+        }
+        else {
+            print "No process found\n";
+        }
+    }
+    else {
+        die 'unknown command';
+    }
+
+}
+
 sub start {
     my ($args)     = @_;
 

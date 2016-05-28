@@ -9,13 +9,11 @@
 # Default-Stop:   0 1 6
 ### END INIT INFO
 
-#PATH=/usr/local/bin:/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/local/bin/authentication_milter
 NAME=authentication_milter
 SNAME=authentication_milter
 DESC="Authentication Mail Filter Daemon"
 PIDFILE="/run/$NAME.pid"
-XNAME=/usr/bin/perl
 
 export TMPDIR=/tmp
 cd $TMPDIR
@@ -24,7 +22,7 @@ cd $TMPDIR
 
 test -f /etc/default/authentication_milter && . /etc/default/authentication_milter
 
-DOPTIONS="--daemon --pidfile=$PIDFILE"
+DOPTIONS="--pidfile=$PIDFILE"
 
 if [ "$ENABLED" = "0" ]; then
     echo "$DESC: disabled, see /etc/default/authentication_milter"
@@ -33,80 +31,35 @@ fi
 
 test -f $DAEMON || exit 0
 
-
-if [ -f $PIDFILE ] ; then
-
-    CURRENTPID=$(cat $PIDFILE)
-
-    case $CURRENTPID in
-    ''|*[!0-9]*)
-        echo "pidfile $PIDFILE is invalid"
-        echo "Please stop any running milters and remove pidfile"
-        exit 1
-        ;;
-    esac
-
-    CURRENTPROCESS=$(ps axo pid,command|grep "^$CURRENTPID ")
-
-    if [ -z "$CURRENTPROCESS" ] ; then
-        echo "Stale pidfile in $PIDFILE"
-        echo "Removing";
-        /bin/rm $PIDFILE
-    elif [ ! "$CURRENTPROCESS" == "$CURRENTPID authentication_milter:master" ] ; then
-        echo "Process in $PIDFILE is not an authentication milter master process"
-        echo "Please stop any running milters and remove pidfile"
-        exit 1
-    fi
-
-fi
-
-set -e
-
 case "$1" in
 
   start)
         echo -n "Starting $DESC: "
-        if [ -f $PIDFILE ] ; then
-            echo "$DESC is already running: $CURRENTPROCESS"
-        else
-            $DAEMON --daemon --pidfile $PIDFILE
-        fi
+        $DAEMON $DOPTIONS --control=start
         echo "$NAME."
         ;;
 
   stop)
         echo -n "Stopping $DESC: "
-        if [ -f $PIDFILE ] ; then
-            kill $CURRENTPID
-            /bin/rm $PIDFILE
-        else
-            echo "Failed"
-        fi
+        $DAEMON $DOPTIONS --control=stop
+        /bin/rm $PIDFILE
         echo "$NAME."
         ;;
 
   reload|force-reload)
         echo -n "Reloading $DESC: "
-        if [ -f $PIDFILE ] ; then
-            kill -HUP $CURRENTPID
-        else
-            echo "Failed"
-        fi
+        $DAEMON $DOPTIONS --control=restart
         echo "$NAME."
         ;;
 
   restart)
         echo -n "Restarting $DESC: "
-        if [ -f $PIDFILE ] ; then
-            kill $CURRENTPID
-            /bin/rm $PIDFILE
-        fi
-        $DAEMON --daemon --pidfile $PIDFILE
+        $DAEMON $DOPTIONS --control=restart
         echo "$NAME."
         ;;
 
   status)
-        status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
+        $DAEMON $DOPTIONS --control=status
         ;;
 
   *)
