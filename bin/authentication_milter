@@ -147,6 +147,11 @@ __END__
   If no valid data is found in the pidfile then control will
   search the process list for a master process.
 
+  Control assumes that there is one, and only one instance of
+  authentication milter running on a given host with only a single
+  configuration.  If your environment is more complex than this then
+  you will need to manage running daemons another way.
+
 =item -h|--help
 
   Show this help.
