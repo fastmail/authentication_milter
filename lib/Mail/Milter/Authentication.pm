@@ -677,13 +677,27 @@ sub destroy_objects {
 
 ## Logging
 
+sub get_queue_id {
+    my ( $self ) = @_;
+    my $queue_id;
+
+    if ( exists ( $self->{'smtp'} ) ) {
+        if ( $self->{'smtp'}->{'queue_id'} ) {
+            $queue_id = $self->{'smtp'}->{'queue_id'};
+        }
+    }
+    elsif ( exists ( $self->{'handler'}->{'_Handler'} ) ) {
+        $queue_id = $self->{'handler'}->{'_Handler'}->get_symbol('i');
+    }
+
+    return $queue_id;
+}
+
 sub logerror {
     my ($self,$line) = @_;
     my $config = $self->{'config'} || get_config();
-    if ( exists ( $self->{'smtp'} ) ) {
-        if ( $self->{'smtp'}->{'queue_id'} ) {
-            $line = $self->{'smtp'}->{'queue_id'} . ': ' . $line;
-        }
+    if ( my $queue_id = $self->get_queue_id() ) {
+        $line = $queue_id . ': ' . $line;
     }
     _warn( $line ) if $config->{'logtoerr'};
     syslog( LOG_ERR, $line );
@@ -693,10 +707,8 @@ sub logerror {
 sub loginfo {
     my ($self,$line) = @_;
     my $config = $self->{'config'} || get_config();
-    if ( exists ( $self->{'smtp'} ) ) {
-        if ( $self->{'smtp'}->{'queue_id'} ) {
-            $line = $self->{'smtp'}->{'queue_id'} . ': ' . $line;
-        }
+    if ( my $queue_id = $self->get_queue_id() ) {
+        $line = $queue_id . ': ' . $line;
     }
     _warn( $line ) if $config->{'logtoerr'};
     syslog( LOG_INFO, $line );
@@ -706,10 +718,8 @@ sub loginfo {
 sub logdebug {
     my ($self,$line) = @_;
     my $config = $self->{'config'} || get_config();
-    if ( exists ( $self->{'smtp'} ) ) {
-        if ( $self->{'smtp'}->{'queue_id'} ) {
-            $line = $self->{'smtp'}->{'queue_id'} . ': ' . $line;
-        }
+    if ( my $queue_id = $self->get_queue_id() ) {
+        $line = $queue_id . ': ' . $line;
     }
     if ( $config->{'debug'} ) {
         _warn( $line ) if $config->{'logtoerr'};
@@ -764,6 +774,18 @@ Hook which runs in parent before it forks children.
 
 Hook which runs for each request, sets up per request items and processes the request.
 
+=item I<control($command)>
+
+Run a daemon command.  Command can be one of start/restart/stop/status.
+
+=item I<find_process()>
+
+Search the process table for an authentication_milter master process
+
+=item I<get_valid_pid($pid_file)>
+
+Given a pid file, check for a valid process ID and return if valid.
+
 =item I<start($hashref)>
 
 Start the server. This method does not return.
@@ -812,6 +834,10 @@ Sort the callbacks for the $callback callback into the right order
 =item I<destroy_objects()>
 
 Remove references to all objects
+
+=item I<get_queue_id()>
+
+Return the queue ID (for logging) if possible.
 
 =item I<logerror( $line )>
 
