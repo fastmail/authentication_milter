@@ -434,6 +434,12 @@ sub get_reject_mail {
     return $top_handler->{'reject_mail'};
 }
 
+sub clear_reject_mail {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    delete $top_handler->{'reject_mail'};
+    return;
+}
 
 sub get_top_handler {
     my ($self) = @_;
@@ -1099,6 +1105,10 @@ Get the current return code.
 =item get_reject_mail()
 
 Get the reject mail reason (or undef)
+
+=item clear_reject_mail()
+
+Clear the reject mail reason
 
 =item get_top_handler()
 

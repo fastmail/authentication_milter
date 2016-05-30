@@ -360,8 +360,6 @@ sub smtp_command_mailfrom {
         return;
     }
 
-    $smtp->{'has_mail_from'} = 1;
-
     # Do connect callback here, because of XFORWARD
     my $host = $smtp->{'fwd_connect_host'} || $smtp->{'connect_host'};
     my $ip   = $smtp->{'fwd_connect_ip'}   || $smtp->{'connect_ip'};
@@ -381,9 +379,11 @@ sub smtp_command_mailfrom {
             $envfrom =~ s/ BODY=8BITMIME$//;
             $returncode = $handler->top_envfrom_callback( $envfrom );
             if ( $returncode == SMFIS_CONTINUE ) {
+                $smtp->{'has_mail_from'} = 1;
                 print $socket "250 2.0.0 Ok\r\n";
             }
             elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+                $handler->clear_reject_mail();
                 $self->loginfo ( "SMTPReject: $reject_reason" );
                 print $socket $reject_reason . "\r\n";
             }
@@ -392,6 +392,7 @@ sub smtp_command_mailfrom {
             }
         }
         elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+            $handler->clear_reject_mail();
             $self->loginfo ( "SMTPReject: $reject_reason" );
             print $socket $reject_reason . "\r\n";
         }
@@ -400,6 +401,7 @@ sub smtp_command_mailfrom {
         }
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+        $handler->clear_reject_mail();
         $self->loginfo ( "SMTPReject: $reject_reason" );
         print $socket $reject_reason . "\r\n";
     }
@@ -430,6 +432,7 @@ sub smtp_command_rcptto {
         print $socket "250 2.0.0 Ok\r\n";
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+        $handler->clear_reject_mail();
         $self->loginfo ( "SMTPReject: $reject_reason" );
         print $socket $reject_reason . "\r\n";
     }
@@ -458,7 +461,6 @@ sub smtp_command_data {
         print $socket "503 5.5.2 One at a time please\r\n";
         return;
     }
-    $smtp->{'has_data'} = 1;
     print $socket "354 2.0.0 Send body\r\n";
 
     local $SIG{'ALRM'} = sub{ die "Timeout\n" };
@@ -561,6 +563,7 @@ sub smtp_command_data {
         if ( $self->smtp_forward_to_destination() ) {
 
             $handler->dbgout( 'Accept string', $smtp->{'string'}, LOG_INFO );
+            $smtp->{'has_data'} = 1;
 
             if ( $smtp->{'using_lmtp'} ) {
                 foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
@@ -600,6 +603,7 @@ sub smtp_command_data {
         }
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+        $handler->clear_reject_mail();
         if ( $smtp->{'using_lmtp'} ) {
             foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
                 $self->loginfo ( "SMTPReject: $reject_reason" );
