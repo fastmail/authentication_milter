@@ -15,6 +15,7 @@ our @EXPORT_OK = qw{
 use JSON;
 
 our $PREFIX = '/etc';
+our $IDENT  = 'authentication_milter';
 
 sub default_config {
     my $config = {

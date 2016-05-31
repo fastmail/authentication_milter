@@ -19,6 +19,7 @@ my $daemon = 0;
 my $help   = 0;
 my $prefix;
 my $control;
+my $ident;
 
 GetOptions (
     "daemon"    => \$daemon,
@@ -26,6 +27,7 @@ GetOptions (
     "pidfile=s" => \$pid_file,
     "help:s"    => \$help,
     "prefix=s"  => \$prefix,
+    "ident=s"   => \$ident,
 ) or die "Error in command line arguments\n";
 
 if ( $help eq q{} ) {
@@ -47,6 +49,10 @@ elsif ( $help ) {
 
 if ( $prefix ) {
     $Mail::Milter::Authentication::Config::PREFIX = $prefix;
+}
+
+if ( $ident ) {
+    $Mail::Milter::Authentication::Config::IDENT .= '_' . $ident;
 }
 
 if ( $control ) {
@@ -120,7 +126,7 @@ __END__
 
 =head1 USAGE
 
-  authentication_milter [-c|--control <command>] [-d|--daemon] [--pidfile <file>] [-h|--help] [--prefix <dir>]
+  authentication_milter [-c|--control <command>] [-d|--daemon] [--pidfile <file>] [-h|--help] [--prefix <dir>] [-i|--ident <ident>]
 
 =head1 OPTIONS
 
@@ -147,10 +153,9 @@ __END__
   If no valid data is found in the pidfile then control will
   search the process list for a master process.
 
-  Control assumes that there is one, and only one instance of
-  authentication milter running on a given host with only a single
-  configuration.  If your environment is more complex than this then
-  you will need to manage running daemons another way.
+  If you are running multiple distinct instances of authentication
+  milter on a single host, each with differing configurations then you
+  should use the --ident identifier to differentiate between them.
 
 =item -h|--help
 
@@ -186,6 +191,13 @@ __END__
 =item --prefix <dir>
 
   Read configuration from dir rather than /etc/
+
+=item -i|--ident <ident>
+
+  A string identifier for use in process management and logging
+
+  This should be used when you are running multiple instances of
+  authentication_milter on a single host, each with different configurations.
 
 =back
 

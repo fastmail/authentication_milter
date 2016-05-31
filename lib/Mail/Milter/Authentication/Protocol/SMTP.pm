@@ -13,6 +13,7 @@ use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
 use Mail::Milter::Authentication::Constants qw{ :all };
+use Mail::Milter::Authentication::Config;
 
 sub get_smtp_config {
     my ( $self ) = @_;
@@ -32,7 +33,7 @@ sub get_smtp_config {
 sub smtp_status {
     my ( $self, $status ) = @_;
     my $smtp = $self->{'smtp'};
-    $PROGRAM_NAME = 'authentication_milter:' . $status . '(' . $self->{'count'} . '.' . $smtp->{'count'} . ')';
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':' . $status . '(' . $self->{'count'} . '.' . $smtp->{'count'} . ')';
     return;
 }
 

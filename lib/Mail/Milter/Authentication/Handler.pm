@@ -13,6 +13,7 @@ use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 
 use Mail::Milter::Authentication::Constants qw { :all };
+use Mail::Milter::Authentication::Config;
 
 our $TestResolver; # For Testing
 
@@ -373,10 +374,10 @@ sub status {
         }
     }
     if ( $status ) {
-        $PROGRAM_NAME = 'authentication_milter:processing:' . $status . '(' . $count . ')';
+        $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':processing:' . $status . '(' . $count . ')';
     }
     else {
-        $PROGRAM_NAME = 'authentication_milter:processing(' . $count . ')';
+        $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':processing(' . $count . ')';
     }
     return;
 }

@@ -23,7 +23,7 @@ sub _warn {
     my @parts = split "\n", $msg;
     foreach my $part ( @parts ) {
         next if $part eq q{};
-        print STDERR scalar localtime . " authentication_milter[$PID] $part\n";
+        print STDERR scalar localtime . ' ' . $Mail::Milter::Authentication::Config::IDENT . "[$PID] $part\n";
     }
     return;
 }
@@ -46,7 +46,7 @@ sub get_installed_handlers {
 sub pre_loop_hook {
     my ( $self ) = @_;
 
-    $PROGRAM_NAME = 'authentication_milter:master';
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':master';
 
     # Load handlers
     my $config = get_config();
@@ -105,7 +105,7 @@ sub child_init_hook {
     }
 
     $self->loginfo( "Child process $PID starting up" );
-    $PROGRAM_NAME = 'authentication_milter:starting';
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':starting';
 
     my $base;
     if ( $config->{'protocol'} eq 'milter' ) {
@@ -156,7 +156,7 @@ sub child_init_hook {
 
     $self->setup_handlers();
 
-    $PROGRAM_NAME = 'authentication_milter:waiting(0)';
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(0)';
     return;
 }
 
@@ -229,7 +229,7 @@ sub process_request {
     $self->{'count'}++;
     my $count = $self->{'count'};
     my $config = $self->{'config'};
-    $PROGRAM_NAME = 'authentication_milter:processing(' . $count . ')';
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':processing(' . $count . ')';
     $self->logdebug( 'Processing request ' . $self->{'count'} );
     $self->{'socket'} = $self->{'server'}->{'client'}; 
 
@@ -257,7 +257,7 @@ sub process_request {
     delete $self->{'handler'}->{'_Handler'}->{'reject_mail'};
     delete $self->{'handler'}->{'_Handler'}->{'return_code'};
     delete $self->{'socket'};
-    $PROGRAM_NAME = 'authentication_milter:waiting(' . $count . ')';
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(' . $count . ')';
     $self->logdebug( 'Request processing completed' );
     return;
 }
@@ -282,7 +282,7 @@ sub get_valid_pid {
     my $process_table = Proc::ProcessTable->new();
     foreach my $process ( @{$process_table->table} ) {
         if ( $process->pid == $pid ) {
-            if ( $process->cmndline eq 'authentication_milter:master' ) {
+            if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':master' ) {
                 return $pid;
             }
         }
@@ -293,7 +293,7 @@ sub get_valid_pid {
 sub find_process {
     my $process_table = Proc::ProcessTable->new();
     foreach my $process ( @{$process_table->table} ) {
-        if ( $process->cmndline eq 'authentication_milter:master' ) {
+        if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':master' ) {
             return $process->pid;
         }
     }
@@ -401,7 +401,7 @@ sub start {
 
     $srvargs{'log_file'}          = 'Sys::Syslog';
     $srvargs{'syslog_facility'}   = LOG_MAIL;
-    $srvargs{'syslog_ident'}      = 'authentication_milter';
+    $srvargs{'syslog_ident'}      = $Mail::Milter::Authentication::Config::IDENT;
     $srvargs{'syslog_logopt'}     = 'pid';
 
     if ( $EUID == 0 ) {
