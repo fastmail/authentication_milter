@@ -30,6 +30,12 @@ GetOptions (
     "ident=s"   => \$ident,
 ) or die "Error in command line arguments\n";
 
+# Reconstruct relevant ARGV line for restart
+push @ARGV, '--daemon' if $daemon;
+push @ARGV, '--pidfile=' . $pid_file if $pid_file;
+push @ARGV, '--prefix=' . $prefix if $prefix;
+push @ARGV, '--ident=' . $ident if $ident;
+
 if ( $help eq q{} ) {
     usage();
     exit 0;
