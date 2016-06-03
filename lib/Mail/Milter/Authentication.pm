@@ -495,6 +495,7 @@ sub start {
 
     $srvargs{'port'} = \@ports;
     $srvargs{'listen'} = $listen_backlog;
+    $srvargs{'leave_children_open_on_hup'} = 1;
 
     _warn "==========\nStarting server\n==========";
     __PACKAGE__->run( %srvargs );
