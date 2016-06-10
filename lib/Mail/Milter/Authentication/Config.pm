@@ -16,6 +16,7 @@ use JSON;
 
 our $PREFIX = '/etc';
 our $IDENT  = 'authentication_milter';
+my  $CONFIG;
 
 sub default_config {
     my $config = {
@@ -88,6 +89,8 @@ sub load_file {
 
 sub get_config {
 
+    return $CONFIG if $CONFIG;
+
     my $file = $PREFIX . '/authentication_milter.json';
 
     my $config = load_file( $file );
@@ -116,6 +119,8 @@ sub get_config {
 
     my $protocol = $config->{'protocol'} || 'milter';
     $config->{'protocol'} = $protocol;
+
+    $CONFIG = $config;
 
     return $config;
 
