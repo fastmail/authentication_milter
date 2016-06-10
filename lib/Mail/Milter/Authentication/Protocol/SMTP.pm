@@ -218,7 +218,7 @@ sub smtp_command_lhlo {
     }
     $smtp->{'helo_host'} = command_param( $command,5 );
     print $socket "250-" . $smtp->{'server_name'} . "\r\n";
-    print $socket "250-XFORWARD NAME ADDR IDENT HELO\r\n";
+    print $socket "250-XFORWARD NAME ADDR HELO IDENT\r\n";
     print $socket "250-PIPELINING\r\n";
     print $socket "250-ENHANCEDSTATUSCODES\r\n";
     print $socket "250 8BITMIME\r\n";
@@ -239,7 +239,7 @@ sub smtp_command_ehlo {
     }
     $smtp->{'helo_host'} = command_param( $command,5 );
     print $socket "250-" . $smtp->{'server_name'} . "\r\n";
-    print $socket "250-XFORWARD NAME ADDR IDENT HELO\r\n";
+    print $socket "250-XFORWARD NAME ADDR HELO IDENT\r\n";
     print $socket "250-PIPELINING\r\n";
     print $socket "250-ENHANCEDSTATUSCODES\r\n";
     print $socket "250 8BITMIME\r\n";
