@@ -9,6 +9,8 @@ use ExtUtils::Installed;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Handler;
+use Mail::Milter::Authentication::Protocol::Milter;
+use Mail::Milter::Authentication::Protocol::SMTP;
 use Module::Load;
 use Module::Loaded;
 use Net::DNS::Resolver;
@@ -117,13 +119,7 @@ sub child_init_hook {
     else {
         die "Unknown protocol " . $config->{'protocol'} . "\n";
     }
-    load $base;
     push @ISA, $base;
-
-    # Load handlers (again to allow for reconfiguration)
-    foreach my $name ( @{$config->{'load_handlers'}} ) {
-        $self->load_handler( $name );
-    }
 
     # BEGIN MILTER PROTOCOL BLOCK
     if ( $config->{'protocol'} eq 'milter' ) {
@@ -134,7 +130,7 @@ sub child_init_hook {
            $protocol &= ~SMFIP_NOHDRS;
            $protocol &= ~SMFIP_NOEOH;
         $self->{'protocol'} = $protocol;
-    
+
         my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
         $self->{'callback_flags'} = $callback_flags;
     }
