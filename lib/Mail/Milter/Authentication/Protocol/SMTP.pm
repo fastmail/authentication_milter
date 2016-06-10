@@ -131,37 +131,38 @@ sub protocol_process_request {
         }
 
         $command =~ s/\r?\n$//;
+        my $uccommand = uc $command;
 
         $self->logdebug( "receive command $command" );
 
         my $returncode = SMFIS_CONTINUE;
 
-        if ( uc $command =~ /^EHLO/ ) {
+        if ( $uccommand =~ /^EHLO/ ) {
             $self->smtp_command_ehlo( $command );
         }
-        elsif ( uc $command =~ /^LHLO/ ) {
+        elsif ( $uccommand =~ /^LHLO/ ) {
             $self->smtp_command_lhlo( $command );
         }
-        elsif ( uc $command =~ /^HELO/ ) {
+        elsif ( $uccommand =~ /^HELO/ ) {
             $self->smtp_command_helo( $command );
         }
-        elsif ( uc $command =~ /^XFORWARD/ ) {
+        elsif ( $uccommand =~ /^XFORWARD/ ) {
             $self->smtp_command_xforward( $command );
         }
-        elsif ( uc $command =~ /^MAIL FROM:/ ) {
+        elsif ( $uccommand =~ /^MAIL FROM:/ ) {
             $self->smtp_init();
             $self->smtp_command_mailfrom( $command );
         }
-        elsif ( uc $command =~ /^RCPT TO:/ ) {
+        elsif ( $uccommand =~ /^RCPT TO:/ ) {
             $self->smtp_command_rcptto( $command );
         }
-        elsif ( uc $command =~ /^RSET/ ) {
+        elsif ( $uccommand =~ /^RSET/ ) {
             $self->smtp_command_rset( $command );
         }
-        elsif ( uc $command =~ /^DATA/ ) {
+        elsif ( $uccommand =~ /^DATA/ ) {
             $self->smtp_command_data( $command );
         }
-        elsif ( uc $command =~ /^QUIT/ ){
+        elsif ( $uccommand =~ /^QUIT/ ){
             $self->smtp_status('smtp.i.quit');
             print $socket "221 2.0.0 Bye\n";
             last COMMAND;
