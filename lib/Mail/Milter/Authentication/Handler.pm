@@ -320,7 +320,6 @@ sub top_abort_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    $self->dbgoutwrite();
     $self->status('postabort');
     return $self->get_return();
 }
