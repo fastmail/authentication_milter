@@ -35,8 +35,12 @@ t/01-pipeline.t
 t/01-tools.t
 t/02-milter.t
 t/02-smtp.t
-t/AuthMilterTest.pm
 t/AuthMilterTestDNSCache.pm
+t/AuthMilterTest.pm
+t/config/dmarc_reject/authentication_milter.json
+t/config/dmarc_reject/mail-dmarc.ini
+t/config/dmarc_reject.smtp/authentication_milter.json
+t/config/dmarc_reject.smtp/mail-dmarc.ini
 t/config/dryrun/authentication_milter.json
 t/config/dryrun/mail-dmarc.ini
 t/config/dryrun.smtp/authentication_milter.json
@@ -45,11 +49,16 @@ t/config/normal/authentication_milter.json
 t/config/normal/mail-dmarc.ini
 t/config/normal.smtp/authentication_milter.json
 t/config/normal.smtp/mail-dmarc.ini
+t/data/example/dmarc_reject.eml
+t/data/example/dmarc_reject_hard.eml
+t/data/example/dmarc_reject.smtp.eml
 t/data/example/google_apps_bad.eml
 t/data/example/google_apps_bad.smtp.eml
 t/data/example/google_apps_bad_space.eml
 t/data/example/google_apps_bad_space.smtp.eml
 t/data/example/google_apps_bad_spf_fail.eml
+t/data/example/google_apps_bad_spf_fail_hard.eml
+t/data/example/google_apps_bad_spf_fail_hard.smtp.eml
 t/data/example/google_apps_bad_spf_fail.smtp.eml
 t/data/example/google_apps_good.8bit.smtp.eml
 t/data/example/google_apps_good_case.local.eml
@@ -81,6 +90,7 @@ t/data/example/pipelined.smtp.eml
 t/data/example/tools_pipeline_test.eml
 t/data/example/tools_test.eml
 t/data/example/transparency.smtp.eml
+t/data/source/dmarc_reject.eml
 t/data/source/google_apps_bad.eml
 t/data/source/google_apps_bad_space.eml
 t/data/source/google_apps_good_case.eml
@@ -97,4 +107,5 @@ t/dev-critic.t
 t/dev-manifest.t
 t/dev-pod-coverage.t
 t/dev-pod.t
+t/get_record.pl
 t/perlcriticrc

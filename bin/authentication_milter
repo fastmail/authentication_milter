@@ -121,7 +121,6 @@ sub show_default_config {
     $json->canonical( 1 );
     print $json->encode( $default_config );
     exit 0;
-    return;
 }
 
 __END__

@@ -265,13 +265,13 @@ sub process_request {
 sub get_valid_pid {
     my ( $pid_file ) = @_;
     if ( ! $pid_file ) {
-        return undef;
+        return undef; ## no critic
     }
     if ( ! -e $pid_file ) {
-        return undef;
+        return undef; ## no critic
     }
 
-    open my $inf, '<', $pid_file || return undef;
+    open my $inf, '<', $pid_file || return undef; ## no critic
     my $pid = <$inf>;
     close $inf;
 
@@ -283,7 +283,7 @@ sub get_valid_pid {
             }
         }
     }
-    return undef;
+    return undef; ## no critic
 }
 
 sub find_process {
@@ -293,7 +293,7 @@ sub find_process {
             return $process->pid;
         }
     }
-    return undef;
+    return undef; ## no critic
 }
 
 sub control {
@@ -341,6 +341,7 @@ sub control {
         die 'unknown command';
     }
 
+    return;
 }
 
 sub start {

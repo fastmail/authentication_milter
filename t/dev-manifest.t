@@ -15,8 +15,10 @@ plan skip_all => "Test::CheckManifest $min_tcm required" if $@;
 ok_manifest(
     {
         'filter' => [
+            qr/\/Mail-Milter-Authentication-v\d+.\d+.\d+\.tar\.gz/,
             qr/\.git/,
             qr/\/tmp\//,
+            qr/\/dev-files\//,
             qr/\/inc\/Module\/AutoInstall/,
             qr/\/inc\/Module\/Install/,
             qr/\.swp/,
