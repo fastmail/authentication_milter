@@ -259,6 +259,8 @@ __END__
         "timeout_in"     : "10",                        | Timeout when waiting for inbound SMTP data
         "timeout_out"    : "10",                        | Timeout when waiting for outbound SMTP data
         "pipeline_limit" : "50",                        | Limit the number of transactions accepted in an SMTP pipeline
+        "queue_type"     : "before",                    | SMTP Queue type, either before or after. After queues have
+                                                        | an upstream queue ID, before queues do not.
 
         "tcp:12346" : {                                 | Outbound SMTP details can be set per inbound port/socket
                                                         | This allows outbound SMTP to be routed differently for

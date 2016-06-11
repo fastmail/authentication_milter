@@ -30,6 +30,12 @@ sub get_smtp_config {
     return $smtp_config;
 }
 
+sub queue_type {
+    my ( $self ) = @_;
+    my $smtp_config = $self->get_smtp_config();
+    return $smtp_config->{'queue_type'} eq 'before' ? 'before' : 'after';
+}
+
 sub smtp_status {
     my ( $self, $status ) = @_;
     my $smtp = $self->{'smtp'};
@@ -218,7 +224,12 @@ sub smtp_command_lhlo {
     }
     $smtp->{'helo_host'} = command_param( $command,5 );
     print $socket "250-" . $smtp->{'server_name'} . "\r\n";
-    print $socket "250-XFORWARD NAME ADDR HELO IDENT\r\n";
+    if ( $self->queue_type() eq 'before' ) {
+        print $socket "250-XFORWARD NAME ADDR HELO\r\n";
+    }
+    else {
+        print $socket "250-XFORWARD NAME ADDR HELO IDENT\r\n";
+    }
     print $socket "250-PIPELINING\r\n";
     print $socket "250-ENHANCEDSTATUSCODES\r\n";
     print $socket "250 8BITMIME\r\n";
@@ -239,7 +250,12 @@ sub smtp_command_ehlo {
     }
     $smtp->{'helo_host'} = command_param( $command,5 );
     print $socket "250-" . $smtp->{'server_name'} . "\r\n";
-    print $socket "250-XFORWARD NAME ADDR HELO IDENT\r\n";
+    if ( $self->queue_type() eq 'before' ) {
+        print $socket "250-XFORWARD NAME ADDR HELO\r\n";
+    }
+    else {
+        print $socket "250-XFORWARD NAME ADDR HELO IDENT\r\n";
+    }
     print $socket "250-PIPELINING\r\n";
     print $socket "250-ENHANCEDSTATUSCODES\r\n";
     print $socket "250 8BITMIME\r\n";
@@ -290,9 +306,14 @@ sub smtp_command_xforward {
             $smtp->{'fwd_helo_host'} = $value;
         }
         elsif ( $key eq 'IDENT' ) {
-            $smtp->{'fwd_ident'} = $value;
-            $handler->set_symbol( 'C', 'i', $self->smtp_queue_id() );
-            $handler->dbgout( 'Upstream ID', $value, LOG_INFO );
+            if ( $self->queue_type() eq 'before' ) {
+                $self->logerror( "XForward IDENT received in before queue mode: $key=$value" );
+            }
+            else {
+                $smtp->{'fwd_ident'} = $value;
+                $handler->set_symbol( 'C', 'i', $self->smtp_queue_id() );
+                $handler->dbgout( 'Upstream ID', $value, LOG_INFO );
+            }
         }
         else {
             # NOP
@@ -946,6 +967,12 @@ Process the command from the SMTP protocol stream.
 Return the SMTP config for the given connection, or
 the default config if no connection specific config
 exists.
+
+=item I<queue_type()>
+
+Return the smtp queue type, either before or after
+A before queue will not have an upstream queue id, an
+after queue will.
 
 =item I<send_smtp_packet( $socket, $send, $expect )>
 
