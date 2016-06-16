@@ -82,7 +82,7 @@ sub eoh_callback {
             $self->set_object('xgdkim', $dkim, 1);
         };
         if ( my $error = $@ ) {
-            $self->log_error( 'X-Google-DKIM Setup Error ' . $error );
+            $self->log_error( 'XGoogleDKIM Setup Error ' . $error );
             $self->_check_error( $error );
             $self->{'failmode'} = 1;
             delete $self->{'headers'};
@@ -96,7 +96,7 @@ sub eoh_callback {
             );
         };
         if ( my $error = $@ ) {
-            $self->log_error( 'X-Google-DKIM Headers Error ' . $error );
+            $self->log_error( 'XGoogleDKIM Headers Error ' . $error );
             $self->_check_error( $error );
             $self->{'failmode'} = 1;
         }
@@ -136,7 +136,7 @@ sub body_callback {
         $dkim->PRINT( $dkim_chunk );
     };
     if ( my $error = $@ ) {
-        $self->log_error( 'X-Google-DKIM Body Error ' . $error );
+        $self->log_error( 'XGoogleDKIM Body Error ' . $error );
         $self->_check_error( $error );
         $self->{'failmode'} = 1;
     }
@@ -160,7 +160,7 @@ sub eom_callback {
         my $dkim_result        = $dkim->result;
         my $dkim_result_detail = $dkim->result_detail;
 
-        $self->dbgout( 'X-Google-DKIMResult', $dkim_result_detail, LOG_INFO );
+        $self->dbgout( 'XGoogleDKIMResult', $dkim_result_detail, LOG_INFO );
 
         if ( !$dkim->signatures() ) {
             if ( !( $config->{'hide_none'} && $dkim_result eq 'none' ) ) {
@@ -176,17 +176,17 @@ sub eom_callback {
                 $otype eq 'Mail::DKIM::DkSignature' ? 'domainkeys'
               : $otype eq 'Mail::DKIM::Signature'   ? 'dkim'
               :                                       'dkim';
-            $self->dbgout( 'DKIMSignatureType', $type, LOG_DEBUG );
+            $self->dbgout( 'XGoogleDKIMSignatureType', $type, LOG_DEBUG );
 
-            $self->dbgout( 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
-            $self->dbgout( 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
+            $self->dbgout( 'XGoogleDKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
+            $self->dbgout( 'XGoogleDKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
             my $signature_result        = $signature->result();
             my $signature_result_detail = $signature->result_detail();
 
             if ( $signature_result eq 'invalid' ) {
                 if ( $signature_result_detail =~ /DNS query timeout for (.*) at / ) {
                     my $timeout_domain = $1;
-                    $self->log_error( "TIMEOUT DETECTED: in DKIM result: $timeout_domain" );
+                    $self->log_error( "TIMEOUT DETECTED: in XGoogleDKIM result: $timeout_domain" );
                     $signature_result_detail = "DNS query timeout for $timeout_domain";
                 }
             }
@@ -232,7 +232,7 @@ sub eom_callback {
     if ( my $error = $@ ) {
 
         # Also in DMARC module
-        $self->log_error( 'X-Google-DKIM EOM Error ' . $error );
+        $self->log_error( 'XGoogleDKIM EOM Error ' . $error );
         $self->_check_error( $error );
         $self->{'failmode'} = 1;
         return;
@@ -255,7 +255,7 @@ sub _check_error {
     if ( $error =~ /^DNS error: query timed out/
             or $error =~ /^DNS query timeout/
     ){
-        $self->log_error( 'Temp DKIM Error - ' . $error );
+        $self->log_error( 'Temp XGoogleDKIM Error - ' . $error );
         $self->add_auth_header('x-google-dkim=temperror (dns timeout)');
     }
     elsif ( $error =~ /^no domain to fetch policy for$/
@@ -263,11 +263,11 @@ sub _check_error {
             or $error =~ /^empty domain label/
             or $error =~ /^invalid name /
     ){
-        $self->log_error( 'Perm DKIM Error - ' . $error );
+        $self->log_error( 'Perm XGoogleDKIM Error - ' . $error );
         $self->add_auth_header('x-google-dkim=permerror (syntax or domain error)');
     }
     else {
-        $self->log_error( 'Unexpected DKIM Error - ' . $error );
+        $self->log_error( 'Unexpected XGoogleDKIM Error - ' . $error );
         $self->add_auth_header('x-google-dkim=temperror');
         # Fill these in as they occur, but for unknowns err on the side of caution
         # and tempfail/exit
