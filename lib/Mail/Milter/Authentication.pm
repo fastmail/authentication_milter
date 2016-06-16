@@ -511,9 +511,14 @@ sub fatal {
 
 sub fatal_global {
     my ( $self, $error ) = @_;
-    $self->logerror( "Child process $PID signalling global shut down due to fatal error: $error" );
     my $ppid = $self->{'server'}->{'ppid'};
-    kill 'HUP', $ppid;
+    if ( $ppid == $PID ) {
+        $self->logerror( "Global shut down due to fatal error: $error" );
+    }
+    else {
+        $self->logerror( "Child process $PID signalling global shut down due to fatal error: $error" );
+        kill 'Term', $ppid;
+    }
     die "$error\n";
 }
 
@@ -540,8 +545,11 @@ sub load_handler {
 
     my $package = "Mail::Milter::Authentication::Handler::$name";
     if ( ! is_loaded ( $package ) ) {
-       $self->logdebug( "Load Handler Module $name" );
-       load $package;
+        $self->logdebug( "Load Handler Module $name" );
+        eval { load $package; };
+        if ( my $error = $@ ) {
+            $self->fatal_global('Could not load handler ' . $name . ' : ' . $error);
+        }
     }
     return;
 }
