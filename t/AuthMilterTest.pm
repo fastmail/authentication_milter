@@ -126,6 +126,7 @@ sub tools_pipeline_test {
         die "unable to fork: $!" unless defined($milter_pid);
         if (!$milter_pid) {
             $Mail::Milter::Authentication::Config::PREFIX = $prefix;
+            $Mail::Milter::Authentication::Config::IDENT  = 'test_authentication_milter_test';
             $Mail::Milter::Authentication::Handler::TestResolver = AuthMilterTestDNSCache->new(),
             Mail::Milter::Authentication::start({
                 'pid_file'   => 'tmp/authentication_milter.pid',
