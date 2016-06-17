@@ -29,7 +29,8 @@ sub is_whitelisted_ip_address {
     my ( $self ) = @_;
     my $config = $self->handler_config();
     return 0 if not exists( $config->{'whitelisted_ip_list'} );
-    my $ip_obj = $self->ip_address();
+    my $top_handler = $self->get_top_handler();
+    my $ip_obj = $top_handler->{'ip_object'};
     my $whitelisted = 0;
     foreach my $whitelisted_ip ( @{ $config->{'whitelisted_ip_list'} } ) {
         my $whitelisted_obj = Net::IP->new($whitelisted_ip);

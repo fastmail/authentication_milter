@@ -479,6 +479,17 @@ sub run_milter_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
+
+    milter_process({
+        'desc'   => 'DMARC Reject Hard Whitelisted',
+        'prefix' => 'config/dmarc_reject',
+        'source' => 'dmarc_reject.eml',
+        'dest'   => 'dmarc_reject_hard_whitelisted.eml',
+        'ip'     => '99.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'test@goestheweasel.com',
+        'to'     => 'marc@fastmail.com',
+    });
  
     stop_milter();
     
@@ -770,6 +781,17 @@ sub run_smtp_processing {
         'ip'     => '123.123.123.123',
         'name'   => 'bad.name.google.com',
         'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+    
+    smtp_process({
+        'desc'   => 'DMARC Reject Hard Whitelisted',
+        'prefix' => 'config/dmarc_reject.smtp',
+        'source' => 'dmarc_reject.eml',
+        'dest'   => 'dmarc_reject_hard_whitelisted.smtp.eml',
+        'ip'     => '99.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'test@goestheweasel.com',
         'to'     => 'marc@fastmail.com',
     });
    

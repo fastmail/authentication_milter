@@ -51,6 +51,8 @@ t/config/normal.smtp/authentication_milter.json
 t/config/normal.smtp/mail-dmarc.ini
 t/data/example/dmarc_reject.eml
 t/data/example/dmarc_reject_hard.eml
+t/data/example/dmarc_reject_hard_whitelisted.eml
+t/data/example/dmarc_reject_hard_whitelisted.smtp.eml
 t/data/example/dmarc_reject.smtp.eml
 t/data/example/google_apps_bad.eml
 t/data/example/google_apps_bad.smtp.eml
