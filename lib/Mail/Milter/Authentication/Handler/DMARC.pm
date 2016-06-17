@@ -6,6 +6,7 @@ use version; our $VERSION = version->declare('v1.1.0');
 
 use Data::Dumper;
 use English qw{ -no_match_vars };
+use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 
 use Mail::DMARC::PurePerl;
@@ -14,13 +15,36 @@ my $PSL_CHECKED_TIME;
 
 sub default_config {
     return {
-        'hide_none'      => 0,
-        'hard_reject'    => 0,
-        'no_list_reject' => 1,
-        'detect_list_id' => 1,
-        'report_skip_to' => [ 'my_report_from_address@example.com' ],
-        'no_report'      => 0,
+        'hide_none'           => 0,
+        'hard_reject'         => 0,
+        'no_list_reject'      => 1,
+        'whitelisted_ip_list' => [],
+        'detect_list_id'      => 1,
+        'report_skip_to'      => [ 'my_report_from_address@example.com' ],
+        'no_report'           => 0,
     };
+}
+
+sub is_whitelisted_ip_address {
+    my ( $self ) = @_;
+    my $config = $self->handler_config();
+    return 0 if not exists( $config->{'whitelisted_ip_list'} );
+    my $ip_obj = $self->ip_address();
+    my $whitelisted = 0;
+    foreach my $whitelisted_ip ( @{ $config->{'whitelisted_ip_list'} } ) {
+        my $whitelisted_obj = Net::IP->new($whitelisted_ip);
+        my $is_overlap = $ip_obj->overlaps($whitelisted_obj) || 0;
+        if (
+               $is_overlap == $IP_A_IN_B_OVERLAP
+            || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
+            || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
+            || $is_overlap == $IP_IDENTICAL
+          )
+        {
+            $whitelisted = 1;
+        }
+    }
+    return $whitelisted;
 }
 
 sub pre_loop_setup {
@@ -295,6 +319,9 @@ sub eom_callback {
                         if ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
                             $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
                         }
+                        elsif ( $self->is_whitelisted_ip_address() ) {
+                            $self->dbgout( 'DMARCReject', "Policy reject overridden for whitelisted ip address", LOG_INFO );
+                        }
                         else {
                             $self->reject_mail( '550 5.7.0 DMARC policy violation' );
                             $self->dbgout( 'DMARCReject', "Policy reject", LOG_INFO );
@@ -386,17 +413,21 @@ This handler requires the SPF and DKIM handlers to be installed and active.
 
         "DMARC" : {                                     | Config for the DMARC Module
                                                         | Requires DKIM and SPF
-            "hard_reject"    : 0,                       | Reject mail which fails with a reject policy
-            "no_list_reject" : 0,                       | Do not reject mail detected as mailing list
-            "hide_none"      : 0,                       | Hide auth line if the result is 'none'
-            "detect_list_id" : "1",                     | Detect a list ID and modify the DMARC authentication header
+            "hard_reject"         : 0,                  | Reject mail which fails with a reject policy
+            "no_list_reject"      : 0,                  | Do not reject mail detected as mailing list
+            "whitelisted_ip_list" : [                   | A list of ip addresses or CIDR ranges for which
+                "1.2.3.4",                              | we do not want to hard reject mail on fail p=reject
+                "10.20.30.40"
+            ],
+            "hide_none"           : 0,                  | Hide auth line if the result is 'none'
+            "detect_list_id"      : "1",                | Detect a list ID and modify the DMARC authentication header
                                                         | to note this, useful when making rules for junking email
                                                         | as mailing lists frequently cause false DMARC failures.
-            "report_skip_to" : [                        | Do not send DMARC reports for emails to these addresses.
+            "report_skip_to"     : [                    | Do not send DMARC reports for emails to these addresses.
                 "dmarc@yourdomain.com",                 | This can be used to avoid report loops for email sent to
                 "dmarc@example.com"                     | your report from addresses.
             ],
-            "no_report" : "1"                           | If set then we will not attempt to store DMARC reports.
+            "no_report"          : "1"                  | If set then we will not attempt to store DMARC reports.
         },
 
 =head1 SYNOPSIS
