@@ -15,6 +15,7 @@ use Mail::DKIM::DNS;
 sub default_config {
     return {
         'hide_none'         => 0,
+        'hide_domainkeys'   => 0,
         'check_adsp'        => 1,
         'show default_adsp' => 0,
         'adsp_hide_none'    => 0,
@@ -31,6 +32,14 @@ sub envfrom_callback {
     return;
 }
 
+sub show_domainkeys {
+    my ( $self ) = @_;
+    my $config = $self->handler_config();
+    return 1 if ! exists $config->{'hide_domainkeys'};
+    return 0 if $config->{'hide_domainkeys'};
+    return 1;
+}
+
 sub header_callback {
     my ( $self, $header, $value ) = @_;
     return if ( $self->{'failmode'} );
@@ -43,7 +52,7 @@ sub header_callback {
         $self->{'has_dkim'} = 1;
     }
     if ( lc($header) eq 'domainkey-signature' ) {
-        $self->{'has_dkim'} = 1;
+        $self->{'has_dkim'} = 1 if $self->show_domainkeys();
     }
 
     return;
@@ -207,19 +216,21 @@ sub eom_callback {
 
                 if ( $type eq 'domainkeys' ) {
                     ## DEBUGGING
-                    my $header = join(
-                        q{ },
-                        $self->format_header_entry( $type, $signature_result ),
-                        '('
-                          . $self->format_header_comment(
-                              $result_comment
-                              . $key_data
-                            )
-                          . ')',
-                        $self->format_header_entry( 'header.d', $signature->domain() ),
-                        $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
-                    );
-                    $self->add_auth_header($header);
+                    if ( $self->show_domainkeys() ) {
+                        my $header = join(
+                            q{ },
+                            $self->format_header_entry( $type, $signature_result ),
+                            '('
+                              . $self->format_header_comment(
+                                  $result_comment
+                                  . $key_data
+                                )
+                              . ')',
+                            $self->format_header_entry( 'header.d', $signature->domain() ),
+                            $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
+                        );
+                        $self->add_auth_header($header);
+                        }
                 }
                 else {
                     my $header = join(
@@ -246,6 +257,7 @@ sub eom_callback {
             && ( $self->is_trusted_ip_address() == 0 )
             && ( $self->is_authenticated() == 0 ) )
         {
+            POLICY:
             foreach my $policy ( $dkim->policies() ) {
                 my $apply    = $policy->apply($dkim);
                 my $string   = $policy->as_string();
@@ -265,6 +277,8 @@ sub eom_callback {
                 $self->dbgout( 'DKIMPolicyLocation', $location,               LOG_DEBUG );
                 $self->dbgout( 'DKIMPolicyName',     $name,                   LOG_DEBUG );
                 $self->dbgout( 'DKIMPolicyDefault',  $default ? 'yes' : 'no', LOG_DEBUG );
+
+                next POLICY if ( ( $type eq 'x-dkim-dkssp' ) && ( ! $self->show_domainkeys() ) );
 
                 my $result =
                     $apply eq 'accept'  ? 'pass'
@@ -354,6 +368,7 @@ Module for validation of DKIM and DomainKeys signatures, and application of ADSP
 
         "DKIM" : {                                      | Config for the DKIM Module
             "hide_none"         : 0,                    | Hide auth line if the result is 'none'
+            "hide_domainkeys"   : 0,                    | Hide any DomainKeys results
             "check_adsp"        : 1,                    | Also check for ADSP
             "show_default_adsp" : 0,                    | Show the default ADSP result
             "adsp_hide_none"    : 0                     | Hide auth ADSP if the result is 'none'
