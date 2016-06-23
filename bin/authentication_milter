@@ -218,18 +218,18 @@ __END__
     "logtoerr"  : 0,                                    | Also write logs to STDERR
     "error_log" : "/var/log/authentication_milter.err", | Capture STDERR to logfile
 
-    "connection"             : "inet:12345@localhost",  | The connection to use 
+    "connection"             : "inet:12345@localhost",  | The connection to use
     "umask"                  : "0000",                  | Set umask (for unix socket)
 
     "connections" : {                                   | Other than the default connection, also bind to
                                                         | these connections.
 
         "name_two" : {                                  | Name of connection
-            "connection"   : "unix:/var/sock/a.sock",   | The connection to use 
+            "connection"   : "unix:/var/sock/a.sock",   | The connection to use
             "umask"        : "0000",                    | Set umask
         }
         "name_one" : {                                  | Name of connection
-            "connection"   : "inet:12346@localhost",    | The connection to use 
+            "connection"   : "inet:12346@localhost",    | The connection to use
         }
     },
 
@@ -242,7 +242,7 @@ __END__
     "listen_backlog"         : 20,                      | socket listen backlog limit (default 20)
     "min_children"           : 20,                      | Max number of children to pre fork
     "max_children"           : 200,                     | Max number of children to pre fork
-    "min_spare_children"     : 10,                      | Min number of spare children to maintain 
+    "min_spare_children"     : 10,                      | Min number of spare children to maintain
     "max_spare_children"     : 20,                      | Max number of spare children to maintain
     "max_requests_per_child" : 200,                     | Max number of requests per child process (prefork)
 

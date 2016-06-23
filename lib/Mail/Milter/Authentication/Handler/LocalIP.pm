@@ -15,7 +15,7 @@ sub is_local_ip_address {
     my $ip_address = $ip->ip();
     if ( ! $ip ) {
         $self->dbgout( 'IPAddress', "Address $ip_address detected as invalid", LOG_DEBUG );
-        return 0; 
+        return 0;
     }
     my $ip_type  = $ip->iptype();
     my $type_map = {

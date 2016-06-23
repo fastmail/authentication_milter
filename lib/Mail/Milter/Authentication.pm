@@ -227,7 +227,7 @@ sub process_request {
     my $config = $self->{'config'};
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':processing(' . $count . ')';
     $self->logdebug( 'Processing request ' . $self->{'count'} );
-    $self->{'socket'} = $self->{'server'}->{'client'}; 
+    $self->{'socket'} = $self->{'server'}->{'client'};
 
     $self->protocol_process_request();
 
@@ -614,7 +614,7 @@ sub sort_callbacks {
     else {
         return $self->{'callbacks_list'}->{$callback};
     }
-    
+
     my $callbacks_ref = $self->{'callbacks'}->{$callback};
 
     my $added = {};
@@ -627,7 +627,7 @@ sub sort_callbacks {
         foreach my $item ( @todo ) {
             my $handler = $self->{'handler'}->{ $item };
             my $requires_method = $callback . '_requires';
-            if ( $handler->can( $requires_method ) ) { 
+            if ( $handler->can( $requires_method ) ) {
                 my $requires_met = 1;
                 my $requires = $handler->$requires_method;
                 foreach my $require ( @{ $requires } ) {
@@ -797,7 +797,7 @@ Given a pid file, check for a valid process ID and return if valid.
 Start the server. This method does not return.
 
     $hashref = {
-        'pid_file'   => 'The pid file to use', # 
+        'pid_file'   => 'The pid file to use', #
         'daemon'     => 1/0,                   # Daemonize process?
     }
 

@@ -15,7 +15,7 @@ sub _check_address {
     my ( $self, $address, $type ) = @_;
 
     my $resolver = $self->get_object('resolver');
- 
+
     my $email = $self->get_address_from( $address );
 
     if ( ! $email ) {
@@ -102,7 +102,7 @@ sub _check_address {
         $self->format_header_entry( 'x-return-mx', $result ),
         @details,
     );
-    
+
     $self->add_auth_header($header);
 
     return;

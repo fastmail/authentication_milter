@@ -228,7 +228,7 @@ sub smtp_process_multi {
     unlink 'tmp/authentication_milter_smtp_out.sock';
     my $cat_pid = smtpcat( $catargs );
     sleep 2;
-    
+
     my $putargs = {
         'sock_type'    => 'unix',
         'sock_path'    => 'tmp/authentication_milter_test.sock',
@@ -355,7 +355,7 @@ sub run_milter_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     milter_process({
         'desc'   => 'SPF Fail',
         'prefix' => 'config/normal',
@@ -366,7 +366,7 @@ sub run_milter_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     milter_process({
         'desc'   => 'DKIM Fail Domain Space',
         'prefix' => 'config/normal',
@@ -388,7 +388,7 @@ sub run_milter_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     milter_process({
         'desc'   => 'DKIM/SPF Fail',
         'prefix' => 'config/normal',
@@ -399,7 +399,7 @@ sub run_milter_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     milter_process({
         'desc'   => 'No DKIM',
         'prefix' => 'config/normal',
@@ -410,7 +410,7 @@ sub run_milter_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     milter_process({
         'desc'   => 'No DKIM/SPF Fail',
         'prefix' => 'config/normal',
@@ -421,7 +421,7 @@ sub run_milter_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     milter_process({
         'desc'   => 'Sanitize Headers',
         'prefix' => 'config/normal',
@@ -432,7 +432,7 @@ sub run_milter_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     milter_process({
         'desc'   => 'Long Lines',
         'prefix' => 'config/normal',
@@ -443,7 +443,7 @@ sub run_milter_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     milter_process({
         'desc'   => 'DMARC Reject',
         'prefix' => 'config/normal',
@@ -456,9 +456,9 @@ sub run_milter_processing {
     });
 
     stop_milter();
-    
+
     start_milter( 'config/dmarc_reject' );
-    
+
     milter_process({
         'desc'   => 'DMARC Reject Hard',
         'prefix' => 'config/dmarc_reject',
@@ -469,7 +469,7 @@ sub run_milter_processing {
         'from'   => 'test@goestheweasel.com',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     milter_process({
         'desc'   => 'DKIM/SPF Fail Hard',
         'prefix' => 'config/dmarc_reject',
@@ -491,11 +491,11 @@ sub run_milter_processing {
         'from'   => 'test@goestheweasel.com',
         'to'     => 'marc@fastmail.com',
     });
- 
+
     stop_milter();
-    
-    start_milter( 'config/dryrun' ); 
-    
+
+    start_milter( 'config/dryrun' );
+
     milter_process({
         'desc'   => 'Dry Run Mode',
         'prefix' => 'config/normal',
@@ -506,7 +506,7 @@ sub run_milter_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     stop_milter();
 
     return;
@@ -570,7 +570,7 @@ sub run_smtp_processing {
         'from'   => 'test@example.com',
         'to'     => 'test@example.com',
     });
-    
+
     smtp_process({
         'desc'   => '8BITMIME message',
         'prefix' => 'config/normal.smtp',
@@ -636,7 +636,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     smtp_process({
         'desc'   => 'Good message no from',
         'prefix' => 'config/normal.smtp',
@@ -658,7 +658,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     smtp_process({
         'desc'   => 'SPF Fail',
         'prefix' => 'config/normal.smtp',
@@ -669,7 +669,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     smtp_process({
         'desc'   => 'DKIM Fail Domain Space',
         'prefix' => 'config/normal.smtp',
@@ -690,7 +690,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     smtp_process({
         'desc'   => 'DKIM/SPF Fail',
         'prefix' => 'config/normal.smtp',
@@ -701,7 +701,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     smtp_process({
         'desc'   => 'No DKIM',
         'prefix' => 'config/normal.smtp',
@@ -712,7 +712,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     smtp_process({
         'desc'   => 'No DKIM/SPF Fail',
         'prefix' => 'config/normal.smtp',
@@ -723,7 +723,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     smtp_process({
         'desc'   => 'Sanitize Headers',
         'prefix' => 'config/normal.smtp',
@@ -734,7 +734,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     smtp_process({
         'desc'   => 'Long Lines',
         'prefix' => 'config/normal.smtp',
@@ -745,7 +745,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     smtp_process({
         'desc'   => 'DMARC Reject',
         'prefix' => 'config/normal.smtp',
@@ -758,9 +758,9 @@ sub run_smtp_processing {
     });
 
     stop_milter();
-    
+
     start_milter( 'config/dmarc_reject.smtp' );
-    
+
     smtp_process({
         'desc'   => 'DMARC Reject Hard',
         'prefix' => 'config/dmarc_reject.smtp',
@@ -773,7 +773,7 @@ sub run_smtp_processing {
         'eom_expect' => '550',
         'no_cat' => 1,
     });
-    
+
     smtp_process({
         'desc'   => 'DKIM/SPF Fail Hard',
         'prefix' => 'config/dmarc_reject.smtp',
@@ -784,7 +784,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     smtp_process({
         'desc'   => 'DMARC Reject Hard Whitelisted',
         'prefix' => 'config/dmarc_reject.smtp',
@@ -795,11 +795,11 @@ sub run_smtp_processing {
         'from'   => 'test@goestheweasel.com',
         'to'     => 'marc@fastmail.com',
     });
-   
+
     stop_milter();
-    
+
     start_milter( 'config/dryrun.smtp' );
-    
+
     smtp_process({
         'desc'   => 'Dry Run Mode',
         'prefix' => 'config/normal',
@@ -810,7 +810,7 @@ sub run_smtp_processing {
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
-    
+
     stop_milter();
 
     return;
@@ -840,14 +840,14 @@ sub smtpput {
     my ( $args ) = @_;
 
     my $mailer_name  = $args->{'mailer_name'};
-    
+
     my $mail_file_a  = $args->{'mail_file'};
     my $mail_from_a  = $args->{'mail_from'};
     my $rcpt_to_a    = $args->{'rcpt_to'};
     my $x_name_a     = $args->{'connect_name'};
     my $x_addr_a     = $args->{'connect_ip'};
     my $x_helo_a     = $args->{'helo_host'};
-    
+
     my $sock_type    = $args->{'sock_type'};
     my $sock_path    = $args->{'sock_path'};
     my $sock_host    = $args->{'sock_host'};
@@ -868,20 +868,20 @@ sub smtpput {
             'Peer' => $sock_path,
         ) || die "could not open outbound SMTP socket: $!";
     }
-    
+
     my $line = <$sock>;
-    
+
     if ( ! $line =~ /250/ ) {
         die "Unexpected SMTP response $line";
         return 0;
     }
-    
+
     send_smtp_packet( $sock, 'EHLO ' . $mailer_name,       '250' ) || die;
-    
+
     my $first_time = 1;
-   
+
     while ( @$mail_from_a ) {
-    
+
         if ( ! $first_time ) {
             if ( ! send_smtp_packet( $sock, 'RSET', '250' ) ) {
                 $sock->close();
@@ -889,16 +889,16 @@ sub smtpput {
             };
         }
         $first_time = 0;
-    
+
         my $mail_file = shift @$mail_file_a;
-        my $mail_from = shift @$mail_from_a; 
+        my $mail_from = shift @$mail_from_a;
         my $rcpt_to   = shift @$rcpt_to_a;
         my $x_name    = shift @$x_name_a;
         my $x_addr    = shift @$x_addr_a;
         my $x_helo    = shift @$x_helo_a;
-        
+
         my $mail_data = q{};
-        
+
         if ( $mail_file eq '-' ) {
             while ( my $l = <> ) {
                 $mail_data .= $l;
@@ -913,26 +913,26 @@ sub smtpput {
             $mail_data = join( q{}, @all );
             close $inf;
         }
-        
+
         $mail_data =~ s/\015?\012/\015\012/g;
         # Handle transparency
         $mail_data =~ s/\015\012\./\015\012\.\./g;
-        
+
         send_smtp_packet( $sock, 'XFORWARD NAME=' . $x_name,   '250' ) || die;
         send_smtp_packet( $sock, 'XFORWARD ADDR=' . $x_addr,   '250' ) || die;
         send_smtp_packet( $sock, 'XFORWARD HELO=' . $x_helo,   '250' ) || die;
-        
+
         send_smtp_packet( $sock, 'MAIL FROM:' . $mail_from, '250' ) || die;
         send_smtp_packet( $sock, 'RCPT TO:' .   $rcpt_to,   '250' ) || die;
         send_smtp_packet( $sock, 'DATA',                    '354' ) || die;
-        
+
         print $sock $mail_data;
         print $sock "\r\n";
-        
+
         send_smtp_packet( $sock, '.',    $eom_expect ) || return 0;
-    
+
     }
-        
+
     send_smtp_packet( $sock, 'QUIT', '221' ) || return 0;
     $sock->close();
 
@@ -957,19 +957,19 @@ sub send_smtp_packet {
 
 sub smtpcat {
     my ( $args ) = @_;
-    
+
     my $cat_pid = fork();
     die "unable to fork: $!" unless defined($cat_pid);
-    return $cat_pid if $cat_pid; 
-    
+    return $cat_pid if $cat_pid;
+
     my $sock_type = $args->{'sock_type'};
     my $sock_path = $args->{'sock_path'};
     my $sock_host = $args->{'sock_host'};
     my $sock_port = $args->{'sock_port'};
-    
+
     my $remove = $args->{'remove'};
     my $output = $args->{'output'};
-   
+
     my @out_lines;
 
     my $sock;
@@ -987,19 +987,19 @@ sub smtpcat {
             'Local' => $sock_path,
         ) || die "could not open socket: $!";
     }
-    
+
     my $accept = $sock->accept();
-    
+
     print $accept "220 smtp.cat ESMTP Test\r\n";
-    
+
     local $SIG{'ALRM'} = sub{ die "Timeout\n" };
     alarm( 60 );
-    
+
     my $quit = 0;
     while ( ! $quit ) {
         my $command = <$accept> || { $quit = 1 };
         alarm( 60 );
-    
+
         if ( $command =~ /^HELO/ ) {
             push @out_lines, $command;
             print $accept "250 HELO Ok\r\n";

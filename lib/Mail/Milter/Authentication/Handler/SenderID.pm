@@ -55,7 +55,7 @@ sub eoh_callback {
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
-    
+
     my $spf_server = $self->get_object('spf_server');
     if ( ! $spf_server ) {
         $self->log_error( 'SenderID Setup Error' );

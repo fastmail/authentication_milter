@@ -597,7 +597,7 @@ sub clear_symbols {
             'C' => $connect_symbols,
         };
     }
- 
+
     return;
 }
 
@@ -636,25 +636,25 @@ sub tempfail_on_error {
     if ( $self->is_authenticated() ) {
         if ( $config->{'tempfail_on_error_authenticated'} ) {
             $self->log_error('TempFail set');
-            $self->set_return( $self->smfis_tempfail() ) 
+            $self->set_return( $self->smfis_tempfail() );
         }
     }
     elsif ( $self->is_local_ip_address() ) {
         if ( $config->{'tempfail_on_error_local'} ) {
             $self->log_error('TempFail set');
-            $self->set_return( $self->smfis_tempfail() ) 
+            $self->set_return( $self->smfis_tempfail() );
         }
     }
     elsif ( $self->is_trusted_ip_address() ) {
         if ( $config->{'tempfail_on_error_trusted'} ) {
             $self->log_error('TempFail set');
-            $self->set_return( $self->smfis_tempfail() )
-        } 
+            $self->set_return( $self->smfis_tempfail() );
+        }
     }
     else {
         if ( $config->{'tempfail_on_error'} ) {
             $self->log_error('TempFail set');
-            $self->set_return( $self->smfis_tempfail() ) 
+            $self->set_return( $self->smfis_tempfail() );
         }
     }
     return;
@@ -891,7 +891,7 @@ sub add_headers {
             $self->add_header( $header->{'field'}, $header->{'value'} );
         }
     }
- 
+
     return;
 }
 
@@ -1032,7 +1032,7 @@ and creates a new handler object.
 
 =head1 METHODS
 
-=over 
+=over
 
 =item top_setup_callback()
 

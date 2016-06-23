@@ -82,7 +82,7 @@ sub connect_callback {
             # Don't log this right now, might be an AAAA only host.
             $a_error = $resolver->errorstring;
         }
-    
+
 
         if ( $a_error eq 'NXDOMAIN' ) {
             $self->_dns_error( 'A', $domain, $a_error );

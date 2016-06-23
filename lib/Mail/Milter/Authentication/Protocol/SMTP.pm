@@ -44,7 +44,7 @@ sub smtp_status {
 }
 
 sub smtp_init {
-    my ( $self ) = @_;    
+    my ( $self ) = @_;
 
     return if $self->{'smtp'}->{'init_required'} == 0;
 
@@ -56,7 +56,7 @@ sub smtp_init {
 
     $smtp->{'queue_id'} = substr( uc md5_hex( "Authentication Milter Client $PID " . time() . rand(100) ) , -11 );
     $handler->set_symbol( 'C', 'i', $self->smtp_queue_id() );
-   
+
     $smtp->{'count'}++ ;
     $handler->dbgout( 'SMTP Transaction count', $self->{'count'} . '.' . $smtp->{'count'} , LOG_INFO );
 
@@ -67,7 +67,7 @@ sub smtp_init {
 
 sub protocol_process_request {
     my ( $self ) = @_;
-    
+
     my $handler = $self->{'handler'}->{'_Handler'};
     $handler->top_setup_callback();
 
@@ -387,7 +387,7 @@ sub smtp_command_mailfrom {
     my $host = $smtp->{'fwd_connect_host'} || $smtp->{'connect_host'};
     my $ip   = $smtp->{'fwd_connect_ip'}   || $smtp->{'connect_ip'};
     my $helo = $smtp->{'fwd_helo_host'}    || $smtp->{'helo_host'};
-    
+
     if ( substr( $ip, 0, 5 ) eq 'IPv6:' ) {
         $ip = substr( $ip, 5 );
     }
@@ -419,7 +419,7 @@ sub smtp_command_mailfrom {
             $self->loginfo ( "SMTPReject: $reject_reason" );
             print $socket $reject_reason . "\r\n";
         }
-        else { 
+        else {
             print $socket "451 4.0.0 HELO - That's not right\r\n";
         }
     }
@@ -428,10 +428,10 @@ sub smtp_command_mailfrom {
         $self->loginfo ( "SMTPReject: $reject_reason" );
         print $socket $reject_reason . "\r\n";
     }
-    else { 
+    else {
         print $socket "451 4.0.0 Connection - That's not right\r\n";
     }
-    
+
     return;
 }
 
@@ -451,7 +451,7 @@ sub smtp_command_rcptto {
     push @{ $smtp->{'rcpt_to'} }, $envrcpt;
     my $returncode = $handler->top_envrcpt_callback( $envrcpt );
     if ( $returncode == SMFIS_CONTINUE ) {
-        push @{ $smtp->{'lmtp_rcpt'} }, $envrcpt;  
+        push @{ $smtp->{'lmtp_rcpt'} }, $envrcpt;
         print $socket "250 2.0.0 Ok\r\n";
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
@@ -491,7 +491,7 @@ sub smtp_command_data {
         alarm( $smtp->{'smtp_timeout_in'} );
         HEADERS:
         while ( my $dataline = <$socket> ) {
-            alarm( 0 ); 
+            alarm( 0 );
             $dataline =~ s/\r?\n$//;
             if ( $dataline eq '.' ) {
                 $done = 1;
@@ -638,7 +638,7 @@ sub smtp_command_data {
             print $socket $reject_reason . "\r\n";
         }
     }
-    else { 
+    else {
         if ( $smtp->{'using_lmtp'} ) {
             foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
                 print $socket "451 4.0.0 That's not right\r\n";
@@ -718,7 +718,7 @@ sub smtp_forward_to_destination {
 
     my $line;
 
-    if ( $sock ) { 
+    if ( $sock ) {
         if ( ! $sock->connected() ) {
             $self->logerror( "Outbound SMTP socket was disconnected by remote end" );
             undef $sock;
@@ -758,12 +758,12 @@ sub smtp_forward_to_destination {
             return 0;
         }
         alarm( 0 );
-    
+
         if ( ! $line =~ /250/ ) {
             $self->logerror( "Unexpected SMTP response $line" );
             return 0;
         }
-        
+
         $smtp->{'destination_sock'} = $sock;
     }
 
@@ -807,7 +807,7 @@ sub smtp_forward_to_destination {
     my $body = $smtp->{'body'};
     $body =~ s/\015?\012/\015\012/g;
     $email .= $body;
-    
+
     # Handle transparency
     $email =~ s/\015\012\./\015\012\.\./g;
 
@@ -835,7 +835,7 @@ sub close_destination_socket {
 sub send_smtp_packet {
     my ( $self, $socket, $send, $expect ) = @_;
     my $smtp = $self->{'smtp'};
-    
+
     my $status = lc $send;
     $status =~ s/^([^ ]+) .*$/$1/;
     $status = 'dot' if $status eq '.';

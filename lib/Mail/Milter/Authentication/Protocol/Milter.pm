@@ -17,7 +17,7 @@ sub protocol_process_request {
     COMMAND:
     while ( 1 ) {
 
-        # Get packet length 
+        # Get packet length
         my $length = unpack('N', $self->milter_read_block(4) ) || last;
         $self->fatal("bad packet length $length") if ($length <= 0 || $length > 131072);
 
@@ -34,7 +34,7 @@ sub protocol_process_request {
         last COMMAND if $command eq SMFIC_QUIT;
         $self->milter_process_command( $command, $data );
 
-    }    
+    }
 
     return;
 }
@@ -162,8 +162,8 @@ sub milter_process_command {
                 $self->write_packet($returncode);
             }
         }
-    } 
- 
+    }
+
     return;
 }
 
@@ -210,7 +210,7 @@ sub milter_read_block {
     my ( $self, $len ) = @_;
     my $socket = $self->{'socket'};
     my $sofar = 0;
-    my $buffer = q{}; 
+    my $buffer = q{};
     while ($len > $sofar) {
         my $read = $socket->sysread($buffer, $len - $sofar, $sofar);
         last if (!defined($read) || $read <= 0); # EOF

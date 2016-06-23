@@ -110,7 +110,7 @@ sub get_dmarc_object {
         $self->add_auth_header('dmarc=temperror');
         $self->{'failmode'} = 1;
     }
-    
+
     return $dmarc;
 }
 

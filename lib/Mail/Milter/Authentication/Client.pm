@@ -171,7 +171,7 @@ sub replace_header {
     }
     $self->{'header_pairs'} = \@header_pairs;
     return;
-} 
+}
 
 sub add_header {
     my ( $self, $header, $value ) = @_;
@@ -195,7 +195,7 @@ sub load_mail {
     elsif ( $self->{'mail_data'} ) {
         $mail_data = $self->{'mail_data'};
     }
-    
+
     my @header_pairs;
     my @header_split;
 
@@ -211,7 +211,7 @@ sub load_mail {
         }
         push @header_split, $dataline;
     }
-    
+
     my $value = q{};
     foreach my $header_line ( @header_split ) {
         if ( $header_line =~ /^\s/ ) {
@@ -487,7 +487,7 @@ use vars qw($DEBUG);
 use version; our $VERSION = version->declare('v1.1.0');
 $DEBUG=0;
 
-use constant PROTOCOL_NEGATION => 0; 
+use constant PROTOCOL_NEGATION => 0;
 
 ############
 sub new
@@ -522,27 +522,27 @@ sub open {
     if (lc($proto) eq 'tcp' || lc($proto) eq 'inet') {
     if ($DEBUG==1) {print STDERR "\topen tcp socket\n";}
     use IO::Socket::INET;
-	$sock = new IO::Socket::INET (PeerAddr => $addr,
-				      PeerPort => $port,
-				      Proto => 'tcp',
-				      Type => SOCK_STREAM,
-				      Timeout => 10,
-				      ) or carp "Couldn't connect to $addr:$port : $@\n";
+        $sock = new IO::Socket::INET (PeerAddr => $addr,
+                                      PeerPort => $port,
+                                      Proto => 'tcp',
+                                      Type => SOCK_STREAM,
+                                      Timeout => 10,
+                                      ) or carp "Couldn't connect to $addr:$port : $@\n";
     } # end if tcp
     elsif (lc($proto) eq 'unix' || lc($proto) eq 'local') {
     if ($DEBUG==1) {print STDERR "\topen unix socket\n";}
-	use IO::Socket::UNIX;
-	$sock = new IO::Socket::UNIX (Peer => $addr,
-				      Type => SOCK_STREAM,
-				      Timeout => $port
-				      ) or carp "Couldn't connect to unix socket on $addr : $@\n";
+        use IO::Socket::UNIX;
+        $sock = new IO::Socket::UNIX (Peer => $addr,
+                                      Type => SOCK_STREAM,
+                                      Timeout => $port
+                                      ) or carp "Couldn't connect to unix socket on $addr : $@\n";
     } # end if unix
     else {carp "$proto is unknown to me\n";}
 
     if (!defined($sock)) {return 0;}
     else {
-	$self->{socket} = $sock;
-	return 1;
+        $self->{socket} = $sock;
+        return 1;
     }
 
 } # end sub open
@@ -552,7 +552,7 @@ sub open {
 sub protocol_negotiation {
 # negotiate with the filter as to what options to use
     my $self = shift;
-    
+
     my (%options) = @_;
 
     if ($DEBUG==1) {print STDERR "protocol_negotiation\n";}
@@ -569,14 +569,14 @@ sub protocol_negotiation {
 
     $count=0;
     while ($action = shift(@action_types)) {
-	if (defined($options{$action}) && $options{$action}==0) {
-	    # do nothing
-	}
-	else {
-	    $action_field = $action_field | (2**$count);
-	}
+        if (defined($options{$action}) && $options{$action}==0) {
+            # do nothing
+        }
+        else {
+            $action_field = $action_field | (2**$count);
+        }
 
-	$count++;
+        $count++;
     } # end while
 
 
@@ -585,16 +585,16 @@ sub protocol_negotiation {
 
     $count=0;
     while ($content = shift(@content_types)) {
-	if (defined($options{$content}) && $options{$content}==1) {
-	    $protocol_field = $protocol_field | 2**$count;
-	}
-	else {
-	    # do nothing
-	}
+        if (defined($options{$content}) && $options{$content}==1) {
+            $protocol_field = $protocol_field | 2**$count;
+        }
+        else {
+            # do nothing
+        }
 
-	$count++;
+        $count++;
     } # end while
- 
+
 ### hmmm this bit might not be right on 64 bit architecture
 # we want a 32 bit unsigned integer in network order
     my $smfi_version = 2;  # version of protocol
@@ -605,17 +605,16 @@ sub protocol_negotiation {
     $action_field = $self->_pack_number($action_field);
     $protocol_field = $self->_pack_number($protocol_field);
     if (PROTOCOL_NEGATION == 1) {$protocol_field = ~$protocol_field;}
-    $smfi_version = $self->_pack_number($smfi_version);  
-    $length = $self->_pack_number($length);  
+    $smfi_version = $self->_pack_number($smfi_version);
+    $length = $self->_pack_number($length);
 
     if ($DEBUG==1) {print STDERR "\tsendsubing\n";}
 
-    $self->{socket}->send($length);	
-    $self->{socket}->send('O');	    
+    $self->{socket}->send($length);
+    $self->{socket}->send('O');
     $self->{socket}->send($smfi_version);
     $self->{socket}->send($action_field);
     $self->{socket}->send($protocol_field);
-	
 
     if ($DEBUG==1) {print STDERR "\treceiving\n";}
 
@@ -624,11 +623,11 @@ sub protocol_negotiation {
     if ($command ne 'O') {carp "error in protocol negotiation \n";}
 
     my($ret_version,$ret_actions,$ret_protocol)=unpack "NNN",$data;
-    
+
     if ($DEBUG==1) {print STDERR "\treturned version : $ret_version\n";}
     if ($DEBUG==1) {printf STDERR "\treturned actions : %8b\n", $ret_actions;}
     if ($DEBUG==1) {printf STDERR "\treturned protocol : %7b\n", $ret_protocol;}
-    
+
 # translate returned bit mask into fields
     if ($DEBUG==1) {print STDERR "\ttranslating bit mask\n";}
 
@@ -637,7 +636,7 @@ sub protocol_negotiation {
     $count=0;
     while ($action = shift(@action_types)) {
         if ($ret_actions & 2**$count) {
-	    push @returned_actions,$action;
+            push @returned_actions,$action;
         }
         $count++;
     } # end while
@@ -645,7 +644,7 @@ sub protocol_negotiation {
     $count=0;
     while ($content = shift(@content_types)) {
         if ($ret_protocol & 2**$count) {
-	    push @returned_protocol,$content;
+            push @returned_protocol,$content;
         }
         $count++;
     } # end while
@@ -676,18 +675,18 @@ sub send_body {
     my $body = shift;
     if ($DEBUG==1) {print STDERR "send_body\n";}
 # restrict body size to max allowable
-    
+
     if ($DEBUG==1) {print STDERR "\tsending".substr($body,0,5).'...'."\n";}
 
     if (length ($body)>65535) {
-	warn "the message body is too big; its length must be less than 65536 bytes";
-	$self->_send('B',substr($body,0,65535));
-	$body = substr($body,65535);
+        warn "the message body is too big; its length must be less than 65536 bytes";
+        $self->_send('B',substr($body,0,65535));
+        $body = substr($body,65535);
     }
     else {
-	$self->_send('B',$body);
+        $self->_send('B',$body);
     }
-    
+
     if ($DEBUG==1) {print STDERR "\treceiving from body\n";}
 
 # get response
@@ -856,7 +855,7 @@ sub _send {
     my $self = shift;
     my $command = shift;
     my (@data) = @_;
-    
+
     if ($DEBUG==1) {print STDERR "send\n";}
 
     my $data = join '',@data;
@@ -864,9 +863,9 @@ sub _send {
     $length += 1;
 
     if ($DEBUG==1) {
-	print STDERR "sending - command : $command\tlength : $length";
-	if (length($data)<100) {print STDERR "\tdata : $data\n";}
-	else {print STDERR "\n";}
+        print STDERR "sending - command : $command\tlength : $length";
+        if (length($data)<100) {print STDERR "\tdata : $data\n";}
+        else {print STDERR "\n";}
     }
 
     $length = $self->_pack_number($length);
@@ -876,7 +875,7 @@ sub _send {
    $self->_io_send($command);
    $self->_io_send($data) if (length($data) > 0);
 
-    
+
 } # end sub _send
 ############
 
@@ -898,7 +897,7 @@ sub _receive {
 
     my $data;
     if ($length > 0) {
-	$data = $self->_io_recv($length);
+        $data = $self->_io_recv($length);
     }
 
     return ($command,$data);
@@ -941,95 +940,94 @@ sub _translate_response {
     my ($command,$data)=@_;
 
     if ($DEBUG==1) {
-	print STDERR "_translate_response\n";
-	print STDERR "\tcommand : $command\n";
-	if (defined($data) && $command !~/[hm]/) {print STDERR "\tdata : $data\n";}
+        print STDERR "_translate_response\n";
+        print STDERR "\tcommand : $command\n";
+        if (defined($data) && $command !~/[hm]/) {print STDERR "\tdata : $data\n";}
     }
-
 
     my %reply=();
 
     $reply{command}=$command;
 
     if ($command eq '+') {
-	$reply{explanation}='Add a recipient';
-	$reply{header}='To';
-	$reply{action}='add';
-	$reply{value}=$data;
+        $reply{explanation}='Add a recipient';
+        $reply{header}='To';
+        $reply{action}='add';
+        $reply{value}=$data;
     }
 
     elsif ($command eq '-') {
-	$reply{explanation}='Remove a recipient';
-	$reply{header}='To';
-	$reply{action}='delete';
-	$reply{value}=$data;
+        $reply{explanation}='Remove a recipient';
+        $reply{header}='To';
+        $reply{action}='delete';
+        $reply{value}=$data;
     }
 
     elsif ($command eq 'a') {
-	$reply{explanation}='Accept message completely';
-	$reply{action}='accept';
+        $reply{explanation}='Accept message completely';
+        $reply{action}='accept';
     }
 
     elsif ($command eq 'b') {
-	$reply{explanation}='Replace body chunk';
-	$reply{header}='body';
-	$reply{action}='replace';
-	$reply{value}=$data;
+        $reply{explanation}='Replace body chunk';
+        $reply{header}='body';
+        $reply{action}='replace';
+        $reply{value}=$data;
     }
 
     elsif ($command eq 'c') {
-	$reply{explanation}='Accept and continue';
-	$reply{action}='continue';
+        $reply{explanation}='Accept and continue';
+        $reply{action}='continue';
     }
 
     elsif ($command eq 'd') {
-	$reply{explanation}='Reject message completely';
-	$reply{action}='reject';
+        $reply{explanation}='Reject message completely';
+        $reply{action}='reject';
     }
 
     elsif ($command eq 'h') {
-	$reply{explanation}='Add header';
-	($reply{header},$reply{value},undef)=split(/\0/,$data);
-	$reply{action}='add';
+        $reply{explanation}='Add header';
+        ($reply{header},$reply{value},undef)=split(/\0/,$data);
+        $reply{action}='add';
     }
-    
+
     elsif ($command eq 'i') {
-	$reply{explanation}='Insert header';
-	$reply{index}=$self->_unpack_number(substr($data,0,4));
-	$data = substr($data,4);
-	($reply{header},$reply{value},undef)=split(/\0/,$data);
-	$reply{action}='insert';
+        $reply{explanation}='Insert header';
+        $reply{index}=$self->_unpack_number(substr($data,0,4));
+        $data = substr($data,4);
+        ($reply{header},$reply{value},undef)=split(/\0/,$data);
+        $reply{action}='insert';
     }
 
     elsif ($command eq 'm') {
-	$reply{explanation}='Replace body header';
-	$reply{index}=$self->_unpack_number(substr($data,0,4));
-	$data = substr($data,4);
-	($reply{header},$reply{value},undef)=split(/\0/,$data);
-	$reply{action}='replace';
+        $reply{explanation}='Replace body header';
+        $reply{index}=$self->_unpack_number(substr($data,0,4));
+        $data = substr($data,4);
+        ($reply{header},$reply{value},undef)=split(/\0/,$data);
+        $reply{action}='replace';
     }
 
     elsif ($command eq 'p') {
-	$reply{explanation}='Progress';
-	$reply{action}='continue';
+        $reply{explanation}='Progress';
+        $reply{action}='continue';
     }
 
     elsif ($command eq 'r') {
-	$reply{explanation}='Reject command with 5xx error';
-	$reply{action}='reject';
-	$reply{value}=5;
+        $reply{explanation}='Reject command with 5xx error';
+        $reply{action}='reject';
+        $reply{value}=5;
     }
 
     elsif ($command eq 't') {
-	$reply{explanation}='Reject command with 4xx error';
-	$reply{action}='reject';
-	$reply{value}=4;
+        $reply{explanation}='Reject command with 4xx error';
+        $reply{action}='reject';
+        $reply{value}=4;
     }
 
     elsif ($command eq 'y') {
-	$reply{explanation}='Reject command with xxx error';
-	$reply{action}='reject';
-	$reply{value}=$data;
+        $reply{explanation}='Reject command with xxx error';
+        $reply{action}='reject';
+        $reply{value}=$data;
     }
 
 
@@ -1044,22 +1042,22 @@ sub _retrieve_responses {
 
     my (@replies,$command,$data,$reply_ref);
 
-    if ($DEBUG==1) {print STDERR "_retrieve_response\n";}    
+    if ($DEBUG==1) {print STDERR "_retrieve_response\n";}
 
     while () {
-	if ($DEBUG==1) {print STDERR "\twaiting for response\n";}
-	($command,$data)=$self->_receive();
-	($reply_ref)=$self->_translate_response($command,$data);
-	
-	push @replies,$reply_ref;
+        if ($DEBUG==1) {print STDERR "\twaiting for response\n";}
+        ($command,$data)=$self->_receive();
+        ($reply_ref)=$self->_translate_response($command,$data);
 
-	if ($DEBUG==1) {print STDERR "\tcommand : $$reply_ref{command}";}
-	if ($$reply_ref{command} eq 'c') {last;}
-	elsif ($$reply_ref{command} eq 'a') {last;}
-	elsif ($$reply_ref{command} eq 'r') {last;}
-	elsif ($$reply_ref{command} eq 't') {last;}
-	elsif ($$reply_ref{command} eq 'y') {last;}
-	elsif ($$reply_ref{command} eq 'd') {last;}
+        push @replies,$reply_ref;
+
+        if ($DEBUG==1) {print STDERR "\tcommand : $$reply_ref{command}";}
+        if ($$reply_ref{command} eq 'c') {last;}
+        elsif ($$reply_ref{command} eq 'a') {last;}
+        elsif ($$reply_ref{command} eq 'r') {last;}
+        elsif ($$reply_ref{command} eq 't') {last;}
+        elsif ($$reply_ref{command} eq 'y') {last;}
+        elsif ($$reply_ref{command} eq 'd') {last;}
     } # end while
 
     return (@replies);
@@ -1071,14 +1069,14 @@ sub send_macros {
     my $self=shift;
     my %macros = @_;
 
-    if ($DEBUG==1) {print STDERR "retrieve_response\n";}    
+    if ($DEBUG==1) {print STDERR "retrieve_response\n";}
 
     my (@data);
 
     if ($DEBUG==1) {
-	foreach (keys(%macros)) {
-	    print STDERR "\tmacro : $_ = $macros{$_}\n";    
-	}
+        foreach (keys(%macros)) {
+            print STDERR "\tmacro : $_ = $macros{$_}\n";
+        }
     } # end if DEBUG
 
     if (defined($macros{j})) {push @data,'j'."\0".$macros{j}."\0";}
@@ -1088,8 +1086,8 @@ sub send_macros {
     if (defined($macros{'{if_addr}'})) {push @data,'{if_addr}'."\0".$macros{'{if_addr}'}."\0";}
 
     if (@data) {
-	if ($DEBUG==1) {print STDERR "\tsending D,C\n";}
-	$self->_send('D','C',@data);
+        if ($DEBUG==1) {print STDERR "\tsending D,C\n";}
+        $self->_send('D','C',@data);
     }
 
     @data=();
@@ -1100,8 +1098,8 @@ sub send_macros {
     if (defined($macros{'{cert_issuer}'})) {push @data,'{cert_issuer}'."\0".$macros{'{cert_issuer}'}."\0";}
 
     if (@data) {
-	if ($DEBUG==1) {print STDERR "\tsending D,H\n";}
-	$self->_send('D','H',@data);
+        if ($DEBUG==1) {print STDERR "\tsending D,H\n";}
+        $self->_send('D','H',@data);
     }
 
 
@@ -1117,8 +1115,8 @@ sub send_macros {
     if (defined($macros{'{mail_addr}'})) {push @data,'{mail_addr}'."\0".$macros{'{mail_addr}'}."\0";}
 
     if (@data) {
-	if ($DEBUG==1) {print STDERR "\tsending D,M\n";}
-	$self->_send('D','M',@data);
+        if ($DEBUG==1) {print STDERR "\tsending D,M\n";}
+        $self->_send('D','M',@data);
     }
 
 
@@ -1128,8 +1126,8 @@ sub send_macros {
     if (defined($macros{'{rcpt_addr}'})) {push @data,'{rcpt_addr}'."\0".$macros{'{rcpt_addr}'}."\0";}
 
     if (@data) {
-	if ($DEBUG==1) {print STDERR "\tsending D,R\n";}
-	$self->_send('D','R',@data);
+        if ($DEBUG==1) {print STDERR "\tsending D,R\n";}
+        $self->_send('D','R',@data);
     }
 
 
@@ -1143,19 +1141,19 @@ sub send_macros {
 sub _io_send {
     my $self = shift;
     my ($data) = @_;
-    
+
     my $must_send = length($data);
     my $did_send = 0;
     while ($did_send < $must_send) {
-	my $len = $self->{socket}->send(substr($data, $did_send));
-	if (defined($len)) {
-	    $did_send += $len;
-	}
-	else {
-	    carp "Error while writing to the socket: $!";
-	}
+        my $len = $self->{socket}->send(substr($data, $did_send));
+        if (defined($len)) {
+            $did_send += $len;
+        }
+        else {
+            carp "Error while writing to the socket: $!";
+        }
     }
-    
+
     return 1;
 }
 ############
@@ -1164,19 +1162,19 @@ sub _io_send {
 sub _io_recv {
     my $self = shift;
     my ($must_recv) = @_;
-    
+
     my $did_recv = 0;
     my $data = "";
     while ($did_recv < $must_recv) {
-	my $len = $self->{socket}->sysread($data, $must_recv-$did_recv, $did_recv);
-	if (defined($len)) {
-	    $did_recv += $len;
-	}
-	else {
-	    carp "Error while reading from the socket: $!";
-	}
+        my $len = $self->{socket}->sysread($data, $must_recv-$did_recv, $did_recv);
+        if (defined($len)) {
+            $did_recv += $len;
+        }
+        else {
+            carp "Error while reading from the socket: $!";
+        }
     }
-    
+
     return $data;
 }
 ############
@@ -1184,8 +1182,8 @@ sub _io_recv {
 ############
 sub DESTROY {
     my $self = shift;
-   if (defined($self->{socket})) {
- 	   $self->{socket}->close;
+    if (defined($self->{socket})) {
+        $self->{socket}->close;
     } # end if
 
 } # end sub DESTROY
@@ -1197,7 +1195,7 @@ __END__
 
 =head1 NAME
 
-Net::Milter - Masquerade as the MTA to communicate with email 
+Net::Milter - Masquerade as the MTA to communicate with email
 filters through a milter interface.
 
 =head1 SYNOPSIS
@@ -1206,7 +1204,7 @@ filters through a milter interface.
     my $milter = new Net::Milter;
     $milter->open('127.0.0.1',5513,'tcp');
 
-    my ($milter_version,$returned_actions_ref,$returned_protocol_ref) = 
+    my ($milter_version,$returned_actions_ref,$returned_protocol_ref) =
     $milter->protocol_negotiation();
 
     my (@results) = $milter->send_header('From','martin@localhost');
@@ -1219,14 +1217,14 @@ Also see example in scripts directory.
 
 =head1 DESCRIPTION
 
-Perl module to provide a pure Perl implementation of the MTA part the 
-milter interface. The goal of this module is to allow other email 
-systems to easily integrate with the various email filters that accept 
+Perl module to provide a pure Perl implementation of the MTA part the
+milter interface. The goal of this module is to allow other email
+systems to easily integrate with the various email filters that accept
 content via milter.
 
 This implementation of milter is developed from the description provided
-by Todd Vierling, 
-cvs.sourceforge.net/viewcvs.py/pmilter/pmilter/doc/milter-protocol.txt?rev=1.2 
+by Todd Vierling,
+cvs.sourceforge.net/viewcvs.py/pmilter/pmilter/doc/milter-protocol.txt?rev=1.2
 and from examining the tcp output from Sendmail.
 
 =head2 Attributes
@@ -1247,39 +1245,39 @@ Reference to an array of the set of content types which may be witheld.
 
 =over
 
-=item new 
+=item new
 
 Constructor, creates a new blank Net::Milter object.
 
 =item open
 
-Open a socket to a milter filter. Takes three arguments, the last 
-argument, can be 'tcp' or 'unix' depending if the connection is to be 
-made to a TCP socket or through a UNIX file system socket. For TCP 
-sockets, the first two argument are the IP address and the port number; 
-for UNIX sockets the first argument is the file path, the second the 
+Open a socket to a milter filter. Takes three arguments, the last
+argument, can be 'tcp' or 'unix' depending if the connection is to be
+made to a TCP socket or through a UNIX file system socket. For TCP
+sockets, the first two argument are the IP address and the port number;
+for UNIX sockets the first argument is the file path, the second the
 timeout value.
 Accepted synonyms for tcp and unix are inet and local respecively.
 
 e.g.
- 
+
     $milter->open('127.0.0.1',5513,'tcp');
 
 to open a connection to port 5513 on address 127.0.0.1,
 or
 
-    $milter->open('/tmp/file.sck',10,'unix'); 
+    $milter->open('/tmp/file.sck',10,'unix');
 
 to open a connection to /tmp/file.sck with a timeout of 10 seconds.
 
-The method creates the attribute, 'socket' containing an IO::Handle 
-object. 
+The method creates the attribute, 'socket' containing an IO::Handle
+object.
 
 =item protocol_negotiation
 
-Talk to the milter filter, describing the list of actions it may 
+Talk to the milter filter, describing the list of actions it may
 perform, and any email content that wont be sent.
-Accepts as argument the hash of allowable actions and withheld content. 
+Accepts as argument the hash of allowable actions and withheld content.
 The hash keys are :
 Allowable actions by the filter :
 
@@ -1297,8 +1295,8 @@ Allowable actions by the filter :
 
 =back
 
-The default is to allow all actions, setting the value to be '0' of any 
-of these keys in the argument hash informs the filter not perform the 
+The default is to allow all actions, setting the value to be '0' of any
+of these keys in the argument hash informs the filter not perform the
 action.
 
 e.g.
@@ -1308,7 +1306,7 @@ e.g.
         SMFIF_CHGBODY => 1
         );
 
-informs the filter it is able to change the contents of the message 
+informs the filter it is able to change the contents of the message
 body, but it may not add message headers.
 
 Withheld content :
@@ -1327,11 +1325,11 @@ Withheld content :
 
 =item SMFIP_NOHDRS - Do not expect any email headers.
 
-=item SMFIP_NOEOH - Do not expect an end of headers signal.  
+=item SMFIP_NOEOH - Do not expect an end of headers signal.
 
 =back
 
-The default is to inform the filter to expect everything, setting the 
+The default is to inform the filter to expect everything, setting the
 value of the key to '1' informs the filter to not expect the content.
 
 e.g.
@@ -1343,15 +1341,15 @@ e.g.
         SMFIP_NOCONNECT => 1
     );
 
-informs the filter it is able to change the contents of the message 
-body, but it may not add message headers, it will not receive an end 
+informs the filter it is able to change the contents of the message
+body, but it may not add message headers, it will not receive an end
 of headers signal, nor will it receive the conection details.
 
-The method returns three parameters, the protocol version, an array 
-reference containing all the names of the actions the filter 
-understands it is able to perform, and an array reference 
+The method returns three parameters, the protocol version, an array
+reference containing all the names of the actions the filter
+understands it is able to perform, and an array reference
 containing the names of the content it understands it wont be sent.
- 
+
 =item send_abort
 
 Send an abort signal to the mail filter.
@@ -1361,21 +1359,21 @@ Accepts nothing, returns nothing.
 
 Send the body of the email to the mail filter.
 NOTE the filter will only accept upto 65535 bytes of body at a time.
-Feed the body to the filter piece by piece by repeat calls to send_body 
+Feed the body to the filter piece by piece by repeat calls to send_body
 with each body chunk until all the body is sent.
 Accepts the message body, returns reference to an array of return codes
 (see RETURN CODE section).
 
 =item send_end_body
 
-Send an end of body signal, i.e. no more body information will 
-follow. Returns a reference to an array of return codes (see RETURN 
+Send an end of body signal, i.e. no more body information will
+follow. Returns a reference to an array of return codes (see RETURN
 CODE section).
 
 =item send_connect
 
-Send the SMTP connect information to the mail filter. 
-Accepts the hostname, the family ('unix' for file sockets, 'tcp4' for 
+Send the SMTP connect information to the mail filter.
+Accepts the hostname, the family ('unix' for file sockets, 'tcp4' for
 tcp connections (v4), 'tcp6' for version 6 tcp connections), the sending
 connection port, the IP address of the sender. Returns a reference to an
 array of return codes (see RETURN CODE section).
@@ -1383,43 +1381,43 @@ array of return codes (see RETURN CODE section).
 e.g.
 
     $milter->send_connect(
-			  'host.domain',
-			  'tcp4',
-			  '12345',
-			  '127.0.0.1'
-			  );
+                          'host.domain',
+                          'tcp4',
+                          '12345',
+                          '127.0.0.1'
+                          );
 
 The machine host.domain with IP address 127.0.0.1 connected to
 us from port 12345 using TCP version 4.
 
 =item send_helo
 
-Send the HELO (or EHLO) string provided by the connecting computer. 
+Send the HELO (or EHLO) string provided by the connecting computer.
 Accepts the HELO string as an argument. Returns a reference to an array
 of return codes (see RETURN CODE section).
 
 =item send_header
 
-Send a single header name and contents to the filter, accepts two 
+Send a single header name and contents to the filter, accepts two
 arguments, the header name and the header contents. Returns a reference
 to an array of return codes (see RETURN CODE section).
 
 =item send_mail_from
 
 Send the MAIL FROM string to the filter, accepts the MAIL FROM data as
-an argument. Returns a reference to an array of return codes (see 
+an argument. Returns a reference to an array of return codes (see
 RETURN CODE section).
 
-=item send_end_headers 
+=item send_end_headers
 
-Send an end of headers signal, i.e. no more header information will 
-follow. Returns a reference to an array of return codes (see RETURN 
+Send an end of headers signal, i.e. no more header information will
+follow. Returns a reference to an array of return codes (see RETURN
 CODE section).
 
 =item send_rcpt_to
 
-Send the RCPT TO string to the filter, accepts an array of RCPT TO 
-recipients as argument. Returns a reference to an array of return 
+Send the RCPT TO string to the filter, accepts an array of RCPT TO
+recipients as argument. Returns a reference to an array of return
 codes (see RETURN CODE section).
 
 =item send_quit
@@ -1428,7 +1426,7 @@ Quit the milter communication, accepts nothing, returns nothing.
 
 =item send_macros
 
-Send Sendmail macro information to the filter. The method accepts a 
+Send Sendmail macro information to the filter. The method accepts a
 hash of the Sendmail macro names, returns  a reference to an array of
 return codes (see RETURN CODE section).
 
@@ -1452,7 +1450,7 @@ The potential macro names (hash keys) are :
 
 =item {cipher_bits}  - keylength of the encryption algorith.
 
-=item {cert_subject} - distinguished name of the presented certificate. 
+=item {cert_subject} - distinguished name of the presented certificate.
 
 =item {cert_issuer}  - name of the certificate authority.
 
@@ -1494,7 +1492,7 @@ e.g.
 For further explanation of macros see :
 
 http://people.freenet.de/slgig/op_en/macros.html
-and 
+and
 http://www.sendmail.com/idemo/prod_guide/switch/switchdemo/helplets/en/Macros.html
 
 =back
@@ -1527,27 +1525,27 @@ Call the various methods in the order that they would be called if accepting
 a SMTP stream, ie send_connect(), send_helo(),  send_mail_from(), send_rcpt_to(),
 send_header(), send_end_headers(), send_body(). Some milter filters expect this
 and refuse to return values when expected.
-Equally continuing to send data when a filter has rejected or accepted a 
+Equally continuing to send data when a filter has rejected or accepted a
 message may confuse it, and refuse to return values for subsequent data, so
 always check the codes returned.
 
-In some circumstantes 'read' has not worked, now replaced by 'sysread' which is 
+In some circumstantes 'read' has not worked, now replaced by 'sysread' which is
 reported to fix the problem. If this doesn't work, change 'sysread' to 'read' and
 email me please.
 
-Some filters appear to expect a bitwise negation of the protocol field. This is 
-now disabled as default. If you wish to enable this, please set 
-PROTOCOL_NEGATION => 1 
+Some filters appear to expect a bitwise negation of the protocol field. This is
+now disabled as default. If you wish to enable this, please set
+PROTOCOL_NEGATION => 1
 
 =head1 SEE ALSO
 
 This module is the Yang to Ying's Sendmail::Milter, which can act as the other end
-of the communication. 
+of the communication.
 
 =head1 NAMING
 
-I choose not to put this module in the Sendmail namespace, as it has nothing to do 
-with Sendmail itself, neither is it anything to do with SMTP, its a net protocol, 
+I choose not to put this module in the Sendmail namespace, as it has nothing to do
+with Sendmail itself, neither is it anything to do with SMTP, its a net protocol,
 hence the Net namespace.
 
 =head1 AUTHOR
