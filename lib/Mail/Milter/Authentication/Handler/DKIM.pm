@@ -333,6 +333,10 @@ sub _check_error {
         $self->log_error( 'Temp DKIM Error - ' . $error );
         $self->add_auth_header('dkim=temperror (dns timeout)');
     }
+    elsif ( $error =~ /^DNS error: SERVFAIL/ ){
+        $self->log_error( 'Temp DKIM Error - ' . $error );
+        $self->add_auth_header('dkim=temperror (dns servfail)');
+    }
     elsif ( $error =~ /^no domain to fetch policy for$/
             or $error =~ /^policy syntax error$/
             or $error =~ /^empty domain label/
