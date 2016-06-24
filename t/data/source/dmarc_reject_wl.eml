@@ -1,0 +1,15 @@
+DKIM-Signature: v=1; a=rsa-sha1; c=relaxed; d=marcbradshaw.net; h=from
+        :to:subject; s=tfe2; bh=Z1rObkCx8w01d7+aXVQFqtqal9Y=; b=S/mtomBF
+        fMeLyRHW9vDS74LS8p2mwuIMcdO8KimZjCknRCoEJDOkcIBjRIi6D+FhThzBCnBn
+        ddLSqbSnJ3Cj6HEm8fOAqOqaJDCXko41ig+d3FXkk9SEL7rgLmILh9h9pn1IBdG7
+        kKGnOevLaEMBW8dPKYBbhI7f6hsJBZ8PAfbG3a381uvNAhwgPwtqqIc0UqxroFBD
+        +yQ56muCQMfn0NA9syLhL1/lFY7OsQeapeCbRSr6AiTVOlAnmlZAiOZj+RP3HUfj
+        vrc04lYjJNOnjBjQytHhxDGJENgOyii+iDMna6krEQc0BtF6KlBT2UYVr4uX5QD9
+        olnyCKPw9uEqmA==
+From: test@goestheweasel.com
+To: test@example.com
+Subject: This is a test
+
+This should be a DMARC fail with a reject policy.
+
+

@@ -41,6 +41,10 @@ t/config/dmarc_reject/authentication_milter.json
 t/config/dmarc_reject/mail-dmarc.ini
 t/config/dmarc_reject.smtp/authentication_milter.json
 t/config/dmarc_reject.smtp/mail-dmarc.ini
+t/config/dmarc_reject_wl/authentication_milter.json
+t/config/dmarc_reject_wl/mail-dmarc.ini
+t/config/dmarc_reject_wl.smtp/authentication_milter.json
+t/config/dmarc_reject_wl.smtp/mail-dmarc.ini
 t/config/dryrun/authentication_milter.json
 t/config/dryrun/mail-dmarc.ini
 t/config/dryrun.smtp/authentication_milter.json
@@ -54,6 +58,8 @@ t/data/example/dmarc_reject_hard.eml
 t/data/example/dmarc_reject_hard_whitelisted.eml
 t/data/example/dmarc_reject_hard_whitelisted.smtp.eml
 t/data/example/dmarc_reject.smtp.eml
+t/data/example/dmarc_reject_wl.eml
+t/data/example/dmarc_reject_wl.smtp.eml
 t/data/example/google_apps_bad.eml
 t/data/example/google_apps_bad.smtp.eml
 t/data/example/google_apps_bad_space.eml
@@ -93,6 +99,7 @@ t/data/example/tools_pipeline_test.eml
 t/data/example/tools_test.eml
 t/data/example/transparency.smtp.eml
 t/data/source/dmarc_reject.eml
+t/data/source/dmarc_reject_wl.eml
 t/data/source/google_apps_bad.eml
 t/data/source/google_apps_bad_space.eml
 t/data/source/google_apps_good_case.eml

@@ -23,11 +23,12 @@ sub default_config {
 }
 
 sub envfrom_callback {
-    my ( $self, $env_from ) = @_;
-    $self->{'failmode'}     = 0;
-    $self->{'headers'}      = [];
-    $self->{'has_dkim'}     = 0;
-    $self->{'carry'}        = q{};
+    my ( $self, $env_from )  = @_;
+    $self->{'failmode'}      = 0;
+    $self->{'headers'}       = [];
+    $self->{'has_dkim'}      = 0;
+    $self->{'valid_domains'} = {};
+    $self->{'carry'}         = q{};
     $self->destroy_object('dkim');
     return;
 }
@@ -181,10 +182,15 @@ sub eom_callback {
               :                                       'dkim';
             $self->dbgout( 'DKIMSignatureType', $type, LOG_DEBUG );
 
+            $self->dbgout( 'DKIMSignatureDomain', $signature->domain, LOG_DEBUG );
             $self->dbgout( 'DKIMSignatureIdentity', $signature->identity, LOG_DEBUG );
             $self->dbgout( 'DKIMSignatureResult',   $signature->result_detail, LOG_DEBUG );
             my $signature_result        = $signature->result();
             my $signature_result_detail = $signature->result_detail();
+
+            if ( $signature_result eq 'pass' ) {
+                $self->{'valid_domains'}->{ $signature->domain } = 1;
+            }
 
             if ( $signature_result eq 'invalid' ) {
                 if ( $signature_result_detail =~ /DNS query timeout for (.*) at / ) {
@@ -321,6 +327,7 @@ sub close_callback {
     delete $self->{'body'};
     delete $self->{'carry'};
     delete $self->{'has_dkim'};
+    delete $self->{'valid_domains'};
     $self->destroy_object('dkim');
     return;
 }

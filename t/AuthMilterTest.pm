@@ -494,6 +494,21 @@ sub run_milter_processing {
 
     stop_milter();
 
+    start_milter( 'config/dmarc_reject_wl' );
+
+    milter_process({
+        'desc'   => 'DMARC Reject DKIM Whitelisted',
+        'prefix' => 'config/dmarc_reject_wl',
+        'source' => 'dmarc_reject_wl.eml',
+        'dest'   => 'dmarc_reject_wl.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    stop_milter();
+
     start_milter( 'config/dryrun' );
 
     milter_process({
@@ -793,6 +808,21 @@ sub run_smtp_processing {
         'ip'     => '99.123.123.123',
         'name'   => 'bad.name.google.com',
         'from'   => 'test@goestheweasel.com',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    stop_milter();
+
+    start_milter( 'config/dmarc_reject_wl.smtp' );
+
+    smtp_process({
+        'desc'   => 'DMARC Reject DKIM Whitelisted',
+        'prefix' => 'config/dmarc_reject_wl.smtp',
+        'source' => 'dmarc_reject_wl.eml',
+        'dest'   => 'dmarc_reject_wl.smtp.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });
 

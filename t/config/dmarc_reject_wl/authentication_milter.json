@@ -30,7 +30,7 @@
         "DMARC" : {
             "hard_reject" : 1,
             "hide_none" : 0,
-            "whitelisted" : [ "99.0.0.0/8" ],
+            "whitelisted" : [ "99.0.0.0/8", "dkim:marcbradshaw.net" ],
             "detect_list_id" : 1
         },
         "DKIM" : {

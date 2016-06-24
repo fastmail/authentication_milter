@@ -38,7 +38,7 @@
         "DMARC" : {
             "hard_reject" : 1,
             "hide_none" : 0,
-            "whitelisted_ip_list" : [ "99.0.0.0/8" ],
+            "whitelisted" : [ "99.0.0.0/8" ],
             "detect_list_id" : 1
         },
         "DKIM" : {

@@ -1,10 +1,10 @@
-# Test configuration for auth milter
+# Test configuration for auth milter smtp
 {
 
     "debug"                           : 0,
     "dryrun"                          : 0,
     "logtoerr"                        : 0,
-    "error_log"                       : "tmp/milter.err",
+    "error_log"                       : "tmp/smtp.err",
     "connection"                      : "unix:tmp/authentication_milter_test.sock",
     "umask"                           : "0000",
     "connect_timeout"                 : 55,
@@ -15,6 +15,13 @@
     "tempfail_on_error_local"         : 1,
     "tempfail_on_error_trusted"       : 1,
 
+    "protocol" : "smtp",
+    "smtp" : {
+        "sock_type" : "unix",
+        "sock_path" : "tmp/authentication_milter_smtp_out.sock",
+        "pipeline_limit" : "4"
+    },
+
     "listen_backlog"         : 1,
     "min_children"           : 1,
     "max_children"           : 2,
@@ -22,6 +29,7 @@
     "max_spare_children"     : 1,
     "max_requests_per_child" : 1000,
 
+    "dns_resolvers" : [ "127.0.0.1" ],
 
     "handlers" : {
         "SPF" : {
@@ -30,7 +38,7 @@
         "DMARC" : {
             "hard_reject" : 1,
             "hide_none" : 0,
-            "whitelisted" : [ "99.0.0.0/8" ],
+            "whitelisted" : [ "99.0.0.0/8", "dkim:marcbradshaw.net" ],
             "detect_list_id" : 1
         },
         "DKIM" : {

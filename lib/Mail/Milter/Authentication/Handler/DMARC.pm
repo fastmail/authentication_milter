@@ -15,34 +15,45 @@ my $PSL_CHECKED_TIME;
 
 sub default_config {
     return {
-        'hide_none'           => 0,
-        'hard_reject'         => 0,
-        'no_list_reject'      => 1,
-        'whitelisted_ip_list' => [],
-        'detect_list_id'      => 1,
-        'report_skip_to'      => [ 'my_report_from_address@example.com' ],
-        'no_report'           => 0,
+        'hide_none'      => 0,
+        'hard_reject'    => 0,
+        'no_list_reject' => 1,
+        'whitelisted'    => [],
+        'detect_list_id' => 1,
+        'report_skip_to' => [ 'my_report_from_address@example.com' ],
+        'no_report'      => 0,
     };
 }
 
-sub is_whitelisted_ip_address {
+sub is_whitelisted {
     my ( $self ) = @_;
     my $config = $self->handler_config();
-    return 0 if not exists( $config->{'whitelisted_ip_list'} );
+    return 0 if not exists( $config->{'whitelisted'} );
     my $top_handler = $self->get_top_handler();
     my $ip_obj = $top_handler->{'ip_object'};
     my $whitelisted = 0;
-    foreach my $whitelisted_ip ( @{ $config->{'whitelisted_ip_list'} } ) {
-        my $whitelisted_obj = Net::IP->new($whitelisted_ip);
-        my $is_overlap = $ip_obj->overlaps($whitelisted_obj) || 0;
-        if (
-               $is_overlap == $IP_A_IN_B_OVERLAP
-            || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
-            || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
-            || $is_overlap == $IP_IDENTICAL
-          )
-        {
-            $whitelisted = 1;
+    foreach my $entry ( @{ $config->{'whitelisted'} } ) {
+        if ( $entry =~ /^dkim:/ ) {
+            my ( $dummy, $dkim_domain ) = split( /:/, $entry, 2 );
+            my $dkim_handler = $self->get_handler('DKIM');
+            if ( exists( $dkim_handler->{'valid_domains'}->{ $dkim_domain } ) ) {
+                $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                $whitelisted = 1;
+            }
+        }
+        else {
+            my $whitelisted_obj = Net::IP->new($entry);
+            my $is_overlap = $ip_obj->overlaps($whitelisted_obj) || 0;
+            if (
+                   $is_overlap == $IP_A_IN_B_OVERLAP
+                || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
+                || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
+                || $is_overlap == $IP_IDENTICAL
+              )
+            {
+                $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                $whitelisted = 1;
+            }
         }
     }
     return $whitelisted;
@@ -320,8 +331,8 @@ sub eom_callback {
                         if ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
                             $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
                         }
-                        elsif ( $self->is_whitelisted_ip_address() ) {
-                            $self->dbgout( 'DMARCReject', "Policy reject overridden for whitelisted ip address", LOG_INFO );
+                        elsif ( $self->is_whitelisted() ) {
+                            $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
                         }
                         else {
                             $self->reject_mail( '550 5.7.0 DMARC policy violation' );
@@ -416,9 +427,10 @@ This handler requires the SPF and DKIM handlers to be installed and active.
                                                         | Requires DKIM and SPF
             "hard_reject"         : 0,                  | Reject mail which fails with a reject policy
             "no_list_reject"      : 0,                  | Do not reject mail detected as mailing list
-            "whitelisted_ip_list" : [                   | A list of ip addresses or CIDR ranges for which
-                "1.2.3.4",                              | we do not want to hard reject mail on fail p=reject
-                "10.20.30.40"
+            "whitelisted"         : [                   | A list of ip addresses or CIDR ranges, or dkim domains
+                "10.20.30.40",                          | for which we do not want to hard reject mail on fail p=reject
+                "dkim:bad.forwarder.com",               | (valid) DKIM signing domains can also be whitelisted by
+                "20.30.40.0/24"                         | having an entry such as "dkim:domain.com"
             ],
             "hide_none"           : 0,                  | Hide auth line if the result is 'none'
             "detect_list_id"      : "1",                | Detect a list ID and modify the DMARC authentication header
