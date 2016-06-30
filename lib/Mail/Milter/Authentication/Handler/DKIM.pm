@@ -189,7 +189,7 @@ sub eom_callback {
             my $signature_result_detail = $signature->result_detail();
 
             if ( $signature_result eq 'pass' ) {
-                $self->{'valid_domains'}->{ $signature->domain } = 1;
+                $self->{'valid_domains'}->{ lc $signature->domain } = 1;
             }
 
             if ( $signature_result eq 'invalid' ) {

@@ -36,7 +36,7 @@ sub is_whitelisted {
         if ( $entry =~ /^dkim:/ ) {
             my ( $dummy, $dkim_domain ) = split( /:/, $entry, 2 );
             my $dkim_handler = $self->get_handler('DKIM');
-            if ( exists( $dkim_handler->{'valid_domains'}->{ $dkim_domain } ) ) {
+            if ( exists( $dkim_handler->{'valid_domains'}->{ lc $dkim_domain } ) ) {
                 $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
                 $whitelisted = 1;
             }
