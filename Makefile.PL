@@ -45,7 +45,7 @@ requires (
     'JSON'                  => 0,
     'List::MoreUtils'       => 0,
     'Mail::DKIM::Verifier'  => '0.39',
-    'Mail::DMARC::PurePerl' => 0,
+    'Mail::DMARC'           => '1.20160612',
     'Mail::SPF'             => 0,
     'MIME::Base64'          => 0,
     'Module::Load'          => 0,
