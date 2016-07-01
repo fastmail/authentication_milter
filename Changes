@@ -3,7 +3,15 @@ Revision history for Mail-Milter-Authentication
 1.1.0   FUTURE
         - Allow email to be rejected by handlers
         - Option to reject DMARC p=reject failures
+        - DMARC reject whitelist based on ip or dkim
         - Split X-Google-DKIM checks into own handler
+        - DKIM DNS error handling improvements
+        - Optionally hide Domainkeys results
+        - Updates to improve operation when running as a postfix pre-queue filter
+        - Do not drop connections when restarting
+        - Better handling of multiple instances
+        - Updated daemon control
+        - Improved logging
 
 1.0.1   2015-09-11
         - Removed unrequired error handling
