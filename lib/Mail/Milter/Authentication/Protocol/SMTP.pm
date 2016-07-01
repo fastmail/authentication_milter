@@ -601,14 +601,10 @@ sub smtp_command_data {
             $self->logerror( "SMTP Mail Rejected" );
             my $error =  '451 4.0.0 That\'s not right';
             my $upstream_error = $smtp->{'string'};
-            if ( $upstream_error =~ /^451 / ) {
+            if ( $upstream_error =~ /^4\d\d / ) {
                 $error = $upstream_error;
             }
-            elsif ( $upstream_error =~ /^554 / ) {
-                # Also pass back rejects
-                $error = $upstream_error;
-            }
-            elsif ( $upstream_error =~ /^501 / ) {
+            elsif ( $upstream_error =~ /^5\d\d / ) {
                 # Also pass back rejects
                 $error = $upstream_error;
             }
