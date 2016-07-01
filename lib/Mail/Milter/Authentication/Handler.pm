@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Handler;
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v1.1.0');
+use version; our $VERSION = version->declare('v1.1.1');
 
 use Digest::MD5 qw{ md5_hex };
 use Email::Address;
