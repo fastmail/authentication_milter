@@ -1,6 +1,6 @@
 Revision history for Mail-Milter-Authentication
 
-1.1.0   FUTURE
+1.1.0   2016-07-01
         - Allow email to be rejected by handlers
         - Option to reject DMARC p=reject failures
         - DMARC reject whitelist based on ip or dkim
