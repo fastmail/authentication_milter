@@ -26,7 +26,25 @@ sub new {
     return $self;
 }
 
+sub metric_register {
+    my ( $self, $id ) = @_;
+    $self->{'thischild'}->{'metric'}->register( $id, $self->{'thischild'} );
+    return;
+}
+
+sub metric_count {
+    my ( $self, $id ) = @_;
+    $self->{'thischild'}->{'metric'}->count( $id, $self->{'thischild'} );
+    return;
+}
+
 # Top Level Callbacks
+
+sub setup_handler {
+    my ( $self ) = @_;
+    $self->metric_register( 'connect' );
+    return;
+}
 
 sub top_setup_callback {
 
@@ -46,6 +64,7 @@ sub top_connect_callback {
 
     # On Connect
     my ( $self, $hostname, $ip ) = @_;
+    $self->metric_count( 'connect' );
     $self->status('connect');
     $self->dbgout( 'CALLBACK', 'Connect', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );

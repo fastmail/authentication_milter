@@ -9,6 +9,7 @@ use ExtUtils::Installed;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Handler;
+use Mail::Milter::Authentication::Metric;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
 use Module::Load;
@@ -49,6 +50,8 @@ sub pre_loop_hook {
     my ( $self ) = @_;
 
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':master';
+
+    $self->{'metric'} = Mail::Milter::Authentication::Metric->new();
 
     # Load handlers
     my $config = get_config();
@@ -219,12 +222,39 @@ sub get_client_details {
     return;
 }
 
+sub child_is_talking_hook {
+    my ( $self, $socket ) = @_;
+    my $request = <$socket>;
+    return if ! $request;
+    $request =~ s/[\n\r]+$//;
+    if ( $request =~ /^METRIC/ ) {
+        $self->{'metric'}->master_handler( $request, $socket, $self );
+    }
+    return;
+}
+
 sub process_request {
+    my ( $self ) = @_;
+    my $config = $self->{'config'};
+    if ( $self->get_client_port() eq $config->{'metric_port'} ) {
+        $self->{'metric'}->child_handler( $self );
+    }
+    else {
+        $self->process_main();
+    }
+    
+    my $count = $self->{'count'};
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(' . $count . ')';
+}
+
+
+sub process_main {
     my ( $self ) = @_;
 
     $self->{'count'}++;
     my $count = $self->{'count'};
     my $config = $self->{'config'};
+
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':processing(' . $count . ')';
     $self->logdebug( 'Processing request ' . $self->{'count'} );
     $self->{'socket'} = $self->{'server'}->{'client'};
@@ -253,7 +283,6 @@ sub process_request {
     delete $self->{'handler'}->{'_Handler'}->{'reject_mail'};
     delete $self->{'handler'}->{'_Handler'}->{'return_code'};
     delete $self->{'socket'};
-    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(' . $count . ')';
     $self->logdebug( 'Request processing completed' );
     return;
 }
@@ -489,6 +518,14 @@ sub start {
             die 'Invalid connection';
         }
     }
+            
+    push @ports, {
+        'host'  => '127.0.0.1',
+        'port'  => $config->{'metric_port'},
+        'ipv'   => '*',
+        'proto' => 'tcp',
+    };
+    $srvargs{'child_communication'} = 1;
 
     $srvargs{'port'} = \@ports;
     $srvargs{'listen'} = $listen_backlog;
@@ -499,6 +536,13 @@ sub start {
 
     # Never reaches here.
     die 'Something went horribly wrong';
+}
+
+sub idle_loop_hook {
+    my ( $self ) = @_;
+#    use Data::Dumper;
+#    warn Dumper( $self->{'server'}->{'tally'} );
+    return;
 }
 
 ##### Protocol methods
@@ -530,6 +574,7 @@ sub setup_handlers {
     $self->{'handler'}->{'_Handler'} = $handler;
 
     my $config = $self->{'config'};
+    $handler->setup_handler();
     foreach my $name ( @{$config->{'load_handlers'}} ) {
         $self->setup_handler( $name );
     }
