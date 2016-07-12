@@ -82,7 +82,7 @@ Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2015
+Copyright 2016
 
 This library is free software; you may redistribute it and/or
 modify it under the same terms as Perl itself.
