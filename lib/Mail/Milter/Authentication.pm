@@ -238,7 +238,7 @@ sub child_is_talking_hook {
 sub process_request {
     my ( $self ) = @_;
     my $config = $self->{'config'};
-    if ( $self->get_client_port() eq $config->{'metric_port'} ) {
+    if ( defined( $config->{ 'metric_port' } ) && $self->get_client_port() eq $config->{'metric_port'} ) {
         $self->{'metric'}->child_handler( $self );
     }
     else {
@@ -520,14 +520,18 @@ sub start {
             die 'Invalid connection';
         }
     }
-            
-    push @ports, {
-        'host'  => '127.0.0.1',
-        'port'  => $config->{'metric_port'},
-        'ipv'   => '*',
-        'proto' => 'tcp',
-    };
-    $srvargs{'child_communication'} = 1;
+
+    if ( defined( $config->{'metric_port'} ) ) {
+        my $metric_host = $config->{ 'metric_host' } || '127.0.0.1';
+        push @ports, {
+            'host'  => $metric_host,
+            'port'  => $config->{'metric_port'},
+            'ipv'   => '*',
+            'proto' => 'tcp',
+        };
+        $srvargs{'child_communication'} = 1;
+        _warn( 'Metrics available on ' . $metric_host . ':' . $config->{'metric_port'} );
+    }
 
     $srvargs{'port'} = \@ports;
     $srvargs{'listen'} = $listen_backlog;

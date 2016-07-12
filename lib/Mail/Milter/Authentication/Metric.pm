@@ -16,13 +16,17 @@ sub new {
 
 sub count {
     my ( $self, $id, $server ) = @_;
+    return if ( ! defined( $server->{'config'}->{'metric_port'} ) );
     my $psocket = $server->{'server'}->{'parent_sock'};
+    return if ! $psocket;
     print $psocket "METRIC.COUNT $id\n";
 }
 
 sub register {
     my ( $self, $id, $help, $server ) = @_;
+    return if ( ! defined( $server->{'config'}->{'metric_port'} ) );
     my $psocket = $server->{'server'}->{'parent_sock'};
+    return if ! $psocket;
     print $psocket "METRIC.REGISTER $id $help\n";
 }
 
