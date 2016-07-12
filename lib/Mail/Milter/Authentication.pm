@@ -449,8 +449,10 @@ sub start {
                 open my $outf, '>', $config->{'error_log'} || die "Could not create error log: $!\n";;
                 close $outf;
             }
-            my ($login,$pass,$uid,$gid) = getpwnam($user);
-            chown $uid, $gid, $config->{'error_log'};
+            if ( $user ) {
+                my ($login,$pass,$uid,$gid) = getpwnam($user);
+                chown $uid, $gid, $config->{'error_log'};
+            }
         }
         if ( exists( $config->{'chroot'} ) ) {
             _warn('Chroot to ' . $config->{'chroot'});
