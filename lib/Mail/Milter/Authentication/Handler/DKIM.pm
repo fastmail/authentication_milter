@@ -180,7 +180,7 @@ sub eom_callback {
         my $dkim_result_detail = $dkim->result_detail;
 
         if ( $dkim_result eq 'pass' ) {
-            $self->metric_count( 'dkim_error' );
+            $self->metric_count( 'dkim_pass' );
         }
         elsif ( $dkim_result eq 'fail' ) {
             $self->metric_count( 'dkim_fail' );
