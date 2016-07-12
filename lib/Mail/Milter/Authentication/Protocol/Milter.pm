@@ -80,6 +80,9 @@ sub milter_process_command {
     }
     elsif ( $command eq SMFIC_BODYEOB ) {
         $returncode = $handler->top_eom_callback();
+        if ( $returncode == SMFIS_CONTINUE ) {
+            $handler->metric_count( 'mail_accepted' );
+        }
     }
     elsif ( $command eq SMFIC_HELO ) {
         my $helo = $self->milter_split_buffer( $buffer );
