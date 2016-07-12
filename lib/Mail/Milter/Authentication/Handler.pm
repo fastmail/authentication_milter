@@ -27,8 +27,8 @@ sub new {
 }
 
 sub metric_register {
-    my ( $self, $id ) = @_;
-    $self->{'thischild'}->{'metric'}->register( $id, $self->{'thischild'} );
+    my ( $self, $id, $help ) = @_;
+    $self->{'thischild'}->{'metric'}->register( $id, $help, $self->{'thischild'} );
     return;
 }
 
@@ -40,9 +40,19 @@ sub metric_count {
 
 # Top Level Callbacks
 
-sub setup_handler {
+sub child_setup {
     my ( $self ) = @_;
-    $self->metric_register( 'connect' );
+    $self->metric_register( 'connect', 'The number of connections made to authentication milter' );
+    $self->metric_register( 'callback_error_connect' , 'The number of errors in the connect stage' );
+    $self->metric_register( 'callback_error_helo' , 'The number of errors in the helo stage' );
+    $self->metric_register( 'callback_error_envfrom' , 'The number of errors in the envfrom stage' );
+    $self->metric_register( 'callback_error_rcptto' , 'The number of errors in the rcptto stage' );
+    $self->metric_register( 'callback_error_header' , 'The number of errors in the header stage' );
+    $self->metric_register( 'callback_error_eoh' , 'The number of errors in the eoh stage' );
+    $self->metric_register( 'callback_error_body' , 'The number of errors in the body stage' );
+    $self->metric_register( 'callback_error_eom' , 'The number of errors in the eom stage' );
+    $self->metric_register( 'callback_error_abort' , 'The number of errors in the abort stage' );
+    $self->metric_register( 'callback_error_close' , 'The number of errors in the close stage' );
     return;
 }
 
@@ -89,6 +99,7 @@ sub top_connect_callback {
         $self->log_error( 'Connect callback error ' . $error );
         $self->exit_on_close();
         $self->tempfail_on_error();
+        $self->metric_count( 'callback_error_connect' );
     }
     $self->status('postconnect');
     return $self->get_return();
@@ -124,6 +135,7 @@ sub top_helo_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_helo' );
         $self->log_error( 'HELO callback error ' . $error );
         $self->exit_on_close();
         $self->tempfail_on_error();
@@ -160,6 +172,7 @@ sub top_envfrom_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_envfrom' );
         $self->log_error( 'Env From callback error ' . $error );
         $self->exit_on_close();
         $self->tempfail_on_error();
@@ -190,6 +203,7 @@ sub top_envrcpt_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_rcptto' );
         $self->log_error( 'Rcpt To callback error ' . $error );
         $self->exit_on_close();
         $self->tempfail_on_error();
@@ -219,6 +233,7 @@ sub top_header_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_header' );
         $self->log_error( 'Header callback error ' . $error );
         $self->exit_on_close();
         $self->tempfail_on_error();
@@ -247,6 +262,7 @@ sub top_eoh_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_eoh' );
         $self->log_error( 'EOH callback error ' . $error );
         $self->exit_on_close();
         $self->tempfail_on_error();
@@ -276,6 +292,7 @@ sub top_body_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_body' );
         $self->log_error( 'Body callback error ' . $error );
         $self->exit_on_close();
         $self->tempfail_on_error();
@@ -305,6 +322,7 @@ sub top_eom_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_eom' );
         $self->log_error( 'EOM callback error ' . $error );
         $self->exit_on_close();
         $self->tempfail_on_error();
@@ -335,6 +353,7 @@ sub top_abort_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_abort' );
         $self->log_error( 'Abort callback error ' . $error );
         $self->exit_on_close();
         $self->tempfail_on_error();
@@ -363,6 +382,7 @@ sub top_close_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_close' );
         $self->log_error( 'Close callback error ' . $error );
         $self->exit_on_close();
         $self->tempfail_on_error();

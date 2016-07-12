@@ -115,6 +115,7 @@ sub child_init_hook {
     my $base;
     if ( $config->{'protocol'} eq 'milter' ) {
         $base = 'Mail::Milter::Authentication::Protocol::Milter';
+
     }
     elsif ( $config->{'protocol'} eq 'smtp' ) {
         $base = 'Mail::Milter::Authentication::Protocol::SMTP';
@@ -154,6 +155,7 @@ sub child_init_hook {
     $self->{'object_maker'}   = $object_maker;
 
     $self->setup_handlers();
+    $self->child_setup();
 
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(0)';
     return;
@@ -572,9 +574,9 @@ sub setup_handlers {
     $self->logdebug( 'setup objects' );
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'}->{'_Handler'} = $handler;
+    $handler->child_setup();
 
     my $config = $self->{'config'};
-    $handler->setup_handler();
     foreach my $name ( @{$config->{'load_handlers'}} ) {
         $self->setup_handler( $name );
     }
@@ -613,6 +615,10 @@ sub setup_handler {
         if ( $object->can( $callback . '_callback' ) ) {
             $self->register_callback( $name, $callback );
         }
+        if ( $object->can( 'child_setup' ) ) {
+            $object->child_setup();
+        }
+
     }
 
     return;

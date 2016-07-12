@@ -15,6 +15,16 @@ use Sys::Syslog qw{:standard :macros};
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Config;
 
+sub child_setup {
+    my ( $self ) = @_;
+    my $handler = $self->{'handler'}->{'_Handler'};
+    $handler->metric_register( 'mail_accepted', 'Number of emails accepted' );
+    $handler->metric_register( 'mail_bounced', 'Number of emails rejected by upstream SMTP' );
+    $handler->metric_register( 'mail_rejected', 'Number of emails rejected by milter' );
+    $handler->metric_register( 'mail_errored', 'Number of emails rejected due to internal error' );
+    return;
+}
+
 sub get_smtp_config {
     my ( $self ) = @_;
     my $client_details = $self->get_client_details();
@@ -585,6 +595,7 @@ sub smtp_command_data {
 
         if ( $self->smtp_forward_to_destination() ) {
 
+            $handler->metric_count( 'mail_accepted' );
             $handler->dbgout( 'Accept string', $smtp->{'string'}, LOG_INFO );
             $smtp->{'has_data'} = 1;
 
@@ -598,6 +609,7 @@ sub smtp_command_data {
             }
         }
         else {
+            $handler->metric_count( 'mail_bounced' );
             $self->logerror( "SMTP Mail Rejected" );
             my $error =  '451 4.0.0 That\'s not right';
             my $upstream_error = $smtp->{'string'};
@@ -622,6 +634,7 @@ sub smtp_command_data {
         }
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
+        $handler->metric_count( 'mail_rejected' );
         $handler->clear_reject_mail();
         if ( $smtp->{'using_lmtp'} ) {
             foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
@@ -635,6 +648,7 @@ sub smtp_command_data {
         }
     }
     else {
+        $handler->metric_count( 'mail_errored' );
         if ( $smtp->{'using_lmtp'} ) {
             foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
                 print $socket "451 4.0.0 That's not right\r\n";

@@ -40,6 +40,19 @@ sub setup_callback {
     return;
 }
 
+sub child_setup {
+    my ( $self ) = @_;
+    $self->metric_register( 'spf_none', 'The number of emails with no SPF' );
+    $self->metric_register( 'spf_pass', 'The number of emails with a SPF pass' );
+    $self->metric_register( 'spf_fail', 'The number of emails with a SPF fail' );
+    $self->metric_register( 'spf_permerror', 'The number of emails with a SPF permerror' );
+    $self->metric_register( 'spf_temperror', 'The number of emails with a SPF temperror' );
+    $self->metric_register( 'spf_softfail', 'The number of emails with a SPF softfail' );
+    $self->metric_register( 'spf_neutral', 'The number of emails with a SPF neutral' );
+    $self->metric_register( 'spf_error', 'The number of emails with a SPF internal error' );
+    return;
+}
+
 sub wrap_header {
     my ( $self, $value ) = @_;
     $value =~ s/ /\n    /;
@@ -68,6 +81,7 @@ sub envfrom_callback {
     my $spf_server = $self->get_object('spf_server');
     if ( ! $spf_server ) {
         $self->log_error( 'SPF Setup Error' );
+        $self->metric_count( 'spf_error' );
         $self->add_auth_header('spf=temperror');
         return;
     }
@@ -107,6 +121,32 @@ sub envfrom_callback {
 
         my $result_code = $spf_result->code();
 
+        if ( $result_code eq 'none' ) {
+            $self->metric_count( 'spf_none' );
+        }
+        elsif ( $result_code eq 'pass' ) {
+            $self->metric_count( 'spf_pass' );
+        }
+        elsif ( $result_code eq 'fail' ) {
+            $self->metric_count( 'spf_fail' );
+        }
+        elsif ( $result_code eq 'permerror' ) {
+            $self->metric_count( 'spf_permerror' );
+        }
+        elsif ( $result_code eq 'temperror' ) {
+            $self->metric_count( 'spf_temperror' );
+        }
+        elsif ( $result_code eq 'neutral' ) {
+            $self->metric_count( 'spf_neutral' );
+        }
+        elsif ( $result_code eq 'softfail' ) {
+            $self->metric_count( 'spf_softfail' );
+        }
+        else {
+            $self->metric_count( 'spf_error' );
+        }
+
+
         my $auth_header = join( q{ },
             $self->format_header_entry( 'spf',           $result_code ),
             $self->format_header_entry( 'smtp.mailfrom', $self->get_address_from( $env_from ) ),
@@ -134,6 +174,7 @@ sub envfrom_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'SPF Error ' . $error );
         $self->add_auth_header('spf=temperror');
+        $self->metric_count( 'spf_error' );
         $self->{'failmode'} = 1;
     }
 

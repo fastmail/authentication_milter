@@ -22,6 +22,17 @@ sub default_config {
     };
 }
 
+sub child_setup {
+    my ( $self ) = @_;
+    $self->metric_register( 'dkim_none', 'The number of emails with no DKIM' );
+    $self->metric_register( 'dkim_pass', 'The number of emails with at best a DKIM pass' );
+    $self->metric_register( 'dkim_fail', 'The number of emails with at beas a DKIM fail' );
+    $self->metric_register( 'dkim_invalid', 'The number of emails with at best a DKIM invalid' );
+    $self->metric_register( 'dkim_temperror', 'The number of emails with at best a DKIM temperror' );
+    $self->metric_register( 'dkim_error', 'The number of emails with a DKIM internal error' );
+    return;
+}
+
 sub envfrom_callback {
     my ( $self, $env_from )  = @_;
     $self->{'failmode'}      = 0;
@@ -65,6 +76,7 @@ sub eoh_callback {
     my $config = $self->handler_config();
 
     if ( $self->{'has_dkim'} == 0 ) {
+        $self->metric_count( 'dkim_none' );
         $self->dbgout( 'DKIMResult', 'No DKIM headers', LOG_INFO );
         if ( !( $config->{'hide_none'} ) ) {
             $self->add_auth_header(
@@ -88,6 +100,7 @@ sub eoh_callback {
         if ( my $error = $@ ) {
             $self->log_error( 'DKIM Setup Error ' . $error );
             $self->_check_error( $error );
+            $self->metric_count( 'dkim_error' );
             $self->{'failmode'} = 1;
             delete $self->{'headers'};
             return;
@@ -102,6 +115,7 @@ sub eoh_callback {
         if ( my $error = $@ ) {
             $self->log_error( 'DKIM Headers Error ' . $error );
             $self->_check_error( $error );
+            $self->metric_count( 'dkim_error' );
             $self->{'failmode'} = 1;
         }
 
@@ -142,6 +156,7 @@ sub body_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'DKIM Body Error ' . $error );
         $self->_check_error( $error );
+        $self->metric_count( 'dkim_error' );
         $self->{'failmode'} = 1;
     }
     return;
@@ -164,10 +179,27 @@ sub eom_callback {
         my $dkim_result        = $dkim->result;
         my $dkim_result_detail = $dkim->result_detail;
 
+        if ( $dkim_result eq 'pass' ) {
+            $self->metric_count( 'dkim_error' );
+        }
+        elsif ( $dkim_result eq 'fail' ) {
+            $self->metric_count( 'dkim_fail' );
+        }
+        elsif ( $dkim_result eq 'invalid' ) {
+            $self->metric_count( 'dkim_invalid' );
+        }
+        elsif ( $dkim_result eq 'temperror' ) {
+            $self->metric_count( 'dkim_temperror' );
+        }
+        else {
+            $self->metric_count( 'dkim_error' );
+        }
+
         $self->dbgout( 'DKIMResult', $dkim_result_detail, LOG_INFO );
 
         if ( !$dkim->signatures() ) {
             if ( !( $config->{'hide_none'} && $dkim_result eq 'none' ) ) {
+                $self->metric_count( 'dkim_none' );
                 $self->add_auth_header(
                     $self->format_header_entry( 'dkim', $dkim_result )
                       . ' (no signatures found)' );
@@ -315,6 +347,7 @@ sub eom_callback {
         # Also in DMARC module
         $self->log_error( 'DKIM EOM Error ' . $error );
         $self->_check_error( $error );
+        $self->metric_count( 'dkim_error' );
         $self->{'failmode'} = 1;
         return;
     }

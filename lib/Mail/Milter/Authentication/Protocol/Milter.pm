@@ -8,6 +8,16 @@ use Net::IP;
 
 use Mail::Milter::Authentication::Constants qw{ :all };
 
+sub child_setup {
+    my ( $self ) = @_;
+    my $handler = $self->{'handler'}->{'_Handler'};
+    $handler->metric_register( 'mail_accepted', 'Number of emails accepted' );
+    $handler->metric_register( 'mail_bounced', 'Number of emails rejected by upstream SMTP' );
+    $handler->metric_register( 'mail_rejected', 'Number of emails rejected by milter' );
+    $handler->metric_register( 'mail_errored', 'Number of emails rejected due to internal error' );
+    return;
+}
+
 sub protocol_process_request {
     my ( $self ) = @_;
 
@@ -133,6 +143,7 @@ sub milter_process_command {
         }
         elsif ( $returncode == SMFIS_ACCEPT ) {
             $returncode = SMFIR_ACCEPT;
+            $handler->metric_count( 'mail_accepted' );
         }
 
         my $config = $self->{'config'};
@@ -147,10 +158,12 @@ sub milter_process_command {
             if ( $reject_reason ) {
                 my ( $rcode, $xcode, $message ) = split( ' ', $reject_reason, 3 );
                 if ($rcode !~ /^[45]\d\d$/ || $xcode !~ /^[45]\.\d\.\d$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
+                    $handler->metric_count( 'mail_errored' );
                     $self->loginfo ( "Invalid reject message $reject_reason - setting to TempFail" );
                     $self->write_packet(SMFIR_TEMPFAIL );
                 }
                 else {
+                    $handler->metric_count( 'mail_rejected' );
                     $self->loginfo ( "SMTPReject: $reject_reason" );
                     $self->write_packet( SMFIR_REPLYCODE,
                         $reject_reason
