@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 1.1.1   FUTURE
+        - Added metrics collection (prometheus)
 
 1.1.0   2016-07-01
         - Allow email to be rejected by handlers
