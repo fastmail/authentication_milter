@@ -137,3 +137,62 @@ sub child_handler {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Mail::Milter::Authentication::Metric - Collect and produce metrics data
+
+=head1 DESCRIPTION
+
+Handle metrics collection and production for prometheus
+
+=head1 CONSTRUCTOR
+
+=over
+
+=item new()
+
+my $object = Mail::Milter::Authentication::Metric->new();
+
+Creates a new metric object.
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item count( $id, $server )
+
+Increment the metric for the given counter
+Called from the base handler, do not call directly.
+$server is the current handler object
+
+=item register( $id, $help, $server )
+
+Register a new metric type and help text
+Called from the base handler, do not call directly.
+$server is the current handler object
+
+=item master_handler( $request, $socket, $server )
+
+Handle a request for metrics from a child in the master process.
+
+=item child_handler( $server )
+
+Handle a request for metrics in a child process.
+
+=back
+
+=head1 AUTHORS
+
+Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2016
+
+This library is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.

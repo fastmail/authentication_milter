@@ -310,6 +310,10 @@ Please see Net::Server docs for more detail of the server code.
 
 =over
 
+=item child_setup
+
+Run setup required after forking a new child
+
 =item I<protocol_process_command( $command, $buffer )>
 
 Process the command from the milter protocol stream.

@@ -546,13 +546,6 @@ sub start {
     die 'Something went horribly wrong';
 }
 
-sub idle_loop_hook {
-    my ( $self ) = @_;
-#    use Data::Dumper;
-#    warn Dumper( $self->{'server'}->{'tally'} );
-    return;
-}
-
 ##### Protocol methods
 
 sub fatal {
@@ -833,9 +826,17 @@ Hook which runs after forking, sets up per process items.
 
 Hook which runs in parent before it forks children.
 
+=item I<child_is_talking_hook( $sock )>
+
+Hook which runs when a child wishes to communicate with the parent.
+
 =item I<process_request()>
 
-Hook which runs for each request, sets up per request items and processes the request.
+Hook which runs for each request, passes control to metrics handler or process_main as appropriate.
+
+=item I<process_main()>
+
+Method which runs for each request, sets up per request items and processes the request.
 
 =item I<control($command)>
 

@@ -1073,6 +1073,18 @@ and creates a new handler object.
 
 =over
 
+=item metric_register( $id, $help )
+
+Register a metric type
+
+=item metric_count( $id )
+
+Increment a metrics counter
+
+=item child_setup
+
+Run setup required after forking a new child
+
 =item top_setup_callback()
 
 Top level handler for handler setup.

@@ -968,6 +968,10 @@ Extract parameters from a SMTP command line.
 
 =over
 
+=item child_setup
+
+Run setup required after forking a new child
+
 =item I<protocol_process_request( $command, $buffer )>
 
 Process the command from the SMTP protocol stream.
