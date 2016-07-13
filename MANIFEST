@@ -20,6 +20,7 @@ lib/Mail/Milter/Authentication/Handler/TLS.pm
 lib/Mail/Milter/Authentication/Handler/TrustedIP.pm
 lib/Mail/Milter/Authentication/Handler/XGoogleDKIM.pm
 lib/Mail/Milter/Authentication.pm
+lib/Mail/Milter/Authentication/Metric.pm
 lib/Mail/Milter/Authentication/Protocol/Milter.pm
 lib/Mail/Milter/Authentication/Protocol/SMTP.pm
 LICENCE
