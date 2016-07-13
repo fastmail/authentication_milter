@@ -51,7 +51,7 @@ sub master_handler {
         if ( $request =~ /^METRIC.GET/ ) {
             print $socket "# TYPE authmilter_uptime_seconds_total count\n";
             print $socket "# HELP authmilter_uptime_seconds_total Number of seconds since server startup\n";
-            print $socket 'authmilter_uptime_seconds_totel' . $ident . ' ' . ( time - $self->{'start_time'} ) . "\n";
+            print $socket 'authmilter_uptime_seconds_total' . $ident . ' ' . ( time - $self->{'start_time'} ) . "\n";
             foreach my $type ( qw { waiting processing } ) {
                 print $socket '# TYPE authmilter_processes_' . $type . " gauge\n";
                 print $socket '# HELP authmilter_processes_' . $type . ' ' . $guage_help->{ $type } . "\n";
