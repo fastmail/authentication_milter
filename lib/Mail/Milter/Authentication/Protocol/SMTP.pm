@@ -17,10 +17,10 @@ use Mail::Milter::Authentication::Config;
 
 sub register_metrics {
     return {
-        'mail_accepted' => 'Number of emails accepted',
-        'mail_bounced'  => 'Number of emails rejected by upstream SMTP',
-        'mail_rejected' => 'Number of emails rejected by milter',
-        'mail_errored'  => 'Number of emails rejected due to internal error',
+        'mail_accepted_total' => 'Number of emails accepted',
+        'mail_bounced_total'  => 'Number of emails rejected by upstream SMTP',
+        'mail_rejected_total' => 'Number of emails rejected by milter',
+        'mail_errored_total'  => 'Number of emails rejected due to internal error',
     };
 }
 
@@ -594,7 +594,7 @@ sub smtp_command_data {
 
         if ( $self->smtp_forward_to_destination() ) {
 
-            $handler->metric_count( 'mail_accepted' );
+            $handler->metric_count( 'mail_accepted_total' );
             $handler->dbgout( 'Accept string', $smtp->{'string'}, LOG_INFO );
             $smtp->{'has_data'} = 1;
 
@@ -608,7 +608,7 @@ sub smtp_command_data {
             }
         }
         else {
-            $handler->metric_count( 'mail_bounced' );
+            $handler->metric_count( 'mail_bounced_total' );
             $self->logerror( "SMTP Mail Rejected" );
             my $error =  '451 4.0.0 That\'s not right';
             my $upstream_error = $smtp->{'string'};
@@ -633,7 +633,7 @@ sub smtp_command_data {
         }
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
-        $handler->metric_count( 'mail_rejected' );
+        $handler->metric_count( 'mail_rejected_total' );
         $handler->clear_reject_mail();
         if ( $smtp->{'using_lmtp'} ) {
             foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
@@ -647,7 +647,7 @@ sub smtp_command_data {
         }
     }
     else {
-        $handler->metric_count( 'mail_errored' );
+        $handler->metric_count( 'mail_errored_total' );
         if ( $smtp->{'using_lmtp'} ) {
             foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
                 print $socket "451 4.0.0 That's not right\r\n";

@@ -10,10 +10,10 @@ use Mail::Milter::Authentication::Constants qw{ :all };
 
 sub register_metrics {
     return {
-        'mail_accepted' => 'Number of emails accepted',
-        'mail_bounced'  => 'Number of emails rejected by upstream SMTP',
-        'mail_rejected' => 'Number of emails rejected by milter',
-        'mail_errored'  => 'Number of emails rejected due to internal error',
+        'mail_accepted_total' => 'Number of emails accepted',
+        'mail_bounced_total'  => 'Number of emails rejected by upstream SMTP',
+        'mail_rejected_total' => 'Number of emails rejected by milter',
+        'mail_errored_total'  => 'Number of emails rejected due to internal error',
     };
 }
 
@@ -80,7 +80,7 @@ sub milter_process_command {
     elsif ( $command eq SMFIC_BODYEOB ) {
         $returncode = $handler->top_eom_callback();
         if ( $returncode == SMFIS_CONTINUE ) {
-            $handler->metric_count( 'mail_accepted' );
+            $handler->metric_count( 'mail_accepted_total' );
         }
     }
     elsif ( $command eq SMFIC_HELO ) {
@@ -145,7 +145,7 @@ sub milter_process_command {
         }
         elsif ( $returncode == SMFIS_ACCEPT ) {
             $returncode = SMFIR_ACCEPT;
-            $handler->metric_count( 'mail_accepted' );
+            $handler->metric_count( 'mail_accepted_total' );
         }
 
         my $config = $self->{'config'};
@@ -160,12 +160,12 @@ sub milter_process_command {
             if ( $reject_reason ) {
                 my ( $rcode, $xcode, $message ) = split( ' ', $reject_reason, 3 );
                 if ($rcode !~ /^[45]\d\d$/ || $xcode !~ /^[45]\.\d\.\d$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
-                    $handler->metric_count( 'mail_errored' );
+                    $handler->metric_count( 'mail_errored_total' );
                     $self->loginfo ( "Invalid reject message $reject_reason - setting to TempFail" );
                     $self->write_packet(SMFIR_TEMPFAIL );
                 }
                 else {
-                    $handler->metric_count( 'mail_rejected' );
+                    $handler->metric_count( 'mail_rejected_total' );
                     $self->loginfo ( "SMTPReject: $reject_reason" );
                     $self->write_packet( SMFIR_REPLYCODE,
                         $reject_reason
