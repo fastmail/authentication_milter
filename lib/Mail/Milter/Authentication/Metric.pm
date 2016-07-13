@@ -8,8 +8,9 @@ use English qw{ -no_match_vars };
 sub new {
     my ( $class ) = @_;
     my $self = {};
-    $self->{'counter'} = {};
-    $self->{'help'}    = {};
+    $self->{'counter'}    = {};
+    $self->{'help'}       = {};
+    $self->{'start_time'} = time;
     bless $self, $class;
     return $self;
 }
@@ -48,6 +49,9 @@ sub master_handler {
         };
 
         if ( $request =~ /^METRIC.GET/ ) {
+            print $socket "# TYPE authmilter_uptime_seconds count\n";
+            print $socket "# HELP authmilter_uptime_seconds Number of seconds since server startup\n";
+            print $socket 'authmilter_uptime_seconds' . $ident . ' ' . ( time - $self->{'start_time'} ) . "\n";
             foreach my $type ( qw { waiting processing } ) {
                 print $socket '# TYPE authmilter_processes_' . $type . " gauge\n";
                 print $socket '# HELP authmilter_processes_' . $type . ' ' . $guage_help->{ $type } . "\n";
