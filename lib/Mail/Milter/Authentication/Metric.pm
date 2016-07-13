@@ -49,7 +49,7 @@ sub master_handler {
         };
 
         if ( $request =~ /^METRIC.GET/ ) {
-            print $socket "# TYPE authmilter_uptime_seconds_total count\n";
+            print $socket "# TYPE authmilter_uptime_seconds_total counter\n";
             print $socket "# HELP authmilter_uptime_seconds_total Number of seconds since server startup\n";
             print $socket 'authmilter_uptime_seconds_total' . $ident . ' ' . ( time - $self->{'start_time'} ) . "\n";
             foreach my $type ( qw { waiting processing } ) {
@@ -104,7 +104,7 @@ sub child_handler {
         my $request_method  = uc $1;
         my $request_uri     = $2;
         my $server_protocol = $3;
-        if ( $request_method   ne 'GET' || $request_uri      ne '/metrics/' ) {
+        if ( $request_method   ne 'GET' || $request_uri      ne '/metrics' ) {
             print $socket "HTTP/1.0 500 Server Error\n";
             print $socket "\n";
             print $socket "Server Error\n";
