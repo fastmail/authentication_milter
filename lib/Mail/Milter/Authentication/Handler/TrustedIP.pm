@@ -36,7 +36,7 @@ sub is_trusted_ip_address {
 
 sub register_metrics {
     return {
-        'trustedip_connect' => 'The number of connections from a trusted IP',
+        'trustedip_connect_total' => 'The number of connections from a trusted IP',
     };
 }
 
@@ -47,7 +47,7 @@ sub connect_callback {
         $self->dbgout( 'TrustedIP', 'pass', LOG_DEBUG );
         $self->add_c_auth_header('x-trusted-ip=pass');
         $self->{'is_trusted_ip_address'} = 1;
-        $self->metric_count( 'trustedip_connect' );
+        $self->metric_count( 'trustedip_connect_total' );
     }
     return;
 }

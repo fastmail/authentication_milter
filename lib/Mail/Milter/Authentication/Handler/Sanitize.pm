@@ -15,7 +15,7 @@ sub default_config {
 
 sub register_metrics {
     return {
-        'sanitize_removed' => 'The number Authentication Results headers removed',
+        'sanitize_removed_total' => 'The number Authentication Results headers removed',
     };
 }
 
@@ -48,7 +48,7 @@ sub is_hostname_mine {
 
 sub remove_auth_header {
     my ( $self, $value ) = @_;
-    $self->metric_count( 'sanitize_remove' );
+    $self->metric_count( 'sanitize_remove_total' );
     if ( !exists( $self->{'remove_auth_headers'} ) ) {
         $self->{'remove_auth_headers'} = [];
     }

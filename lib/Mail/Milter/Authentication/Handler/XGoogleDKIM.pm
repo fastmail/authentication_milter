@@ -20,12 +20,12 @@ sub default_config {
 
 sub register_metrics {
     return {
-        'xgoogledkim_none'      => 'The number of emails with no DKIM',
-        'xgoogledkim_pass'      => 'The number of emails with at best a DKIM pass',
-        'xgoogledkim_fail'      => 'The number of emails with at beas a DKIM fail',
-        'xgoogledkim_invalid'   => 'The number of emails with at best a DKIM invalid',
-        'xgoogledkim_temperror' => 'The number of emails with at best a DKIM temperror',
-        'xgoogledkim_error'     => 'The number of emails with a DKIM internal error',
+        'xgoogledkim_none_total'      => 'The number of emails with no DKIM',
+        'xgoogledkim_pass_total'      => 'The number of emails with at best a DKIM pass',
+        'xgoogledkim_fail_total'      => 'The number of emails with at beas a DKIM fail',
+        'xgoogledkim_invalid_total'   => 'The number of emails with at best a DKIM invalid',
+        'xgoogledkim_temperror_total' => 'The number of emails with at best a DKIM temperror',
+        'xgoogledkim_error_total'     => 'The number of emails with a DKIM internal error',
     };
 }
 
@@ -72,7 +72,7 @@ sub eoh_callback {
     my $config = $self->handler_config();
 
     if ( $self->{'has_dkim'} == 0 ) {
-        $self->metric_count( 'xgoogledkim_none' );
+        $self->metric_count( 'xgoogledkim_none_total' );
         $self->dbgout( 'XGoogleDKIMResult', 'No X-Google-DKIM headers', LOG_INFO );
         if ( !( $config->{'hide_none'} ) ) {
             $self->add_auth_header(
@@ -96,7 +96,7 @@ sub eoh_callback {
         if ( my $error = $@ ) {
             $self->log_error( 'XGoogleDKIM Setup Error ' . $error );
             $self->_check_error( $error );
-            $self->metric_count( 'xgoogledkim_error' );
+            $self->metric_count( 'xgoogledkim_error_total' );
             $self->{'failmode'} = 1;
             delete $self->{'headers'};
             return;
@@ -111,7 +111,7 @@ sub eoh_callback {
         if ( my $error = $@ ) {
             $self->log_error( 'XGoogleDKIM Headers Error ' . $error );
             $self->_check_error( $error );
-            $self->metric_count( 'xgoogledkim_error' );
+            $self->metric_count( 'xgoogledkim_error_total' );
             $self->{'failmode'} = 1;
         }
 
@@ -152,7 +152,7 @@ sub body_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'XGoogleDKIM Body Error ' . $error );
         $self->_check_error( $error );
-        $self->metric_count( 'xgoogledkim_error' );
+        $self->metric_count( 'xgoogledkim_error_total' );
         $self->{'failmode'} = 1;
     }
     return;
@@ -176,26 +176,26 @@ sub eom_callback {
         my $dkim_result_detail = $dkim->result_detail;
 
         if ( $dkim_result eq 'pass' ) {
-            $self->metric_count( 'xgoogledkim_pass' );
+            $self->metric_count( 'xgoogledkim_pass_total' );
         }
         elsif ( $dkim_result eq 'fail' ) {
-            $self->metric_count( 'xgoogledkim_fail' );
+            $self->metric_count( 'xgoogledkim_fail_total' );
         }
         elsif ( $dkim_result eq 'invalid' ) {
-            $self->metric_count( 'xgoogledkim_invalid' );
+            $self->metric_count( 'xgoogledkim_invalid_total' );
         }
         elsif ( $dkim_result eq 'temperror' ) {
-            $self->metric_count( 'xgoogledkim_temperror' );
+            $self->metric_count( 'xgoogledkim_temperror_total' );
         }
         else {
-            $self->metric_count( 'xgoogledkim_error' );
+            $self->metric_count( 'xgoogledkim_error_total' );
         }
 
         $self->dbgout( 'XGoogleDKIMResult', $dkim_result_detail, LOG_INFO );
 
         if ( !$dkim->signatures() ) {
             if ( !( $config->{'hide_none'} && $dkim_result eq 'none' ) ) {
-                $self->metric_count( 'xgoogledkim_none' );
+                $self->metric_count( 'xgoogledkim_none_total' );
                 $self->add_auth_header(
                     $self->format_header_entry( 'x-google-dkim', $dkim_result )
                       . ' (no signatures found)' );
@@ -266,7 +266,7 @@ sub eom_callback {
         # Also in DMARC module
         $self->log_error( 'XGoogleDKIM EOM Error ' . $error );
         $self->_check_error( $error );
-        $self->metric_count( 'xgoogledkim_error' );
+        $self->metric_count( 'xgoogledkim_error_total' );
         $self->{'failmode'} = 1;
         return;
     }

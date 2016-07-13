@@ -97,18 +97,18 @@ sub pre_fork_setup {
 
 sub register_metrics {
     return {
-        'dmarc_none'                           => 'The number of emails with no DMARC',
-        'dmarc_pass'                           => 'The number of emails with a DMARC pass',
-        'dmarc_fail'                           => 'The number of emails with a DMARC fail',
-        'dmarc_fail_policy_none'               => 'The number of emails with a DMARC fail and policy of none',
-        'dmarc_fail_policy_quarantine'         => 'The number of emails with a DMARC fail and policy if quarantine',
-        'dmarc_fail_policy_reject'             => 'The number of emails with a DMARC fail and policy of reject',
-        'dmarc_fail_policy_reject_list_id'     => 'The number of emails with a DMARC fail and policy of reject and a list header',
-        'dmarc_fail_policy_reject_whitelisted' => 'The number of emails with a DMARC fail and policy of reject which were whitelisted',
-        'dmarc_invalid'                        => 'The number of emails with a DMARC invalid',
-        'dmarc_temperror'                      => 'The number of emails with a DMARC temperror',
-        'dmarc_permerror'                      => 'The number of emails with a DMARC permerror',
-        'dmarc_error'                          => 'The number of emails with a DMARC internal error',
+        'dmarc_none_total'                           => 'The number of emails with no DMARC',
+        'dmarc_pass_total'                           => 'The number of emails with a DMARC pass',
+        'dmarc_fail_total'                           => 'The number of emails with a DMARC fail',
+        'dmarc_fail_policy_none_total'               => 'The number of emails with a DMARC fail and policy of none',
+        'dmarc_fail_policy_quarantine_total'         => 'The number of emails with a DMARC fail and policy if quarantine',
+        'dmarc_fail_policy_reject_total'             => 'The number of emails with a DMARC fail and policy of reject',
+        'dmarc_fail_policy_reject_list_id_total'     => 'The number of emails with a DMARC fail and policy of reject and a list header',
+        'dmarc_fail_policy_reject_whitelisted_total' => 'The number of emails with a DMARC fail and policy of reject which were whitelisted',
+        'dmarc_invalid_total'                        => 'The number of emails with a DMARC invalid',
+        'dmarc_temperror_total'                      => 'The number of emails with a DMARC temperror',
+        'dmarc_permerror_total'                      => 'The number of emails with a DMARC permerror',
+        'dmarc_error_total'                          => 'The number of emails with a DMARC internal error',
     };
 }
 
@@ -136,7 +136,7 @@ sub get_dmarc_object {
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC IP Error ' . $error );
         $self->add_auth_header('dmarc=permerror');
-        $self->metric_count( 'dmarc_permerror' );
+        $self->metric_count( 'dmarc_permerror_total' );
         $self->{'failmode'} = 1;
     }
 
@@ -171,13 +171,13 @@ sub envfrom_callback {
 
     if ( ! $self->is_handler_loaded( 'SPF' ) ) {
         $self->log_error( 'DMARC Config Error: SPF is missing ');
-        $self->metric_count( 'dmarc_error' );
+        $self->metric_count( 'dmarc_error_total' );
         $self->{'failmode'} = 1;
         return;
     }
     if ( ! $self->is_handler_loaded( 'DKIM' ) ) {
         $self->log_error( 'DMARC Config Error: DKIM is missing ');
-        $self->metric_count( 'dmarc_error' );
+        $self->metric_count( 'dmarc_error_total' );
         $self->{'failmode'} = 1;
         return;
     }
@@ -193,12 +193,12 @@ sub envfrom_callback {
         if ( my $error = $@ ) {
             if ( $error =~ /invalid envelope_from at / ) {
                 $self->log_error( 'DMARC Invalid envelope from <' . $domain_from . '>' );
-                $self->metric_count( 'dmarc_permerror' );
+                $self->metric_count( 'dmarc_permerror_total' );
                 $self->add_auth_header( 'dmarc=permerror' );
             }
             else {
                 $self->log_error( 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
-                $self->metric_count( 'dmarc_temperror' );
+                $self->metric_count( 'dmarc_temperror_total' );
                 $self->add_auth_header('dmarc=temperror');
             }
             $self->{'failmode'} = 1;
@@ -209,7 +209,7 @@ sub envfrom_callback {
     my $spf_handler = $self->get_handler('SPF');
     if ( $spf_handler->{'failmode'} ) {
         $self->log_error('SPF is in failmode, Skipping DMARC');
-        $self->metric_count( 'dmarc_temperror' );
+        $self->metric_count( 'dmarc_temperror_total' );
         $self->add_auth_header('dmarc=temperror');
         $self->{'failmode'} = 1;
         return;
@@ -226,7 +226,7 @@ sub envfrom_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC SPF Error: ' . $error );
         $self->add_auth_header('dmarc=temperror');
-        $self->metric_count( 'dmarc_temperror' );
+        $self->metric_count( 'dmarc_temperror_total' );
         $self->{'failmode'} = 1;
         return;
     }
@@ -263,7 +263,7 @@ sub envrcpt_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Rcpt To Error ' . $error );
         $self->add_auth_header('dmarc=temperror');
-        $self->metric_count( 'dmarc_temperror' );
+        $self->metric_count( 'dmarc_temperror_total' );
         $self->{'failmode'} = 1;
         return;
     }
@@ -292,7 +292,7 @@ sub header_callback {
             # suggested in the DMARC spec part 5.6.1
             # Currently this does not give reporting feedback to the author domain, this should be changed.
             $self->add_auth_header( 'dmarc=fail (multiple RFC5322 from fields in message)' );
-            $self->metric_count( 'dmarc_fail' );
+            $self->metric_count( 'dmarc_fail_total' );
             $self->{'failmode'} = 1;
             return;
         }
@@ -304,7 +304,7 @@ sub header_callback {
         if ( my $error = $@ ) {
             $self->log_error( 'DMARC Header From Error ' . $error );
             $self->add_auth_header('dmarc=temperror');
-            $self->metric_count( 'dmarc_temperror' );
+            $self->metric_count( 'dmarc_temperror_total' );
             $self->{'failmode'} = 1;
             return;
         }
@@ -332,7 +332,7 @@ sub eom_callback {
         if ( $dkim_handler->{'failmode'} ) {
             $self->log_error('DKIM is in failmode, Skipping DMARC');
             $self->add_auth_header('dmarc=temperror');
-            $self->metric_count( 'dmarc_temperror' );
+            $self->metric_count( 'dmarc_temperror_total' );
             $self->{'failmode'} = 1;
             return;
         }
@@ -358,37 +358,37 @@ sub eom_callback {
         }
 
         if ( $dmarc_code eq 'pass' ) {
-            $self->metric_count( 'dmarc_pass' );
+            $self->metric_count( 'dmarc_pass_total' );
         }
         elsif ( $dmarc_code eq 'fail' ) {
-            $self->metric_count( 'dmarc_fail' );
+            $self->metric_count( 'dmarc_fail_total' );
             if ( $dmarc_policy eq 'none' ) {
-                $self->metric_count( 'dmarc_fail_policy_none' );
+                $self->metric_count( 'dmarc_fail_policy_none_total' );
             }
             elsif ( $dmarc_policy eq 'reject' ) {
-                $self->metric_count( 'dmarc_fail_policy_reject' );
+                $self->metric_count( 'dmarc_fail_policy_reject_total' );
                 if ( $self->{'is_list'} ) {
-                    $self->metric_count( 'dmarc_fail_policy_reject_list_id' );
+                    $self->metric_count( 'dmarc_fail_policy_reject_list_id_total' );
                 }
                 if ( $self->is_whitelisted() ) {
-                    $self->metric_count( 'dmarc_fail_policy_reject_whitelisted' );
+                    $self->metric_count( 'dmarc_fail_policy_reject_whitelisted_total' );
                 }
             }
             elsif ( $dmarc_policy eq 'quarantine' ) {
-                $self->metric_count( 'dmarc_fail_policy_quarantine' );
+                $self->metric_count( 'dmarc_fail_policy_quarantine_total' );
             }
         }
         elsif ( $dmarc_code eq 'none' ) {
-            $self->metric_count( 'dmarc_none' );
+            $self->metric_count( 'dmarc_none_total' );
         }
         elsif ( $dmarc_code eq 'temperror' ) {
-            $self->metric_count( 'dmarc_temperror' );
+            $self->metric_count( 'dmarc_temperror_total' );
         }
         elsif ( $dmarc_code eq 'permerror' ) {
-            $self->metric_count( 'dmarc_permerror' );
+            $self->metric_count( 'dmarc_permerror_total' );
         }
         else {
-            $self->metric_count( 'dmarc_error' );
+            $self->metric_count( 'dmarc_error_total' );
         }
 
         if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
