@@ -55,7 +55,7 @@ sub master_handler {
             foreach my $type ( qw { waiting processing } ) {
                 print $socket '# TYPE authmilter_processes_' . $type . " gauge\n";
                 print $socket '# HELP authmilter_processes_' . $type . ' ' . $guage_help->{ $type } . "\n";
-                print $socket 'authmilter_' . $type . $ident . ' ' . $server->{'server'}->{'tally'}->{ $type } . "\n";
+                print $socket 'authmilter_processes_' . $type . $ident . ' ' . $server->{'server'}->{'tally'}->{ $type } . "\n";
             }
             foreach my $key ( sort keys %{ $self->{'counter'} } ) {
                 print $socket '# TYPE authmilter_' . $key . " counter\n";
