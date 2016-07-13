@@ -22,12 +22,15 @@ sub count {
     print $psocket "METRIC.COUNT $id\n";
 }
 
-sub register {
-    my ( $self, $id, $help, $server ) = @_;
-    return if ( ! defined( $server->{'config'}->{'metric_port'} ) );
-    my $psocket = $server->{'server'}->{'parent_sock'};
-    return if ! $psocket;
-    print $psocket "METRIC.REGISTER $id $help\n";
+sub register_metrics {
+    my ( $self, $hash ) = @_;
+    foreach my $metric ( keys %$hash ) {
+        my $help = $hash->{ $metric };
+        if ( ! exists( $self->{'counter'}->{ $metric } ) ) {
+            $self->{'counter'}->{ $metric } = 0;
+        }
+        $self->{'help'}->{ $metric } = $help;
+    }
 }
 
 sub master_handler {
@@ -59,14 +62,6 @@ sub master_handler {
                 print $socket 'authmilter_' . $key . $ident . ' ' . $self->{'counter'}->{ $key } . "\n";
             }
             print $socket "\0\n";
-        }
-        elsif ( $request =~ /^METRIC.REGISTER (.*)$/ ) {
-            my $data = $1;
-            my ( $count_id, $help ) = split ( ' ', $data, 2 );
-            if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
-                $self->{'counter'}->{ $count_id } = 0;
-            }
-            $self->{'help'}->{ $count_id } = $help;
         }
         elsif ( $request =~ /^METRIC.COUNT (.*)$/ ) {
             my $count_id = $1;
@@ -170,11 +165,10 @@ Increment the metric for the given counter
 Called from the base handler, do not call directly.
 $server is the current handler object
 
-=item register( $id, $help, $server )
+=item register_metrics( $hash )
 
-Register a new metric type and help text
-Called from the base handler, do not call directly.
-$server is the current handler object
+Register a new set of metric types and help texts.
+Called from the master process in the setup phase.
 
 =item master_handler( $request, $socket, $server )
 

@@ -63,7 +63,22 @@ sub pre_loop_hook {
         if ( $object->can( 'pre_loop_setup' ) ) {
             $object->pre_loop_setup();
         }
+        if ( $object->can( 'register_metrics' ) ) {
+            $self->{'metric'}->register_metrics( $object->register_metrics() );
+        }
 
+    }
+
+    $self->{'metric'}->register_metrics( Mail::Milter::Authentication::Handler->register_metrics() );
+
+    if ( $config->{'protocol'} eq 'milter' ) {
+        $self->{'metric'}->register_metrics( Mail::Milter::Authentication::Protocol::Milter->register_metrics() );
+    }
+    elsif ( $config->{'protocol'} eq 'smtp' ) {
+        $self->{'metric'}->register_metrics( Mail::Milter::Authentication::Protocol::SMTP->register_metrics() );
+    }
+    else {
+        die "Unknown protocol " . $config->{'protocol'} . "\n";
     }
 
     if ( $config->{'error_log'} ) {
@@ -155,7 +170,6 @@ sub child_init_hook {
     $self->{'object_maker'}   = $object_maker;
 
     $self->setup_handlers();
-    $self->child_setup();
 
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(0)';
     return;
@@ -573,7 +587,6 @@ sub setup_handlers {
     $self->logdebug( 'setup objects' );
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'}->{'_Handler'} = $handler;
-    $handler->child_setup();
 
     my $config = $self->{'config'};
     foreach my $name ( @{$config->{'load_handlers'}} ) {
@@ -614,10 +627,6 @@ sub setup_handler {
         if ( $object->can( $callback . '_callback' ) ) {
             $self->register_callback( $name, $callback );
         }
-        if ( $object->can( 'child_setup' ) ) {
-            $object->child_setup();
-        }
-
     }
 
     return;

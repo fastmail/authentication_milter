@@ -22,15 +22,15 @@ sub default_config {
     };
 }
 
-sub child_setup {
-    my ( $self ) = @_;
-    $self->metric_register( 'dkim_none', 'The number of emails with no DKIM' );
-    $self->metric_register( 'dkim_pass', 'The number of emails with at best a DKIM pass' );
-    $self->metric_register( 'dkim_fail', 'The number of emails with at beas a DKIM fail' );
-    $self->metric_register( 'dkim_invalid', 'The number of emails with at best a DKIM invalid' );
-    $self->metric_register( 'dkim_temperror', 'The number of emails with at best a DKIM temperror' );
-    $self->metric_register( 'dkim_error', 'The number of emails with a DKIM internal error' );
-    return;
+sub register_metrics {
+    return {
+        'dkim_none'      => 'The number of emails with no DKIM',
+        'dkim_pass'      => 'The number of emails with at best a DKIM pass',
+        'dkim_fail'      => 'The number of emails with at beas a DKIM fail',
+        'dkim_invalid'   => 'The number of emails with at best a DKIM invalid',
+        'dkim_temperror' => 'The number of emails with at best a DKIM temperror',
+        'dkim_error'     => 'The number of emails with a DKIM internal error',
+    };
 }
 
 sub envfrom_callback {

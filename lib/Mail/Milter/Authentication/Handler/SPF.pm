@@ -40,17 +40,17 @@ sub setup_callback {
     return;
 }
 
-sub child_setup {
-    my ( $self ) = @_;
-    $self->metric_register( 'spf_none', 'The number of emails with no SPF' );
-    $self->metric_register( 'spf_pass', 'The number of emails with a SPF pass' );
-    $self->metric_register( 'spf_fail', 'The number of emails with a SPF fail' );
-    $self->metric_register( 'spf_permerror', 'The number of emails with a SPF permerror' );
-    $self->metric_register( 'spf_temperror', 'The number of emails with a SPF temperror' );
-    $self->metric_register( 'spf_softfail', 'The number of emails with a SPF softfail' );
-    $self->metric_register( 'spf_neutral', 'The number of emails with a SPF neutral' );
-    $self->metric_register( 'spf_error', 'The number of emails with a SPF internal error' );
-    return;
+sub register_metrics {
+    return {
+        'spf_none'      => 'The number of emails with no SPF',
+        'spf_pass'      => 'The number of emails with a SPF pass',
+        'spf_fail'      => 'The number of emails with a SPF fail',
+        'spf_permerror' => 'The number of emails with a SPF permerror',
+        'spf_temperror' => 'The number of emails with a SPF temperror',
+        'spf_softfail'  => 'The number of emails with a SPF softfail',
+        'spf_neutral'   => 'The number of emails with a SPF neutral',
+        'spf_error'     => 'The number of emails with a SPF internal error',
+    };
 }
 
 sub wrap_header {

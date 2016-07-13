@@ -15,14 +15,13 @@ use Sys::Syslog qw{:standard :macros};
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Config;
 
-sub child_setup {
-    my ( $self ) = @_;
-    my $handler = $self->{'handler'}->{'_Handler'};
-    $handler->metric_register( 'mail_accepted', 'Number of emails accepted' );
-    $handler->metric_register( 'mail_bounced', 'Number of emails rejected by upstream SMTP' );
-    $handler->metric_register( 'mail_rejected', 'Number of emails rejected by milter' );
-    $handler->metric_register( 'mail_errored', 'Number of emails rejected due to internal error' );
-    return;
+sub register_metrics {
+    return {
+        'mail_accepted' => 'Number of emails accepted',
+        'mail_bounced'  => 'Number of emails rejected by upstream SMTP',
+        'mail_rejected' => 'Number of emails rejected by milter',
+        'mail_errored'  => 'Number of emails rejected due to internal error',
+    };
 }
 
 sub get_smtp_config {
@@ -968,9 +967,9 @@ Extract parameters from a SMTP command line.
 
 =over
 
-=item child_setup
+=item register_metrics
 
-Run setup required after forking a new child
+Return details of the metrics this module exports.
 
 =item I<protocol_process_request( $command, $buffer )>
 

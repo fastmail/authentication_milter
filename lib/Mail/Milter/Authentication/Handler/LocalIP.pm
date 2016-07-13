@@ -44,6 +44,12 @@ sub is_local_ip_address {
     return $type_map->{ $ip_type } || 0;
 }
 
+sub register_metrics {
+    return {
+        'localip_connect' => 'The number of connections from a local IP',
+    };
+}
+
 sub connect_callback {
     my ( $self, $hostname, $ip ) = @_;
     $self->{'is_local_ip_address'} = 0;
@@ -51,6 +57,7 @@ sub connect_callback {
         $self->dbgout( 'LocalIP', 'pass', LOG_DEBUG );
         $self->add_c_auth_header('x-local-ip=pass');
         $self->{'is_local_ip_address'} = 1;
+        $self->metric_count( 'localip_connect' );
     }
     return;
 }

@@ -95,21 +95,21 @@ sub pre_fork_setup {
     return;
 }
 
-sub child_setup {
-    my ( $self ) = @_;
-    $self->metric_register( 'dmarc_none', 'The number of emails with no DMARC' );
-    $self->metric_register( 'dmarc_pass', 'The number of emails with a DMARC pass' );
-    $self->metric_register( 'dmarc_fail', 'The number of emails with a DMARC fail' );
-    $self->metric_register( 'dmarc_fail_policy_none', 'The number of emails with a DMARC fail and policy of none' );
-    $self->metric_register( 'dmarc_fail_policy_quarantine', 'The number of emails with a DMARC fail and policy if quarantin ' );
-    $self->metric_register( 'dmarc_fail_policy_reject', 'The number of emails with a DMARC fail and policy of reject' );
-    $self->metric_register( 'dmarc_fail_policy_reject_list_id', 'The number of emails with a DMARC fail and policy of reject and a list header' );
-    $self->metric_register( 'dmarc_fail_policy_reject_whitelisted', 'The number of emails with a DMARC fail and policy of reject which were whitelisted' );
-    $self->metric_register( 'dmarc_invalid', 'The number of emails with a DMARC invalid' );
-    $self->metric_register( 'dmarc_temperror', 'The number of emails with a DMARC temperror' );
-    $self->metric_register( 'dmarc_permerror', 'The number of emails with a DMARC permerror' );
-    $self->metric_register( 'dmarc_error', 'The number of emails with a DMARC internal error' );
-    return;
+sub register_metrics {
+    return {
+        'dmarc_none'                           => 'The number of emails with no DMARC',
+        'dmarc_pass'                           => 'The number of emails with a DMARC pass',
+        'dmarc_fail'                           => 'The number of emails with a DMARC fail',
+        'dmarc_fail_policy_none'               => 'The number of emails with a DMARC fail and policy of none',
+        'dmarc_fail_policy_quarantine'         => 'The number of emails with a DMARC fail and policy if quarantine',
+        'dmarc_fail_policy_reject'             => 'The number of emails with a DMARC fail and policy of reject',
+        'dmarc_fail_policy_reject_list_id'     => 'The number of emails with a DMARC fail and policy of reject and a list header',
+        'dmarc_fail_policy_reject_whitelisted' => 'The number of emails with a DMARC fail and policy of reject which were whitelisted',
+        'dmarc_invalid'                        => 'The number of emails with a DMARC invalid',
+        'dmarc_temperror'                      => 'The number of emails with a DMARC temperror',
+        'dmarc_permerror'                      => 'The number of emails with a DMARC permerror',
+        'dmarc_error'                          => 'The number of emails with a DMARC internal error',
+    };
 }
 
 sub get_dmarc_object {

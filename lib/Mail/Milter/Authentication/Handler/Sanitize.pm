@@ -9,7 +9,13 @@ use Sys::Syslog qw{:standard :macros};
 sub default_config {
     return {
         'hosts_to_remove' => [ 'example.com', 'example.net' ],
-        'remove_headeres' => 'yes',
+        'remove_headers'  => 'yes',
+    };
+}
+
+sub register_metrics {
+    return {
+        'sanitize_removed' => 'The number Authentication Results headers removed',
     };
 }
 
@@ -42,6 +48,7 @@ sub is_hostname_mine {
 
 sub remove_auth_header {
     my ( $self, $value ) = @_;
+    $self->metric_count( 'sanitize_remove' );
     if ( !exists( $self->{'remove_auth_headers'} ) ) {
         $self->{'remove_auth_headers'} = [];
     }

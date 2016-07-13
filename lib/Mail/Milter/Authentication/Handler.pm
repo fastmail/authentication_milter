@@ -40,20 +40,20 @@ sub metric_count {
 
 # Top Level Callbacks
 
-sub child_setup {
-    my ( $self ) = @_;
-    $self->metric_register( 'connect', 'The number of connections made to authentication milter' );
-    $self->metric_register( 'callback_error_connect' , 'The number of errors in the connect stage' );
-    $self->metric_register( 'callback_error_helo' , 'The number of errors in the helo stage' );
-    $self->metric_register( 'callback_error_envfrom' , 'The number of errors in the envfrom stage' );
-    $self->metric_register( 'callback_error_rcptto' , 'The number of errors in the rcptto stage' );
-    $self->metric_register( 'callback_error_header' , 'The number of errors in the header stage' );
-    $self->metric_register( 'callback_error_eoh' , 'The number of errors in the eoh stage' );
-    $self->metric_register( 'callback_error_body' , 'The number of errors in the body stage' );
-    $self->metric_register( 'callback_error_eom' , 'The number of errors in the eom stage' );
-    $self->metric_register( 'callback_error_abort' , 'The number of errors in the abort stage' );
-    $self->metric_register( 'callback_error_close' , 'The number of errors in the close stage' );
-    return;
+sub register_metrics {
+    return {
+        'connect'                => 'The number of connections made to authentication milter',
+        'callback_error_connect' => 'The number of errors in the connect stage',
+        'callback_error_helo'    => 'The number of errors in the helo stage',
+        'callback_error_envfrom' => 'The number of errors in the envfrom stage',
+        'callback_error_rcptto'  => 'The number of errors in the rcptto stage',
+        'callback_error_header'  => 'The number of errors in the header stage',
+        'callback_error_eoh'     => 'The number of errors in the eoh stage',
+        'callback_error_body'    => 'The number of errors in the body stage',
+        'callback_error_eom'     => 'The number of errors in the eom stage',
+        'callback_error_abort'   => 'The number of errors in the abort stage',
+        'callback_error_close'   => 'The number of errors in the close stage',
+    };
 }
 
 sub top_setup_callback {
@@ -1081,9 +1081,9 @@ Register a metric type
 
 Increment a metrics counter
 
-=item child_setup
+=item register_metrics
 
-Run setup required after forking a new child
+Return details of the metrics this module exports.
 
 =item top_setup_callback()
 
