@@ -104,7 +104,7 @@ sub child_handler {
         my $request_method  = uc $1;
         my $request_uri     = $2;
         my $server_protocol = $3;
-        if ( $request_method   ne 'GET' || $request_uri      ne '/metrics/' ) {
+        if ( $request_method   ne 'GET' || $request_uri      ne '/metrics' ) {
             print $socket "HTTP/1.0 500 Server Error\n";
             print $socket "\n";
             print $socket "Server Error\n";
