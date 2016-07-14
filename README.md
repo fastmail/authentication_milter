@@ -44,6 +44,11 @@ filter these connections through your usual MTA first.
 
 Limitations: SMTP protocol does not yet support detection of Authenticated or Encrypted connections.
 
+Metrics
+-------
+
+Authentication Milter optionally collects and exposes metrics in a promethius compatible format.
+
 Design Decisions
 ----------------
 
@@ -69,6 +74,7 @@ This milter can optionally detect messages with a List-Id header, and include a 
 Authentication-Results header.  This header can then be used to apply a more lenient filter.
 
 DMARC failures with p=reject can optionally be rejected, and emails with a detected list id can be exempted from this rejection.
+A whitelist can be setup to excempt rejections based on IP address or valid DKIM domain.
 
 Trust Model
 -----------
