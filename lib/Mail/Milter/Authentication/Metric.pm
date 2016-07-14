@@ -15,6 +15,13 @@ sub new {
     return $self;
 }
 
+sub clean_label {
+    my ( $self, $text ) = @_;
+    $text = lc $text;
+    $text =~ s/[^a-z0-9]/_/g;
+    return $text;
+}
+
 sub count {
     my ( $self, $id, $labels, $server ) = @_;
     return if ( ! defined( $server->{'config'}->{'metric_port'} ) );
@@ -24,11 +31,11 @@ sub count {
     if ( $labels ) {
         my @labels_list;
         foreach my $l ( sort keys %$labels ) {
-            push @labels_list, $l .'="' . $labels->{$l} . '"';
+            push @labels_list, $self->clean_label( $l ) .'="' . $self->clean_label( $labels->{$l} ) . '"';
         }
         $labels_txt = ' ' . join( ',', @labels_list );
     }
-    print $psocket 'METRIC.COUNT ' . $id . $labels_txt . "\n";
+    print $psocket 'METRIC.COUNT ' . $self->clean_label( $id ) . $labels_txt . "\n";
 }
 
 sub register_metrics {
@@ -38,7 +45,7 @@ sub register_metrics {
         if ( ! exists( $self->{'counter'}->{ $metric } ) ) {
             $self->{'counter'}->{ $metric } = { '' => 0 };
         }
-        $self->{'help'}->{ $metric } = $help;
+        $self->{'help'}->{ $self->clean_label( $metric ) } = $help;
     }
 }
 
@@ -49,7 +56,7 @@ sub master_handler {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         alarm( 2 );
 
-        my $ident = '{ident="' . lc ( $Mail::Milter::Authentication::Config::IDENT ) . '"}';
+        my $ident = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"}';
 
         my $guage_help = {
             'waiting'    => 'The number of authentication milter processes in a waiting state',
@@ -72,7 +79,7 @@ sub master_handler {
                     print $socket '# HELP authmilter_' . $key . ' ' . $self->{'help'}->{ $key } . "\n";
                 }
                 foreach my $labels ( sort keys %{ $self->{'counter'}->{ $key } } ) {
-                    my $labels_txt = '{ident="' . lc ( $Mail::Milter::Authentication::Config::IDENT ) . '"';
+                    my $labels_txt = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"';
                     if ( $labels ne q{} ) {
                         $labels_txt .= ',' . $labels;
                     } 
