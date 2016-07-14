@@ -33,8 +33,8 @@ sub metric_register {
 }
 
 sub metric_count {
-    my ( $self, $id ) = @_;
-    $self->{'thischild'}->{'metric'}->count( $id, $self->{'thischild'} );
+    my ( $self, $id, $labels ) = @_;
+    $self->{'thischild'}->{'metric'}->count( $id, $labels, $self->{'thischild'} );
     return;
 }
 
@@ -1077,7 +1077,7 @@ and creates a new handler object.
 
 Register a metric type
 
-=item metric_count( $id )
+=item metric_count( $id, $labels )
 
 Increment a metrics counter
 
