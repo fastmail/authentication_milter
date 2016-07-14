@@ -357,7 +357,6 @@ sub eom_callback {
         }
         else {
             $self->metric_count( 'dmarc_total', { 'result' => $dmarc_code } );
-            $self->metric_count( 'dmarc_pass_total' );
         }
 
         if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {

@@ -74,7 +74,7 @@ sub envfrom_callback {
     my $spf_server = $self->get_object('spf_server');
     if ( ! $spf_server ) {
         $self->log_error( 'SPF Setup Error' );
-        $self->metric_count( 'spf', { 'result' => 'error' } );
+        $self->metric_count( 'spf_total', { 'result' => 'error' } );
         $self->add_auth_header('spf=temperror');
         return;
     }
@@ -114,7 +114,7 @@ sub envfrom_callback {
 
         my $result_code = $spf_result->code();
         
-        $self->metric_count( 'spf', { 'result' => $result_code } );
+        $self->metric_count( 'spf_total', { 'result' => $result_code } );
 
         my $auth_header = join( q{ },
             $self->format_header_entry( 'spf',           $result_code ),
@@ -143,7 +143,7 @@ sub envfrom_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'SPF Error ' . $error );
         $self->add_auth_header('spf=temperror');
-        $self->metric_count( 'spf', { 'result' => 'error' } );
+        $self->metric_count( 'spf_total', { 'result' => 'error' } );
         $self->{'failmode'} = 1;
     }
 

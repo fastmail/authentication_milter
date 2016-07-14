@@ -66,7 +66,7 @@ sub eoh_callback {
     if ( ! $spf_server ) {
         $self->log_error( 'SenderID Setup Error' );
         $self->add_auth_header('senderid=temperror');
-        $self->metric_count( 'senderid', { 'result' => 'error' } );
+        $self->metric_count( 'senderid_total', { 'result' => 'error' } );
         return;
     }
 
@@ -77,7 +77,7 @@ sub eoh_callback {
     if ( ! $identity ) {
         $self->log_error( 'SENDERID Error No Identity' );
         $self->add_auth_header('senderid=permerror');
-        $self->metric_count( 'senderid', { 'result' => 'permerror' } );
+        $self->metric_count( 'senderid_total', { 'result' => 'permerror' } );
         return;
     }
 
@@ -93,7 +93,7 @@ sub eoh_callback {
         my $spf_result = $spf_server->process($spf_request);
 
         my $result_code = $spf_result->code();
-        $self->metric_count( 'senderid',  {'result' => $result_code } );
+        $self->metric_count( 'senderid_total',  {'result' => $result_code } );
         $self->dbgout( 'SenderIdCode', $result_code, LOG_INFO );
 
         if ( ! ( $config->{'hide_none'} && $result_code eq 'none' ) ) {
@@ -109,7 +109,7 @@ sub eoh_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'SENDERID Error ' . $error );
-        $self->metric_count( 'senderid', { 'result' => 'error' } );
+        $self->metric_count( 'senderid_total', { 'result' => 'error' } );
         $self->add_auth_header('senderid=temperror');
         return;
     }
