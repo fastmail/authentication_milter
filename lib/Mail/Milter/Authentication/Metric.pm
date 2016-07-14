@@ -16,11 +16,19 @@ sub new {
 }
 
 sub count {
-    my ( $self, $id, $server ) = @_;
+    my ( $self, $id, $labels, $server ) = @_;
     return if ( ! defined( $server->{'config'}->{'metric_port'} ) );
     my $psocket = $server->{'server'}->{'parent_sock'};
     return if ! $psocket;
-    print $psocket "METRIC.COUNT $id\n";
+    my $labels_txt = q{};
+    if ( $labels ) {
+        my @labels_list;
+        foreach my $l ( sort keys %$labels ) {
+            push @labels_list, $l .'="' . $labels->{$l} . '"';
+        }
+        $labels_txt = ' ' . join( ',', @labels_list );
+    }
+    print $psocket 'METRIC.COUNT ' . $id . $labels_txt . "\n";
 }
 
 sub register_metrics {
@@ -28,7 +36,7 @@ sub register_metrics {
     foreach my $metric ( keys %$hash ) {
         my $help = $hash->{ $metric };
         if ( ! exists( $self->{'counter'}->{ $metric } ) ) {
-            $self->{'counter'}->{ $metric } = 0;
+            $self->{'counter'}->{ $metric } = { '' => 0 };
         }
         $self->{'help'}->{ $metric } = $help;
     }
@@ -63,16 +71,28 @@ sub master_handler {
                 if ( $help ) {
                     print $socket '# HELP authmilter_' . $key . ' ' . $self->{'help'}->{ $key } . "\n";
                 }
-                print $socket 'authmilter_' . $key . $ident . ' ' . $self->{'counter'}->{ $key } . "\n";
+                foreach my $labels ( sort keys %{ $self->{'counter'}->{ $key } } ) {
+                    my $labels_txt = '{ident="' . lc ( $Mail::Milter::Authentication::Config::IDENT ) . '"';
+                    if ( $labels ne q{} ) {
+                        $labels_txt .= ',' . $labels;
+                    } 
+                    $labels_txt .= '}';
+                    print $socket 'authmilter_' . $key . $labels_txt . ' ' . $self->{'counter'}->{ $key }->{ $labels } . "\n";
+                }
             }
             print $socket "\0\n";
         }
         elsif ( $request =~ /^METRIC.COUNT (.*)$/ ) {
-            my $count_id = $1;
+            my $data = $1;
+            my ( $count_id, $labels ) = split( ' ', $data, 2 );
+            $labels = '' if ! $labels;
             if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
-                $self->{'counter'}->{ $count_id } = 0;
+                $self->{'counter'}->{ $count_id } = { $labels => 0 };
             }
-            $self->{'counter'}->{ $count_id }++;
+            if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
+                $self->{'counter'}->{ $count_id }->{ $labels } = 0;
+            }
+            $self->{'counter'}->{ $count_id }->{ $labels }++;
         }
 
         alarm( 0 );
@@ -163,7 +183,7 @@ Creates a new metric object.
 
 =over
 
-=item count( $id, $server )
+=item count( $id, $labels, $server )
 
 Increment the metric for the given counter
 Called from the base handler, do not call directly.
