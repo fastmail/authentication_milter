@@ -605,18 +605,20 @@ sub smtp_command_data {
             }
         }
         else {
-            $handler->metric_count( 'mail_processed_total', { 'result' => 'deferred_error' } );
             $self->logerror( "SMTP Mail Rejected" );
             my $error =  '451 4.0.0 That\'s not right';
             my $upstream_error = $smtp->{'string'};
             if ( $upstream_error =~ /^4\d\d / ) {
+                $handler->metric_count( 'mail_processed_total', { 'result' => 'deferred' } );
                 $error = $upstream_error;
             }
             elsif ( $upstream_error =~ /^5\d\d / ) {
                 # Also pass back rejects
+                $handler->metric_count( 'mail_processed_total', { 'result' => 'rejected' } );
                 $error = $upstream_error;
             }
             else {
+                $handler->metric_count( 'mail_processed_total', { 'result' => 'deferred_error' } );
                 $error .= ': ' . $upstream_error;
             }
             if ( $smtp->{'using_lmtp'} ) {
