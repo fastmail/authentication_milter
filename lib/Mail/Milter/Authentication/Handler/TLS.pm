@@ -10,6 +10,12 @@ sub default_config {
     return {};
 }
 
+sub register_metrics {
+    return {
+        'tls_connect_total' => 'The number of connections which were enctypted',
+    };
+}
+
 sub pre_loop_setup {
     my ( $self ) = @_;
     my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
@@ -30,15 +36,20 @@ sub envfrom_callback {
         $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits", LOG_INFO );
 
         my $header = q{};
+        my $metric_data = q{};
 
         $header .= $self->format_header_entry( 'x-tls', 'pass' ) . ' ';
         $header .= $self->format_header_entry( 'version', $version );
         if ( $cipher ) {
             $header .= ' ' . $self->format_header_entry( 'cipher', $cipher );
+            $metric_data->{ 'cipher' } = $cipher;
         }
         if ( $bits ) {
             $header .= ' ' . $self->format_header_entry( 'bits', $bits );
+            $metric_data->{ 'bits' } = $bits;
         }
+
+        $self->metric_count( 'authenticated_connect_total', $metric_data );
 
         $self->add_auth_header( $header );
     }

@@ -10,6 +10,12 @@ sub default_config {
     return {};
 }
 
+sub register_metrics {
+    return {
+        'authenticated_connect_total' => 'The number of connections from an authenticated host',
+    };
+}
+
 sub pre_loop_setup {
     my ( $self ) = @_;
     my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
@@ -42,6 +48,7 @@ sub envfrom_callback {
         $top_handler->{'c_auth_headers'} = [];
         $top_handler->{'auth_headers'}   = [];
         $self->{'is_authenticated'}       = 1;
+        $self->metric_count( 'authenticated_connect_total' );
         $self->add_auth_header('auth=pass');
     }
     return;
