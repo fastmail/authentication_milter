@@ -49,7 +49,7 @@ sub header_callback {
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
-    if ( $header eq 'From' ) {
+    if ( lc $header eq 'from' ) {
         $self->{'from_header'} = $value;
     }
     return;

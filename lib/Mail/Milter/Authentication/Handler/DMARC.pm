@@ -274,7 +274,7 @@ sub header_callback {
         $self->dbgout( 'DMARCListId', 'List Post detected: ' . $value, LOG_INFO );
         $self->{'is_list'} = 1;
     }
-    if ( $header eq 'From' ) {
+    if ( lc $header eq 'from' ) {
         if ( exists $self->{'from_header'} ) {
             $self->dbgout( 'DMARCFail', 'Multiple RFC5322 from fields', LOG_INFO );
             # ToDo handle this by eveluating DMARC for each field in turn as
