@@ -1,0 +1,6 @@
+FROM: test@goestheweasel.com
+To: test@example.com
+Subject: This is a test
+
+This should be a DMARC fail with a reject policy.
+

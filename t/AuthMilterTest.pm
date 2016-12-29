@@ -455,6 +455,17 @@ sub run_milter_processing {
         'to'     => 'marc@fastmail.com',
     });
 
+    milter_process({
+        'desc'   => 'DMARC Reject',
+        'prefix' => 'config/normal',
+        'source' => 'dmarc_reject_case.eml',
+        'dest'   => 'dmarc_reject_case.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'test@goestheweasel.com',
+        'to'     => 'marc@fastmail.com',
+    });
+
     stop_milter();
 
     start_milter( 'config/dmarc_reject' );
@@ -766,6 +777,17 @@ sub run_smtp_processing {
         'prefix' => 'config/normal.smtp',
         'source' => 'dmarc_reject.eml',
         'dest'   => 'dmarc_reject.smtp.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'test@goestheweasel.com',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    smtp_process({
+        'desc'   => 'DMARC Reject',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'dmarc_reject_case.eml',
+        'dest'   => 'dmarc_reject_case.smtp.eml',
         'ip'     => '123.123.123.123',
         'name'   => 'bad.name.google.com',
         'from'   => 'test@goestheweasel.com',
