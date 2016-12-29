@@ -36,7 +36,7 @@ sub envfrom_callback {
         $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits", LOG_INFO );
 
         my $header = q{};
-        my $metric_data = q{};
+        my $metric_data = {};
 
         $header .= $self->format_header_entry( 'x-tls', 'pass' ) . ' ';
         $header .= $self->format_header_entry( 'version', $version );
