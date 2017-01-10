@@ -147,6 +147,15 @@ sub protocol_process_request {
 
         $self->logdebug( "receive command $command" );
 
+        if ( exists ( $smtp_config->{ 'debug_triggers' } ) ) {
+            my $triggers = $smtp_config->{ 'debug_triggers' };
+            foreach my $trigger ( @$triggers ) {
+                if ( $command =~ /$trigger/ ) {
+                    $self->enable_extra_debugging();
+                }
+            }
+        }
+
         my $returncode = SMFIS_CONTINUE;
 
         if ( $uccommand =~ /^EHLO/ ) {
@@ -497,6 +506,7 @@ sub smtp_command_data {
         alarm( $smtp->{'smtp_timeout_in'} );
         HEADERS:
         while ( my $dataline = <$socket> ) {
+            $self->extra_debugging( "RAW DEBUG: ". $dataline );
             alarm( 0 );
             $dataline =~ s/\r?\n$//;
             if ( $dataline eq '.' ) {
@@ -559,6 +569,7 @@ sub smtp_command_data {
             alarm( $smtp->{'smtp_timeout_in'} );
             DATA:
             while ( my $dataline = <$socket> ) {
+                $self->extra_debugging( "RAW DEBUG: ". $dataline );
                 alarm( 0 );
                 last DATA if $dataline =~  /^\.\r\n/;
                 # Handle transparency
@@ -858,9 +869,11 @@ sub send_smtp_packet {
     my $recv;
     eval {
         $recv = <$socket>;
+        $self->extra_debugging( "RAW DEBUG: ". $recv );
         while ( $recv =~ /^\d\d\d\-/ ) {
             $self->smtp_status('smtp.o.' . $status . '.waitext');
             $recv = <$socket>;
+            $self->extra_debugging( "RAW DEBUG: ". $recv );
         }
     };
     if ( my $error = $@ ) {

@@ -215,8 +215,13 @@ sub top_header_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         if ( $config->{'content_timeout'} ) {
+            $self->dbgout( 'Content Timeout set', $config->{'content_timeout'}, LOG_DEBUG );
             alarm( $config->{'content_timeout'} );
         }
+        if ( my $error = $@ ) {
+            $self->dbgout( 'inline error $error', '', LOG_DEBUG );
+        }
+
         my $callbacks = $self->get_callbacks( 'header' );
         foreach my $handler ( @$callbacks ) {
             $self->get_handler($handler)->header_callback( $header, $value );

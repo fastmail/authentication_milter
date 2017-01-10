@@ -766,6 +766,26 @@ sub get_queue_id {
     return $queue_id;
 }
 
+sub enable_extra_debugging {
+    my ($self) = @_;
+    my $config = $self->{'config'} || get_config();
+    $config->{'logtoerr'} = 1;
+    $config->{'debug'}    = 1;
+    $self->{'extra_debugging'} = 1;
+    $self->logerror( 'Extra debugging enabled. Child will exit on close.' );
+    # We don't want to persist this, so force an exit on close state.
+    $self->{'handler'}->{'_Handler'}->{'exit_on_close'} = 1;
+    return;
+}
+
+sub extra_debugging {
+    my ($self,$line) = @_;
+    if ( $self->{'extra_debugging'} ) {
+        $self->logerror( $line );
+    }
+    return;
+}
+
 sub logerror {
     my ($self,$line) = @_;
     my $config = $self->{'config'} || get_config();
@@ -931,6 +951,14 @@ Log to the info log.
 =item I<logdebug( $line )>
 
 Log to the debug log.
+
+=item I<enable_extra_debugging()>
+
+Turn on extra debugging mode, will cause child to exit on close.
+
+=item I<extra_debugging( $line )>
+
+Cause $line to be written to log if extra debugging mode is enabled.
 
 =item I<child_finish_hook()>
 
