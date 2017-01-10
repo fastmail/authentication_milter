@@ -224,6 +224,7 @@ sub top_header_callback {
 
         my $callbacks = $self->get_callbacks( 'header' );
         foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'Handler ' . $handler );
             $self->get_handler($handler)->header_callback( $header, $value );
         }
         alarm(0);
@@ -780,7 +781,15 @@ sub get_address_from {
     my ( $self, $address ) = @_;
     my $parsed = $address;
     eval {
-        my @addresses = Email::Address->parse($address);
+
+        my @addresses;
+        foreach my $line ( split /\n/, $address ) {
+            my @line_addresses = Email::Address->parse($line);
+            foreach my $address ( @line_addresses ) {
+                push @addresses, $address;
+            }
+        }
+
         if (@addresses) {
             my $first = $addresses[0];
             $parsed = $first->address();
