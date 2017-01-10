@@ -521,6 +521,7 @@ sub smtp_command_data {
                 last HEADERS;
             }
             push @header_split, $dataline;
+            alarm( $smtp->{'smtp_timeout_in'} );
         }
     };
     if ( my $error = $@ ) {
@@ -577,6 +578,7 @@ sub smtp_command_data {
                     $dataline = substr( $dataline, 1 );
                 }
                 $body .= $dataline;
+                alarm( $smtp->{'smtp_timeout_in'} );
             }
             $returncode = $handler->top_body_callback( $body );
             if ( $returncode != SMFIS_CONTINUE ) {
