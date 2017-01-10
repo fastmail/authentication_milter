@@ -224,7 +224,6 @@ sub top_header_callback {
 
         my $callbacks = $self->get_callbacks( 'header' );
         foreach my $handler ( @$callbacks ) {
-            $self->dbgout( 'Handler ' . $handler );
             $self->get_handler($handler)->header_callback( $header, $value );
         }
         alarm(0);
