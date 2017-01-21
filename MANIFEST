@@ -19,8 +19,8 @@ lib/Mail/Milter/Authentication/Handler/SPF.pm
 lib/Mail/Milter/Authentication/Handler/TLS.pm
 lib/Mail/Milter/Authentication/Handler/TrustedIP.pm
 lib/Mail/Milter/Authentication/Handler/XGoogleDKIM.pm
-lib/Mail/Milter/Authentication.pm
 lib/Mail/Milter/Authentication/Metric.pm
+lib/Mail/Milter/Authentication.pm
 lib/Mail/Milter/Authentication/Protocol/Milter.pm
 lib/Mail/Milter/Authentication/Protocol/SMTP.pm
 LICENCE
@@ -54,6 +54,8 @@ t/config/normal/authentication_milter.json
 t/config/normal/mail-dmarc.ini
 t/config/normal.smtp/authentication_milter.json
 t/config/normal.smtp/mail-dmarc.ini
+t/data/example/dmarc_reject_case.eml
+t/data/example/dmarc_reject_case.smtp.eml
 t/data/example/dmarc_reject.eml
 t/data/example/dmarc_reject_hard.eml
 t/data/example/dmarc_reject_hard_whitelisted.eml
@@ -96,9 +98,11 @@ t/data/example/longlines.eml
 t/data/example/longlines.smtp.eml
 t/data/example/pipelined.limit.smtp.eml
 t/data/example/pipelined.smtp.eml
+t/data/example/spam_headers.smtp.eml
 t/data/example/tools_pipeline_test.eml
 t/data/example/tools_test.eml
 t/data/example/transparency.smtp.eml
+t/data/source/dmarc_reject_case.eml
 t/data/source/dmarc_reject.eml
 t/data/source/dmarc_reject_wl.eml
 t/data/source/google_apps_bad.eml
@@ -110,6 +114,8 @@ t/data/source/google_apps_headers.eml
 t/data/source/google_apps_nodkim.eml
 t/data/source/list.eml
 t/data/source/longlines.eml
+t/data/source/spam_headers.eml
+t/data/source/spam_headers.eml.orig
 t/data/source/tools_test.eml
 t/data/source/transparency.eml
 t/dev-boilerplate.t

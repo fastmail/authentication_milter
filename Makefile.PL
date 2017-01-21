@@ -36,7 +36,6 @@ build_requires (
 
 requires (
     'Cwd'                   => 0,
-    'Email::Address'        => 0,
     'Email::Date::Format'   => 0,
     'Email::Simple'         => 0,
     'English'               => 0,

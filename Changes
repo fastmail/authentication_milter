@@ -2,6 +2,9 @@ Revision history for Mail-Milter-Authentication
 
 1.1.1   FUTURE
         - Added metrics collection (prometheus)
+        - Re-write address parsing code to avoid Email::Address::parse issues
+        - SMTP Debugging modes added
+        - Correctly handle From header with odd case in DMARC module
 
 1.1.0   2016-07-01
         - Allow email to be rejected by handlers

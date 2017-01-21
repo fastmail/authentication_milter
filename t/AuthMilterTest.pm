@@ -587,6 +587,17 @@ sub run_smtp_processing {
     });
 
     smtp_process({
+        'desc'   => 'Spammy headers message',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'spam_headers.eml',
+        'dest'   => 'spam_headers.smtp.eml',
+        'ip'     => '1.2.3.4',
+        'name'   => 'test.example.com',
+        'from'   => 'test@example.com',
+        'to'     => 'test@example.com',
+    });
+
+    smtp_process({
         'desc'   => 'Transparency message',
         'prefix' => 'config/normal.smtp',
         'source' => 'transparency.eml',

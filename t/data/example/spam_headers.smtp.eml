@@ -1,0 +1,160 @@
+EHLO server.example.com
+XFORWARD HELO=test.example.com
+XFORWARD ADDR=1.2.3.4
+XFORWARD NAME=test.example.com
+MAIL FROM:test@example.com
+RCPT TO:test@example.com
+DATA
+Received: from test.module (localhost [127.0.0.1])
+    by server.example.com (Authentication Milter) with ESMTP
+Authentication-Results: server.example.com;
+    dkim=none (no signatures found);
+    dmarc=none (p=none) header.from=example.com;
+    iprev=fail policy.iprev=1.2.3.4 (NOT FOUND);
+    senderid=temperror;
+    spf=fail smtp.mailfrom=test@example.com smtp.helo=test.example.com;
+    x-google-dkim=none (no signatures found);
+    x-ptr=fail x-ptr-helo=test.example.com x-ptr-lookup=
+Received-SPF: fail
+    (example.com: Sender is not authorized by default to use 'test@example.com' in 'mfrom' identity (mechanism '-all' matched))
+    receiver=server.example.com;
+    identity=mailfrom;
+    envelope-from="test@example.com";
+    helo=test.example.com;
+    client-ip=1.2.3.4
+Received: from mailer.example.com (mailer.example.com [1.2.3.4])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx2.messagingengine.com (Postfix) with ESMTPS
+	for <test@example.com>; Mon,  9 Jan 2017 21:15:20 -0500 (EST)
+Received: from mailer.fr.example.com ([2.3.4.5])
+	by mx2-fr with esmtps (TLSv1:DHE-RSA-AES256-SHA:256)
+	(Exim 4.84)
+	(envelope-from <nobody@mailer.fr.example.com>)
+	id 1cQF4M-0008Gi-9t
+	for test@example.com; Sun, 08 Jan 2017 16:07:38 +0100
+Message-Id: <201701081507.v08F7TXC031048@ws5-fr.fr.example.net>
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Transfer-Encoding: binary
+Content-Type: text/plain; charset="utf-8"
+X-Mailer: MIME::Lite 3.027 (F2.74; T1.31; A2.06; B3.07; Q3.07)
+Date: Sun, 8 Jan 2017 15:07:29 +0000
+From: "Dear Customer
+ 
+ Happy new Year Ray-Ban Sunglasses items on online shop.
+ All items are in new condition,and new style.Ray-Ban Sunglasses Just 19.
+  99$ & Up To 87% OFF
+ Welcome to check our website: http://www.example.com/
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ",
+        <noreply@example.com>
+To: test@example.com
+Subject: Dear Customer
+ 
+ Happy new Year Ray-Ban Sunglasses items on online shop.
+ All items are in new condition,and new style.Ray-Ban Sunglasses Just 19.
+  99$ & Up To 87% OFF
+ Welcome to check our website: http://www.example.com/
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ =?UTF-8?Q?=20vous=20a=20envoy=C3=A9=20un=20li?==?UTF-8?Q?en?=
+
+
+.
+QUIT

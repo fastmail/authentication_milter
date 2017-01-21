@@ -4,7 +4,6 @@ use warnings;
 use version; our $VERSION = version->declare('v1.1.1');
 
 use Digest::MD5 qw{ md5_hex };
-use Email::Address;
 use English qw{ -no_match_vars };
 use Mail::SPF;
 use MIME::Base64;
@@ -776,32 +775,142 @@ sub get_domain_from {
     return lc $domain;
 }
 
-sub get_address_from {
-    my ( $self, $address ) = @_;
-    my $parsed = $address;
-    eval {
+use constant IsSep => 0;
+use constant IsPhrase => 1;
+use constant IsEmail => 2;
+use constant IsComment => 3;
 
-        my @addresses;
-        foreach my $line ( split /\n/, $address ) {
-            my @line_addresses = Email::Address->parse($line);
-            foreach my $address ( @line_addresses ) {
-                push @addresses, $address;
+sub get_address_from {
+    my ( $self, $Str ) = @_;
+    $Str = q{} if !defined $Str;
+
+    my $IDNComponentRE = qr/[^\x20-\x2c\x2e\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/;
+    my $IDNRE = qr/(?:$IDNComponentRE\.)+$IDNComponentRE/;
+
+    # Break everything into Tokens
+    my ( @Tokens, @Types );
+    TOKEN_LOOP:
+    while (1) {
+        if ($Str =~ m/\G\"(.*?)(?<!\\)(?:\"|\z)\s*/sgc) {
+            # String " ... "
+            push @Tokens, $1;
+            push @Types, IsPhrase;
+        }
+        elsif ( $Str =~ m/\G\<(.*?)(?<!\\)(?:[>,;]|\z)\s*/sgc) {
+            # String < ... >
+            push @Tokens, $1;
+            push @Types, IsEmail;
+        }
+        elsif ($Str =~ m/\G\((.*?)(?<!\\)\)\s*/sgc) {
+            # String ( ... )
+            push @Tokens, $1;
+            push @Types, IsComment;
+        }
+        elsif ($Str =~ m/\G[,;]\s*/gc) {
+            # Comma or semi-colon
+            push @Tokens, undef;
+            push @Types, IsSep;
+        }
+        elsif ($Str =~ m/\G$/gc) {
+            # End of line
+            last TOKEN_LOOP;
+        }
+        elsif ($Str =~ m/\G([^\s,;"<]*)\s*/gc) {
+            # Anything else
+            if (length $1) {
+                push @Tokens, $1;
+                push @Types, IsPhrase;
             }
         }
-
-        if (@addresses) {
-            my $first = $addresses[0];
-            $parsed = $first->address();
-        }
         else {
-            # We couldn't parse, so just run with it and hope for the best
+            # Incomplete line. We'd like to die, but we'll return what we can
+            $self->log_error('Could not parse address $address : Unknown line remainder : ' . substr( $Str, pos() ) );
+            push @Tokens, substr($Str, pos($Str));
+            push @Types, IsComment;
+            last TOKEN_LOOP;
         }
-    };
-    if ( my $error = $@ ) {
+    }
+
+    my $ParsedAddress;
+    my ($Phrase, $Email, $Comment, $Type);
+
+    PARSE_LOOP:
+    for (my $i = 0; $i < scalar(@Tokens); $i++) {
+        my ($Type, $Token) = ($Types[$i], $Tokens[$i]);
+
+        # If - a separator OR
+        #    - email address and already got one OR
+        #    - phrase and already got email address
+        # then add current data as token
+        if (($Type == IsSep) ||
+            ($Type == IsEmail && defined($Email)) ||
+            ($Type == IsPhrase && defined($Email))) {
+                $ParsedAddress = $Email;
+                last PARSE_LOOP;
+        }
+
+        # A phrase...
+        if ($Type == IsPhrase) {
+            # Strip '...' around token
+            $Token =~ s/^'(.*)'$/$1/;
+            # Strip any newlines assuming folded headers
+            $Token =~ s/\r?\n//g;
+
+            # Email like token?
+            if ($Token =~ /^[\w\.\-\#\$\%\*\+\=\/\'\&\~]+\@$IDNRE$/) {
+            # Yes, check if next token is definitely email. If yes,
+            #  make this a phrase, otherwise make it an email item
+                if ($i+1 < scalar(@Tokens) && $Types[$i+1] == IsEmail) {
+                    $Phrase = defined($Phrase) ? $Phrase . " " . $Token : $Token;
+                }
+                else {
+                    # If we've already got an email address, add current address
+                    if (defined($Email)) {
+                    $ParsedAddress = $Email;
+                    last PARSE_LOOP;
+                }
+            }
+            }
+            else {
+                # No, just add as phrase
+                $Phrase = defined($Phrase) ? $Phrase . " " . $Token : $Token;
+            }
+            # If an email, set email addr. Should be empty
+        }
+        elsif ($Type == IsEmail) {
+            $Email = $Token;
+        }
+        elsif ($Type == IsComment) {
+            $Comment = defined($Comment) ? $Comment . ", " . $Token : $Token;
+        }
+        # Must be separator, do nothing
+    }
+
+    # Add any remaining addresses
+
+    $ParsedAddress = $Email if defined $Email;
+
+    if ( ! defined $ParsedAddress ) {
+        # We couldn't parse, so just run with it and hope for the best
+        $ParsedAddress = $Str;
         $self->log_error('Could not parse address $address : $error');
     }
 
-    return $parsed;
+    if ( $ParsedAddress ) {
+        $ParsedAddress = $Str if $ParsedAddress =~ /\@unspecified-domain$/;
+        if ( $ParsedAddress =~ /^mailto:(.*)$/ ) {
+            $ParsedAddress = $1;
+        }
+        # Trim whitelist that's possible, but not useful and$
+        #  almost certainly a copy/paste issue
+        #  e.g. < foo @ bar.com >
+        $ParsedAddress =~ s/^\s+//;
+        $ParsedAddress =~ s/\s+$//;
+        $ParsedAddress =~ s/\s+\@/\@/;
+        $ParsedAddress =~ s/\@\s+/\@/;
+    }
+
+    return $ParsedAddress;
 }
 
 sub get_my_hostname {
@@ -1285,7 +1394,7 @@ Extract the domain from an email address.
 
 =item get_address_from( $text )
 
-Extract an email address from a string using Email::Address.
+Extract an email address from a string.
 
 =item get_my_hostname()
 

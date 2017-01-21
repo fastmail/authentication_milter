@@ -992,7 +992,6 @@ Hook which runs before the server closes.
 
 =head1 DEPENDENCIES
 
-  Email::Address
   English
   JSON
   Mail::DKIM
