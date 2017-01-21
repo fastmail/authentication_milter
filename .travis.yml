@@ -26,7 +26,7 @@ install:
     - cpanm --quiet --notest Test::More Test::File::Contents Test::Perl::Critic
     - cpanm --quiet --notest List::MoreUtils
     - cpanm --quiet --notest Test::CheckManifest Test::Pod::Coverage Test::Pod
-    - cpanm --quiet --notest Cwd Email::Address Email::Date::Format Email::Simple
+    - cpanm --quiet --notest Cwd Email::Date::Format Email::Simple
     - cpanm --quiet --notest English IO::Socket JSON Mail::DKIM::Verifier Mail::DKIM
     - cpanm --quiet --notest MIME::Base64 Module::Load Module::Loaded
     - cpanm --quiet --notest Net::DNS@1.05
