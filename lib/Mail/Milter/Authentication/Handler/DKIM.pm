@@ -25,6 +25,7 @@ sub default_config {
 sub register_metrics {
     return {
         'dkim_total' => 'The number of emails processed for DKIM',
+        'dkim_signatures' => 'The number of signatures processed for DKIM',
     };
 }
 
@@ -226,11 +227,21 @@ sub eom_callback {
               )
             {
 
-                my $key_data = q{};
+                my $key_size = 0;
+                my $key_type = q{};
                 eval {
                     my $key = $signature->get_public_key();
-                    $key_data = $key->size() . '-bit ' . $key->type() . ' key';
+                    $key_size = $key->size();
+                    $key_type = $key->type();
                 };
+                my $key_data = $key_size . '-bit ' . $key_type . ' key';
+
+                $self->metric_count( 'dkim_signatures', {
+                    'type'     => $type,
+                    'result'   => $signature_result,
+                    'key_size' => $key_size,
+                    'key_type' => $key_type,
+                } );
 
                 if ( $type eq 'domainkeys' ) {
                     ## DEBUGGING
