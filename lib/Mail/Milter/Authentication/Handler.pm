@@ -824,7 +824,7 @@ sub get_address_from {
         }
         else {
             # Incomplete line. We'd like to die, but we'll return what we can
-            $self->log_error('Could not parse address $address : Unknown line remainder : ' . substr( $Str, pos() ) );
+            $self->log_error('Could not parse address ' . $Str . ' : Unknown line remainder : ' . substr( $Str, pos() ) );
             push @Tokens, substr($Str, pos($Str));
             push @Types, IsComment;
             last TOKEN_LOOP;
@@ -866,10 +866,10 @@ sub get_address_from {
                 else {
                     # If we've already got an email address, add current address
                     if (defined($Email)) {
-                    $ParsedAddress = $Email;
-                    last PARSE_LOOP;
+                        $ParsedAddress = $Email;
+                        last PARSE_LOOP;
+                    }
                 }
-            }
             }
             else {
                 # No, just add as phrase
@@ -888,12 +888,14 @@ sub get_address_from {
 
     # Add any remaining addresses
 
-    $ParsedAddress = $Email if defined $Email;
+    if ( ! defined $ParsedAddress ) {
+        $ParsedAddress = $Email if defined $Email;
+    }
 
     if ( ! defined $ParsedAddress ) {
         # We couldn't parse, so just run with it and hope for the best
         $ParsedAddress = $Str;
-        $self->log_error('Could not parse address $address : $error');
+        $self->log_error( 'Could not parse address ' . $Str );
     }
 
     if ( $ParsedAddress ) {
