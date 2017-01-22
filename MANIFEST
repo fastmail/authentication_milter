@@ -34,8 +34,9 @@ share/mail-dmarc.ini
 t/00-load.t
 t/01-pipeline.t
 t/01-tools.t
-t/02-milter.t
-t/02-smtp.t
+t/02-mail-milter-authentication-handler.t
+t/03-milter.t
+t/03-smtp.t
 t/AuthMilterTestDNSCache.pm
 t/AuthMilterTest.pm
 t/config/dmarc_reject/authentication_milter.json
