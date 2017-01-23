@@ -832,24 +832,13 @@ sub get_address_from {
     }
 
     my $ParsedAddress;
-    my ($Phrase, $Email, $Comment, $Type);
+    my $Email;
+    my $MaybeEmail;
 
     PARSE_LOOP:
     for (my $i = 0; $i < scalar(@Tokens); $i++) {
         my ($Type, $Token) = ($Types[$i], $Tokens[$i]);
 
-        # If - a separator OR
-        #    - email address and already got one OR
-        #    - phrase and already got email address
-        # then add current data as token
-        if (($Type == IsSep) ||
-            ($Type == IsEmail && defined($Email)) ||
-            ($Type == IsPhrase && defined($Email))) {
-                $ParsedAddress = $Email;
-                last PARSE_LOOP;
-        }
-
-        # A phrase...
         if ($Type == IsPhrase) {
             # Strip '...' around token
             $Token =~ s/^'(.*)'$/$1/;
@@ -858,30 +847,11 @@ sub get_address_from {
 
             # Email like token?
             if ($Token =~ /^[\w\.\-\#\$\%\*\+\=\/\'\&\~]+\@$IDNRE$/) {
-            # Yes, check if next token is definitely email. If yes,
-            #  make this a phrase, otherwise make it an email item
-                if ($i+1 < scalar(@Tokens) && $Types[$i+1] == IsEmail) {
-                    $Phrase = defined($Phrase) ? $Phrase . " " . $Token : $Token;
-                }
-                else {
-                    # If we've already got an email address, add current address
-                    if (defined($Email)) {
-                        $ParsedAddress = $Email;
-                        last PARSE_LOOP;
-                    }
-                }
+                $MaybeEmail = $Token;
             }
-            else {
-                # No, just add as phrase
-                $Phrase = defined($Phrase) ? $Phrase . " " . $Token : $Token;
-            }
-            # If an email, set email addr. Should be empty
         }
         elsif ($Type == IsEmail) {
             $Email = $Token;
-        }
-        elsif ($Type == IsComment) {
-            $Comment = defined($Comment) ? $Comment . ", " . $Token : $Token;
         }
         # Must be separator, do nothing
     }
@@ -893,14 +863,13 @@ sub get_address_from {
     }
 
     if ( ! defined $ParsedAddress ) {
+        $ParsedAddress = $MaybeEmail if defined $MaybeEmail;
+    }
+
+    if ( ! defined $ParsedAddress ) {
         # We couldn't parse, so just run with it and hope for the best
         $ParsedAddress = $Str;
-        if ( $ParsedAddress =~ /^[\w\.\-\#\$\%\*\+\=\/\'\&\~]+\@$IDNRE$/ ) {
-            # That looks like an email address, silence the warnings.
-        }
-        else {
-            $self->log_error( 'Could not parse address ' . $Str );
-        }
+        $self->log_error( 'Could not parse address ' . $Str );
     }
 
     if ( $ParsedAddress ) {

@@ -22,6 +22,7 @@ this is a very long long email address
     'Marc Bradshaw <marc@goestheweasel.com>'    => [ 'marc@goestheweasel.com', 'goestheweasel.com' ],
     'Marc Bradshaw <marc@ marcbradshaw.net>'    => [ 'marc@marcbradshaw.net', 'marcbradshaw.net' ],
     '"Marc Bradshaw" <marc@marcbradshaw.net>'   => [ 'marc@marcbradshaw.net', 'marcbradshaw.net' ],
+    'test@example.com (With comment)'           => [ 'test@example.com', 'example.com' ],
     'test@example.com'                          => [ 'test@example.com', 'example.com' ],
     'test@goestheweasel.com'                    => [ 'test@goestheweasel.com', 'goestheweasel.com' ],
     'nothing in here is an address'             => [ 'nothing in here is an address', 'localhost.localdomain' ],
