@@ -20,6 +20,7 @@ my $Tests = {
 this is a very long long email address
 <test@example.com>'                             => [ 'test@example.com', 'example.com' ],
     'Marc Bradshaw <marc@goestheweasel.com>'    => [ 'marc@goestheweasel.com', 'goestheweasel.com' ],
+    'marc@ marcbradshaw.net'                    => [ 'marc@marcbradshaw.net', 'marcbradshaw.net' ],
     'Marc Bradshaw <marc@ marcbradshaw.net>'    => [ 'marc@marcbradshaw.net', 'marcbradshaw.net' ],
     '"Marc Bradshaw" <marc@marcbradshaw.net>'   => [ 'marc@marcbradshaw.net', 'marcbradshaw.net' ],
     'test@example.com (With comment)'           => [ 'test@example.com', 'example.com' ],

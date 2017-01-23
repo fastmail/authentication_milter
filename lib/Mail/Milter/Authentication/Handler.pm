@@ -784,6 +784,11 @@ sub get_address_from {
     my ( $self, $Str ) = @_;
     $Str = q{} if !defined $Str;
 
+    if ( $Str eq q{} ) {
+        $self->log_error( 'Could not parse empty address' );
+        return $Str;
+    }
+
     my $IDNComponentRE = qr/[^\x20-\x2c\x2e\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/;
     my $IDNRE = qr/(?:$IDNComponentRE\.)+$IDNComponentRE/;
 
@@ -847,6 +852,10 @@ sub get_address_from {
 
             # Email like token?
             if ($Token =~ /^[\w\.\-\#\$\%\*\+\=\/\'\&\~]+\@$IDNRE$/) {
+                $Token =~ s/^\s+//;
+                $Token =~ s/\s+$//;
+                $Token =~ s/\s+\@/\@/;
+                $Token =~ s/\@\s+/\@/;
                 $MaybeEmail = $Token;
             }
         }

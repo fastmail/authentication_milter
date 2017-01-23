@@ -11,7 +11,6 @@ Authentication-Results: server.example.com;
     dkim=none (no signatures found);
     dmarc=none (p=none) header.from=example.com;
     iprev=fail policy.iprev=1.2.3.4 (NOT FOUND);
-    senderid=temperror;
     spf=fail smtp.mailfrom=test@example.com smtp.helo=test.example.com;
     x-google-dkim=none (no signatures found);
     x-ptr=fail x-ptr-helo=test.example.com x-ptr-lookup=
