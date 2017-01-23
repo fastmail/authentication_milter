@@ -895,7 +895,12 @@ sub get_address_from {
     if ( ! defined $ParsedAddress ) {
         # We couldn't parse, so just run with it and hope for the best
         $ParsedAddress = $Str;
-        $self->log_error( 'Could not parse address ' . $Str );
+        if ( $ParsedAddress =~ /^[\w\.\-\#\$\%\*\+\=\/\'\&\~]+\@$IDNRE$/ ) {
+            # That looks like an email address, silence the warnings.
+        }
+        else {
+            $self->log_error( 'Could not parse address ' . $Str );
+        }
     }
 
     if ( $ParsedAddress ) {
