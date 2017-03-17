@@ -30,6 +30,7 @@ META.yml
 README.md
 share/authentication_milter.init
 share/authentication_milter.json
+share/grafana-dashboard.json
 share/mail-dmarc.ini
 t/00-load.t
 t/01-pipeline.t
