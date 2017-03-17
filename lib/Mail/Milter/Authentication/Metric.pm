@@ -19,6 +19,9 @@ sub clean_label {
     my ( $self, $text ) = @_;
     $text = lc $text;
     $text =~ s/[^a-z0-9]/_/g;
+    if ( $text eq q{} ) {
+        $text = '-none-';
+    }
     return $text;
 }
 
