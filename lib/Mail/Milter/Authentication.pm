@@ -26,7 +26,7 @@ sub _warn {
     my @parts = split "\n", $msg;
     foreach my $part ( @parts ) {
         next if $part eq q{};
-        print STDERR scalar localtime . ' ' . $Mail::Milter::Authentication::Config::IDENT . "[$PID] $part\n";
+        print STDERR scalar(localtime) . ' ' . $Mail::Milter::Authentication::Config::IDENT . "[$PID] $part\n";
     }
     return;
 }
