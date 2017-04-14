@@ -117,7 +117,6 @@ t/data/source/google_apps_nodkim.eml
 t/data/source/list.eml
 t/data/source/longlines.eml
 t/data/source/spam_headers.eml
-t/data/source/spam_headers.eml.orig
 t/data/source/tools_test.eml
 t/data/source/transparency.eml
 t/dev-boilerplate.t
