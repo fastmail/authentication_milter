@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Metric;
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v1.1.1');
+use version; our $VERSION = version->declare('v1.1.2');
 
 use English qw{ -no_match_vars };
 

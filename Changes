@@ -1,5 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
+1.1.2   FUTURE
+
 1.1.1   2017-04-14
         - Added metrics collection (prometheus)
         - Re-write address parsing code to avoid Email::Address::parse issues
