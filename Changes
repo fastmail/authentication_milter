@@ -1,10 +1,13 @@
 Revision history for Mail-Milter-Authentication
 
-1.1.1   FUTURE
+1.1.1   2017-04-14
         - Added metrics collection (prometheus)
         - Re-write address parsing code to avoid Email::Address::parse issues
         - SMTP Debugging modes added
         - Correctly handle From header with odd case in DMARC module
+        - Added example metrics dashboard for Grafana
+        - Metrics bugfixes
+        - Improved test suite
 
 1.1.0   2016-07-01
         - Allow email to be rejected by handlers
