@@ -70,8 +70,8 @@ sub pre_loop_hook {
     }
 
     $self->{'metric'}->register_metrics( {
-        'forked_children_total', 'Total number of child processes forked',
-        'reaped_children_total', 'Total number of child processes reaped',
+        'forked_children_total' => 'Total number of child processes forked',
+        'reaped_children_total' => 'Total number of child processes reaped',
     } );
 
     $self->{'metric'}->register_metrics( Mail::Milter::Authentication::Handler->register_metrics() );
@@ -264,9 +264,10 @@ sub process_request {
     else {
         $self->process_main();
     }
-    
+
     my $count = $self->{'count'};
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(' . $count . ')';
+    return;
 }
 
 

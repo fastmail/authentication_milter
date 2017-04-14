@@ -39,6 +39,7 @@ sub count {
         $labels_txt = ' ' . join( ',', @labels_list );
     }
     print $psocket 'METRIC.COUNT ' . $self->clean_label( $id ) . $labels_txt . "\n";
+    return;
 }
 
 sub register_metrics {
@@ -50,6 +51,7 @@ sub register_metrics {
         }
         $self->{'help'}->{ $self->clean_label( $metric ) } = $help;
     }
+    return;
 }
 
 sub master_handler {
