@@ -560,7 +560,11 @@ sub start {
     $srvargs{'listen'} = $listen_backlog;
     $srvargs{'leave_children_open_on_hup'} = 1;
 
-    _warn "==========\nStarting server\n==========";
+    _warn "==========";
+    _warn "Starting server";
+    _warn "Running with perl $PERL_VERSION";
+    _warn "==========";
+
     __PACKAGE__->run( %srvargs );
 
     # Never reaches here.
