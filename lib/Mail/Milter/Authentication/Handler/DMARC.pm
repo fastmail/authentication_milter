@@ -334,6 +334,7 @@ sub eom_callback {
 #           $dmarc->dkim( $empty_dkim );
         }
         my $dmarc_result = $dmarc->validate();
+        $self->set_object('dmarc_result', $dmarc_result,1 );
         my $dmarc_code   = $dmarc_result->result;
         $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
 
@@ -440,6 +441,7 @@ sub close_callback {
     delete $self->{'is_list'};
     delete $self->{'from_header'};
     $self->destroy_object('dmarc');
+    $self->destroy_object('dmarc_result');
     return;
 }
 
