@@ -79,7 +79,7 @@ sub header_callback {
 
     # Future, extend to check for client certificates
 
-    $value =~ m/using ([^ ]*) with cipher ([^ ]+) \(([^ ]_) bits\)/;
+    $value =~ m/using ([^ ]*) with cipher ([^ ]+) \(([^ ]+) bits\)/;
     my $version = $1;
     my $cipher  = $2;
     my $bits    = $3;
