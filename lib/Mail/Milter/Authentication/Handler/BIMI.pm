@@ -65,7 +65,8 @@ sub eom_callback {
     return if ( $self->{'failmode'} );
     eval {
         my $Domain = $self->get_domain_from( $self->{'from_header'} );
-        my $Selector = lc $self->{ 'selector' } || 'default';
+        my $Selector = $self->{ 'selector' } || 'default';
+        $Selector = lc $Selector;
         my $BIMI = Mail::BIMI->new();
 
         my $DMARCResult = $self->get_object( 'dmarc_result' );
