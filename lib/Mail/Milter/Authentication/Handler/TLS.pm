@@ -68,7 +68,7 @@ sub header_callback {
     $self->{'first_header_read'} = 1;
 
     my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
-    return if $protocol ne 'milter';
+    return if $protocol ne 'smtp';
 
     # Try and parse the first received header, this should be something like...
     # Received: from mail-ua0-f173.google.com (mail-ua0-f173.google.com [209.85.217.173])
