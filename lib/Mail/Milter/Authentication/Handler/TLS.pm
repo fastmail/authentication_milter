@@ -28,6 +28,11 @@ sub pre_loop_setup {
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
 
+    delete $self->{'first_header_read'};
+
+    my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
+    return if $protocol ne 'milter';
+
     my $version = $self->get_symbol('{tls_version}');
     my $cipher  = $self->get_symbol('{cipher}');
     my $bits    = $self->get_symbol('{cipher_bits}');
@@ -53,6 +58,60 @@ sub envfrom_callback {
 
         $self->add_auth_header( $header );
     }
+    return;
+}
+
+sub header_callback {
+    my ( $self, $header, $value ) = @_;
+
+    return if ( exists( $self->{'first_header_read'} ) );
+    $self->{'first_header_read'} = 1;
+
+    my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
+    return if $protocol ne 'milter';
+
+    # Try and parse the first received header, this should be something like...
+    # Received: from mail-ua0-f173.google.com (mail-ua0-f173.google.com [209.85.217.173])
+    #           (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+    #           (No client certificate requested)
+    #           by mx5.messagingengine.com (Postfix) with ESMTPS
+    #           for <marcmctest@fastmail.com>; Thu,  1 Dec 2016 22:35:06 -0500 (EST)
+
+    # Future, extend to check for client certificates
+
+    $value =~ m/using ([^ ]*) with cipher ([^ ]+) \(([^ ]_) bits\)/;
+    my $version = $1;
+    my $cipher  = $2;
+    my $bits    = $3;
+
+    if ($version) {
+        $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits", LOG_INFO );
+
+        my $header = q{};
+        my $metric_data = {};
+
+        $header .= $self->format_header_entry( 'x-tls', 'pass' ) . ' ';
+        $header .= $self->format_header_entry( 'version', $version );
+        if ( $cipher ) {
+            $header .= ' ' . $self->format_header_entry( 'cipher', $cipher );
+            $metric_data->{ 'cipher' } = $cipher;
+        }
+        if ( $bits ) {
+            $header .= ' ' . $self->format_header_entry( 'bits', $bits );
+            $metric_data->{ 'bits' } = $bits;
+        }
+
+        $self->metric_count( 'authenticated_connect_total', $metric_data );
+
+        $self->add_auth_header( $header );
+    }
+
+    return;
+}
+
+sub close_callback {
+    my ( $self ) = @_;
+    delete $self->{'first_header_read'};
     return;
 }
 
