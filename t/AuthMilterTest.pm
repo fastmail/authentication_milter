@@ -26,7 +26,7 @@ sub tools_test {
     my $catargs = {
         'sock_type' => 'unix',
         'sock_path' => 'tmp/tools_test.sock',
-        'remove'    => [10],
+        'remove'    => [],
         'output'    => 'tmp/result/tools_test.eml',
     };
     unlink 'tmp/tools_test.sock';
@@ -57,7 +57,7 @@ sub tools_pipeline_test {
     my $catargs = {
         'sock_type' => 'unix',
         'sock_path' => 'tmp/tools_test.sock',
-        'remove'    => [10],
+        'remove'    => [],
         'output'    => 'tmp/result/tools_pipeline_test.eml',
     };
     unlink 'tmp/tools_test.sock';
@@ -571,7 +571,7 @@ sub run_smtp_processing {
         'name'   => [ 'test.example.com', 'localhost', 'bad.name.google.com', ],
         'from'   => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
         'to'     => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
-        'filter' => [10,11,52,53,122,123],
+        'filter' => [10,11,52,53,128,129],
     });
 
     smtp_process_multi({
@@ -583,7 +583,7 @@ sub run_smtp_processing {
         'name'   => [ 'test.example.com', 'localhost', 'bad.name.google.com', 'test.example.com', 'localhost', 'bad.name.google.com', ],
         'from'   => [ 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', 'test@example.com', 'marc@marcbradshaw.net', 'marc@marcbradshaw.net', ],
         'to'     => [ 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', 'test@example.com', 'marc@fastmail.com', 'marc@fastmail.com', ],
-        'filter' => [10,11,52,53,122,123,203,204],
+        'filter' => [10,11,52,53,128,129,209,210],
     });
 
     smtp_process({
@@ -1117,7 +1117,7 @@ sub smtpcat {
     my $i = 0;
     foreach my $line ( @out_lines ) {
         $i++;
-        next if grep { $i == $_ } @$remove;
+        $line = "############\n" if grep { $i == $_ } @$remove;
         print $file $line;
     }
     close $file;

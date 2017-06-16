@@ -7,6 +7,8 @@ RCPT TO:marc@fastmail.com
 DATA
 Received: from test.module (localhost [127.0.0.1])
     by server.example.com (Authentication Milter) with ESMTP
+############
+############
 Authentication-Results: server.example.com;
     dkim=pass (1024-bit rsa key) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3;
     x-google-dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;

@@ -7,6 +7,8 @@ RCPT TO:test@example.com
 DATA
 Received: from test.module (localhost [127.0.0.1])
     by server.example.com (Authentication Milter) with ESMTP
+############
+############
 Authentication-Results: server.example.com;
     dkim=none (no signatures found);
     dmarc=none (p=none) header.from=example.com;
@@ -47,11 +49,19 @@ RCPT TO:marc@fastmail.com
 DATA
 Received: from test.module (localhost [127.0.0.1])
     by server.example.com (Authentication Milter) with ESMTP
+############
+############
 Authentication-Results: server.example.com;
     dkim=pass (1024-bit rsa key) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3;
     x-google-dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
-    x-local-ip=pass
+    x-local-ip=pass;
+    x-tls=pass version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128
 Return-Path: <marc@marcbradshaw.net>
+Received: from mail-ua0-f173.google.com (mail-ua0-f173.google.com [209.85.217.173])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mx5.messagingengine.com (Postfix) with ESMTPS
+        for <marc@fastmail.com>; Thu,  1 Dec 2016 22:35:06 -0500 (EST)
 Received: by mail-we0-f171.google.com with SMTP id k11so1456187wes.2
         for <marc@fastmail.com>; Sat, 24 Jan 2015 19:35:19 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
@@ -115,6 +125,8 @@ RCPT TO:marc@fastmail.com
 DATA
 Received: from test.module (localhost [127.0.0.1])
     by server.example.com (Authentication Milter) with ESMTP
+############
+############
 Authentication-Results: server.example.com;
     dkim-adsp=unknown (ADSP policy from marcbradshaw.net);
     dkim=fail (bad RSA signature; 1024-bit rsa key) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3;
@@ -194,6 +206,8 @@ RCPT TO:test@example.com
 DATA
 Received: from test.module (localhost [127.0.0.1])
     by server.example.com (Authentication Milter) with ESMTP
+############
+############
 Authentication-Results: server.example.com;
     dkim=none (no signatures found);
     dmarc=none (p=none) header.from=example.com;

@@ -19,8 +19,8 @@ sub register_metrics {
 sub pre_loop_setup {
     my ( $self ) = @_;
     my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
-    if ( $protocol ne 'milter' ) {
-        warn 'The TLS handler only works with the milter protocol';
+    if ( $protocol eq 'smtp' ) {
+        warn 'When in smtp mode, the TLS handler requires the MTA to write TLS data into the first Received header.';
     }
     return;
 }
