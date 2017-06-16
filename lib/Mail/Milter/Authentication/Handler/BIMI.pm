@@ -89,9 +89,11 @@ sub eom_callback {
         $self->add_auth_header( $AuthResults );
         my $Record = $BIMI->record();
         my $URLList = $Record->url_list();
-        $self->prepend_header( 'BIMI-Location', join( "\n",
-            'v=BIMI1;',
-            '    l=' . join( ',', @$URLList ) ) );
+        if ( $Result->result() eq 'pass' ) {
+            $self->prepend_header( 'BIMI-Location', join( "\n",
+                'v=BIMI1;',
+                '    l=' . join( ',', @$URLList ) ) );
+        }
 
         $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
 
