@@ -17,15 +17,54 @@ sub default_config {
 sub register_metrics {
     return {
         'bimi_total' => 'The number of emails processed for BIMI',
+        'bimi_removed_total' => 'The number BIMI-Location headers removed',
     };
+}
+
+sub remove_bimi_header {
+    my ( $self, $value ) = @_;
+    $self->metric_count( 'bimi_remove_total' );
+    if ( !exists( $self->{'remove_bimi_headers'} ) ) {
+        $self->{'remove_bimi_headers'} = [];
+    }
+    push @{ $self->{'remove_bimi_headers'} }, $value;
+    return;
+}
+
+sub envfrom_callback {
+    my ( $self, $env_from ) = @_;
+    delete $self->{'bimi_header_index'};
+    delete $self->{'remove_bimi_headers'};
+    return;
 }
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
+
+    # Not sure where this should go in the flow, so it's going here!
+    # Which is clearly, or at least probably the wrong place.
+    if ( lc $header eq 'bimi-location' ) {
+        if ( !exists $self->{'bimi_header_index'} ) {
+            $self->{'bimi_header_index'} = 0;
+        }
+        $self->{'bimi_header_index'} =
+        $self->{'bimi_header_index'} + 1;
+        $self->remove_bimi_header( $self->{'bimi_header_index'} );
+        my $forged_header =
+          '(Received BIMI-Location header removed by '
+          . $self->get_my_hostname()
+          . ')' . "\n"
+          . '    '
+          . $value;
+        $self->append_header( 'X-Received-BIMI-Location',
+            $forged_header );
+    }
+
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
+
     if ( lc $header eq 'bimi-selector' ) {
         if ( exists $self->{'selector'} ) {
             $self->dbgout( 'BIMIFail', 'Multiple BIMI-Selector fields', LOG_INFO );
@@ -59,6 +98,15 @@ sub eom_requires {
 sub eom_callback {
     my ($self) = @_;
     my $config = $self->handler_config();
+
+    # Again, not sure where this should go, so it's going here.
+    if ( exists( $self->{'remove_bimi_headers'} ) ) {
+        foreach my $header ( reverse @{ $self->{'remove_bimi_headers'} } ) {
+            $self->dbgout( 'RemoveBIMILocationHeader', $header, LOG_DEBUG );
+            $self->change_header( 'BIMI-Location', $header, q{} );
+        }
+    }
+
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
@@ -111,6 +159,8 @@ sub close_callback {
     delete $self->{'selector'};
     delete $self->{'from_header'};
     delete $self->{'failmode'};
+    delete $self->{'remove_bimi_headers'};
+    delete $self->{'bimi_header_index'};
     return;
 }
 
