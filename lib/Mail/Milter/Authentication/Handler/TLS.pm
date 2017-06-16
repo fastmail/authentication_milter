@@ -64,8 +64,10 @@ sub envfrom_callback {
 sub header_callback {
     my ( $self, $header, $value ) = @_;
 
+    return if lc $header ne 'received';
     return if ( exists( $self->{'first_header_read'} ) );
     $self->{'first_header_read'} = 1;
+
 
     my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
     return if $protocol ne 'smtp';
