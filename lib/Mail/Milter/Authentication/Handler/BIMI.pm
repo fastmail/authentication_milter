@@ -4,7 +4,6 @@ use warnings;
 use base 'Mail::Milter::Authentication::Handler';
 use version; our $VERSION = version->declare('v1.1.2');
 
-use Data::Dumper;
 use English qw{ -no_match_vars };
 use Mail::BIMI;
 use Sys::Syslog qw{:standard :macros};
