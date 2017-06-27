@@ -22,6 +22,7 @@ sub default_config {
         'detect_list_id' => 1,
         'report_skip_to' => [ 'my_report_from_address@example.com' ],
         'no_report'      => 0,
+        'config_file'    => '/etc/mail-dmarc.ini',
     };
 }
 
@@ -63,6 +64,11 @@ sub pre_loop_setup {
     my ( $self ) = @_;
     $PSL_CHECKED_TIME = time;
     my $dmarc = Mail::DMARC::PurePerl->new();
+    my $config = $self->{'config'};
+    if ( exists ( $config->{ 'config_file' } ) ) {
+        $self->log_error( 'DMARC config file does not exist' ) if ! exists $config->{ 'config_file' };
+        $dmarc->config( $config->{ 'config_file' } );
+    }
     my $psl = eval { $dmarc->get_public_suffix_list(); };
     if ( $psl ) {
         $self->{'thischild'}->loginfo( 'DMARC Preloaded PSL' );
@@ -77,6 +83,11 @@ sub pre_fork_setup {
     my ( $self ) = @_;
     my $now = time;
     my $dmarc = Mail::DMARC::PurePerl->new();
+    my $config = $self->{'config'};
+    if ( exists ( $config->{ 'config_file' } ) ) {
+        $self->log_error( 'DMARC config file does not exist' ) if ! exists $config->{ 'config_file' };
+        $dmarc->config( $config->{ 'config_file' } );
+    }
     my $check_time = 60*10; # Check no more often than every 10 minutes
     if ( $now > $PSL_CHECKED_TIME + $check_time ) {
         $PSL_CHECKED_TIME = $now;
@@ -112,6 +123,10 @@ sub get_dmarc_object {
 
     eval {
         $dmarc = Mail::DMARC::PurePerl->new();
+        if ( exists ( $config->{ 'config_file' } ) ) {
+            $self->log_error( 'DMARC config file does not exist' ) if ! exists $config->{ 'config_file' };
+            $dmarc->config( $config->{ 'config_file' } );
+        }
         if ( $dmarc->can('set_resolver') ) {
             my $resolver = $self->get_object('resolver');
             $dmarc->set_resolver($resolver);
