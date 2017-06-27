@@ -476,24 +476,25 @@ This handler requires the SPF and DKIM handlers to be installed and active.
 
 =head1 CONFIGURATION
 
-        "DMARC" : {                                     | Config for the DMARC Module
-                                                        | Requires DKIM and SPF
-            "hard_reject"         : 0,                  | Reject mail which fails with a reject policy
-            "no_list_reject"      : 0,                  | Do not reject mail detected as mailing list
-            "whitelisted"         : [                   | A list of ip addresses or CIDR ranges, or dkim domains
-                "10.20.30.40",                          | for which we do not want to hard reject mail on fail p=reject
-                "dkim:bad.forwarder.com",               | (valid) DKIM signing domains can also be whitelisted by
-                "20.30.40.0/24"                         | having an entry such as "dkim:domain.com"
+        "DMARC" : {                                      | Config for the DMARC Module
+                                                         | Requires DKIM and SPF
+            "hard_reject"         : 0,                   | Reject mail which fails with a reject policy
+            "no_list_reject"      : 0,                   | Do not reject mail detected as mailing list
+            "whitelisted"         : [                    | A list of ip addresses or CIDR ranges, or dkim domains
+                "10.20.30.40",                           | for which we do not want to hard reject mail on fail p=reject
+                "dkim:bad.forwarder.com",                | (valid) DKIM signing domains can also be whitelisted by
+                "20.30.40.0/24"                          | having an entry such as "dkim:domain.com"
             ],
-            "hide_none"           : 0,                  | Hide auth line if the result is 'none'
-            "detect_list_id"      : "1",                | Detect a list ID and modify the DMARC authentication header
-                                                        | to note this, useful when making rules for junking email
-                                                        | as mailing lists frequently cause false DMARC failures.
-            "report_skip_to"     : [                    | Do not send DMARC reports for emails to these addresses.
-                "dmarc@yourdomain.com",                 | This can be used to avoid report loops for email sent to
-                "dmarc@example.com"                     | your report from addresses.
+            "hide_none"           : 0,                   | Hide auth line if the result is 'none'
+            "detect_list_id"      : "1",                 | Detect a list ID and modify the DMARC authentication header
+                                                         | to note this, useful when making rules for junking email
+                                                         | as mailing lists frequently cause false DMARC failures.
+            "report_skip_to"     : [                     | Do not send DMARC reports for emails to these addresses.
+                "dmarc@yourdomain.com",                  | This can be used to avoid report loops for email sent to
+                "dmarc@example.com"                      | your report from addresses.
             ],
-            "no_report"          : "1"                  | If set then we will not attempt to store DMARC reports.
+            "no_report"          : "1",                  | If set then we will not attempt to store DMARC reports.
+            "config_file"        : "/etc/mail-dmarc.ini" | Optional path to dmarc config file
         },
 
 =head1 SYNOPSIS
