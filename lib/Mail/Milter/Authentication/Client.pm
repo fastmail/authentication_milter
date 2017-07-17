@@ -318,7 +318,7 @@ sub process {
         while ( @process_header ) {
             my $key = shift @process_header;
             my $value = shift @process_header;
-            $value //= '';
+            $value = '' unless defined $value;
             $header_string .= "$key: $value\015\012";
         }
         my $header_obj = Email::Simple::Header->new( $header_string );
