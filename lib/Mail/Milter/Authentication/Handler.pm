@@ -994,6 +994,8 @@ sub dbgoutwrite {
 sub add_headers {
     my ($self) = @_;
 
+    my $config = $self->config();
+
     my $header = $self->get_my_hostname();
     my @auth_headers;
     my $top_handler = $self->get_top_handler();
@@ -1012,6 +1014,24 @@ sub add_headers {
     }
 
     $self->prepend_header( 'Authentication-Results', $header );
+
+    eval {
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        if ( $config->{'addheader_timeout'} ) {
+            alarm( $config->{'addheader_timeout'} );
+        }
+        my $callbacks = $self->get_callbacks( 'addheader' );
+        foreach my $handler ( @$callbacks ) {
+            $self->get_handler($handler)->addheader_callback($self);
+        }
+        alarm(0);
+    };
+    if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_total', { 'stage' => 'addheader' } );
+        $self->log_error( 'Final callback error ' . $error );
+        $self->exit_on_close();
+        $self->tempfail_on_error();
+    }
 
     if ( exists( $top_handler->{'pre_headers'} ) ) {
         foreach my $header ( @{ $top_handler->{'pre_headers'} } ) {
