@@ -836,7 +836,7 @@ Mail::Milter::Authentication - A Perl Mail Authentication Milter
 
 =head1 DESCRIPTION
 
-A Perl Implemetation of email authentication standards rolled up into a single easy to use milter.
+A Perl Implementation of email authentication standards rolled up into a single easy to use milter.
 
 =head1 SYNOPSIS
 

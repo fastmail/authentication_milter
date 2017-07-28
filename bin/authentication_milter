@@ -186,7 +186,7 @@ __END__
 
 =item -d|--daemon
 
-  detatch from shell and run as a daemon
+  detach from shell and run as a daemon
 
 =item --pidfile <file>
 

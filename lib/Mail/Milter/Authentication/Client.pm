@@ -1276,7 +1276,7 @@ object.
 =item protocol_negotiation
 
 Talk to the milter filter, describing the list of actions it may
-perform, and any email content that wont be sent.
+perform, and any email content that won't be sent.
 Accepts as argument the hash of allowable actions and withheld content.
 The hash keys are :
 Allowable actions by the filter :
@@ -1343,12 +1343,12 @@ e.g.
 
 informs the filter it is able to change the contents of the message
 body, but it may not add message headers, it will not receive an end
-of headers signal, nor will it receive the conection details.
+of headers signal, nor will it receive the connection details.
 
 The method returns three parameters, the protocol version, an array
 reference containing all the names of the actions the filter
 understands it is able to perform, and an array reference
-containing the names of the content it understands it wont be sent.
+containing the names of the content it understands it won't be sent.
 
 =item send_abort
 
@@ -1358,7 +1358,7 @@ Accepts nothing, returns nothing.
 =item send_body
 
 Send the body of the email to the mail filter.
-NOTE the filter will only accept upto 65535 bytes of body at a time.
+NOTE the filter will only accept up to 65535 bytes of body at a time.
 Feed the body to the filter piece by piece by repeat calls to send_body
 with each body chunk until all the body is sent.
 Accepts the message body, returns reference to an array of return codes
