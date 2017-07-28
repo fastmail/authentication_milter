@@ -54,7 +54,7 @@ sub envfrom_callback {
             $metric_data->{ 'bits' } = $bits;
         }
 
-        $self->metric_count( 'authenticated_connect_total', $metric_data );
+        $self->metric_count( 'tls_connect_total', $metric_data );
 
         $self->add_auth_header( $header );
     }
@@ -103,7 +103,7 @@ sub header_callback {
             $metric_data->{ 'bits' } = $bits;
         }
 
-        $self->metric_count( 'authenticated_connect_total', $metric_data );
+        $self->metric_count( 'tls_connect_total', $metric_data );
 
         $self->add_auth_header( $header );
     }
