@@ -134,7 +134,7 @@ sub envfrom_callback {
         $self->dbgout( 'SPFCode', $result_code, LOG_INFO );
 
         if ( !( $config->{'hide_received-spf_header'} ) ) {
-            if ( !( $config->{'skip_none'} && $result_code eq 'none' ) ) {
+            if ( !( $config->{'hide_none'} && $result_code eq 'none' ) ) {
                 my $result_header = $spf_result->received_spf_header();
                 my ( $header, $value ) = split( ': ', $result_header, 2 );
                 $value = $self->wrap_header( $value );
