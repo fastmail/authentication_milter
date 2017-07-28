@@ -166,7 +166,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - SPF Module
+  Authentication-Milter - SPF Module
 
 =head1 DESCRIPTION
 

@@ -119,7 +119,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - Sanitize Module
+  Authentication-Milter - Sanitize Module
 
 =head1 DESCRIPTION
 

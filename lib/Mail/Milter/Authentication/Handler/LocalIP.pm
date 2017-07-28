@@ -74,7 +74,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - LocalIP Module
+  Authentication-Milter - LocalIP Module
 
 =head1 DESCRIPTION
 

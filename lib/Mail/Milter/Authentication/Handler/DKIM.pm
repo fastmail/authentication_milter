@@ -393,7 +393,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - DKIM Module
+  Authentication-Milter - DKIM Module
 
 =head1 DESCRIPTION
 

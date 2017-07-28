@@ -129,7 +129,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - ReturnOK Module
+  Authentication-Milter - ReturnOK Module
 
 =head1 DESCRIPTION
 

@@ -466,7 +466,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - DMARC Module
+  Authentication-Milter - DMARC Module
 
 =head1 DESCRIPTION
 

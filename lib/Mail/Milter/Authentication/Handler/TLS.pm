@@ -123,7 +123,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - TLS Module
+  Authentication-Milter - TLS Module
 
 =head1 DESCRIPTION
 

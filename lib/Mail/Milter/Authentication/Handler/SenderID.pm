@@ -129,7 +129,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - SenderID Module
+  Authentication-Milter - SenderID Module
 
 =head1 DESCRIPTION
 

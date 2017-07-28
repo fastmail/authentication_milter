@@ -153,7 +153,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - IPRev Module
+  Authentication-Milter - IPRev Module
 
 =head1 DESCRIPTION
 

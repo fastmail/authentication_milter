@@ -66,7 +66,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - Auth Module
+  Authentication-Milter - Auth Module
 
 =head1 DESCRIPTION
 

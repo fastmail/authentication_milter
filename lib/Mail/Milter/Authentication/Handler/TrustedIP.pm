@@ -64,7 +64,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - TrustedIP Module
+  Authentication-Milter - TrustedIP Module
 
 =head1 DESCRIPTION
 

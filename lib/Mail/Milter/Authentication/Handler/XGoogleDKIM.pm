@@ -296,7 +296,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - X Google DKIM Module
+  Authentication-Milter - X Google DKIM Module
 
 =head1 DESCRIPTION
 

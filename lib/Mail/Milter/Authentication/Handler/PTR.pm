@@ -52,7 +52,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - PTR Module
+  Authentication-Milter - PTR Module
 
 =head1 DESCRIPTION
 

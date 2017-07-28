@@ -24,7 +24,7 @@ __END__
 
 =head1 NAME
 
-  Authentication Milter - AddID Module
+  Authentication-Milter - AddID Module
 
 =head1 DESCRIPTION
 
