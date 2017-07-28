@@ -11,7 +11,7 @@ Received: from test.module (localhost [127.0.0.1])
 ############
 Authentication-Results: server.example.com;
     dkim-adsp=unknown (ADSP policy from goestheweasel.com);
-    dkim=pass (2048-bit rsa key) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=S/mtomBF;
+    dkim=pass (2048-bit rsa key sha1) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=S/mtomBF;
     dmarc=fail (p=reject) header.from=goestheweasel.com;
     iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
     spf=softfail smtp.mailfrom=marc@marcbradshaw.net smtp.helo=bad.name.google.com;
