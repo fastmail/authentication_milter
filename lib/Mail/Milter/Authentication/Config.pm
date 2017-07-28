@@ -101,7 +101,7 @@ sub get_config {
         opendir $dh, $folder;
         my @config_files =
             sort
-            grep { $_ =~ /\.json/ }
+            grep { $_ =~ /\.json$/ }
             grep { not $_ =~ /^\./ }
             readdir($dh);
         closedir $dh;
