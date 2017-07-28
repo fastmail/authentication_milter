@@ -234,10 +234,11 @@ sub eom_callback {
                     $key_size = $key->size();
                     $key_type = $key->type();
                 };
-                my $key_data = $key_size . '-bit ' . $key_type . ' key';
 
                 my $hash_algorithm   = eval { $signature->hash_algorithm(); };
                 my $canonicalization = eval { $signature->canonicalization(); };
+
+                my $key_data = $key_size . '-bit ' . $key_type . ' key ' . $hash_algorithm;
 
                 $self->metric_count( 'dkim_signatures', {
                     'type'             => $type,
