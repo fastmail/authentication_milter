@@ -452,6 +452,7 @@ sub start {
     $srvargs{'syslog_facility'}   = LOG_MAIL;
     $srvargs{'syslog_ident'}      = $Mail::Milter::Authentication::Config::IDENT;
     $srvargs{'syslog_logopt'}     = 'pid';
+    $srvargs{'syslog_logsock'}    = 'native';
 
     if ( $EUID == 0 ) {
         my $user  = $config->{'runas'};
