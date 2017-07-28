@@ -10,7 +10,8 @@ use Mail::SPF;
 
 sub default_config {
     return {
-        'hide_none' => 0,
+        'hide_received-spf_header' => 0,
+        'hide_none'                => 0,
     };
 }
 
@@ -132,12 +133,14 @@ sub envfrom_callback {
 
         $self->dbgout( 'SPFCode', $result_code, LOG_INFO );
 
-        if ( !( $config->{'skip_none'} && $result_code eq 'none' ) ) {
-            my $result_header = $spf_result->received_spf_header();
-            my ( $header, $value ) = split( ': ', $result_header, 2 );
-            $value = $self->wrap_header( $value );
-            $self->prepend_header( $header, $value );
-            $self->dbgout( 'SPFHeader', $result_header, LOG_DEBUG );
+        if ( !( $config->{'hide_received-spf_header'} ) ) {
+            if ( !( $config->{'skip_none'} && $result_code eq 'none' ) ) {
+                my $result_header = $spf_result->received_spf_header();
+                my ( $header, $value ) = split( ': ', $result_header, 2 );
+                $value = $self->wrap_header( $value );
+                $self->prepend_header( $header, $value );
+                $self->dbgout( 'SPFHeader', $result_header, LOG_DEBUG );
+            }
         }
     };
     if ( my $error = $@ ) {
@@ -175,7 +178,9 @@ Implements the SPF standard checks.
 =head1 CONFIGURATION
 
         "SPF" : {                                       | Config for the SPF Module
-            "hide_none" : 0                             | Hide auth line if the result is 'none'
+            "hide_received-spf_header" : 0,             | Do not add the "Received-SPF" header
+            "hide_none"                : 0              | Hide auth line if the result is 'none'
+                                                        | if not hidden at all
         },
 
 =head1 SYNOPSIS
