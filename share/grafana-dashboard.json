@@ -1,18 +1,17 @@
 {
-  "id": 8,
-  "title": "Authentication Milter",
-  "tags": [
-    "fastmail"
-  ],
-  "style": "dark",
-  "timezone": "browser",
+  "annotations": {
+    "list": []
+  },
   "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
   "hideControls": false,
-  "sharedCrosshair": false,
+  "id": 11,
+  "links": [],
+  "refresh": false,
   "rows": [
     {
-      "collapse": false,
-      "editable": true,
+      "collapse": true,
       "height": "250px",
       "panels": [
         {
@@ -22,14 +21,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 9,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -63,6 +56,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Emails processed rate by result",
@@ -74,7 +68,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -102,14 +99,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 12,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -150,6 +141,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Milter connections rate",
@@ -161,7 +153,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -189,14 +184,8 @@
           "editable": true,
           "error": false,
           "fill": 0,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 17,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -230,6 +219,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Emails processed rate by node",
@@ -241,7 +231,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -263,12 +256,15 @@
           ]
         }
       ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
       "showTitle": true,
-      "title": "Throughput"
+      "title": "Throughput",
+      "titleSize": "h6"
     },
     {
-      "collapse": false,
-      "editable": true,
+      "collapse": true,
       "height": "250px",
       "panels": [
         {
@@ -278,14 +274,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 3,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -319,6 +309,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "SPF results rate",
@@ -330,7 +321,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -352,29 +346,28 @@
           ]
         }
       ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
       "showTitle": true,
-      "title": "SPF"
+      "title": "SPF",
+      "titleSize": "h6"
     },
     {
-      "collapse": false,
-      "editable": true,
+      "collapse": true,
       "height": "250px",
       "panels": [
         {
           "aliasColors": {},
           "bars": false,
+          "dashLength": 10,
+          "dashes": false,
           "datasource": null,
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 1,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -395,6 +388,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
+          "spaceLength": 10,
           "span": 12,
           "stack": false,
           "steppedLine": false,
@@ -406,9 +400,10 @@
               "legendFormat": "{{ result }}",
               "metric": "authmilter_dkim_error_total",
               "refId": "A",
-              "step": 10
+              "step": 20
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "DKIM results rate",
@@ -420,7 +415,11 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -444,18 +443,14 @@
         {
           "aliasColors": {},
           "bars": false,
+          "dashLength": 10,
+          "dashes": false,
           "datasource": null,
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 5,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -475,6 +470,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
+          "spaceLength": 10,
           "span": 12,
           "stack": false,
           "steppedLine": false,
@@ -486,9 +482,10 @@
               "legendFormat": "{{ result }}",
               "metric": "authmilter_dkim_error_total",
               "refId": "A",
-              "step": 10
+              "step": 20
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "X-Google-DKIM results rate",
@@ -500,7 +497,11 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -524,18 +525,14 @@
         {
           "aliasColors": {},
           "bars": true,
+          "dashLength": 10,
+          "dashes": false,
           "datasource": null,
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 22,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -556,6 +553,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
+          "spaceLength": 10,
           "span": 12,
           "stack": true,
           "steppedLine": false,
@@ -567,9 +565,10 @@
               "legendFormat": " {{ key_size }} {{ key_type }} {{ result }}",
               "metric": "authmilter_dkim_error_total",
               "refId": "A",
-              "step": 10
+              "step": 20
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "DKIM signatures rate",
@@ -581,7 +580,11 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -605,18 +608,14 @@
         {
           "aliasColors": {},
           "bars": false,
+          "dashLength": 10,
+          "dashes": false,
           "datasource": null,
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 23,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -637,6 +636,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
+          "spaceLength": 10,
           "span": 12,
           "stack": false,
           "steppedLine": false,
@@ -648,9 +648,10 @@
               "legendFormat": " {{ key_size }}",
               "metric": "authmilter_dkim_error_total",
               "refId": "A",
-              "step": 10
+              "step": 20
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "DKIM key sizes rate",
@@ -662,7 +663,179 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 24,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": false,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_dkim_signatures{node=~\"$node\"}[$ratetime])) by(hash_algorithm)",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": " {{ hash_algorithm }}",
+              "metric": "authmilter_dkim_error_total",
+              "refId": "A",
+              "step": 20
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "DKIM hashing algorithm rate",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 25,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": false,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_dkim_signatures{node=~\"$node\"}[$ratetime])) by(canonicalization)",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": " {{ canonicalization }}",
+              "metric": "authmilter_dkim_error_total",
+              "refId": "A",
+              "step": 20
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "DKIM canonicalization rate",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -684,12 +857,15 @@
           ]
         }
       ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
       "showTitle": true,
-      "title": "DKIM"
+      "title": "DKIM",
+      "titleSize": "h6"
     },
     {
-      "collapse": false,
-      "editable": true,
+      "collapse": true,
       "height": "250px",
       "panels": [
         {
@@ -699,14 +875,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 2,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -740,6 +910,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "DMARC results rate",
@@ -751,7 +922,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -779,15 +953,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)",
-            "thresholdLine": false
-          },
+          "grid": {},
           "id": 13,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -822,6 +989,7 @@
               "step": 5
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "DMARC Fail Policies split",
@@ -833,7 +1001,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -861,14 +1032,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 15,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -906,6 +1071,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "DMARC Failures ListID Detection",
@@ -917,7 +1083,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -945,14 +1114,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 16,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -990,6 +1153,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "DMARC Failures Whitelist",
@@ -1001,7 +1165,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1023,12 +1190,15 @@
           ]
         }
       ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
       "showTitle": true,
-      "title": "DMARC"
+      "title": "DMARC",
+      "titleSize": "h6"
     },
     {
-      "collapse": false,
-      "editable": true,
+      "collapse": true,
       "height": "250px",
       "panels": [
         {
@@ -1038,14 +1208,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 21,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -1078,6 +1242,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "SMIME results rate",
@@ -1089,7 +1254,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1111,12 +1279,15 @@
           ]
         }
       ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
       "showTitle": true,
-      "title": "SMIME"
+      "title": "SMIME",
+      "titleSize": "h6"
     },
     {
-      "collapse": false,
-      "editable": true,
+      "collapse": true,
       "height": "250px",
       "panels": [
         {
@@ -1126,14 +1297,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 18,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -1174,6 +1339,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Children count",
@@ -1185,7 +1351,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1213,14 +1382,8 @@
           "editable": true,
           "error": false,
           "fill": 0,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 7,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -1253,6 +1416,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Total children by node",
@@ -1264,7 +1428,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1292,14 +1459,8 @@
           "editable": true,
           "error": false,
           "fill": 0,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 19,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -1332,6 +1493,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Spare children by node",
@@ -1343,7 +1505,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1371,14 +1536,8 @@
           "editable": true,
           "error": false,
           "fill": 0,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 20,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -1411,6 +1570,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Processing children by node",
@@ -1422,7 +1582,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1450,14 +1613,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 14,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -1506,6 +1663,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Fork rate",
@@ -1517,7 +1675,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1539,12 +1700,15 @@
           ]
         }
       ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
       "showTitle": true,
-      "title": "Processes"
+      "title": "Processes",
+      "titleSize": "h6"
     },
     {
-      "collapse": false,
-      "editable": true,
+      "collapse": true,
       "height": "250px",
       "panels": [
         {
@@ -1554,14 +1718,8 @@
           "editable": true,
           "error": false,
           "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 10,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -1595,6 +1753,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Callback Errors Total",
@@ -1606,7 +1765,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1628,12 +1790,15 @@
           ]
         }
       ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
       "showTitle": true,
-      "title": "Errors"
+      "title": "Errors",
+      "titleSize": "h6"
     },
     {
-      "collapse": false,
-      "editable": true,
+      "collapse": true,
       "height": "250px",
       "panels": [
         {
@@ -1643,14 +1808,8 @@
           "editable": true,
           "error": false,
           "fill": 0,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
+          "grid": {},
           "id": 11,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -1681,6 +1840,7 @@
               "step": 10
             }
           ],
+          "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
           "title": "Uptime",
@@ -1692,7 +1852,10 @@
           },
           "type": "graph",
           "xaxis": {
-            "show": true
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
           },
           "yaxes": [
             {
@@ -1714,10 +1877,118 @@
           ]
         }
       ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
       "showTitle": true,
-      "title": "Uptime"
+      "title": "Uptime",
+      "titleSize": "h6"
     }
   ],
+  "schemaVersion": 14,
+  "style": "dark",
+  "tags": [
+    "fastmail"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": null,
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": true,
+        "name": "node",
+        "options": [],
+        "query": "label_values(authmilter_uptime_seconds_total, node)",
+        "refresh": 2,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "auto": false,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "text": "1m",
+          "value": "1m"
+        },
+        "datasource": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "",
+        "multi": false,
+        "name": "ratetime",
+        "options": [
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h"
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h"
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d"
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d"
+          }
+        ],
+        "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "refresh": 2,
+        "type": "interval"
+      }
+    ]
+  },
   "time": {
     "from": "now-3h",
     "to": "now"
@@ -1747,147 +2018,7 @@
       "30d"
     ]
   },
-  "templating": {
-    "list": [
-      {
-        "current": {
-          "value": [
-            "$__all"
-          ],
-          "text": "All"
-        },
-        "datasource": null,
-        "hide": 0,
-        "includeAll": true,
-        "multi": true,
-        "name": "node",
-        "options": [
-          {
-            "text": "All",
-            "value": "$__all",
-            "selected": true
-          },
-          {
-            "text": "mx1",
-            "value": "mx1",
-            "selected": false
-          },
-          {
-            "text": "mx2",
-            "value": "mx2",
-            "selected": false
-          },
-          {
-            "text": "mx3",
-            "value": "mx3",
-            "selected": false
-          },
-          {
-            "text": "mx4",
-            "value": "mx4",
-            "selected": false
-          },
-          {
-            "text": "mx5",
-            "value": "mx5",
-            "selected": false
-          },
-          {
-            "text": "mx6",
-            "value": "mx6",
-            "selected": false
-          },
-          {
-            "text": "sdb1",
-            "value": "sdb1",
-            "selected": false
-          },
-          {
-            "text": "sdb2",
-            "value": "sdb2",
-            "selected": false
-          }
-        ],
-        "query": "label_values(authmilter_uptime_seconds_total, node)",
-        "refresh": 2,
-        "regex": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "type": "interval",
-        "datasource": null,
-        "refresh": 0,
-        "name": "ratetime",
-        "hide": 0,
-        "options": [
-          {
-            "text": "1m",
-            "value": "1m",
-            "selected": true
-          },
-          {
-            "text": "10m",
-            "value": "10m",
-            "selected": false
-          },
-          {
-            "text": "30m",
-            "value": "30m",
-            "selected": false
-          },
-          {
-            "text": "1h",
-            "value": "1h",
-            "selected": false
-          },
-          {
-            "text": "6h",
-            "value": "6h",
-            "selected": false
-          },
-          {
-            "text": "12h",
-            "value": "12h",
-            "selected": false
-          },
-          {
-            "text": "1d",
-            "value": "1d",
-            "selected": false
-          },
-          {
-            "text": "7d",
-            "value": "7d",
-            "selected": false
-          },
-          {
-            "text": "14d",
-            "value": "14d",
-            "selected": false
-          },
-          {
-            "text": "30d",
-            "value": "30d",
-            "selected": false
-          }
-        ],
-        "includeAll": false,
-        "multi": false,
-        "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
-        "current": {
-          "text": "1m",
-          "value": "1m"
-        }
-      }
-    ]
-  },
-  "annotations": {
-    "list": []
-  },
-  "refresh": false,
-  "schemaVersion": 12,
-  "version": 26,
-  "links": [],
-  "gnetId": null
+  "timezone": "browser",
+  "title": "Authentication Milter",
+  "version": 5
 }
