@@ -36,9 +36,11 @@ sub envfrom_callback {
     my $version = $self->get_symbol('{tls_version}');
     my $cipher  = $self->get_symbol('{cipher}');
     my $bits    = $self->get_symbol('{cipher_bits}');
+    # on postfix the macro is empty on untrusted connections
+    my $trusted = $self->get_symbol('{cert_issuer}') ? ', trusted' : '';
 
     if ($version) {
-        $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits", LOG_INFO );
+        $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits$trusted", LOG_INFO );
 
         my $header = q{};
         my $metric_data = {};
@@ -53,6 +55,7 @@ sub envfrom_callback {
             $header .= ' ' . $self->format_header_entry( 'bits', $bits );
             $metric_data->{ 'bits' } = $bits;
         }
+        $metric_data->{ 'trusted' } = $trusted ? 1 : 0;
 
         $self->metric_count( 'tls_connect_total', $metric_data );
 
