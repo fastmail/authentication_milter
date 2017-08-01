@@ -11,6 +11,7 @@ This milter verifies using the following standards.
 - DMARC
 - IPRev
 - Check HELO matches it's IP address
+- ARC
 
 Includes 3 additional modules.
 

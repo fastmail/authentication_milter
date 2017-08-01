@@ -46,6 +46,16 @@
             "detect_list_id" : "1"
         },
 
+        "ARC" : {
+            "hide_none" : 0,
+            "arcseal_domain" : "example.com",
+            "arcseal_selector" : "arc1",
+            "arcseal_headers" : "header1:header2",
+            "arcseal_algorithm" : "rsa-sha256",
+            "arcseal_key" : "base64 key text",
+            "arcseal_keyfile" : "/etc/arcseal.key"
+        },
+
         "PTR" : {},
 
         "SenderID" : {
