@@ -4,6 +4,7 @@ Changes
 lib/Mail/Milter/Authentication/Client.pm
 lib/Mail/Milter/Authentication/Config.pm
 lib/Mail/Milter/Authentication/Constants.pm
+lib/Mail/Milter/Authentication/Handler/ARC.pm
 lib/Mail/Milter/Authentication/Handler/AddID.pm
 lib/Mail/Milter/Authentication/Handler/Auth.pm
 lib/Mail/Milter/Authentication/Handler/DKIM.pm
