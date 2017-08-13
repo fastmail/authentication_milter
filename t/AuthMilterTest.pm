@@ -127,7 +127,9 @@ sub tools_pipeline_test {
         if (!$milter_pid) {
             $Mail::Milter::Authentication::Config::PREFIX = $prefix;
             $Mail::Milter::Authentication::Config::IDENT  = 'test_authentication_milter_test';
-            $Mail::Milter::Authentication::Handler::TestResolver = AuthMilterTestDNSCache->new(),
+            my $Resolver = AuthMilterTestDNSCache->new();
+            $Resolver->load_zonefile( 'zonefile' );
+            $Mail::Milter::Authentication::Handler::TestResolver = $Resolver,
             Mail::Milter::Authentication::start({
                 'pid_file'   => 'tmp/authentication_milter.pid',
                 'daemon'     => 0,

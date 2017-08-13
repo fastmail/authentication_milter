@@ -36,7 +36,9 @@ plan tests => $NumTests;
 my $prefix = 'config/normal.smtp';
 $Mail::Milter::Authentication::Config::PREFIX = $prefix;
 $Mail::Milter::Authentication::Config::IDENT  = 'test_authentication_milter_test';
-$Mail::Milter::Authentication::Handler::TestResolver = AuthMilterTestDNSCache->new(),
+my $Resolver = AuthMilterTestDNSCache->new();
+$Resolver->load_zonefile( 'zonefile' );
+$Mail::Milter::Authentication::Handler::TestResolver = $Resolver;
 my $Authentication = Mail::Milter::Authentication->new();
 $Authentication->{'config'} = $Authentication->get_config();
 my $Handler = Mail::Milter::Authentication::Handler->new( $Authentication );

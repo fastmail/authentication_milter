@@ -1,0 +1,62 @@
+171.82.125.74.in-addr.arpa.	62004	IN	PTR	mail-we0-f171.google.com.
+20130820._domainkey.1e100.net.	61954	IN	TXT	( "k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnOv6+Txyz+SEc7mT719QQtOj6g2MjpErYUGVrRGGc7f5rmE1cRP1lhwx8PVoHOiuRzyok7IqjvAub9kk9fBoE9uXJB1QaRdMnKz7W/UhWemK5TEUgW1xT5qtBfUIpFRL34h6FbHbeysb4szi7aTg" erxI15o73cP5BoPVkQj4BQKkfTQYGNH03J5Db9uMqW/NNJ8fKCLKWO5C1e+NQ1lD6uwFCjJ6PWFmAIeUu9+LfYW89Tz1NnwtSkFC96Oky1cmnlBf4dhZ/Up/FMZmB9l7TA6gLEu6JijlDrNmx1o50WADPjjN4rGELLt3VuXn09y2piBPlZPU2SIiDQC0qX0JWQIDAQAB )
+;ERROR,1.2.3.4,PTR,NXDOMAIN
+;ERROR,123.123.123.123,PTR,NXDOMAIN
+;ERROR,99.123.123.123,PTR,NXDOMAIN
+;ERROR,_dmarc.example.com,TXT,NXDOMAIN
+;ERROR,_policy._domainkey.marcbradshaw.net,TXT,NXDOMAIN
+_adsp._domainkey.goestheweasel.com.	3600	IN	TXT	dkim=all
+_adsp._domainkey.marcbradshaw.net.	61955	IN	TXT	dkim=unknown
+_dmarc.goestheweasel.com.	334	IN	TXT	( "v=DMARC1; p=reject; rua=mailto:dmarc.reports@ops.twofiftyeight.ltd.uk; rf=afrf; pct=100;" )
+_dmarc.marcbradshaw.net.	61899	IN	TXT	( "v=DMARC1; p=none; rua=mailto:dmarc.reports@ops.twofiftyeight.ltd.uk; rf=afrf; pct=100;" )
+_domainkey.goestheweasel.com TXT
+_netblocks.google.com.	1423	IN	TXT	( "v=spf1 ip4:64.18.0.0/20 ip4:64.233.160.0/19 ip4:66.102.0.0/20 ip4:66.249.80.0/20 ip4:72.14.192.0/18 ip4:74.125.0.0/16 ip4:173.194.0.0/16 ip4:207.126.144.0/20 ip4:209.85.128.0/17 ip4:216.58.208.0/20 ip4:216.239.32.0/19 ~all" )
+_netblocks2.google.com.	3025	IN	TXT	( "v=spf1 ip6:2001:4860:4000::/36 ip6:2404:6800:4000::/36 ip6:2607:f8b0:4000::/36 ip6:2800:3f0:4000::/36 ip6:2a00:1450:4000::/36 ip6:2c0f:fb50:4000::/36 ~all" )
+_netblocks3.google.com.	2898	IN	TXT	"v=spf1 ~all"
+_policy._domainkey.goestheweasel.com TXT
+_spf.google.com.	242	IN	TXT	( "v=spf1 include:_netblocks.google.com include:_netblocks2.google.com include:_netblocks3.google.com ~all" )
+example.com MX
+example.com.	33024	IN	NS	a.iana-servers.net.
+example.com.	33024	IN	NS	b.iana-servers.net.
+example.com.	55	IN	TXT	"v=spf1 -all"
+example.com.	55	IN	TXT	( "$Id: example.com 3280 2014-12-10 00:15:12Z spowell $" )
+example.com.	60879	IN	A	93.184.216.34
+example.com.	60884	IN	A	93.184.216.34
+goestheweasel.com.	2957	IN	NS	ns1.linode.com.
+goestheweasel.com.	2957	IN	NS	ns2.linode.com.
+goestheweasel.com.	2957	IN	NS	ns3.linode.com.
+goestheweasel.com.	2957	IN	NS	ns4.linode.com.
+goestheweasel.com.	2957	IN	NS	ns5.linode.com.
+goestheweasel.com.	2957	IN	NS	ns5.twofiftyeight.ltd.uk.
+goestheweasel.com.	2957	IN	NS	ns7.twofiftyeight.ltd.uk.
+goestheweasel.com.	3392	IN	A	106.187.51.197
+goestheweasel.com.	3392	IN	A	212.71.247.19
+goestheweasel.com.	3393	IN	AAAA	2400:8900::f03c:91ff:fe6e:84c7
+goestheweasel.com.	3393	IN	AAAA	2a01:7e00::f03c:91ff:fe33:65c6
+goestheweasel.com.	3393	IN	MX	10 mx5.twofiftyeight.ltd.uk.
+goestheweasel.com.	3393	IN	MX	10 mx6.twofiftyeight.ltd.uk.
+goestheweasel.com.	3393	IN	MX	30 mx5.electric-dreams.org.
+goestheweasel.com.	3393	IN	MX	30 mx6.electric-dreams.org.
+goestheweasel.com.	3600	IN	TXT	( "v=spf1 ip4:212.71.247.19 ip6:2a01:7e00::f03c:91ff:fe33:65c6 ip4:106.187.51.197 ip6:2400:8900::f03c:91ff:fe6e:84c7 ip4:59.167.198.153 ip6:2001:44b8:62:c0::/64 -all" )
+goestheweasel.com.	3600	IN	TXT	( google-site-verification=d1EpeghHs1csmxXOLpyPWDSPH85IXudfTXhRch6O1Lw )
+goestheweasel.com._report._dmarc.ops.twofiftyeight.ltd.uk.	3570	IN	TXT	( v=DMARC1 )
+google._domainkey.marcbradshaw.net.	61969	IN	TXT	( "v=DKIM1; k=rsa; t=y; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC5zl5SXilsFKevQGiqBlayLeL+bBzi4N98RjV/yiM+unz+317bWhTU63biRyHbv0DZ431uqj8mPURgnLef+SBOYkEDv/dhizcqNVWHWHJou/I/oXpjPWJqVIBu242wxNLI3R92LhLGKg0W/J++PosQvlZ3ogYdmDNY+wmRYFPJlwIDAQAB" )
+mail-we0-f171.google.com.	56383	IN	A	74.125.82.171
+marcbradshaw.net.	61879	IN	NS	ns1.linode.com.
+marcbradshaw.net.	61879	IN	NS	ns2.linode.com.
+marcbradshaw.net.	61879	IN	NS	ns3.linode.com.
+marcbradshaw.net.	61879	IN	NS	ns4.linode.com.
+marcbradshaw.net.	61879	IN	NS	ns5.linode.com.
+marcbradshaw.net.	61879	IN	NS	ns5.twofiftyeight.ltd.uk.
+marcbradshaw.net.	61879	IN	NS	ns6.twofiftyeight.ltd.uk.
+marcbradshaw.net.	61883	IN	MX	10 ASPMX.L.GOOGLE.COM.
+marcbradshaw.net.	61883	IN	MX	20 ALT1.ASPMX.L.GOOGLE.COM.
+marcbradshaw.net.	61883	IN	MX	20 ALT2.ASPMX.L.GOOGLE.COM.
+marcbradshaw.net.	61883	IN	MX	30 ASPMX2.GOOGLEMAIL.COM.
+marcbradshaw.net.	61883	IN	MX	30 ASPMX3.GOOGLEMAIL.COM.
+marcbradshaw.net.	61883	IN	MX	30 ASPMX4.GOOGLEMAIL.COM.
+marcbradshaw.net.	61883	IN	MX	30 ASPMX5.GOOGLEMAIL.COM.
+marcbradshaw.net.	61932	IN	TXT	( "v=spf1 include:spf.mandrillapp.com include:_spf.google.com ip4:178.79.176.97 ip6:2a01:7e00::f03c:91ff:fe93:1cd ip4:106.187.51.197 ip6:2400:8900::f03c:91ff:fe6e:84c7 ip4:59.167.198.153 ip6:2001:44b8:62:c0::/64 ~all" )
+marcbradshaw.net._report._dmarc.ops.twofiftyeight.ltd.uk.	3124	IN	TXT	( v=DMARC1 )
+spf.mandrillapp.com.	31059	IN	TXT	( "v=spf1 ip4:198.2.128.0/24 ip4:198.2.132.0/22 ip4:205.201.131.128/25 ip4:205.201.134.128/25 ip4:205.201.136.0/23 ip4:205.201.139.0/24 ?all" )
+tfe2._domainkey.marcbradshaw.net.	3600	IN	TXT	( "v=DKIM1; k=rsa; " p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz/Enx3CbPOAGBZLtVwjDMiL4TPHCOEJSvPrBr/VsLcrO0cJ2bu4A5uXPK1DS31ihUEt9WmHVPXyRMe8teaZTekkF/MuS72uxFarvgXbUyHs/rq34OEIl03+pFDmmnjiIvJ4lxU0vhmNOa3OoqEJ4jNkI ah3g9Fg4+UI9YTKDx5F+CqpecFPYBXqw7AR+ZBpbimFP8/GrKRu3z1yh4U4B1tekWFVAKT1+L6tUad4N8uN+HU3oXLyJWfoS6F9JZ+sJpOAsRtwUS3KrqEUTlamfEHeB5SUIriInlksOFeapgsWPFejFPxD5ZRqDUy99v5/nOlM7uTLD7EnXPLOEzmK91wIDAQAB )

@@ -26,6 +26,10 @@ configure_requires (
 );
 
 build_requires (
+    'Net::DNS::Packet'     => 0,
+    'Net::DNS::Question'   => 0,
+    'Net::DNS::Resolver'   => 0,
+    'Net::DNS::ZoneFile'   => 0,
     'Test::More'           => 0,
     'Test::File::Contents' => 0,
     'Test::Perl::Critic'   => 0,
