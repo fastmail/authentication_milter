@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use lib 't';
 use Test::More;
 use Test::File::Contents;
-use AuthMilterTestDNSCache;
+use Net::DNS::Resolver::Mock;
 use AuthMilterTest;
 
 if ( ! -e 't/01-tools.t' ) {

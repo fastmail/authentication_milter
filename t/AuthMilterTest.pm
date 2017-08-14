@@ -2,7 +2,7 @@ package AuthMilterTest;
 
 use strict;
 use warnings;
-use AuthMilterTestDNSCache;
+use Net::DNS::Resolver::Mock;
 use Test::More;
 use Test::File::Contents;
 
@@ -127,8 +127,8 @@ sub tools_pipeline_test {
         if (!$milter_pid) {
             $Mail::Milter::Authentication::Config::PREFIX = $prefix;
             $Mail::Milter::Authentication::Config::IDENT  = 'test_authentication_milter_test';
-            my $Resolver = AuthMilterTestDNSCache->new();
-            $Resolver->load_zonefile( 'zonefile' );
+            my $Resolver = Net::DNS::Resolver::Mock->new();
+            $Resolver->zonefile_read( 'zonefile' );
             $Mail::Milter::Authentication::Handler::TestResolver = $Resolver,
             Mail::Milter::Authentication::start({
                 'pid_file'   => 'tmp/authentication_milter.pid',
