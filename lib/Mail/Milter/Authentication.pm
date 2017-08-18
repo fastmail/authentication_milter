@@ -327,14 +327,34 @@ sub get_valid_pid {
     my $pid = <$inf>;
     close $inf;
 
+    my $self_pid   = $PID;
+    my $found_self = 0;
+    my $found_pid  = 0;
+
     my $process_table = Proc::ProcessTable->new();
     foreach my $process ( @{$process_table->table} ) {
+        if ( $process->pid == $self_pid ) {
+            if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':control' ) {
+                $found_self = 1;
+            }
+        }
         if ( $process->pid == $pid ) {
+            $found_pid = 1;
             if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':master' ) {
                 return $pid;
             }
         }
     }
+
+    # If we didn't find ourself in the process table then we can assume that
+    # $0 is read only on our current operating system, and return the pid that we read from the
+    # pidfile if it is in the process table regardness of it's process name..
+    if ( ! $found_self ) {
+        if ( $found_pid ) {
+            return $pid;
+        }
+    }
+
     return undef; ## no critic
 }
 
@@ -352,6 +372,8 @@ sub control {
     my ( $args ) = @_;
     my $pid_file = $args->{'pid_file'};
     my $command  = $args->{'command'};
+
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':control';
 
     if ( $command eq 'stop' ) {
         my $pid = get_valid_pid( $pid_file ) || find_process();
