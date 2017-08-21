@@ -373,6 +373,7 @@ sub control {
     my $pid_file = $args->{'pid_file'};
     my $command  = $args->{'command'};
 
+    my $OriginalProgramName = $PROGRAM_NAME;
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':control';
 
     if ( $command eq 'stop' ) {
@@ -393,6 +394,7 @@ sub control {
         }
         else {
             print "No process found, starting up\n";
+            $PROGRAM_NAME = $OriginalProgramName;
             start({
                 'pid_file'   => $pid_file,
                 'daemon'     => 1,
