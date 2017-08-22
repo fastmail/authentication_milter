@@ -38,6 +38,7 @@ sub default_config {
         'connect_timeout'                 => 30,
         'command_timeout'                 => 30,
         'content_timeout'                 => 300,
+        'addheader_timeout'               => 30,
         'dns_timeout'                     => 10,
         'dns_retry'                       => 2,
         'tempfail_on_error'               => '1',
