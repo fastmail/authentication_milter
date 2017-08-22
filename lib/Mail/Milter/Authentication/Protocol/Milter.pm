@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Protocol::Milter;
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v1.1.2');
+use version; our $VERSION = version->declare('v1.1.3');
 
 use English qw{ -no_match_vars };
 use Net::IP;
