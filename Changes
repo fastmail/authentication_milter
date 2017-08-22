@@ -1,6 +1,13 @@
 Revision history for Mail-Milter-Authentication
 
-1.1.2   FUTURE
+1.1.2   2017-08-22
+        - Fixed process management under SmartOS
+        - Added post processing callback for adding headers (Required for future ARC handler)
+        - Improve DNS mocking in tests by using Net::DNS::Resolver::Mock
+        - Fix syslog for Debian 9
+        - Add DKIM hash algorithm to metrics and AR comments
+        - Parse headers for TLS information in SMTP protocol mode
+        - Misc bugfixes
 
 1.1.1   2017-04-14
         - Added metrics collection (prometheus)
