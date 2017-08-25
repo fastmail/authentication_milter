@@ -38,7 +38,7 @@ sub count {
         }
         $labels_txt = ' ' . join( ',', @labels_list );
     }
-    print $psocket 'METRIC.COUNT ' . $self->clean_label( $id ) . $labels_txt . "\n";
+    print $psocket 'METRIC.COUNT 1 ' . $self->clean_label( $id ) . $labels_txt . "\n";
     return;
 }
 
@@ -94,8 +94,9 @@ sub master_handler {
             }
             print $socket "\0\n";
         }
-        elsif ( $request =~ /^METRIC.COUNT (.*)$/ ) {
-            my $data = $1;
+        elsif ( $request =~ /^METRIC.COUNT (\d+) (.*)$/ ) {
+            my $count = $1;
+            my $data = $2;
             my ( $count_id, $labels ) = split( ' ', $data, 2 );
             $labels = '' if ! $labels;
             if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
@@ -104,7 +105,7 @@ sub master_handler {
             if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
                 $self->{'counter'}->{ $count_id }->{ $labels } = 0;
             }
-            $self->{'counter'}->{ $count_id }->{ $labels }++;
+            $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
         }
 
         alarm( 0 );
