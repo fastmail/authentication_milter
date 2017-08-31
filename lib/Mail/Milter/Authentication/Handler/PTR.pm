@@ -24,24 +24,32 @@ sub helo_callback {
     }
 
     my $iprev_handler = $self->get_handler('IPRev');
-    my $domain =
+    my $domains =
       exists( $iprev_handler->{'verified_ptr'} )
       ? $iprev_handler->{'verified_ptr'}
       : q{};
 
-    if ( lc $domain eq lc $helo_host ) {
+    my $found_match = 0;
+
+    foreach my $domain ( split ',', $domains ) {
+        if ( lc $domain eq lc $helo_host ) {
+            $found_match = 1;
+        }
+    }
+
+    if ( $found_match ) {
         $self->dbgout( 'PTRMatch', 'pass', LOG_DEBUG );
         $self->add_c_auth_header(
                 $self->format_header_entry( 'x-ptr',        'pass' ) . q{ }
               . $self->format_header_entry( 'x-ptr-helo',   $helo_host ) . q{ }
-              . $self->format_header_entry( 'x-ptr-lookup', $domain ) );
+              . $self->format_header_entry( 'x-ptr-lookup', $domains ) );
     }
     else {
         $self->dbgout( 'PTRMatch', 'fail', LOG_DEBUG );
         $self->add_c_auth_header(
                 $self->format_header_entry( 'x-ptr',        'fail' ) . q{ }
               . $self->format_header_entry( 'x-ptr-helo',   $helo_host ) . q{ }
-              . $self->format_header_entry( 'x-ptr-lookup', $domain ) );
+              . $self->format_header_entry( 'x-ptr-lookup', $domains ) );
     }
     return;
 }
