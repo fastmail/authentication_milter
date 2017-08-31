@@ -7,7 +7,6 @@ use version; our $VERSION = version->declare('v1.1.3');
 use Net::DNS;
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
-use List::Util qw{ uniq };
 
 sub default_config {
     return {};
@@ -72,7 +71,7 @@ sub connect_callback {
     }
 
     DOMAINLOOKUP:
-    foreach my $domain ( uniq sort keys %$ptr_list ) {
+    foreach my $domain ( sort keys %$ptr_list ) {
 
         my $ip_list = [];
 
@@ -121,8 +120,8 @@ sub connect_callback {
     }
 
     my @match_list;
-    foreach my $domain ( uniq sort keys %$ptr_list ) {
-        foreach my $address ( uniq sort @{ $ptr_list->{ $domain } } ) {
+    foreach my $domain ( sort keys %$ptr_list ) {
+        foreach my $address ( sort @{ $ptr_list->{ $domain } } ) {
             my $i2 = Net::IP->new($address);
             my $is_overlap = $i1->overlaps($i2) || 0;
             if ( $is_overlap == $IP_IDENTICAL ) {
