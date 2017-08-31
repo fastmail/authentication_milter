@@ -43,9 +43,9 @@ sub body_callback {
 sub eom_callback {
     my ($self) = @_;
 
-    $self->metric_count( 'size_total', {} );
-    $self->metric_count( 'header_bytes_total', {} );
-    $self->metric_count( 'body_bytes_totsl', {} );
+    $self->metric_count( 'size_total', {}, 1 );
+    $self->metric_count( 'header_bytes_total', {}, $self->{ 'headersize' } );
+    $self->metric_count( 'body_bytes_total', {}, $Self->{ 'bodysize' } );
 }
 
 sub close_callback {

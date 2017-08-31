@@ -26,7 +26,7 @@ sub clean_label {
 }
 
 sub count {
-    my ( $self, $id, $labels, $server ) = @_;
+    my ( $self, $id, $labels, $server, $count ) = @_;
     return if ( ! defined( $server->{'config'}->{'metric_port'} ) );
     my $psocket = $server->{'server'}->{'parent_sock'};
     return if ! $psocket;
