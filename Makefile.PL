@@ -5,7 +5,7 @@ use inc::Module::Install;
 
 name     'Mail-Milter-Authentication-Handler-ARC';
 all_from 'lib/Mail/Milter/Authentication/Handler/ARC.pm';
-author   q{Bron Gondwana <brong@fastmail.fm>};
+author   q{Bron Gondwana <brong@fastmailteam.com>};
 license  'perl';
 
 perl_version 5.006;
@@ -32,14 +32,10 @@ build_requires (
     'Test::CheckManifest'  => 0,
     'Test::Pod::Coverage'  => 0,
     'Test::Pod'            => 0,
-    'Test::MockModule'     => 0,
 );
 
 requires (
-    'Convert::X509' => 0,
     'Mail::DKIM' => 0, # Version here once released
-    'Crypt::SMIME'  => 0.15,
-    'Email::MIME'   => 0,
     'Mail::Milter::Authentication' => '1.1.2 ',
 );
 
