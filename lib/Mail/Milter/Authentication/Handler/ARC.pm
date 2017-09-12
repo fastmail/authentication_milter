@@ -14,6 +14,13 @@ use Mail::DKIM::TextWrap;
 use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::ARC::Verifier;
 
+sub add_auth_header {
+    my ( $self, $value ) = @_;
+    # Temporary override method to log arc results rather than adding a header
+    $self->log_error( 'ARC Test: ' . $value );
+    return;
+}
+
 sub default_config {
     return {
         'hide_none'         => 0,
@@ -338,7 +345,9 @@ sub addheader_callback {
         }
 
         # these will prepend in reverse
-        push @{$handler->{pre_headers}}, reverse @list;
+        #push @{$handler->{pre_headers}}, reverse @list;
+        # Just Log For Now
+        $self->log_error( 'ARCSeal Test: ' . join( "\n", reverse @list ) );
     };
 
     if ( my $error = $@ ) {
