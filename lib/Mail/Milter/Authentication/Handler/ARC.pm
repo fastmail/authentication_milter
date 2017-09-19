@@ -358,9 +358,9 @@ sub addheader_callback {
         # these will prepend in reverse
         push @{$handler->{pre_headers}}, reverse @list;
         # Just Log For Now
-        foreach my $Header ( reverse @list ) {
-            $self->log_error( 'ARCSeal Test: ' . join( "\n", $Header->{'field'} . ': ' . $Header->{'value'} ) );
-        }
+        #foreach my $Header ( reverse @list ) {
+        #    $self->log_error( 'ARCSeal Test: ' . join( "\n", $Header->{'field'} . ': ' . $Header->{'value'} ) );
+        #}
     };
 
     if ( my $error = $@ ) {
