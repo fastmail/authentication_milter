@@ -14,12 +14,12 @@ use Mail::DKIM::TextWrap;
 use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::ARC::Verifier;
 
-sub add_auth_header {
-    my ( $self, $value ) = @_;
-    # Temporary override method to log arc results rather than adding a header
-    $self->log_error( 'ARC Test: ' . $value );
-    return;
-}
+#sub add_auth_header {
+#    my ( $self, $value ) = @_;
+#    # Temporary override method to log arc results rather than adding a header
+#    $self->log_error( 'ARC Test: ' . $value );
+#    return;
+#}
 
 sub default_config {
     return {
@@ -284,6 +284,7 @@ sub addheader_callback {
             Headers => $config->{arcseal_result},
             # chain value is arc_result from previous seal validation
             Chain => $self->{arc_result},
+            Timestamp => time(),
             %KeyOpts,
         );
 
@@ -327,27 +328,39 @@ sub addheader_callback {
         # we need to extract the headers from ARCSeal and re-format them
         # back to the format that pre_headers expects
         my $headers = $arcseal->as_string();
-        my $value = '';
         my @list;
-        foreach my $header_line ( (split /\015\012/, $headers), '' ) {
+
+        my $current_header = q{};
+        my $current_value  = q{};
+        foreach my $header_line ( (split ( /\015\012/, $headers ) ) ) {
             if ( $header_line =~ /^\s/ ) {
-                $value .= "\r\n" . $header_line;
+                # Line begins with whitespace, add to previous header
+                $header_line =~ s/^\s+/    /; # for consistency
+                $current_value .= "\r\n" . $header_line;
             }
             else {
-                if ( $value ) {
-                    my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
-                    $hvalue =~ s/^ //;
-                    # we add to a list and prepend later to retain sorting
-                    push @list, { field => $hkey, value => $hvalue };
+                # This is a brand new header!
+                if ( $current_header ne q{} ) {
+                    # We have a cached header, add it now.
+                    push @list, { 'field' => $current_header, 'value' => $current_value };
+                    $current_value = q{};
                 }
-                $value = $header_line;
+                ( $current_header, $current_value ) = split ( ':', $header_line, 2 );
+                $current_value =~ s/^ +//;
             }
+        }
+        if ( $current_header ne q{} ) {
+            # We have a cached header, add it now.
+            push @list, { 'field' => $current_header, 'value' => $current_value };
+            $current_value = q{};
         }
 
         # these will prepend in reverse
-        #push @{$handler->{pre_headers}}, reverse @list;
+        push @{$handler->{pre_headers}}, reverse @list;
         # Just Log For Now
-        $self->log_error( 'ARCSeal Test: ' . join( "\n", reverse @list ) );
+        foreach my $Header ( reverse @list ) {
+            $self->log_error( 'ARCSeal Test: ' . join( "\n", $Header->{'field'} . ': ' . $Header->{'value'} ) );
+        }
     };
 
     if ( my $error = $@ ) {
