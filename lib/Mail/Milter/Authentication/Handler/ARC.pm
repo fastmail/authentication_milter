@@ -332,11 +332,11 @@ sub addheader_callback {
 
         my $current_header = q{};
         my $current_value  = q{};
-        foreach my $header_line ( (split ( /\015\012/, $headers ) ) ) {
+        foreach my $header_line ( (split ( /\015?\012/, $headers ) ) ) {
             if ( $header_line =~ /^\s/ ) {
                 # Line begins with whitespace, add to previous header
                 $header_line =~ s/^\s+/    /; # for consistency
-                $current_value .= "\r\n" . $header_line;
+                $current_value .= "\n" . $header_line;
             }
             else {
                 # This is a brand new header!
