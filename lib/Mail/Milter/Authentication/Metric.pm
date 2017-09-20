@@ -123,7 +123,7 @@ sub child_handler {
 
         my $socket = $server->{'server'}->{'client'};
         my $req;
-    
+
         $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':metrics';
 
         $req = <$socket>;

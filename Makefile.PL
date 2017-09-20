@@ -62,7 +62,8 @@ requires (
     'Proc::ProcessTable'    => 0,
     'Socket'                => 0,
     'Sys::Hostname'         => 0,
-    'Sys::Syslog'           => 0, 
+    'Sys::Syslog'           => 0,
+    'Time::HiRes'           => 0,
 );
 
 install_script (
