@@ -15,8 +15,8 @@ sub default_config {
 sub register_metrics {
     return {
         'size_total' => 'The number of emails processed for Size',
-        'header_bytes_total' => 'The header size of emails processed for Size',
-        'body_bytes_total' => 'The body size of emails processed for Size',
+        'size_header_bytes_total' => 'The header size of emails processed for Size',
+        'size_body_bytes_total' => 'The body size of emails processed for Size',
     };
 }
 
@@ -44,8 +44,8 @@ sub eom_callback {
     my ($self) = @_;
 
     $self->metric_count( 'size_total', {}, 1 );
-    $self->metric_count( 'header_bytes_total', {}, $self->{ 'headersize' } );
-    $self->metric_count( 'body_bytes_total', {}, $self->{ 'bodysize' } );
+    $self->metric_count( 'size_header_bytes_total', {}, $self->{ 'headersize' } );
+    $self->metric_count( 'size_body_bytes_total', {}, $self->{ 'bodysize' } );
 }
 
 sub close_callback {
