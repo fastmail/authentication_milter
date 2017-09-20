@@ -47,12 +47,12 @@ sub is_hostname_mine {
 }
 
 sub remove_auth_header {
-    my ( $self, $value ) = @_;
+    my ( $self, $index ) = @_;
     $self->metric_count( 'sanitize_remove_total' );
     if ( !exists( $self->{'remove_auth_headers'} ) ) {
         $self->{'remove_auth_headers'} = [];
     }
-    push @{ $self->{'remove_auth_headers'} }, $value;
+    push @{ $self->{'remove_auth_headers'} }, $index;
     return;
 }
 
@@ -98,9 +98,9 @@ sub eom_callback {
     my $config = $self->handler_config();
     return if ( lc $config->{'remove_headers'} eq 'no' );
     if ( exists( $self->{'remove_auth_headers'} ) ) {
-        foreach my $header ( reverse @{ $self->{'remove_auth_headers'} } ) {
-            $self->dbgout( 'RemoveAuthHeader', $header, LOG_DEBUG );
-            $self->change_header( 'Authentication-Results', $header, q{} );
+        foreach my $index ( reverse @{ $self->{'remove_auth_headers'} } ) {
+            $self->dbgout( 'RemoveAuthHeader', $index, LOG_DEBUG );
+            $self->change_header( 'Authentication-Results', $index, q{} );
         }
     }
     return;

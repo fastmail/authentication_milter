@@ -1475,7 +1475,7 @@ Write an Add Header packet to the MTA (calls Protocol object)
 
 Write an Insert Header packet to the MTA (calls Protocol object)
 
-=item change_header( $key, $value, $index )
+=item change_header( $key, $index, $value )
 
 Write a Change Header packet to the MTA (calls Protocol object)
 
