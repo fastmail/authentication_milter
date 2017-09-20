@@ -40,6 +40,18 @@ sub count {
         $labels_txt = ' ' . join( ',', @labels_list );
     }
     print $psocket 'METRIC.COUNT ' . $count .' ' . $self->clean_label( $id ) . $labels_txt . "\n";
+    eval {
+        local $SIG{'ALRM'} = sub{ die 'Timeout counting metrics' };
+        my $alarm = alarm( 2 );
+        my $ping = <$psocket>;
+        chomp $ping;
+        alarm( $alarm );
+        die 'Failure counting metrics' if $ping ne 'OK';
+    };
+    if ( my $error = $@ ) {
+        warn $error;
+    }
+
     return;
 }
 
@@ -106,10 +118,14 @@ sub master_handler {
                 $self->{'counter'}->{ $count_id }->{ $labels } = 0;
             }
             $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
+            print $socket "OK\n";
         }
 
         alarm( 0 );
     };
+    if ( my $error = $@ ) {
+        warn "Metrics handler error $error";
+    }
 
     return;
 }
