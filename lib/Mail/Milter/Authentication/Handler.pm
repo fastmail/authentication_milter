@@ -1236,6 +1236,10 @@ Increment a metrics counter by $count (defaults to 1 if undef)
 
 Return details of the metrics this module exports.
 
+=item get_microseconds()
+
+Return current time in microseconds
+
 =item top_setup_callback()
 
 Top level handler for handler setup.
