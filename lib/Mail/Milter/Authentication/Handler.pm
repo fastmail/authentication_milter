@@ -34,6 +34,7 @@ sub metric_register {
 
 sub metric_count {
     my ( $self, $id, $labels, $count ) = @_;
+    $labels = {} if ! defined $labels;
     $count = 1 if ! defined $count;
     $self->{'thischild'}->{'metric'}->count( $id, $labels, $self->{'thischild'}, $count );
     return;

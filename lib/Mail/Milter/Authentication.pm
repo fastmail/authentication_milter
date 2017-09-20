@@ -183,7 +183,7 @@ sub child_init_hook {
 sub child_finish_hook {
     my ($self) = @_;
     $self->loginfo( "Child process $PID shutting down" );
-    $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total' );
+    $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
     $self->destroy_objects();
     return;
 }
@@ -624,7 +624,7 @@ sub setup_handlers {
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'}->{'_Handler'} = $handler;
 
-    $handler->metric_count( 'forked_children_total' );
+    $handler->metric_count( 'forked_children_total', {}, 1 );
 
     my $config = $self->{'config'};
     foreach my $name ( @{$config->{'load_handlers'}} ) {
