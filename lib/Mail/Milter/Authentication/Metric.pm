@@ -96,7 +96,7 @@ sub master_handler {
             print $socket "\0\n";
         }
         elsif ( $request =~ /^METRIC.COUNT (.*)$/ ) {
-            my $data = $2;
+            my $data = $1;
             my ( $count, $count_id, $labels ) = split( ' ', $data, 3 );
             $labels = '' if ! $labels;
             if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
