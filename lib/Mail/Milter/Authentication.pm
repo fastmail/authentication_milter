@@ -183,7 +183,7 @@ sub child_init_hook {
 sub child_finish_hook {
     my ($self) = @_;
     $self->loginfo( "Child process $PID shutting down" );
-    $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
+    $self->{'handler'}->{'_Handler'}->metric_count_block( 'reaped_children_total', {}, 1 );
     $self->destroy_objects();
     return;
 }

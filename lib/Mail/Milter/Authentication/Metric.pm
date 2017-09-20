@@ -2,6 +2,7 @@ package Mail::Milter::Authentication::Metric;
 use strict;
 use warnings;
 use version; our $VERSION = version->declare('v1.1.3');
+use JSON;
 
 use English qw{ -no_match_vars };
 
@@ -39,7 +40,14 @@ sub count {
         }
         $labels_txt = ' ' . join( ',', @labels_list );
     }
-    print $psocket 'METRIC.COUNT ' . $count .' ' . $self->clean_label( $id ) . $labels_txt . "\n";
+
+    print $psocket encode_json({
+        'method'   => 'METRIC.COUNT',
+        'count'    => $count,
+        'count_id' => $self->clean_label( $id ),
+        'labels'   => $labels_txt,
+    }) . "\n";
+
     eval {
         local $SIG{'ALRM'} = sub{ die 'Timeout counting metrics' };
         my $alarm = alarm( 2 );
@@ -68,11 +76,14 @@ sub register_metrics {
 }
 
 sub master_handler {
-    my ( $self, $request, $socket, $server ) = @_;
+    my ( $self, $raw_request, $socket, $server ) = @_;
+
 
     eval {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         alarm( 2 );
+
+        my $request = json_decode( $raw_request );
 
         my $ident = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"}';
 
@@ -81,7 +92,7 @@ sub master_handler {
             'processing' => 'The number of authentication milter processes currently processing data',
         };
 
-        if ( $request =~ /^METRIC.GET/ ) {
+        if ( $request->{ 'method' } eq 'METRIC.GET' ) {
             print $socket "# TYPE authmilter_uptime_seconds_total counter\n";
             print $socket "# HELP authmilter_uptime_seconds_total Number of seconds since server startup\n";
             print $socket 'authmilter_uptime_seconds_total' . $ident . ' ' . ( time - $self->{'start_time'} ) . "\n";
@@ -107,9 +118,10 @@ sub master_handler {
             }
             print $socket "\0\n";
         }
-        elsif ( $request =~ /^METRIC.COUNT (.*)$/ ) {
-            my $data = $1;
-            my ( $count, $count_id, $labels ) = split( ' ', $data, 3 );
+        elsif ( $request->{ 'method' } eq 'METRIC.COUNT' ) {
+            my $count    = $request->{ 'count' };
+            my $count_id = $request->{ 'count_id' };
+            my $labels   = $request->{ 'labels' };
             $labels = '' if ! $labels;
             if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
                 $self->{'counter'}->{ $count_id } = { $labels => 0 };
@@ -118,7 +130,11 @@ sub master_handler {
                 $self->{'counter'}->{ $count_id }->{ $labels } = 0;
             }
             $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
-            print $socket "OK\n";
+
+            if ( $request->{ 'ping' } == 1 ) {
+                print $socket "OK\n";
+            }
+
         }
 
         alarm( 0 );
@@ -167,7 +183,7 @@ sub child_handler {
         }
 
         my $psocket = $server->{'server'}->{'parent_sock'};
-        print $psocket "METRIC.GET\n";
+        print $psocket encode_json({ 'method' => 'METRIC.GET' }) . "\n";
 
         print $socket "HTTP/1.0 200 OK\n";
         print $socket "Content-Type: text/plain\n";

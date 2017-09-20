@@ -36,7 +36,27 @@ sub metric_count {
     my ( $self, $id, $labels, $count ) = @_;
     $labels = {} if ! defined $labels;
     $count = 1 if ! defined $count;
-    $self->{'thischild'}->{'metric'}->count( $id, $labels, $self->{'thischild'}, $count );
+    $self->{'thischild'}->{'metric'}->count({
+        'count_id' => $id,
+        'labels'   => $labels,
+        'server'   => $self->{'thischild'},
+        'count'    => $count,
+        'ping'     => 0,
+    });
+    return;
+}
+
+sub metric_count_block {
+    my ( $self, $id, $labels, $count ) = @_;
+    $labels = {} if ! defined $labels;
+    $count = 1 if ! defined $count;
+    $self->{'thischild'}->{'metric'}->count({
+        'count_id' => $id,
+        'labels'   => $labels,
+        'server'   => $self->{'thischild'},
+        'count'    => $count,
+        'ping'     => 1,
+    });
     return;
 }
 
@@ -1232,6 +1252,11 @@ Register a metric type
 =item metric_count( $id, $labels, $count )
 
 Increment a metrics counter by $count (defaults to 1 if undef)
+
+=item metric_count_block( $id, $labels, $count )
+
+Increment a metrics counter by $count (defaults to 1 if undef)
+Wait for ack from parent before returning.
 
 =item register_metrics
 
