@@ -28,6 +28,7 @@ sub clean_label {
 sub count {
     my ( $self, $id, $labels, $server, $count ) = @_;
     return if ( ! defined( $server->{'config'}->{'metric_port'} ) );
+    $count = 1 if ! defined $count;
     my $psocket = $server->{'server'}->{'parent_sock'};
     return if ! $psocket;
     my $labels_txt = q{};
@@ -38,7 +39,7 @@ sub count {
         }
         $labels_txt = ' ' . join( ',', @labels_list );
     }
-    print $psocket 'METRIC.COUNT 1 ' . $self->clean_label( $id ) . $labels_txt . "\n";
+    print $psocket 'METRIC.COUNT ' . $count .' ' . $self->clean_label( $id ) . $labels_txt . "\n";
     return;
 }
 
@@ -94,10 +95,9 @@ sub master_handler {
             }
             print $socket "\0\n";
         }
-        elsif ( $request =~ /^METRIC.COUNT (\d+) (.*)$/ ) {
-            my $count = $1;
+        elsif ( $request =~ /^METRIC.COUNT (.*)$/ ) {
             my $data = $2;
-            my ( $count_id, $labels ) = split( ' ', $data, 2 );
+            my ( $count, $count_id, $labels ) = split( ' ', $data, 3 );
             $labels = '' if ! $labels;
             if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
                 $self->{'counter'}->{ $count_id } = { $labels => 0 };
