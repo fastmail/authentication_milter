@@ -27,11 +27,18 @@ sub clean_label {
 }
 
 sub count {
-    my ( $self, $id, $labels, $server, $count ) = @_;
+    my ( $self, $args ) = @_;
+    my $count_id = $args->{ 'count_id' };
+    my $labels   = $args->{ 'labels' };
+    my $server   = $args->{ 'server' };
+    my $count    = $args->{ 'count' };
+    my $ping     = $args->{ 'ping' };
+
     return if ( ! defined( $server->{'config'}->{'metric_port'} ) );
     $count = 1 if ! defined $count;
     my $psocket = $server->{'server'}->{'parent_sock'};
     return if ! $psocket;
+
     my $labels_txt = q{};
     if ( $labels ) {
         my @labels_list;
@@ -44,17 +51,24 @@ sub count {
     print $psocket encode_json({
         'method'   => 'METRIC.COUNT',
         'count'    => $count,
-        'count_id' => $self->clean_label( $id ),
+        'count_id' => $self->clean_label( $count_id ),
         'labels'   => $labels_txt,
+        'ping'     => $ping,
     }) . "\n";
 
     eval {
-        local $SIG{'ALRM'} = sub{ die 'Timeout counting metrics' };
-        my $alarm = alarm( 2 );
-        my $ping = <$psocket>;
-        chomp $ping;
+
+        my $reply;
+        my $alarm = alarm( 5 );
+        if ( $ping ) {
+            local $SIG{'ALRM'} = sub{ die 'Timeout counting metrics' };
+            $reply = <$psocket>;
+            chomp $reply;
+            alarm( $alarm );
+            die 'Failure counting metrics' if $reply ne 'OK';
+        }
         alarm( $alarm );
-        die 'Failure counting metrics' if $ping ne 'OK';
+
     };
     if ( my $error = $@ ) {
         warn $error;
@@ -76,14 +90,11 @@ sub register_metrics {
 }
 
 sub master_handler {
-    my ( $self, $raw_request, $socket, $server ) = @_;
-
+    my ( $self, $request, $socket, $server ) = @_;
 
     eval {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
         alarm( 2 );
-
-        my $request = json_decode( $raw_request );
 
         my $ident = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"}';
 

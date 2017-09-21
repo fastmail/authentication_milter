@@ -6,6 +6,7 @@ use version; our $VERSION = version->declare('v1.1.3');
 
 use English qw{ -no_match_vars };
 use ExtUtils::Installed;
+use JSON;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Handler;
@@ -182,6 +183,7 @@ sub child_init_hook {
 
 sub child_finish_hook {
     my ($self) = @_;
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':exiting';
     $self->loginfo( "Child process $PID shutting down" );
     $self->{'handler'}->{'_Handler'}->metric_count_block( 'reaped_children_total', {}, 1 );
     $self->destroy_objects();
@@ -249,8 +251,10 @@ sub child_is_talking_hook {
     my $request = <$socket>;
     return if ! $request;
     $request =~ s/[\n\r]+$//;
-    if ( $request =~ /^METRIC/ ) {
-        $self->{'metric'}->master_handler( $request, $socket, $self );
+   
+    my $request_data = eval { decode_json( $request ) };
+    if ( $request_data->{ 'method' } =~ /^METRIC/ ) {
+        $self->{'metric'}->master_handler( $request_data, $socket, $self );
     }
     return;
 }
