@@ -6,6 +6,7 @@ use version; our $VERSION = version->declare('v1.1.3');
 
 use English qw{ -no_match_vars };
 use ExtUtils::Installed;
+use JSON;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Handler;
@@ -183,7 +184,8 @@ sub child_init_hook {
 sub child_finish_hook {
     my ($self) = @_;
     $self->loginfo( "Child process $PID shutting down" );
-    $self->{'handler'}->{'_Handler'}->metric_count_block( 'reaped_children_total', {}, 1 );
+    $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
+    $self->{'handler'}->{'_Handler'}->metric_send();
     $self->destroy_objects();
     return;
 }
@@ -226,6 +228,12 @@ sub get_client_port {
     return $socket->sockport();
 }
 
+sub get_client_host {
+    my ( $self ) = @_;
+    my $socket = $self->{server}{client};
+    return $socket->sockhost();
+}
+
 sub get_client_path {
     my ( $self ) = @_;
     my $socket = $self->{'socket'};
@@ -246,10 +254,17 @@ sub get_client_details {
 
 sub child_is_talking_hook {
     my ( $self, $socket ) = @_;
-    my $request = <$socket>;
-    return if ! $request;
+
+    my $raw_request = <$socket>;
+    return if ! $raw_request;
+
+    my $request = decode_json( $raw_request );
+
     $request =~ s/[\n\r]+$//;
-    if ( $request =~ /^METRIC/ ) {
+    if ( $request->{ 'method' } eq 'METRIC.GET' ) {
+        $self->{'metric'}->master_handler( $request, $socket, $self );
+    }
+    if ( $request->{ 'method' } eq 'METRIC.COUNT' ) {
         $self->{'metric'}->master_handler( $request, $socket, $self );
     }
     return;
@@ -258,9 +273,36 @@ sub child_is_talking_hook {
 sub process_request {
     my ( $self ) = @_;
     my $config = $self->{'config'};
-    if ( defined( $config->{ 'metric_port' } ) && $self->get_client_port() eq $config->{'metric_port'} ) {
+
+    my $metric_type;
+    my $metric_path;
+    my $metric_host;
+
+    if ( defined( $config->{'metric_connection'} ) ) {
+        my $connection = $config->{'metric_connection'};
+        my $umask      = $config->{'metric_umask'};
+
+        $connection =~ /^([^:]+):([^:@]+)(?:@([^:@]+|\[[0-9a-f:\.]+\]))?$/;
+        $metric_type = $1;
+        $metric_path = $2;
+        $metric_host = $3 || q{};
+    }
+
+    ## ToDo, match also on client_host
+
+    # Legacy metrics
+    if ( defined( $config->{ 'metric_port' } ) && $self->get_client_proto() eq 'TXP' && $self->get_client_port() eq $config->{'metric_port'} ) {
         $self->{'metric'}->child_handler( $self );
     }
+
+    elsif ( defined( $config->{ 'metric_connection' } ) && $metric_type eq 'inet' && $self->get_client_proto eq 'TCP' && $self->get_client_port() eq $metric_path ) {
+        $self->{'metric'}->child_handler( $self );
+    }
+
+    elsif ( defined( $config->{ 'metric_connection' } ) && $metric_type eq 'unix' && $self->get_client_proto eq 'UNIX' && $self->get_client_path() eq $metric_path ) {
+        $self->{'metric'}->child_handler( $self );
+    }
+
     else {
         $self->process_main();
     }
@@ -287,8 +329,11 @@ sub process_main {
     # Call close callback
     $self->{'handler'}->{'_Handler'}->top_close_callback();
     if ( $self->{'handler'}->{'_Handler'}->{'exit_on_close'} ) {
+        $self->{'metric'}->send( $self );
         $self->fatal('exit_on_close requested');
     }
+
+    $self->{'metric'}->send( $self );
 
     if ( $config->{'debug'} ) {
         my $process_table = Proc::ProcessTable->new();
@@ -532,7 +577,7 @@ sub start {
         if ( $type eq 'inet' ) {
             _warn(
                 join( ' ',
-                    'listen on inet',
+                    'listening on inet',
                     "host=$host",
                     "port=$path",
                     "backlog=$listen_backlog",
@@ -569,7 +614,61 @@ sub start {
         }
     }
 
-    if ( defined( $config->{'metric_port'} ) ) {
+    if ( defined( $config->{'metric_connection'} ) ) {
+        my $connection = $config->{'metric_connection'};
+        my $umask      = $config->{'metric_umask'};
+
+        $connection =~ /^([^:]+):([^:@]+)(?:@([^:@]+|\[[0-9a-f:\.]+\]))?$/;
+        my $type = $1;
+        my $path = $2;
+        my $host = $3 || q{};
+        if ( $type eq 'inet' ) {
+            _warn(
+                join( ' ',
+                    'metrics listening on inet',
+                    "host=$host",
+                    "port=$path",
+                    "backlog=$listen_backlog",
+                )
+            );
+            push @ports, {
+                'host'  => $host,
+                'port'  => $path,
+                'ipv'   => '*',
+                'proto' => 'tcp',
+            };
+            $srvargs{'child_communication'} = 1;
+        }
+        elsif ( $type eq 'unix' ) {
+            _warn(
+                join( ' ',
+                    'metrics listening on unix',
+                    "socket=$path",
+                    "backlog=$listen_backlog",
+                )
+            );
+            push @ports, {
+                'port'  => $path,
+                'proto' => 'unix',
+            };
+            $srvargs{'child_communication'} = 1;
+
+            if ($umask) {
+                umask ( oct( $umask ) );
+                _warn( 'setting umask to ' . $umask );
+            }
+
+        }
+        else {
+            die 'Invalid metrics connection';
+        }
+
+        if ( defined( $config->{'metric_port'} ) ) {
+            _warn( 'metric_port ignored when metric_connection supplied' );
+        }
+
+    }
+    elsif ( defined( $config->{'metric_port'} ) ) {
         my $metric_host = $config->{ 'metric_host' } || '127.0.0.1';
         push @ports, {
             'host'  => $metric_host,
@@ -579,6 +678,7 @@ sub start {
         };
         $srvargs{'child_communication'} = 1;
         _warn( 'Metrics available on ' . $metric_host . ':' . $config->{'metric_port'} );
+        _warn( 'metric_host/metric_port are depricated, please use metric_connection/metric_umask instead' );
     }
 
     $srvargs{'port'} = \@ports;
@@ -625,6 +725,7 @@ sub setup_handlers {
     $self->{'handler'}->{'_Handler'} = $handler;
 
     $handler->metric_count( 'forked_children_total', {}, 1 );
+    $handler->metric_send();
 
     my $config = $self->{'config'};
     foreach my $name ( @{$config->{'load_handlers'}} ) {
@@ -1005,6 +1106,10 @@ Get the path of the connecting client.
 =item I<get_client_port()>
 
 Get the port of the connecting client.
+
+=item I<get_client_host()>
+
+Get the host of the connecting client.
 
 =item I<get_client_proto()>
 

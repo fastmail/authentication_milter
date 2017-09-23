@@ -246,6 +246,11 @@ __END__
     "max_spare_children"     : 20,                      | Max number of spare children to maintain
     "max_requests_per_child" : 200,                     | Max number of requests per child process (prefork)
 
+    "metric_connection" : "inet:12346@localhost",       | Optional connection on which to expose metrics interface
+    "metric_timeout" : 10,                              | Timeout for metrics IPC (default 5)
+
+    # metric_port and metric_host are deprecated.
+    # please use metric_connection instead
     "metric_port"            : 8081,                    | Optional port on which to expose metrics interface
     "metric_host"            : "127.0.0.1",             | Optional host for binding metrics interface
 

@@ -435,7 +435,7 @@ sub smtp_command_mailfrom {
             print $socket $reject_reason . "\r\n";
         }
         else {
-            print $socket "451 4.0.0 HELO - That's not right\r\n";
+            print $socket "451 4.0.1 HELO - That's not right\r\n";
         }
     }
     elsif ( my $reject_reason = $handler->get_reject_mail() ) {
@@ -444,7 +444,7 @@ sub smtp_command_mailfrom {
         print $socket $reject_reason . "\r\n";
     }
     else {
-        print $socket "451 4.0.0 Connection - That's not right\r\n";
+        print $socket "451 4.0.2 Connection - That's not right\r\n";
     }
 
     return;
@@ -475,7 +475,7 @@ sub smtp_command_rcptto {
         print $socket $reject_reason . "\r\n";
     }
     else {
-        print $socket "451 4.0.0 That's not right\r\n";
+        print $socket "451 4.0.3 That's not right\r\n";
     }
 
     return;
@@ -619,7 +619,7 @@ sub smtp_command_data {
         }
         else {
             $self->logerror( "SMTP Mail Rejected" );
-            my $error =  '451 4.0.0 That\'s not right';
+            my $error =  '451 4.0.4 That\'s not right';
             my $upstream_error = $smtp->{'string'};
             if ( $upstream_error =~ /^4\d\d / ) {
                 $handler->metric_count( 'mail_processed_total', { 'result' => 'deferred' } );
@@ -662,11 +662,11 @@ sub smtp_command_data {
         $handler->metric_count( 'mail_processed_total', { 'result' => 'deferred_error' } );
         if ( $smtp->{'using_lmtp'} ) {
             foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
-                print $socket "451 4.0.0 That's not right\r\n";
+                print $socket "451 4.0.5 That's not right\r\n";
             }
         }
         else {
-            print $socket "451 4.0.0 That's not right\r\n";
+            print $socket "451 4.0.6 That's not right\r\n";
         }
     }
     $self->smtp_status('smtp.i.data.done');

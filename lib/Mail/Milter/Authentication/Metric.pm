@@ -2,9 +2,9 @@ package Mail::Milter::Authentication::Metric;
 use strict;
 use warnings;
 use version; our $VERSION = version->declare('v1.1.3');
-use JSON;
-
 use English qw{ -no_match_vars };
+use JSON;
+use Mail::Milter::Authentication::Config qw{ get_config };
 
 sub new {
     my ( $class ) = @_;
@@ -12,8 +12,22 @@ sub new {
     $self->{'counter'}    = {};
     $self->{'help'}       = {};
     $self->{'start_time'} = time;
+    $self->{'queue'}      = [];
+
+    my $config = get_config();
+
+    $self->{'enabled'} = defined( $config->{'metric_port'} ) ? 1
+                       : defined( $config->{'metric_connection'} ) ? 1
+                       : 0;
+
     bless $self, $class;
     return $self;
+}
+
+sub get_timeout {
+    my ( $self ) = @_;
+    my $config = get_config();
+    return $config->{ 'metric_timeout' } || 5;
 }
 
 sub clean_label {
@@ -27,11 +41,16 @@ sub clean_label {
 }
 
 sub count {
-    my ( $self, $id, $labels, $server, $count ) = @_;
-    return if ( ! defined( $server->{'config'}->{'metric_port'} ) );
+    my ( $self, $args ) = @_;
+
+    my $count_id = $args->{ 'count_id' };
+    my $labels   = $args->{ 'labels' };
+    my $server   = $args->{ 'server' };
+    my $count    = $args->{ 'count '};
+
+    return if ( ! $self->{ 'enabled' } );
     $count = 1 if ! defined $count;
-    my $psocket = $server->{'server'}->{'parent_sock'};
-    return if ! $psocket;
+
     my $labels_txt = q{};
     if ( $labels ) {
         my @labels_list;
@@ -41,30 +60,54 @@ sub count {
         $labels_txt = ' ' . join( ',', @labels_list );
     }
 
-    print $psocket encode_json({
-        'method'   => 'METRIC.COUNT',
+    $count_id =  $self->clean_label( $count_id );
+
+    push @{ $self->{ 'queue' } }, {
         'count'    => $count,
-        'count_id' => $self->clean_label( $id ),
+        'count_id' => $count_id,
         'labels'   => $labels_txt,
-    }) . "\n";
+    };
+
+    return;
+}
+
+sub send {
+    my ( $self, $server ) = @_;
+
+    return if ( ! $self->{ 'enabled' } );
+
+    my $psocket = $server->{'server'}->{'parent_sock'};
+    return if ! $psocket;
+
+    my $config = get_config();
 
     eval {
-        local $SIG{'ALRM'} = sub{ die 'Timeout counting metrics' };
-        my $alarm = alarm( 2 );
+        local $SIG{'ALRM'} = sub{ die 'Timeout sending metrics' };
+        alarm( $self->get_timeout() );
+
+        print $psocket encode_json({
+            'method' => 'METRIC.COUNT',
+            'data'   => $self->{ 'queue' },
+        }) . "\n";
+
         my $ping = <$psocket>;
-        chomp $ping;
-        alarm( $alarm );
-        die 'Failure counting metrics' if $ping ne 'OK';
+        alarm( 0 );
+        die 'Failure counting metrics, has master gone away?' if ! $ping;
     };
     if ( my $error = $@ ) {
         warn $error;
+        return 0;
     }
+
+    $self->{ 'queue' } = [];
 
     return;
 }
 
 sub register_metrics {
     my ( $self, $hash ) = @_;
+    return if ( ! $self->{ 'enabled' } );
+
     foreach my $metric ( keys %$hash ) {
         my $help = $hash->{ $metric };
         if ( ! exists( $self->{'counter'}->{ $metric } ) ) {
@@ -76,14 +119,12 @@ sub register_metrics {
 }
 
 sub master_handler {
-    my ( $self, $raw_request, $socket, $server ) = @_;
-
+    my ( $self, $request, $socket, $server ) = @_;
+    my $config = get_config();
 
     eval {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
-        alarm( 2 );
-
-        my $request = json_decode( $raw_request );
+        alarm( $self->get_timeout() );
 
         my $ident = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"}';
 
@@ -91,6 +132,7 @@ sub master_handler {
             'waiting'    => 'The number of authentication milter processes in a waiting state',
             'processing' => 'The number of authentication milter processes currently processing data',
         };
+
 
         if ( $request->{ 'method' } eq 'METRIC.GET' ) {
             print $socket "# TYPE authmilter_uptime_seconds_total counter\n";
@@ -111,7 +153,7 @@ sub master_handler {
                     my $labels_txt = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"';
                     if ( $labels ne q{} ) {
                         $labels_txt .= ',' . $labels;
-                    } 
+                    }
                     $labels_txt .= '}';
                     print $socket 'authmilter_' . $key . $labels_txt . ' ' . $self->{'counter'}->{ $key }->{ $labels } . "\n";
                 }
@@ -119,21 +161,21 @@ sub master_handler {
             print $socket "\0\n";
         }
         elsif ( $request->{ 'method' } eq 'METRIC.COUNT' ) {
-            my $count    = $request->{ 'count' };
-            my $count_id = $request->{ 'count_id' };
-            my $labels   = $request->{ 'labels' };
-            $labels = '' if ! $labels;
-            if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
-                $self->{'counter'}->{ $count_id } = { $labels => 0 };
+            my $data = $request->{ 'data' };
+            foreach my $datum ( @$data ) {
+                my $count    = $datum->{ 'count' };
+                my $count_id = $datum->{ 'count_id' };
+                my $labels   = $datum->{ 'labels' };
+                $labels = '' if ! $labels;
+                if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
+                    $self->{'counter'}->{ $count_id } = { $labels => 0 };
+                }
+                if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
+                    $self->{'counter'}->{ $count_id }->{ $labels } = 0;
+                }
+                $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
             }
-            if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
-                $self->{'counter'}->{ $count_id }->{ $labels } = 0;
-            }
-            $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
-
-            if ( $request->{ 'ping' } == 1 ) {
-                print $socket "OK\n";
-            }
+            print $socket "1\n";
 
         }
 
@@ -148,10 +190,11 @@ sub master_handler {
 
 sub child_handler {
     my ( $self, $server ) = @_;
+    my $config = get_config();
 
     eval {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
-        alarm( 2 );
+        alarm( $self->get_timeout() );
 
         my $socket = $server->{'server'}->{'client'};
         my $req;
@@ -162,7 +205,9 @@ sub child_handler {
         $req =~ s/[\n\r]+$//;
 
         if (!defined($req) || $req !~ m{ ^\s*(GET|POST|PUT|DELETE|PUSH|HEAD|OPTIONS)\s+(.+)\s+(HTTP/1\.[01])\s*$ }ix) {
-#            die "Invalid request\n";
+            print $socket "HTTP/1.0 500 Server Error\n";
+            print $socket "\n";
+            print $socket "Invalid Request Error\n";
             return;
         }
 
@@ -183,7 +228,8 @@ sub child_handler {
         }
 
         my $psocket = $server->{'server'}->{'parent_sock'};
-        print $psocket encode_json({ 'method' => 'METRIC.GET' }) . "\n";
+        my $request = encode_json({ 'method' => 'METRIC.GET' });
+        print $psocket "$request\n";
 
         print $socket "HTTP/1.0 200 OK\n";
         print $socket "Content-Type: text/plain\n";
