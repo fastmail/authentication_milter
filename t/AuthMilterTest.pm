@@ -194,33 +194,40 @@ sub get_metrics {
 sub test_metrics {
     my ( $expected ) = @_;
 
-    my $metrics =  get_metrics( 'tmp/authentication_milter_test_metrics.sock' );
-    my $j = JSON->new();
+    subtest $expected => sub {
 
-    if ( -e $expected ) {
+        my $metrics =  get_metrics( 'tmp/authentication_milter_test_metrics.sock' );
+        my $j = JSON->new();
 
-        open my $InF, '<', $expected;
-        my @content = <$InF>;
-        close $InF;
-        my $data = $j->decode( join( q{}, @content ) );
+        if ( -e $expected ) {
 
-        foreach my $key ( sort keys %$data ) {
-            if ( $key =~ /seconds_total/ ) {
-                is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $key" );
+            open my $InF, '<', $expected;
+            my @content = <$InF>;
+            close $InF;
+            my $data = $j->decode( join( q{}, @content ) );
+
+            plan tests => scalar keys %$data;
+
+            foreach my $key ( sort keys %$data ) {
+                if ( $key =~ /seconds_total/ ) {
+                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $key" );
+                }
+                else {
+                    is( $metrics->{ $key }, $data->{ $key }, "Metrics $key" );
+                }
             }
-            else {
-                is( $metrics->{ $key }, $data->{ $key }, "Metrics $key" );
-            }
+
+        }
+        else {
+            fail( 'Metrics data does not exist' );
+            # Uncomment to write out new json file
+            #open my $OutF, '>', $expected;
+            #$j->pretty();
+            #print $OutF $j->encode( $metrics );
+            #close $OutF;
         }
 
-    }
-    else {
-        # Uncomment to write out new json file
-        #open my $OutF, '>', $expected;
-        #$j->pretty();
-        #print $OutF $j->encode( $metrics );
-        #close $OutF;
-    }
+    };
 
     return;
 }
