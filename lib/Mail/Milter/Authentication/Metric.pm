@@ -57,7 +57,9 @@ sub count {
         foreach my $l ( sort keys %$labels ) {
             push @labels_list, $self->clean_label( $l ) .'="' . $self->clean_label( $labels->{$l} ) . '"';
         }
-        $labels_txt = ' ' . join( ',', @labels_list );
+        if ( @labels_list ) {
+            $labels_txt = ' ' . join( ',', @labels_list );
+        }
     }
 
     $count_id =  $self->clean_label( $count_id );
