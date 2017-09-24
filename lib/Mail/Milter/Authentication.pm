@@ -236,7 +236,7 @@ sub get_client_host {
 
 sub get_client_path {
     my ( $self ) = @_;
-    my $socket = $self->{'socket'};
+    my $socket = $self->{server}{client};
     return $socket->hostpath();
 }
 
