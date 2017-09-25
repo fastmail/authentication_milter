@@ -183,6 +183,7 @@ sub child_init_hook {
 
 sub child_finish_hook {
     my ($self) = @_;
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':exiting';
     $self->loginfo( "Child process $PID shutting down" );
     $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
     $self->{'handler'}->{'_Handler'}->metric_send();
