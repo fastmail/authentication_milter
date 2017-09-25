@@ -194,6 +194,9 @@ sub get_metrics {
 sub test_metrics {
     my ( $expected ) = @_;
 
+    # Sleep for 5 to allow server to catch up on metrics
+    sleep 5;
+
     subtest $expected => sub {
 
         my $metrics =  get_metrics( 'tmp/authentication_milter_test_metrics.sock' );
