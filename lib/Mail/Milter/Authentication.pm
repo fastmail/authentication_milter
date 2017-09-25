@@ -292,7 +292,7 @@ sub process_request {
     ## ToDo, match also on client_host
 
     # Legacy metrics
-    if ( defined( $config->{ 'metric_port' } ) && $self->get_client_proto() eq 'TXP' && $self->get_client_port() eq $config->{'metric_port'} ) {
+    if ( defined( $config->{ 'metric_port' } ) && $self->get_client_proto() eq 'TCP' && $self->get_client_port() eq $config->{'metric_port'} ) {
         $self->{'metric'}->child_handler( $self );
     }
 
