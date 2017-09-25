@@ -236,7 +236,7 @@ sub smtp_process {
     my ( $args ) = @_;
 
     if ( ! -e $args->{'prefix'} . '/authentication_milter.json' ) {
-        die "Could not find config";
+        die "Could not find config " . $args->{'prefix'};
     }
     if ( ! -e 'data/source/' . $args->{'source'} ) {
         die "Could not find source";
@@ -963,28 +963,6 @@ sub run_smtp_processing {
     });
 
     test_metrics( 'data/metrics/smtp_4.json' );
-
-    stop_milter();
-
-    return;
-}
-
-sub run_smtp_processing_spam {
-
-    start_milter( 'config/spam.smtp' );
-
-    smtp_process({
-        'desc'   => 'Gtube',
-        'prefix' => 'config/normal.smtp',
-        'source' => 'gtube.eml',
-        'dest'   => 'gtube.smtp.eml',
-        'ip'     => '74.125.82.171',
-        'name'   => 'mail-we0-f171.google.com',
-        'from'   => 'marc@marcbradshaw.net',
-        'to'     => 'marc@fastmail.com',
-    });
-
-    test_metrics( 'data/metrics/smtp_smap_1.json' );
 
     stop_milter();
 
