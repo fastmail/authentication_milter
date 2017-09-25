@@ -78,6 +78,12 @@ sub send {
 
     return if ( ! $self->{ 'enabled' } );
 
+    my $ppid = $server->{ 'server' }->{ 'ppid' };
+    if ( $ppid == $PID ) {
+        warn "Parent tried to talk to itsenf to send metrics";
+        return;
+    }
+
     my $psocket = $server->{'server'}->{'parent_sock'};
     return if ! $psocket;
 
