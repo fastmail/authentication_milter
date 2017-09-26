@@ -271,6 +271,7 @@ sub child_is_talking_hook {
     };
     if ( my $error = $@ ) {
         warn "Error $error reading from child";
+        return;
     }
     else {
 

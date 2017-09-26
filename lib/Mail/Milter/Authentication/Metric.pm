@@ -67,14 +67,20 @@ sub count {
     # Parent can count it's own metrics.
     my $ppid = $server->{ 'server' }->{ 'ppid' };
     if ( $ppid == $PID ) {
-        $labels = '' if ! $labels;
-        if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
-            $self->{'counter'}->{ $count_id } = { $labels => 0 };
+        warn "Parent counting metrics";
+        eval {
+            $labels = '' if ! $labels;
+            if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
+                $self->{'counter'}->{ $count_id } = { $labels => 0 };
+            }
+            if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
+                $self->{'counter'}->{ $count_id }->{ $labels } = 0;
+            }
+            $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
+        };
+        if ( my $error = $@ ) {
+            warn "Error counting metrics $error";
         }
-        if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
-            $self->{'counter'}->{ $count_id }->{ $labels } = 0;
-        }
-        $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
         return;
     }
 
