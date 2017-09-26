@@ -64,6 +64,20 @@ sub count {
 
     $count_id =  $self->clean_label( $count_id );
 
+    # Parent can count it's own metrics.
+    my $ppid = $server->{ 'server' }->{ 'ppid' };
+    if ( $ppid == $PID ) {
+        $labels = '' if ! $labels;
+        if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
+            $self->{'counter'}->{ $count_id } = { $labels => 0 };
+        }
+        if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
+            $self->{'counter'}->{ $count_id }->{ $labels } = 0;
+        }
+        $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
+        return;
+    }
+
     push @{ $self->{ 'queue' } }, {
         'count'    => $count,
         'count_id' => $count_id,
@@ -80,7 +94,7 @@ sub send {
 
     my $ppid = $server->{ 'server' }->{ 'ppid' };
     if ( $ppid == $PID ) {
-        warn "Parent tried to talk to itsenf to send metrics";
+        warn "Parent tried to talk to itself to send metrics";
         return;
     }
 
