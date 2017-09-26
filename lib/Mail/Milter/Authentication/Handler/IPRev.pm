@@ -12,6 +12,12 @@ sub default_config {
     return {};
 }
 
+sub register_metrics {
+    return {
+        'iprev_total' => 'The number of emails processed for IPRev',
+    };
+}
+
 sub _dns_error {
     my ( $self, $type, $data, $error ) = @_;
     if ( $error eq 'NXDOMAIN' ) {
@@ -140,6 +146,7 @@ sub connect_callback {
           . $self->format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
           . $self->format_header_comment($comment) . ')';
         $self->add_c_auth_header($header);
+        $self->metric_count( 'iprev_total', { 'result' => 'fail'} );
     }
     else {
         # We have a pass
@@ -151,6 +158,7 @@ sub connect_callback {
           . $self->format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
           . $self->format_header_comment($comment) . ')';
         $self->add_c_auth_header($header);
+        $self->metric_count( 'iprev_total', { 'result' => 'pass'} );
     }
 
     return;

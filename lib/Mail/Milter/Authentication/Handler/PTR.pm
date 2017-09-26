@@ -10,6 +10,12 @@ sub default_config {
     return {};
 }
 
+sub register_metrics {
+    return {
+        'ptr_total' => 'The number of emails processed for PTR',
+    };
+}
+
 sub helo_callback {
 
     # On HELO
@@ -43,6 +49,7 @@ sub helo_callback {
                 $self->format_header_entry( 'x-ptr',        'pass' ) . q{ }
               . $self->format_header_entry( 'x-ptr-helo',   $helo_host ) . q{ }
               . $self->format_header_entry( 'x-ptr-lookup', $domains ) );
+        $self->metric_count( 'ptr_total', { 'result' => 'pass'} );
     }
     else {
         $self->dbgout( 'PTRMatch', 'fail', LOG_DEBUG );
@@ -50,6 +57,7 @@ sub helo_callback {
                 $self->format_header_entry( 'x-ptr',        'fail' ) . q{ }
               . $self->format_header_entry( 'x-ptr-helo',   $helo_host ) . q{ }
               . $self->format_header_entry( 'x-ptr-lookup', $domains ) );
+        $self->metric_count( 'ptr_total', { 'result' => 'fail'} );
     }
     return;
 }

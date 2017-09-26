@@ -11,6 +11,12 @@ sub default_config {
     return {};
 }
 
+sub register_metrics {
+    return {
+        'returnok_total' => 'The number of emails processed for ReturnOK',
+    };
+}
+
 sub _check_address {
     my ( $self, $address, $type ) = @_;
 
@@ -104,6 +110,7 @@ sub _check_address {
     );
 
     $self->add_auth_header($header);
+    $self->metric_count( 'returnok_total', { 'result' => $result} );
 
     return;
 }
