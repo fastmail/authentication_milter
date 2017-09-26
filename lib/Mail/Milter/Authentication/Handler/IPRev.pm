@@ -18,6 +18,14 @@ sub register_metrics {
     };
 }
 
+## ToDo
+sub grafana_rows {
+    my ( $self ) = @_;
+    my @rows;
+    push @rows , '';
+    return \@rows;
+}
+
 sub _dns_error {
     my ( $self, $type, $data, $error ) = @_;
     if ( $error eq 'NXDOMAIN' ) {

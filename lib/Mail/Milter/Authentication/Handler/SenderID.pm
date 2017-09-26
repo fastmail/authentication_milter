@@ -16,6 +16,13 @@ sub default_config {
     };
 }
 
+sub grafana_rows {
+    my ( $self ) = @_;
+    my @rows;
+    push @rows , '{"titleSize":"h6","title":"SenderID Handler","repeat":null,"height":250,"showTitle":true,"repeatRowId":null,"repeatIteration":null,"collapse":true,"panels":[{"aliasColors":{},"yaxes":[{"show":true,"min":null,"logBase":1,"format":"short","max":null,"label":null},{"show":true,"format":"short","label":null,"max":null,"logBase":1,"min":null}],"title":"SenderID results rate","nullPointMode":"connected","fill":1,"thresholds":[],"targets":[{"metric":"","refId":"A","step":240,"intervalFactor":2,"interval":"","legendFormat":"{{ result }}","expr":"sum(rate(authmilter_senderid_total{node=~\"$node\"}[$ratetime])) by(result)"}],"links":[],"pointradius":5,"seriesOverrides":[],"error":false,"xaxis":{"values":[],"name":null,"mode":"time","show":true},"id":38,"grid":{},"tooltip":{"sort":2,"shared":true,"value_type":"cumulative","msResolution":false},"lines":true,"renderer":"flot","type":"graph","stack":false,"percentage":false,"steppedLine":false,"bars":false,"timeFrom":null,"datasource":"${DS_PROMETHEUS}","legend":{"current":false,"avg":false,"values":false,"total":false,"min":false,"show":true,"hideZero":true,"max":false},"points":false,"editable":true,"linewidth":2,"span":12,"timeShift":null}]}';
+    return \@rows;
+}
+
 sub setup_callback {
     my ( $self ) = @_;
     # Call connect_callback from SPF handler to setup object creation

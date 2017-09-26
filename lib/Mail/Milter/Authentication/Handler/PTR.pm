@@ -10,6 +10,14 @@ sub default_config {
     return {};
 }
 
+## ToDo
+sub grafana_rows {
+    my ( $self ) = @_;
+    my @rows;
+    push @rows , '';
+    return \@rows;
+}
+
 sub register_metrics {
     return {
         'ptr_total' => 'The number of emails processed for PTR',

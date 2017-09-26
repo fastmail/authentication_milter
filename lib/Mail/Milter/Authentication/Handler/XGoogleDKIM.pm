@@ -18,6 +18,13 @@ sub default_config {
     };
 }
 
+sub grafana_rows {
+    my ( $self ) = @_;
+    my @rows;
+    push @rows , '{"panels":[{"targets":[{"legendFormat":"{{ result }}","expr":"sum(rate(authmilter_xgoogledkim_total{node=~\"$node\"}[$ratetime])) by(result)","interval":"","intervalFactor":2,"step":4,"refId":"A","metric":"authmilter_dkim_error_total"}],"pointradius":5,"links":[],"fill":1,"thresholds":[],"title":"X-Google-DKIM results rate","yaxes":[{"max":null,"label":null,"format":"short","logBase":1,"min":null,"show":true},{"show":true,"label":null,"max":null,"format":"short","logBase":1,"min":null}],"nullPointMode":"connected","aliasColors":{},"error":false,"seriesOverrides":[],"xaxis":{"mode":"time","name":null,"show":true,"values":[]},"renderer":"flot","lines":true,"tooltip":{"msResolution":false,"sort":2,"shared":true,"value_type":"cumulative"},"id":5,"grid":{},"percentage":false,"stack":false,"type":"graph","timeFrom":null,"bars":false,"steppedLine":false,"editable":true,"points":false,"legend":{"min":false,"total":false,"values":false,"current":false,"avg":false,"max":false,"show":true,"hideZero":true},"datasource":"${DS_PROMETHEUS}","timeShift":null,"span":12,"linewidth":2}],"repeatIteration":null,"collapse":true,"height":250,"showTitle":true,"repeatRowId":null,"titleSize":"h6","title":"XGoogleDKIM Handler","repeat":null}';
+    return \@rows;
+}
+
 sub register_metrics {
     return {
         'xgoogledkim_total'      => 'The number of emails processed for X-Google-DKIM',

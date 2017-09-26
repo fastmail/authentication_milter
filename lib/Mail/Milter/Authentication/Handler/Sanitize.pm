@@ -13,6 +13,14 @@ sub default_config {
     };
 }
 
+## ToDo
+sub grafana_rows {
+    my ( $self ) = @_;
+    my @rows;
+    push @rows , '';
+    return \@rows;
+}
+
 sub register_metrics {
     return {
         'sanitize_removed_total' => 'The number Authentication Results headers removed',

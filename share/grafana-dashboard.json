@@ -1,4 +1,34 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "4.2.0"
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    }
+  ],
   "annotations": {
     "list": []
   },
@@ -6,7 +36,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "hideControls": false,
-  "id": 11,
+  "id": null,
   "links": [],
   "refresh": false,
   "rows": [
@@ -17,7 +47,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -53,7 +83,7 @@
               "legendFormat": "{{ result }}",
               "metric": "authmilter_mail_",
               "refId": "A",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -63,7 +93,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -95,12 +125,12 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
           "grid": {},
-          "id": 12,
+          "id": 37,
           "legend": {
             "avg": false,
             "current": false,
@@ -129,16 +159,7 @@
               "legendFormat": "Connections",
               "metric": "authmilter_connect_total",
               "refId": "A",
-              "step": 10
-            },
-            {
-              "expr": "sum(rate(authmilter_localip_connect_total{node=~\"$node\"}[$ratetime]))",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "Local connections",
-              "metric": "connect",
-              "refId": "B",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -148,7 +169,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -180,7 +201,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -216,7 +237,7 @@
               "legendFormat": "{{ node }}",
               "metric": "authmilter_mail_",
               "refId": "A",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -226,7 +247,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -265,12 +286,214 @@
     },
     {
       "collapse": true,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 12,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))",
+              "intervalFactor": 2,
+              "legendFormat": "Connections",
+              "metric": "authmilter_connect_total",
+              "refId": "A",
+              "step": 4
+            },
+            {
+              "expr": "sum(rate(authmilter_localip_connect_total{node=~\"$node\"}[$ratetime]))",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "Local connections",
+              "metric": "connect",
+              "refId": "B",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Local/NonLocal IP rate",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "LocalIP Handler",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": true,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 35,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_size_body_bytes_total{node=~\"$node\"}[$ratetime]))+sum(rate(authmilter_size_header_bytes_total{node=~\"$node\"}[$ratetime]))",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "Combined",
+              "refId": "C",
+              "step": 4
+            },
+            {
+              "expr": "sum(rate(authmilter_size_body_bytes_total{node=~\"$node\"}[$ratetime]))",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "Body",
+              "metric": "authmilter_mail_",
+              "refId": "A",
+              "step": 4
+            },
+            {
+              "expr": "sum(rate(authmilter_size_header_bytes_total{node=~\"$node\"}[$ratetime]))",
+              "intervalFactor": 2,
+              "legendFormat": "Header",
+              "refId": "B",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Data processed rate by result",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "Bps",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Size Handler",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": true,
       "height": "250px",
       "panels": [
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -306,7 +529,7 @@
               "legendFormat": "{{ result }}",
               "metric": "",
               "refId": "A",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -316,7 +539,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -350,7 +573,7 @@
       "repeatIteration": null,
       "repeatRowId": null,
       "showTitle": true,
-      "title": "SPF",
+      "title": "SPF Handler",
       "titleSize": "h6"
     },
     {
@@ -360,9 +583,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -388,7 +609,6 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "spaceLength": 10,
           "span": 12,
           "stack": false,
           "steppedLine": false,
@@ -400,7 +620,7 @@
               "legendFormat": "{{ result }}",
               "metric": "authmilter_dkim_error_total",
               "refId": "A",
-              "step": 20
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -410,12 +630,11 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
             "name": null,
             "show": true,
@@ -443,91 +662,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {},
-          "id": 5,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "hideZero": true,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 12,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(rate(authmilter_xgoogledkim_total{node=~\"$node\"}[$ratetime])) by(result)",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{ result }}",
-              "metric": "authmilter_dkim_error_total",
-              "refId": "A",
-              "step": 20
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "X-Google-DKIM results rate",
-          "tooltip": {
-            "msResolution": false,
-            "shared": true,
-            "sort": 0,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
-        },
-        {
-          "aliasColors": {},
-          "bars": true,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -544,7 +679,7 @@
             "total": false,
             "values": false
           },
-          "lines": false,
+          "lines": true,
           "linewidth": 2,
           "links": [],
           "nullPointMode": "connected",
@@ -553,9 +688,8 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "spaceLength": 10,
           "span": 12,
-          "stack": true,
+          "stack": false,
           "steppedLine": false,
           "targets": [
             {
@@ -565,7 +699,7 @@
               "legendFormat": " {{ key_size }} {{ key_type }} {{ result }}",
               "metric": "authmilter_dkim_error_total",
               "refId": "A",
-              "step": 20
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -575,12 +709,11 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
             "name": null,
             "show": true,
@@ -608,9 +741,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -624,8 +755,8 @@
             "max": false,
             "min": false,
             "show": true,
-            "total": false,
-            "values": false
+            "total": true,
+            "values": true
           },
           "lines": true,
           "linewidth": 2,
@@ -636,7 +767,6 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "spaceLength": 10,
           "span": 12,
           "stack": false,
           "steppedLine": false,
@@ -648,7 +778,7 @@
               "legendFormat": " {{ key_size }}",
               "metric": "authmilter_dkim_error_total",
               "refId": "A",
-              "step": 20
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -658,12 +788,11 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
             "name": null,
             "show": true,
@@ -693,7 +822,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -732,7 +861,7 @@
               "legendFormat": " {{ hash_algorithm }}",
               "metric": "authmilter_dkim_error_total",
               "refId": "A",
-              "step": 20
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -742,7 +871,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -777,7 +906,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -816,7 +945,7 @@
               "legendFormat": " {{ canonicalization }}",
               "metric": "authmilter_dkim_error_total",
               "refId": "A",
-              "step": 20
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -826,7 +955,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -861,7 +990,97 @@
       "repeatIteration": null,
       "repeatRowId": null,
       "showTitle": true,
-      "title": "DKIM",
+      "title": "DKIM Handler",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": true,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 5,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_xgoogledkim_total{node=~\"$node\"}[$ratetime])) by(result)",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{ result }}",
+              "metric": "authmilter_dkim_error_total",
+              "refId": "A",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "X-Google-DKIM results rate",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "XGoogleDKIM Handler",
       "titleSize": "h6"
     },
     {
@@ -871,7 +1090,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -907,7 +1126,7 @@
               "legendFormat": "{{ result }}",
               "metric": "authmilter_dmarc_fail_policy_none_total",
               "refId": "A",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -917,7 +1136,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -949,7 +1168,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -986,7 +1205,7 @@
               "legendFormat": "{{ policy }}",
               "metric": "dmarc_fail",
               "refId": "A",
-              "step": 5
+              "step": 2
             }
           ],
           "thresholds": [],
@@ -996,7 +1215,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "individual"
           },
           "type": "graph",
@@ -1028,7 +1247,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1061,14 +1280,14 @@
               "intervalFactor": 2,
               "legendFormat": "List detected",
               "refId": "A",
-              "step": 10
+              "step": 4
             },
             {
               "expr": "sum(rate(authmilter_dmarc_total{node=~\"$node\",result=\"fail\",is_list=\"0\"}[$ratetime]))",
               "intervalFactor": 2,
               "legendFormat": "No list detected",
               "refId": "B",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1078,7 +1297,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -1110,7 +1329,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1143,14 +1362,14 @@
               "intervalFactor": 2,
               "legendFormat": "Whitelisted",
               "refId": "A",
-              "step": 10
+              "step": 4
             },
             {
               "expr": "sum(rate(authmilter_dmarc_total{node=~\"$node\",result=\"fail\",is_whitelisted=\"0\"}[$ratetime]))",
               "intervalFactor": 2,
               "legendFormat": "Not whitelisted",
               "refId": "B",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1160,7 +1379,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -1194,7 +1413,98 @@
       "repeatIteration": null,
       "repeatRowId": null,
       "showTitle": true,
-      "title": "DMARC",
+      "title": "DMARC Handler",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": true,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 29,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideEmpty": false,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_arc_total{node=~\"$node\"}[$ratetime])) by(result)",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{ result }}",
+              "metric": "authmilter_dkim_error_total",
+              "refId": "A",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "ARC results rate",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "ARC Handler",
       "titleSize": "h6"
     },
     {
@@ -1204,7 +1514,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1239,7 +1549,7 @@
               "intervalFactor": 2,
               "legendFormat": "{{ result }}",
               "refId": "A",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1249,7 +1559,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -1283,7 +1593,245 @@
       "repeatIteration": null,
       "repeatRowId": null,
       "showTitle": true,
-      "title": "SMIME",
+      "title": "SMIME Handler",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": true,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "fill": 1,
+          "id": 26,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_tls_connect_total{node=~\"$node\"}[$ratetime]))",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "TLS",
+              "refId": "A",
+              "step": 4
+            },
+            {
+              "expr": "sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "Total Connections",
+              "refId": "B",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Connections",
+          "tooltip": {
+            "shared": true,
+            "sort": 2,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "fill": 1,
+          "id": 27,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_tls_connect_total{node=~\"$node\"}[$ratetime])) by(bits)",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{ bits }}",
+              "refId": "A",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Bits",
+          "tooltip": {
+            "shared": true,
+            "sort": 2,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "fill": 1,
+          "id": 28,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_tls_connect_total{node=~\"$node\"}[$ratetime])) by(cipher)",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{ cipher }}",
+              "refId": "A",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Ciphers",
+          "tooltip": {
+            "shared": true,
+            "sort": 2,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "TLS Handler",
       "titleSize": "h6"
     },
     {
@@ -1293,7 +1841,7 @@
         {
           "aliasColors": {},
           "bars": true,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1328,7 +1876,7 @@
               "legendFormat": "Spare children",
               "metric": "authmilter_",
               "refId": "A",
-              "step": 10
+              "step": 4
             },
             {
               "expr": "sum(authmilter_processes_processing{node=~\"$node\"})",
@@ -1336,7 +1884,7 @@
               "legendFormat": "Busy children",
               "metric": "authmilter_",
               "refId": "B",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1346,7 +1894,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "individual"
           },
           "type": "graph",
@@ -1378,7 +1926,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -1413,7 +1961,7 @@
               "legendFormat": "{{ node }}",
               "metric": "authmilter_",
               "refId": "A",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1423,7 +1971,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "individual"
           },
           "type": "graph",
@@ -1455,7 +2003,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -1490,7 +2038,7 @@
               "legendFormat": "{{ node }}",
               "metric": "authmilter_",
               "refId": "A",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1500,7 +2048,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "individual"
           },
           "type": "graph",
@@ -1532,7 +2080,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -1567,7 +2115,7 @@
               "legendFormat": "{{ node }}",
               "metric": "authmilter_",
               "refId": "A",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1577,7 +2125,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "individual"
           },
           "type": "graph",
@@ -1609,12 +2157,12 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
           "grid": {},
-          "id": 14,
+          "id": 31,
           "legend": {
             "avg": false,
             "current": false,
@@ -1643,7 +2191,7 @@
               "legendFormat": "Children forked",
               "metric": "authmilter_f",
               "refId": "A",
-              "step": 10
+              "step": 4
             },
             {
               "expr": "-sum(rate(authmilter_reaped_children_total{node=~\"$node\"}[$ratetime]))",
@@ -1652,7 +2200,7 @@
               "legendFormat": "Children reaped",
               "metric": "authmilter_f",
               "refId": "B",
-              "step": 10
+              "step": 4
             },
             {
               "expr": "sum(rate(authmilter_forked_children_total{node=~\"$node\"}[$ratetime]))-sum(rate(authmilter_reaped_children_total{node=~\"$node\"}[$ratetime]))",
@@ -1660,7 +2208,7 @@
               "intervalFactor": 2,
               "legendFormat": "Children churn",
               "refId": "C",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1670,7 +2218,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -1709,12 +2257,332 @@
     },
     {
       "collapse": true,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 36,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_time_microseconds_total{node=~\"$node\"}[$ratetime]))",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "Time",
+              "metric": "authmilter_f",
+              "refId": "A",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Processing Time",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "µs",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 32,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_time_microseconds_total{node=~\"$node\"}[$ratetime])) by(handler)",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{ handler }}",
+              "metric": "authmilter_f",
+              "refId": "A",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Time per Handler",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "µs",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 33,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_time_microseconds_total{node=~\"$node\"}[$ratetime])) by(callback)",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{ callback }}",
+              "metric": "authmilter_f",
+              "refId": "A",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Time per Callback",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "µs",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 34,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_time_microseconds_total{node=~\"$node\"}[$ratetime])) by(callback,handler)",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{ callback }} {{ handler }}",
+              "metric": "authmilter_f",
+              "refId": "A",
+              "step": 4
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Time per Callback/Handler",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "µs",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Processing Time",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": true,
       "height": "250px",
       "panels": [
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1750,7 +2618,7 @@
               "legendFormat": "{{ stage }}",
               "metric": "authmilter_call",
               "refId": "A",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1760,7 +2628,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -1804,7 +2672,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -1837,7 +2705,7 @@
               "intervalFactor": 2,
               "legendFormat": "Uptime {{ node }}",
               "refId": "A",
-              "step": 10
+              "step": 4
             }
           ],
           "thresholds": [],
@@ -1847,7 +2715,7 @@
           "tooltip": {
             "msResolution": false,
             "shared": true,
-            "sort": 0,
+            "sort": 2,
             "value_type": "cumulative"
           },
           "type": "graph",
@@ -1883,6 +2751,290 @@
       "showTitle": true,
       "title": "Uptime",
       "titleSize": "h6"
+    },
+    {
+      "collapse": true,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 38,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "hideZero": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_senderid_total{node=~\"$node\"}[$ratetime])) by(result)",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{ result }}",
+              "metric": "",
+              "refId": "A",
+              "step": 240
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "SenderID results rate",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "SenderID Handler",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": true,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 39,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))",
+              "intervalFactor": 2,
+              "legendFormat": "Connections",
+              "metric": "authmilter_connect_total",
+              "refId": "A",
+              "step": 2
+            },
+            {
+              "expr": "sum(rate(authmilter_trustedip_connect_total{node=~\"$node\"}[$ratetime]))",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "Trusted connections",
+              "metric": "connect",
+              "refId": "B",
+              "step": 2
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Trusted connections IP rate",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "TrustedIP Handler",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": true,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 40,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))",
+              "intervalFactor": 2,
+              "legendFormat": "Connections",
+              "metric": "authmilter_connect_total",
+              "refId": "A",
+              "step": 2
+            },
+            {
+              "expr": "sum(rate(authmilter_authenticated_connect_total{node=~\"$node\"}[$ratetime]))",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "Authenticated connections",
+              "metric": "connect",
+              "refId": "B",
+              "step": 2
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Authenticated connections IP rate",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 2,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": true,
+      "title": "Auth Handler",
+      "titleSize": "h6"
     }
   ],
   "schemaVersion": 14,
@@ -1894,13 +3046,8 @@
     "list": [
       {
         "allValue": null,
-        "current": {
-          "text": "All",
-          "value": [
-            "$__all"
-          ]
-        },
-        "datasource": null,
+        "current": {},
+        "datasource": "${DS_PROMETHEUS}",
         "hide": 0,
         "includeAll": true,
         "label": null,
@@ -1908,9 +3055,9 @@
         "name": "node",
         "options": [],
         "query": "label_values(authmilter_uptime_seconds_total, node)",
-        "refresh": 2,
+        "refresh": 1,
         "regex": "",
-        "sort": 0,
+        "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
         "tagsQuery": "",
@@ -1990,7 +3137,7 @@
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {
@@ -2020,5 +3167,5 @@
   },
   "timezone": "browser",
   "title": "Authentication Milter",
-  "version": 5
+  "version": 56
 }

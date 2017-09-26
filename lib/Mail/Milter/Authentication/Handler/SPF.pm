@@ -15,6 +15,13 @@ sub default_config {
     };
 }
 
+sub grafana_rows {
+    my ( $self ) = @_;
+    my @rows;
+    push @rows , '{"panels":[{"title":"SPF results rate","yaxes":[{"show":true,"format":"short","label":null,"max":null,"logBase":1,"min":null},{"logBase":1,"min":null,"format":"short","max":null,"label":null,"show":true}],"nullPointMode":"connected","aliasColors":{},"targets":[{"interval":"","legendFormat":"{{ result }}","expr":"sum(rate(authmilter_spf_total{node=~\"$node\"}[$ratetime])) by(result)","step":4,"intervalFactor":2,"metric":"","refId":"A"}],"links":[],"pointradius":5,"fill":1,"thresholds":[],"seriesOverrides":[],"error":false,"xaxis":{"name":null,"mode":"time","show":true,"values":[]},"grid":{},"id":3,"renderer":"flot","tooltip":{"shared":true,"value_type":"cumulative","sort":2,"msResolution":false},"lines":true,"stack":false,"type":"graph","percentage":false,"steppedLine":false,"timeFrom":null,"bars":false,"legend":{"total":false,"values":false,"min":false,"avg":false,"current":false,"max":false,"hideZero":true,"show":true},"points":false,"datasource":"${DS_PROMETHEUS}","editable":true,"span":12,"linewidth":2,"timeShift":null}],"repeatIteration":null,"collapse":true,"showTitle":true,"height":"250px","repeatRowId":null,"titleSize":"h6","repeat":null,"title":"SPF Handler"}';
+    return \@rows;
+}
+
 sub setup_callback {
     my ( $self ) = @_;
 
