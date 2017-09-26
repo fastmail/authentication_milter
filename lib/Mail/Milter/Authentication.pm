@@ -707,10 +707,31 @@ sub start {
     _warn "Running with perl $PERL_VERSION";
     _warn "==========";
 
-    __PACKAGE__->run( %srvargs );
+    my @start_times;
+    while ( 1 ) {
+        unshift @start_times, time();
 
-    # Never reaches here.
-    die 'Something went horribly wrong';
+        eval {
+            __PACKAGE__->run( %srvargs );
+        };
+        my $error = $@;
+        $error = 'unknown error' if ! $error;
+        _warn "Server failed: $error";
+
+        if ( scalar @start_times >= 4 ) {
+            if ( $start_times[3] > ( time() - 120 ) ) {
+                _warn "Abandoning automatic restart: too many restarts in a short time";
+                last;
+            }
+        }
+
+        _warn "Attempting automatic restart";
+        sleep 10;
+    }
+    _warn "Server exiting abnormally";
+    die;
+
+    return;
 }
 
 ##### Protocol methods
