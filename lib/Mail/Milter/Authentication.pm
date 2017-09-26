@@ -256,18 +256,33 @@ sub get_client_details {
 sub child_is_talking_hook {
     my ( $self, $socket ) = @_;
 
-    my $raw_request = <$socket>;
-    return if ! $raw_request;
+    my $request;
 
-    my $request = decode_json( $raw_request );
+    eval {
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        alarm(5);
 
-    $request =~ s/[\n\r]+$//;
-    if ( $request->{ 'method' } eq 'METRIC.GET' ) {
-        $self->{'metric'}->master_handler( $request, $socket, $self );
+        my $raw_request = <$socket>;
+        return if ! $raw_request;
+
+        $request = decode_json( $raw_request );
+
+        alarm(0);
+    };
+    if ( my $error = $@ ) {
+        warn "Error $error reading from child";
     }
-    if ( $request->{ 'method' } eq 'METRIC.COUNT' ) {
-        $self->{'metric'}->master_handler( $request, $socket, $self );
+    else {
+
+        $request =~ s/[\n\r]+$//;
+        if ( $request->{ 'method' } eq 'METRIC.GET' ) {
+            $self->{'metric'}->master_handler( $request, $socket, $self );
+        }
+        if ( $request->{ 'method' } eq 'METRIC.COUNT' ) {
+            $self->{'metric'}->master_handler( $request, $socket, $self );
+        }
     }
+
     return;
 }
 
