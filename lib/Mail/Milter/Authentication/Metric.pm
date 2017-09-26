@@ -46,7 +46,7 @@ sub count {
     my $count_id = $args->{ 'count_id' };
     my $labels   = $args->{ 'labels' };
     my $server   = $args->{ 'server' };
-    my $count    = $args->{ 'count '};
+    my $count    = $args->{ 'count' };
 
     return if ( ! $self->{ 'enabled' } );
     $count = 1 if ! defined $count;
