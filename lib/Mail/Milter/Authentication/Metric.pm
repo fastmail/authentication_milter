@@ -94,7 +94,7 @@ sub count {
     return;
 }
 
-sub send {
+sub send { ## no critic
     my ( $self, $server ) = @_;
 
     return if ( ! $self->{ 'enabled' } );

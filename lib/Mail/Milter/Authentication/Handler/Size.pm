@@ -53,6 +53,8 @@ sub eom_callback {
     $self->metric_count( 'size_total', {}, 1 );
     $self->metric_count( 'size_header_bytes_total', {}, $self->{ 'headersize' } );
     $self->metric_count( 'size_body_bytes_total', {}, $self->{ 'bodysize' } );
+
+    return;
 }
 
 sub close_callback {

@@ -725,7 +725,7 @@ sub start {
     _warn "Server exiting abnormally";
     die;
 
-    return;
+    return; ## no critic
 }
 
 ##### Protocol methods
