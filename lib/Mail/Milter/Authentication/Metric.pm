@@ -275,12 +275,42 @@ sub child_handler {
             }
 
         }
+        elsif ( $request_uri eq '/' ){
+            print $socket "HTTP/1.0 200 OK\n";
+            print $socket "Content-Type: text/html\n";
+            print $socket "\n";
+            print $socket qq{
+<html>
+<head>
+<title>Authentication Milter</title>
+</head>
+<body>
+
+<h1>Authentication Milter</h1>
+
+    <ul>
+        <li>Version:} . $Mail::Milter::Authentication::VERSION . qq{</li>
+        <li><a href="/metrics">Prometheus metrics endpoint</a></li>
+        <li><a href="/grafana">Grafana Dashboard</a></li>
+        <li>Installed Handlers
+            <ul>};
+
+            foreach my $Handler ( sort keys %{ $server->{ 'handler' } } ) {
+                print $socket '<li>' . $Handler . '</li>' if $Handler ne '_Handler';
+            }
+
+            print $socket qq{
+            </ul>
+    </ul>
+</body>
+};
+        }
         elsif ( $request_uri eq '/grafana' ) {
             print $socket "HTTP/1.0 200 OK\n";
-            print $socket "Content-Type: text/plain\n";
+            print $socket "Content-Type: application/json\n";
             print $socket "\n";
 
-            my $Base = '{"id":null,"annotations":{"list":[]},"timezone":"browser","__requires":[{"type":"grafana","name":"Grafana","id":"grafana","version":"4.2.0"},{"version":"","id":"graph","name":"Graph","type":"panel"},{"version":"1.0.0","name":"Prometheus","id":"prometheus","type":"datasource"}],"hideControls":false,"__inputs":[{"type":"datasource","pluginId":"prometheus","pluginName":"Prometheus","description":"","label":"Prometheus","name":"DS_PROMETHEUS"}],"editable":true,"rows":[],"gnetId":null,"refresh":false,"style":"dark","graphTooltip":0,"tags":["fastmail"],"time":{"to":"now","from":"now-1h"},"schemaVersion":14,"timepicker":{"refresh_intervals":["5s","10s","30s","1m","5m","15m","30m","1h","2h","1d"],"time_options":["5m","15m","1h","6h","12h","24h","2d","7d","30d"]},"title":"Authentication Milter","version":56,"templating":{"list":[{"regex":"","tagsQuery":"","options":[],"refresh":1,"tags":[],"allValue":null,"multi":true,"type":"query","query":"label_values(authmilter_uptime_seconds_total, node)","datasource":"${DS_PROMETHEUS}","label":null,"current":{},"hide":0,"useTags":false,"tagValuesQuery":"","includeAll":true,"name":"node","sort":1},{"hide":0,"options":[{"value":"1m","text":"1m","selected":true},{"selected":false,"value":"10m","text":"10m"},{"text":"30m","value":"30m","selected":false},{"text":"1h","value":"1h","selected":false},{"selected":false,"text":"6h","value":"6h"},{"value":"12h","text":"12h","selected":false},{"value":"1d","text":"1d","selected":false},{"selected":false,"text":"7d","value":"7d"},{"selected":false,"text":"14d","value":"14d"},{"text":"30d","value":"30d","selected":false}],"auto_count":30,"includeAll":false,"name":"ratetime","refresh":2,"auto_min":"10s","query":"1m,10m,30m,1h,6h,12h,1d,7d,14d,30d","datasource":null,"multi":false,"type":"interval","auto":false,"label":"","current":{"text":"1m","value":"1m"}}]},"links":[]}';
+            my $Base = '{"id":null,"annotations":{"list":[]},"timezone":"browser","__requires":[{"type":"grafana","name":"Grafana","id":"grafana","version":"4.2.0"},{"version":"","id":"graph","name":"Graph","type":"panel"},{"version":"1.0.0","name":"Prometheus","id":"prometheus","type":"datasource"}],"hideControls":false,"__inputs":[{"type":"datasource","pluginId":"prometheus","pluginName":"Prometheus","description":"","label":"Prometheus","name":"DS_PROMETHEUS"}],"editable":true,"rows":[],"gnetId":null,"refresh":false,"style":"dark","graphTooltip":0,"tags":["AuthenticationMilter"],"time":{"to":"now","from":"now-1h"},"schemaVersion":14,"timepicker":{"refresh_intervals":["5s","10s","30s","1m","5m","15m","30m","1h","2h","1d"],"time_options":["5m","15m","1h","6h","12h","24h","2d","7d","30d"]},"title":"Authentication Milter","version":56,"templating":{"list":[{"regex":"","tagsQuery":"","options":[],"refresh":1,"tags":[],"allValue":null,"multi":true,"type":"query","query":"label_values(authmilter_uptime_seconds_total, node)","datasource":"${DS_PROMETHEUS}","label":null,"current":{},"hide":0,"useTags":false,"tagValuesQuery":"","includeAll":true,"name":"node","sort":1},{"hide":0,"options":[{"value":"1m","text":"1m","selected":true},{"selected":false,"value":"10m","text":"10m"},{"text":"30m","value":"30m","selected":false},{"text":"1h","value":"1h","selected":false},{"selected":false,"text":"6h","value":"6h"},{"value":"12h","text":"12h","selected":false},{"value":"1d","text":"1d","selected":false},{"selected":false,"text":"7d","value":"7d"},{"selected":false,"text":"14d","value":"14d"},{"text":"30d","value":"30d","selected":false}],"auto_count":30,"includeAll":false,"name":"ratetime","refresh":2,"auto_min":"10s","query":"1m,10m,30m,1h,6h,12h,1d,7d,14d,30d","datasource":null,"multi":false,"type":"interval","auto":false,"label":"","current":{"text":"1m","value":"1m"}}]},"links":[]}';
 
             my @Rows;
 
@@ -311,6 +341,7 @@ sub child_handler {
             my $BaseData = $J->decode( $Base );
             my $RowsData = $J->decode( '[' . join( ',', @Rows ) . ']' );
             $BaseData->{ 'rows' } = $RowsData;
+            $J->pretty();
             print $socket $J->encode( $BaseData ) . "\n";
 
         }
