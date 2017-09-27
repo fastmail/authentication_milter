@@ -58,7 +58,7 @@
    "authmilter_authenticated_connect_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_processes_processing{ident=\"test_authentication_milter_test\"}" : "1",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"connect\",handler=\"trustedip\"}" : "3",
-   "authmilter_sanitize_removed_total{ident=\"test_authentication_milter_test\"}" : "0",
+   "authmilter_sanitize_remove_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"helo\",handler=\"ptr\"}" : "3",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"header\",handler=\"dmarc\"}" : "20",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"helo\",handler=\"dmarc\"}" : "3",

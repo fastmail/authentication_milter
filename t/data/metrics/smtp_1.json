@@ -30,7 +30,7 @@
    "authmilter_spf_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_dkim_signatures{ident=\"test_authentication_milter_test\", canonicalization=\"relaxed_relaxed\",hash_algorithm=\"sha256\",key_size=\"1024\",key_type=\"rsa\",result=\"pass\",type=\"dkim\"}" : "11",
    "authmilter_dmarc_total{ident=\"test_authentication_milter_test\", is_list=\"0\",is_whitelisted=\"0\",policy=\"reject\",result=\"fail\"}" : "2",
-   "authmilter_sanitize_removed_total{ident=\"test_authentication_milter_test\"}" : "0",
+   "authmilter_sanitize_remove_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"close\",handler=\"dkim\"}" : "55",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"close\",handler=\"trustedip\"}" : "55",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"header\",handler=\"sanitize\"}" : "297",

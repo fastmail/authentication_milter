@@ -49,7 +49,7 @@
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"header\",handler=\"dmarc\"}" : "4",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"helo\",handler=\"ptr\"}" : "1",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"envfrom\",handler=\"dmarc\"}" : "1",
-   "authmilter_sanitize_removed_total{ident=\"test_authentication_milter_test\"}" : "0",
+   "authmilter_sanitize_remove_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"connect\",handler=\"trustedip\"}" : "1",
    "authmilter_localip_connect_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_processes_processing{ident=\"test_authentication_milter_test\"}" : "1",

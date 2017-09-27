@@ -62,5 +62,5 @@
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"header\",handler=\"senderid\"}" : "4",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"header\",handler=\"sanitize\"}" : "4",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"close\",handler=\"dkim\"}" : "2",
-   "authmilter_sanitize_removed_total{ident=\"test_authentication_milter_test\"}" : "0"
+   "authmilter_sanitize_remove_total{ident=\"test_authentication_milter_test\"}" : "0"
 }
