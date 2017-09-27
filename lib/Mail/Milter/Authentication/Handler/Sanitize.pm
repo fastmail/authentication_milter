@@ -17,13 +17,13 @@ sub default_config {
 sub grafana_rows {
     my ( $self ) = @_;
     my @rows;
-    push @rows , '';
+    push @rows , '{"repeatIteration":null,"titleSize":"h6","showTitle":true,"collapse":true,"panels":[{"title":"Authenticated connections IP rate","datasource":"${DS_PROMETHEUS}","legend":{"values":false,"total":false,"show":true,"current":false,"min":false,"max":false,"avg":false},"stack":false,"type":"graph","aliasColors":{},"span":12,"bars":false,"editable":true,"targets":[{"metric":"connect","interval":"","step":30,"legendFormat":"Headers Sanitized","expr":"sum(rate(authmilter_sanitize_remove_total{node=~\"$node\"}[$ratetime]))","refId":"B","intervalFactor":2}],"nullPointMode":"connected","id":40,"lines":true,"error":false,"seriesOverrides":[],"renderer":"flot","steppedLine":false,"links":[],"percentage":false,"fill":1,"yaxes":[{"format":"short","min":null,"max":null,"logBase":1,"show":true,"label":null},{"label":null,"show":true,"logBase":1,"format":"short","max":null,"min":null}],"linewidth":2,"xaxis":{"values":[],"name":null,"show":true,"mode":"time"},"timeFrom":null,"timeShift":null,"grid":{},"thresholds":[],"tooltip":{"shared":true,"sort":2,"msResolution":false,"value_type":"cumulative"},"points":false,"pointradius":5}],"repeatRowId":null,"repeat":null,"height":250,"title":"Sanitize Handler"}';
     return \@rows;
 }
 
 sub register_metrics {
     return {
-        'sanitize_removed_total' => 'The number Authentication Results headers removed',
+        'sanitize_remove_total' => 'The number Authentication Results headers removed',
     };
 }
 
