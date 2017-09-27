@@ -22,6 +22,7 @@ lib/Mail/Milter/Authentication/Handler/ReturnOK.pm
 lib/Mail/Milter/Authentication/Handler/SPF.pm
 lib/Mail/Milter/Authentication/Handler/Sanitize.pm
 lib/Mail/Milter/Authentication/Handler/SenderID.pm
+lib/Mail/Milter/Authentication/Handler/Size.pm
 lib/Mail/Milter/Authentication/Handler/TLS.pm
 lib/Mail/Milter/Authentication/Handler/TrustedIP.pm
 lib/Mail/Milter/Authentication/Handler/XGoogleDKIM.pm
@@ -30,7 +31,6 @@ lib/Mail/Milter/Authentication/Protocol/Milter.pm
 lib/Mail/Milter/Authentication/Protocol/SMTP.pm
 share/authentication_milter.init
 share/authentication_milter.json
-share/grafana-dashboard.json
 share/mail-dmarc.ini
 t/00-load.t
 t/01-pipeline.t
@@ -103,6 +103,14 @@ t/data/example/spam_headers.smtp.eml
 t/data/example/tools_pipeline_test.eml
 t/data/example/tools_test.eml
 t/data/example/transparency.smtp.eml
+t/data/metrics/milter_1.json
+t/data/metrics/milter_2.json
+t/data/metrics/milter_3.json
+t/data/metrics/milter_4.json
+t/data/metrics/smtp_1.json
+t/data/metrics/smtp_2.json
+t/data/metrics/smtp_3.json
+t/data/metrics/smtp_4.json
 t/data/source/dmarc_reject.eml
 t/data/source/dmarc_reject_case.eml
 t/data/source/dmarc_reject_wl.eml
