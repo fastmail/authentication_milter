@@ -73,7 +73,6 @@
    "authmilter_mail_processed_total{ident=\"test_authentication_milter_test\", result=\"accepted\"}" : "15",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"close\",handler=\"senderid\"}" : "15",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"close\",handler=\"iprev\"}" : "15",
-   "authmilter_sanitize_remove_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"envfrom\",handler=\"sanitize\"}" : "15",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\", callback=\"eom\",handler=\"xgoogledkim\"}" : "15",
    "authmilter_dkim_signatures{ident=\"test_authentication_milter_test\", canonicalization=\"relaxed_relaxed\",hash_algorithm=\"sha256\",key_size=\"1024\",key_type=\"rsa\",result=\"fail\",type=\"dkim\"}" : "3",
