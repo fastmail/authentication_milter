@@ -10,7 +10,6 @@ sub default_config {
     return {};
 }
 
-## ToDo
 sub grafana_rows {
     my ( $self ) = @_;
     my @rows;

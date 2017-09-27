@@ -13,7 +13,6 @@ sub default_config {
     };
 }
 
-## ToDo
 sub grafana_rows {
     my ( $self ) = @_;
     my @rows;
