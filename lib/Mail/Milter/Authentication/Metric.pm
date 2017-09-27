@@ -146,68 +146,71 @@ sub register_metrics {
     return;
 }
 
+sub master_metric_get {
+    my ( $self, $request, $socket, $server ) = @_;
+    my $ident = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"}';
+    my $guage_help = {
+        'waiting'    => 'The number of authentication milter processes in a waiting state',
+        'processing' => 'The number of authentication milter processes currently processing data',
+    };
+    print $socket "# TYPE authmilter_uptime_seconds_total counter\n";
+    print $socket "# HELP authmilter_uptime_seconds_total Number of seconds since server startup\n";
+    print $socket 'authmilter_uptime_seconds_total' . $ident . ' ' . ( time - $self->{'start_time'} ) . "\n";
+    foreach my $type ( qw { waiting processing } ) {
+        print $socket '# TYPE authmilter_processes_' . $type . " gauge\n";
+        print $socket '# HELP authmilter_processes_' . $type . ' ' . $guage_help->{ $type } . "\n";
+        print $socket 'authmilter_processes_' . $type . $ident . ' ' . $server->{'server'}->{'tally'}->{ $type } . "\n";
+    }
+    foreach my $key ( sort keys %{ $self->{'counter'} } ) {
+        print $socket '# TYPE authmilter_' . $key . " counter\n";
+        my $help = $self->{'help'}->{ $key };
+        if ( $help ) {
+            print $socket '# HELP authmilter_' . $key . ' ' . $self->{'help'}->{ $key } . "\n";
+        }
+        foreach my $labels ( sort keys %{ $self->{'counter'}->{ $key } } ) {
+            my $labels_txt = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"';
+            if ( $labels ne q{} ) {
+                $labels_txt .= ',' . $labels;
+            }
+            $labels_txt .= '}';
+            print $socket 'authmilter_' . $key . $labels_txt . ' ' . $self->{'counter'}->{ $key }->{ $labels } . "\n";
+        }
+    }
+    print $socket "\0\n";
+    return;
+}
+
+sub master_metric_count {
+    my ( $self, $request, $socket, $server ) = @_;
+    my $data = $request->{ 'data' };
+    foreach my $datum ( @$data ) {
+        my $count    = $datum->{ 'count' };
+        my $count_id = $datum->{ 'count_id' };
+        my $labels   = $datum->{ 'labels' };
+        $labels = '' if ! $labels;
+        if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
+            $self->{'counter'}->{ $count_id } = { $labels => 0 };
+        }
+        if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
+            $self->{'counter'}->{ $count_id }->{ $labels } = 0;
+        }
+        $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
+    }
+    print $socket "1\n";
+    return;
+}
+
 sub master_handler {
     my ( $self, $request, $socket, $server ) = @_;
     my $config = get_config();
 
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
-        alarm( $self->get_timeout() );
-
-        my $ident = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"}';
-
-        my $guage_help = {
-            'waiting'    => 'The number of authentication milter processes in a waiting state',
-            'processing' => 'The number of authentication milter processes currently processing data',
-        };
-
-
         if ( $request->{ 'method' } eq 'METRIC.GET' ) {
-            print $socket "# TYPE authmilter_uptime_seconds_total counter\n";
-            print $socket "# HELP authmilter_uptime_seconds_total Number of seconds since server startup\n";
-            print $socket 'authmilter_uptime_seconds_total' . $ident . ' ' . ( time - $self->{'start_time'} ) . "\n";
-            foreach my $type ( qw { waiting processing } ) {
-                print $socket '# TYPE authmilter_processes_' . $type . " gauge\n";
-                print $socket '# HELP authmilter_processes_' . $type . ' ' . $guage_help->{ $type } . "\n";
-                print $socket 'authmilter_processes_' . $type . $ident . ' ' . $server->{'server'}->{'tally'}->{ $type } . "\n";
-            }
-            foreach my $key ( sort keys %{ $self->{'counter'} } ) {
-                print $socket '# TYPE authmilter_' . $key . " counter\n";
-                my $help = $self->{'help'}->{ $key };
-                if ( $help ) {
-                    print $socket '# HELP authmilter_' . $key . ' ' . $self->{'help'}->{ $key } . "\n";
-                }
-                foreach my $labels ( sort keys %{ $self->{'counter'}->{ $key } } ) {
-                    my $labels_txt = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"';
-                    if ( $labels ne q{} ) {
-                        $labels_txt .= ',' . $labels;
-                    }
-                    $labels_txt .= '}';
-                    print $socket 'authmilter_' . $key . $labels_txt . ' ' . $self->{'counter'}->{ $key }->{ $labels } . "\n";
-                }
-            }
-            print $socket "\0\n";
+            $self->master_metric_get( $request, $socket, $server );
         }
         elsif ( $request->{ 'method' } eq 'METRIC.COUNT' ) {
-            my $data = $request->{ 'data' };
-            foreach my $datum ( @$data ) {
-                my $count    = $datum->{ 'count' };
-                my $count_id = $datum->{ 'count_id' };
-                my $labels   = $datum->{ 'labels' };
-                $labels = '' if ! $labels;
-                if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
-                    $self->{'counter'}->{ $count_id } = { $labels => 0 };
-                }
-                if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
-                    $self->{'counter'}->{ $count_id }->{ $labels } = 0;
-                }
-                $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
-            }
-            print $socket "1\n";
-
+            $self->master_metric_count( $request, $socket, $server );
         }
-
-        alarm( 0 );
     };
     if ( my $error = $@ ) {
         warn "Metrics handler error $error";

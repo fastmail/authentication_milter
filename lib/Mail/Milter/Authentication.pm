@@ -259,15 +259,9 @@ sub child_is_talking_hook {
     my $request;
 
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
-        alarm(5);
-
         my $raw_request = <$socket>;
         return if ! $raw_request;
-
         $request = decode_json( $raw_request );
-
-        alarm(0);
     };
     if ( my $error = $@ ) {
         warn "Error $error reading from child";
