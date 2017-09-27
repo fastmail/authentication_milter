@@ -3,6 +3,14 @@ Revision history for Mail-Milter-Authentication
 1.1.3   FUTURE
         - Handler for capturing metrics on message size
         - Collect metrics for processing time in each handler/stage
+        - Defer internal counting of metrics until after transaction
+        - Generate grafana dashboard automatically for installed handlers
+        - Allow metrics port to be unix socket
+        - Tests for metrics system
+        - New handler to gather metrics of the size of messages/headers processed
+        - Make the IPRev handler rfc compliant
+        - Add metrics for IPRev, PTR, and ReturnOK handlers
+        - Stability fixes
 
 1.1.2   2017-08-22
         - Fixed process management under SmartOS
