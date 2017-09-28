@@ -1,0 +1,245 @@
+{
+   "repeatRowId" : null,
+   "panels" : [
+      {
+         "nullPointMode" : "connected",
+         "id" : 9,
+         "error" : false,
+         "tooltip" : {
+            "value_type" : "cumulative",
+            "sort" : 2,
+            "msResolution" : false,
+            "shared" : true
+         },
+         "bars" : false,
+         "thresholds" : [],
+         "fill" : 1,
+         "timeShift" : null,
+         "targets" : [
+            {
+               "legendFormat" : "{{ result }}",
+               "metric" : "authmilter_mail_",
+               "expr" : "sum(rate(authmilter_mail_processed_total{node=~\"$node\"}[$ratetime])) by(result)",
+               "step" : 4,
+               "interval" : "",
+               "refId" : "A",
+               "intervalFactor" : 2
+            }
+         ],
+         "span" : 12,
+         "editable" : true,
+         "type" : "graph",
+         "steppedLine" : false,
+         "pointradius" : 5,
+         "aliasColors" : {},
+         "xaxis" : {
+            "show" : true,
+            "name" : null,
+            "mode" : "time",
+            "values" : []
+         },
+         "grid" : {},
+         "renderer" : "flot",
+         "linewidth" : 2,
+         "yaxes" : [
+            {
+               "min" : null,
+               "show" : true,
+               "label" : null,
+               "format" : "short",
+               "max" : null,
+               "logBase" : 1
+            },
+            {
+               "min" : null,
+               "show" : true,
+               "logBase" : 1,
+               "max" : null,
+               "format" : "short",
+               "label" : null
+            }
+         ],
+         "percentage" : false,
+         "links" : [],
+         "legend" : {
+            "max" : false,
+            "show" : true,
+            "min" : false,
+            "current" : false,
+            "values" : false,
+            "hideZero" : true,
+            "total" : false,
+            "avg" : false
+         },
+         "points" : false,
+         "lines" : true,
+         "title" : "Emails processed rate by result",
+         "datasource" : "${DS_PROMETHEUS}",
+         "stack" : false,
+         "seriesOverrides" : [],
+         "timeFrom" : null
+      },
+      {
+         "aliasColors" : {},
+         "pointradius" : 5,
+         "xaxis" : {
+            "show" : true,
+            "name" : null,
+            "values" : [],
+            "mode" : "time"
+         },
+         "steppedLine" : false,
+         "type" : "graph",
+         "percentage" : false,
+         "legend" : {
+            "avg" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "max" : false,
+            "current" : false,
+            "values" : false
+         },
+         "points" : false,
+         "links" : [],
+         "lines" : true,
+         "linewidth" : 2,
+         "yaxes" : [
+            {
+               "show" : true,
+               "min" : null,
+               "label" : null,
+               "logBase" : 1,
+               "format" : "short",
+               "max" : null
+            },
+            {
+               "max" : null,
+               "format" : "short",
+               "logBase" : 1,
+               "label" : null,
+               "min" : null,
+               "show" : true
+            }
+         ],
+         "renderer" : "flot",
+         "grid" : {},
+         "title" : "Milter connections rate",
+         "datasource" : "${DS_PROMETHEUS}",
+         "timeFrom" : null,
+         "seriesOverrides" : [],
+         "stack" : false,
+         "nullPointMode" : "connected",
+         "id" : 37,
+         "bars" : false,
+         "tooltip" : {
+            "shared" : true,
+            "msResolution" : false,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "error" : false,
+         "timeShift" : null,
+         "thresholds" : [],
+         "fill" : 1,
+         "span" : 12,
+         "editable" : true,
+         "targets" : [
+            {
+               "step" : 4,
+               "intervalFactor" : 2,
+               "refId" : "A",
+               "legendFormat" : "Connections",
+               "expr" : "sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))",
+               "metric" : "authmilter_connect_total"
+            }
+         ]
+      },
+      {
+         "thresholds" : [],
+         "fill" : 0,
+         "timeShift" : null,
+         "targets" : [
+            {
+               "step" : 4,
+               "intervalFactor" : 2,
+               "interval" : "",
+               "refId" : "A",
+               "legendFormat" : "{{ node }}",
+               "expr" : "sum(rate(authmilter_mail_processed_total{node=~\"$node\"}[$ratetime])) by(node)",
+               "metric" : "authmilter_mail_"
+            }
+         ],
+         "span" : 12,
+         "editable" : true,
+         "nullPointMode" : "connected",
+         "id" : 17,
+         "tooltip" : {
+            "shared" : true,
+            "msResolution" : false,
+            "value_type" : "cumulative",
+            "sort" : 2
+         },
+         "bars" : false,
+         "error" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "title" : "Emails processed rate by node",
+         "seriesOverrides" : [],
+         "stack" : false,
+         "timeFrom" : null,
+         "xaxis" : {
+            "mode" : "time",
+            "values" : [],
+            "show" : true,
+            "name" : null
+         },
+         "pointradius" : 5,
+         "aliasColors" : {},
+         "type" : "graph",
+         "steppedLine" : false,
+         "grid" : {},
+         "legend" : {
+            "total" : false,
+            "avg" : false,
+            "current" : false,
+            "values" : false,
+            "hideZero" : true,
+            "min" : false,
+            "show" : true,
+            "max" : false
+         },
+         "points" : false,
+         "lines" : true,
+         "percentage" : false,
+         "links" : [],
+         "linewidth" : 2,
+         "renderer" : "flot",
+         "yaxes" : [
+            {
+               "min" : null,
+               "show" : true,
+               "logBase" : 1,
+               "format" : "short",
+               "max" : null,
+               "label" : null
+            },
+            {
+               "show" : true,
+               "min" : null,
+               "label" : null,
+               "logBase" : 1,
+               "format" : "short",
+               "max" : null
+            }
+         ]
+      }
+   ],
+   "collapse" : true,
+   "repeatIteration" : null,
+   "title" : "Throughput",
+   "height" : "250px",
+   "repeat" : null,
+   "titleSize" : "h6",
+   "showTitle" : true
+}
+

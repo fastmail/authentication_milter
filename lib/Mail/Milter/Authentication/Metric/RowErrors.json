@@ -1,0 +1,91 @@
+{
+   "showTitle" : true,
+   "repeat" : null,
+   "collapse" : true,
+   "titleSize" : "h6",
+   "title" : "Errors",
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "height" : "250px",
+   "panels" : [
+      {
+         "id" : 10,
+         "linewidth" : 2,
+         "aliasColors" : {},
+         "timeShift" : null,
+         "type" : "graph",
+         "xaxis" : {
+            "values" : [],
+            "name" : null,
+            "mode" : "time",
+            "show" : true
+         },
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "fill" : 1,
+         "grid" : {},
+         "span" : 12,
+         "bars" : false,
+         "renderer" : "flot",
+         "stack" : false,
+         "title" : "Callback Errors Total",
+         "links" : [],
+         "tooltip" : {
+            "msResolution" : false,
+            "value_type" : "cumulative",
+            "sort" : 2,
+            "shared" : true
+         },
+         "targets" : [
+            {
+               "metric" : "authmilter_call",
+               "refId" : "A",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "step" : 4,
+               "expr" : "sum(authmilter_callback_error_total{node=~\"$node\"}) by(stage)",
+               "legendFormat" : "{{ stage }}"
+            }
+         ],
+         "lines" : true,
+         "timeFrom" : null,
+         "yaxes" : [
+            {
+               "logBase" : 1,
+               "format" : "short",
+               "show" : true,
+               "max" : null,
+               "label" : null,
+               "min" : null
+            },
+            {
+               "format" : "short",
+               "logBase" : 1,
+               "show" : true,
+               "label" : null,
+               "max" : null,
+               "min" : null
+            }
+         ],
+         "seriesOverrides" : [],
+         "percentage" : false,
+         "nullPointMode" : "connected",
+         "error" : false,
+         "points" : false,
+         "legend" : {
+            "avg" : false,
+            "values" : false,
+            "current" : false,
+            "min" : false,
+            "max" : false,
+            "show" : true,
+            "hideZero" : true,
+            "total" : false
+         },
+         "steppedLine" : false,
+         "thresholds" : [],
+         "pointradius" : 5
+      }
+   ]
+}
+

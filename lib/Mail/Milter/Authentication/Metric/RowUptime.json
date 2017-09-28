@@ -1,0 +1,88 @@
+{
+   "repeatRowId" : null,
+   "repeat" : null,
+   "panels" : [
+      {
+         "type" : "graph",
+         "grid" : {},
+         "stack" : false,
+         "span" : 12,
+         "timeShift" : null,
+         "lines" : true,
+         "datasource" : "${DS_PROMETHEUS}",
+         "steppedLine" : false,
+         "id" : 11,
+         "fill" : 0,
+         "aliasColors" : {},
+         "seriesOverrides" : [],
+         "title" : "Uptime",
+         "renderer" : "flot",
+         "linewidth" : 2,
+         "links" : [],
+         "pointradius" : 5,
+         "nullPointMode" : "connected",
+         "editable" : true,
+         "error" : false,
+         "yaxes" : [
+            {
+               "logBase" : 1,
+               "format" : "s",
+               "show" : true,
+               "max" : null,
+               "min" : null,
+               "label" : ""
+            },
+            {
+               "format" : "short",
+               "logBase" : 1,
+               "show" : true,
+               "min" : null,
+               "max" : null,
+               "label" : null
+            }
+         ],
+         "legend" : {
+            "current" : false,
+            "show" : true,
+            "total" : false,
+            "max" : false,
+            "min" : false,
+            "avg" : false,
+            "values" : false
+         },
+         "bars" : false,
+         "percentage" : false,
+         "tooltip" : {
+            "sort" : 2,
+            "value_type" : "cumulative",
+            "shared" : true,
+            "msResolution" : false
+         },
+         "timeFrom" : null,
+         "thresholds" : [],
+         "targets" : [
+            {
+               "intervalFactor" : 2,
+               "refId" : "A",
+               "expr" : "sum(authmilter_uptime_seconds_total{node=~\"$node\"}) by(node)",
+               "legendFormat" : "Uptime {{ node }}",
+               "step" : 4
+            }
+         ],
+         "xaxis" : {
+            "mode" : "time",
+            "values" : [],
+            "name" : null,
+            "show" : true
+         },
+         "points" : false
+      }
+   ],
+   "titleSize" : "h6",
+   "height" : "250px",
+   "repeatIteration" : null,
+   "collapse" : true,
+   "showTitle" : true,
+   "title" : "Uptime"
+}
+

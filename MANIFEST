@@ -27,7 +27,13 @@ lib/Mail/Milter/Authentication/Handler/TLS.pm
 lib/Mail/Milter/Authentication/Handler/TrustedIP.pm
 lib/Mail/Milter/Authentication/Handler/XGoogleDKIM.pm
 lib/Mail/Milter/Authentication/Metric.pm
+lib/Mail/Milter/Authentication/Metric/Base.json
 lib/Mail/Milter/Authentication/Metric/Grafana.pm
+lib/Mail/Milter/Authentication/Metric/RowErrors.json
+lib/Mail/Milter/Authentication/Metric/RowProcesses.json
+lib/Mail/Milter/Authentication/Metric/RowProcessingTime.json
+lib/Mail/Milter/Authentication/Metric/RowThroughput.json
+lib/Mail/Milter/Authentication/Metric/RowUptime.json
 lib/Mail/Milter/Authentication/Protocol/Milter.pm
 lib/Mail/Milter/Authentication/Protocol/SMTP.pm
 share/authentication_milter.init

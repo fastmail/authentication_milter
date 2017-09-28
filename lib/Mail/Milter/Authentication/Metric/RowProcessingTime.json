@@ -1,0 +1,321 @@
+{
+   "repeat" : null,
+   "title" : "Processing Time",
+   "collapse" : true,
+   "titleSize" : "h6",
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "panels" : [
+      {
+         "seriesOverrides" : [],
+         "steppedLine" : false,
+         "nullPointMode" : "connected",
+         "error" : false,
+         "points" : false,
+         "editable" : true,
+         "linewidth" : 2,
+         "tooltip" : {
+            "shared" : true,
+            "sort" : 2,
+            "msResolution" : false,
+            "value_type" : "cumulative"
+         },
+         "lines" : true,
+         "timeFrom" : null,
+         "percentage" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "fill" : 1,
+         "legend" : {
+            "max" : false,
+            "show" : true,
+            "min" : false,
+            "avg" : false,
+            "values" : false,
+            "total" : false,
+            "current" : false
+         },
+         "title" : "Processing Time",
+         "span" : 12,
+         "timeShift" : null,
+         "id" : 36,
+         "renderer" : "flot",
+         "type" : "graph",
+         "pointradius" : 5,
+         "targets" : [
+            {
+               "legendFormat" : "Time",
+               "expr" : "sum(rate(authmilter_time_microseconds_total{node=~\"$node\"}[$ratetime]))",
+               "refId" : "A",
+               "intervalFactor" : 2,
+               "metric" : "authmilter_f",
+               "step" : 4,
+               "interval" : ""
+            }
+         ],
+         "xaxis" : {
+            "show" : true,
+            "values" : [],
+            "mode" : "time",
+            "name" : null
+         },
+         "links" : [],
+         "bars" : false,
+         "thresholds" : [],
+         "grid" : {},
+         "aliasColors" : {},
+         "yaxes" : [
+            {
+               "label" : null,
+               "logBase" : 1,
+               "format" : "µs",
+               "show" : true,
+               "min" : null,
+               "max" : null
+            },
+            {
+               "label" : null,
+               "logBase" : 1,
+               "format" : "short",
+               "min" : null,
+               "show" : true,
+               "max" : null
+            }
+         ],
+         "stack" : false
+      },
+      {
+         "title" : "Time per Handler",
+         "fill" : 1,
+         "legend" : {
+            "current" : false,
+            "total" : false,
+            "max" : false,
+            "avg" : false,
+            "values" : false,
+            "show" : true,
+            "min" : false
+         },
+         "span" : 12,
+         "percentage" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "lines" : true,
+         "timeFrom" : null,
+         "tooltip" : {
+            "sort" : 2,
+            "shared" : true,
+            "msResolution" : false,
+            "value_type" : "cumulative"
+         },
+         "editable" : true,
+         "linewidth" : 2,
+         "error" : false,
+         "nullPointMode" : "connected",
+         "points" : false,
+         "seriesOverrides" : [],
+         "steppedLine" : false,
+         "aliasColors" : {},
+         "grid" : {},
+         "yaxes" : [
+            {
+               "label" : null,
+               "logBase" : 1,
+               "format" : "µs",
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "show" : true,
+               "min" : null,
+               "max" : null,
+               "label" : null,
+               "logBase" : 1,
+               "format" : "short"
+            }
+         ],
+         "thresholds" : [],
+         "stack" : false,
+         "links" : [],
+         "xaxis" : {
+            "values" : [],
+            "show" : true,
+            "mode" : "time",
+            "name" : null
+         },
+         "bars" : false,
+         "targets" : [
+            {
+               "legendFormat" : "{{ handler }}",
+               "expr" : "sum(rate(authmilter_time_microseconds_total{node=~\"$node\"}[$ratetime])) by(handler)",
+               "intervalFactor" : 2,
+               "refId" : "A",
+               "metric" : "authmilter_f",
+               "step" : 4,
+               "interval" : ""
+            }
+         ],
+         "pointradius" : 5,
+         "id" : 32,
+         "renderer" : "flot",
+         "type" : "graph",
+         "timeShift" : null
+      },
+      {
+         "datasource" : "${DS_PROMETHEUS}",
+         "percentage" : false,
+         "timeFrom" : null,
+         "lines" : true,
+         "legend" : {
+            "current" : false,
+            "total" : false,
+            "max" : false,
+            "avg" : false,
+            "values" : false,
+            "min" : false,
+            "show" : true
+         },
+         "span" : 12,
+         "fill" : 1,
+         "title" : "Time per Callback",
+         "points" : false,
+         "error" : false,
+         "nullPointMode" : "connected",
+         "seriesOverrides" : [],
+         "steppedLine" : false,
+         "tooltip" : {
+            "msResolution" : false,
+            "value_type" : "cumulative",
+            "sort" : 2,
+            "shared" : true
+         },
+         "linewidth" : 2,
+         "editable" : true,
+         "targets" : [
+            {
+               "metric" : "authmilter_f",
+               "step" : 4,
+               "interval" : "",
+               "expr" : "sum(rate(authmilter_time_microseconds_total{node=~\"$node\"}[$ratetime])) by(callback)",
+               "legendFormat" : "{{ callback }}",
+               "refId" : "A",
+               "intervalFactor" : 2
+            }
+         ],
+         "pointradius" : 5,
+         "stack" : false,
+         "thresholds" : [],
+         "aliasColors" : {},
+         "grid" : {},
+         "yaxes" : [
+            {
+               "min" : null,
+               "show" : true,
+               "max" : null,
+               "logBase" : 1,
+               "format" : "µs",
+               "label" : null
+            },
+            {
+               "min" : null,
+               "show" : true,
+               "max" : null,
+               "format" : "short",
+               "logBase" : 1,
+               "label" : null
+            }
+         ],
+         "bars" : false,
+         "links" : [],
+         "xaxis" : {
+            "name" : null,
+            "mode" : "time",
+            "show" : true,
+            "values" : []
+         },
+         "timeShift" : null,
+         "type" : "graph",
+         "renderer" : "flot",
+         "id" : 33
+      },
+      {
+         "timeShift" : null,
+         "type" : "graph",
+         "id" : 34,
+         "renderer" : "flot",
+         "targets" : [
+            {
+               "metric" : "authmilter_f",
+               "step" : 4,
+               "interval" : "",
+               "expr" : "sum(rate(authmilter_time_microseconds_total{node=~\"$node\"}[$ratetime])) by(callback,handler)",
+               "legendFormat" : "{{ callback }} {{ handler }}",
+               "intervalFactor" : 2,
+               "refId" : "A"
+            }
+         ],
+         "pointradius" : 5,
+         "stack" : false,
+         "yaxes" : [
+            {
+               "format" : "µs",
+               "logBase" : 1,
+               "label" : null,
+               "min" : null,
+               "show" : true,
+               "max" : null
+            },
+            {
+               "label" : null,
+               "format" : "short",
+               "logBase" : 1,
+               "max" : null,
+               "show" : true,
+               "min" : null
+            }
+         ],
+         "thresholds" : [],
+         "aliasColors" : {},
+         "grid" : {},
+         "bars" : false,
+         "xaxis" : {
+            "show" : true,
+            "values" : [],
+            "mode" : "time",
+            "name" : null
+         },
+         "links" : [],
+         "points" : false,
+         "error" : false,
+         "nullPointMode" : "connected",
+         "seriesOverrides" : [],
+         "steppedLine" : false,
+         "tooltip" : {
+            "msResolution" : false,
+            "value_type" : "cumulative",
+            "shared" : true,
+            "sort" : 2
+         },
+         "linewidth" : 2,
+         "editable" : true,
+         "datasource" : "${DS_PROMETHEUS}",
+         "percentage" : false,
+         "timeFrom" : null,
+         "lines" : true,
+         "legend" : {
+            "avg" : false,
+            "values" : false,
+            "show" : true,
+            "min" : false,
+            "max" : false,
+            "current" : false,
+            "total" : false
+         },
+         "span" : 12,
+         "title" : "Time per Callback/Handler",
+         "fill" : 1
+      }
+   ],
+   "height" : 250,
+   "repeatIteration" : null
+}
+
