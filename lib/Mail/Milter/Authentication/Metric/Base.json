@@ -1,6 +1,14 @@
 {
-   "title" : "Authentication Milter",
-   "schemaVersion" : 14,
+   "__inputs" : [
+      {
+         "description" : "",
+         "label" : "Prometheus",
+         "name" : "DS_PROMETHEUS",
+         "pluginId" : "prometheus",
+         "pluginName" : "Prometheus",
+         "type" : "datasource"
+      }
+   ],
    "__requires" : [
       {
          "id" : "grafana",
@@ -9,24 +17,132 @@
          "version" : "4.2.0"
       },
       {
-         "version" : "",
-         "type" : "panel",
+         "id" : "graph",
          "name" : "Graph",
-         "id" : "graph"
+         "type" : "panel",
+         "version" : ""
       },
       {
-         "name" : "Prometheus",
          "id" : "prometheus",
-         "version" : "1.0.0",
-         "type" : "datasource"
+         "name" : "Prometheus",
+         "type" : "datasource",
+         "version" : "1.0.0"
       }
    ],
+   "annotations" : {
+      "list" : []
+   },
+   "editable" : true,
+   "gnetId" : null,
    "graphTooltip" : 0,
+   "hideControls" : false,
    "id" : null,
+   "links" : [],
+   "refresh" : false,
+   "rows" : [],
+   "schemaVersion" : 14,
+   "style" : "dark",
    "tags" : [
       "AuthenticationMilter"
    ],
-   "hideControls" : false,
+   "templating" : {
+      "list" : [
+         {
+            "allValue" : null,
+            "current" : {},
+            "datasource" : "${DS_PROMETHEUS}",
+            "hide" : 0,
+            "includeAll" : true,
+            "label" : null,
+            "multi" : true,
+            "name" : "node",
+            "options" : [],
+            "query" : "label_values(authmilter_uptime_seconds_total, node)",
+            "refresh" : 1,
+            "regex" : "",
+            "sort" : 1,
+            "tagValuesQuery" : "",
+            "tags" : [],
+            "tagsQuery" : "",
+            "type" : "query",
+            "useTags" : false
+         },
+         {
+            "auto" : false,
+            "auto_count" : 30,
+            "auto_min" : "10s",
+            "current" : {
+               "text" : "1m",
+               "value" : "1m"
+            },
+            "datasource" : null,
+            "hide" : 0,
+            "includeAll" : false,
+            "label" : "",
+            "multi" : false,
+            "name" : "ratetime",
+            "options" : [
+               {
+                  "selected" : true,
+                  "text" : "1m",
+                  "value" : "1m"
+               },
+               {
+                  "selected" : false,
+                  "text" : "10m",
+                  "value" : "10m"
+               },
+               {
+                  "selected" : false,
+                  "text" : "30m",
+                  "value" : "30m"
+               },
+               {
+                  "selected" : false,
+                  "text" : "1h",
+                  "value" : "1h"
+               },
+               {
+                  "selected" : false,
+                  "text" : "6h",
+                  "value" : "6h"
+               },
+               {
+                  "selected" : false,
+                  "text" : "12h",
+                  "value" : "12h"
+               },
+               {
+                  "selected" : false,
+                  "text" : "1d",
+                  "value" : "1d"
+               },
+               {
+                  "selected" : false,
+                  "text" : "7d",
+                  "value" : "7d"
+               },
+               {
+                  "selected" : false,
+                  "text" : "14d",
+                  "value" : "14d"
+               },
+               {
+                  "selected" : false,
+                  "text" : "30d",
+                  "value" : "30d"
+               }
+            ],
+            "query" : "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+            "refresh" : 2,
+            "type" : "interval"
+         }
+      ]
+   },
+   "time" : {
+      "from" : "now-1h",
+      "to" : "now"
+   },
    "timepicker" : {
       "refresh_intervals" : [
          "5s",
@@ -52,124 +168,7 @@
          "30d"
       ]
    },
-   "rows" : [],
    "timezone" : "browser",
-   "links" : [],
-   "refresh" : false,
-   "time" : {
-      "from" : "now-1h",
-      "to" : "now"
-   },
-   "templating" : {
-      "list" : [
-         {
-            "current" : {},
-            "label" : null,
-            "hide" : 0,
-            "type" : "query",
-            "tagValuesQuery" : "",
-            "sort" : 1,
-            "tags" : [],
-            "options" : [],
-            "datasource" : "${DS_PROMETHEUS}",
-            "query" : "label_values(authmilter_uptime_seconds_total, node)",
-            "tagsQuery" : "",
-            "allValue" : null,
-            "includeAll" : true,
-            "multi" : true,
-            "useTags" : false,
-            "name" : "node",
-            "regex" : "",
-            "refresh" : 1
-         },
-         {
-            "datasource" : null,
-            "current" : {
-               "value" : "1m",
-               "text" : "1m"
-            },
-            "query" : "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
-            "label" : "",
-            "auto_min" : "10s",
-            "auto_count" : 30,
-            "auto" : false,
-            "type" : "interval",
-            "hide" : 0,
-            "name" : "ratetime",
-            "options" : [
-               {
-                  "text" : "1m",
-                  "selected" : true,
-                  "value" : "1m"
-               },
-               {
-                  "value" : "10m",
-                  "text" : "10m",
-                  "selected" : false
-               },
-               {
-                  "value" : "30m",
-                  "selected" : false,
-                  "text" : "30m"
-               },
-               {
-                  "selected" : false,
-                  "text" : "1h",
-                  "value" : "1h"
-               },
-               {
-                  "value" : "6h",
-                  "selected" : false,
-                  "text" : "6h"
-               },
-               {
-                  "text" : "12h",
-                  "selected" : false,
-                  "value" : "12h"
-               },
-               {
-                  "value" : "1d",
-                  "selected" : false,
-                  "text" : "1d"
-               },
-               {
-                  "selected" : false,
-                  "text" : "7d",
-                  "value" : "7d"
-               },
-               {
-                  "value" : "14d",
-                  "selected" : false,
-                  "text" : "14d"
-               },
-               {
-                  "value" : "30d",
-                  "text" : "30d",
-                  "selected" : false
-               }
-            ],
-            "refresh" : 2,
-            "includeAll" : false,
-            "multi" : false
-         }
-      ]
-   },
-   "style" : "dark",
-   "version" : 56,
-   "editable" : true,
-   "__inputs" : [
-      {
-         "pluginName" : "Prometheus",
-         "type" : "datasource",
-         "description" : "",
-         "pluginId" : "prometheus",
-         "label" : "Prometheus",
-         "name" : "DS_PROMETHEUS"
-      }
-   ],
-   "gnetId" : null,
-   "annotations" : {
-      "list" : []
-   }
+   "title" : "Authentication Milter",
+   "version" : 56
 }
-

@@ -1,1 +1,238 @@
-{"repeatIteration":null,"collapse":true,"panels":[{"points":false,"legend":{"max":false,"min":false,"values":false,"total":false,"avg":false,"show":true,"current":false},"datasource":"${DS_PROMETHEUS}","timeShift":null,"span":12,"linewidth":1,"percentage":false,"stack":false,"type":"graph","timeFrom":null,"bars":false,"steppedLine":false,"xaxis":{"values":[],"show":true,"mode":"time","name":null},"renderer":"flot","tooltip":{"sort":2,"shared":true,"value_type":"individual"},"lines":true,"id":26,"pointradius":5,"targets":[{"intervalFactor":2,"step":4,"refId":"A","legendFormat":"TLS","expr":"sum(rate(authmilter_tls_connect_total{node=~\"$node\"}[$ratetime]))","interval":"","hide":false},{"refId":"B","intervalFactor":2,"step":4,"hide":false,"legendFormat":"Total Connections","expr":"sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))","interval":""}],"links":[],"thresholds":[],"fill":1,"yaxes":[{"show":true,"label":null,"max":null,"format":"short","min":"0","logBase":1},{"show":true,"logBase":1,"min":null,"max":null,"label":null,"format":"short"}],"title":"Connections","nullPointMode":"null","aliasColors":{},"seriesOverrides":[]},{"legend":{"values":false,"total":false,"min":false,"max":false,"current":false,"show":true,"avg":false},"points":false,"datasource":"${DS_PROMETHEUS}","span":12,"linewidth":1,"timeShift":null,"stack":false,"type":"graph","percentage":false,"steppedLine":false,"timeFrom":null,"bars":false,"xaxis":{"show":true,"name":null,"mode":"time","values":[]},"id":27,"renderer":"flot","lines":true,"tooltip":{"value_type":"individual","shared":true,"sort":2},"title":"Bits","yaxes":[{"max":null,"label":null,"format":"short","min":null,"logBase":1,"show":true},{"show":true,"max":null,"label":null,"format":"short","logBase":1,"min":null}],"nullPointMode":"null","aliasColors":{},"targets":[{"intervalFactor":2,"step":4,"refId":"A","legendFormat":"{{ bits }}","expr":"sum(rate(authmilter_tls_connect_total{node=~\"$node\"}[$ratetime])) by(bits)","interval":""}],"links":[],"pointradius":5,"thresholds":[],"fill":1,"seriesOverrides":[]},{"xaxis":{"show":true,"name":null,"mode":"time","values":[]},"renderer":"flot","tooltip":{"sort":2,"value_type":"individual","shared":true},"lines":true,"id":28,"links":[],"targets":[{"step":4,"intervalFactor":2,"refId":"A","interval":"","expr":"sum(rate(authmilter_tls_connect_total{node=~\"$node\"}[$ratetime])) by(cipher)","legendFormat":"{{ cipher }}"}],"pointradius":5,"fill":1,"thresholds":[],"yaxes":[{"show":true,"format":"short","max":null,"label":null,"logBase":1,"min":null},{"format":"short","max":null,"label":null,"logBase":1,"min":null,"show":true}],"nullPointMode":"null","title":"Ciphers","aliasColors":{},"seriesOverrides":[],"legend":{"max":false,"total":false,"values":false,"min":false,"avg":false,"current":false,"show":true},"points":false,"datasource":"${DS_PROMETHEUS}","timeShift":null,"span":12,"linewidth":1,"percentage":false,"stack":false,"type":"graph","timeFrom":null,"bars":false,"steppedLine":false}],"titleSize":"h6","repeat":null,"title":"TLS Handler","showTitle":true,"height":250,"repeatRowId":null}
+{
+   "collapse" : true,
+   "height" : 250,
+   "panels" : [
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "fill" : 1,
+         "id" : 26,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 1,
+         "links" : [],
+         "nullPointMode" : "null",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_tls_connect_total{node=~\"$node\"}[$ratetime]))",
+               "hide" : false,
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "TLS",
+               "refId" : "A",
+               "step" : 4
+            },
+            {
+               "expr" : "sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))",
+               "hide" : false,
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "Total Connections",
+               "refId" : "B",
+               "step" : 4
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Connections",
+         "tooltip" : {
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "individual"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : "0",
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      },
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "fill" : 1,
+         "id" : 27,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 1,
+         "links" : [],
+         "nullPointMode" : "null",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_tls_connect_total{node=~\"$node\"}[$ratetime])) by(bits)",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "{{ bits }}",
+               "refId" : "A",
+               "step" : 4
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Bits",
+         "tooltip" : {
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "individual"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      },
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "fill" : 1,
+         "id" : 28,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 1,
+         "links" : [],
+         "nullPointMode" : "null",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_tls_connect_total{node=~\"$node\"}[$ratetime])) by(cipher)",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "{{ cipher }}",
+               "refId" : "A",
+               "step" : 4
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Ciphers",
+         "tooltip" : {
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "individual"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      }
+   ],
+   "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "title" : "TLS Handler",
+   "titleSize" : "h6"
+}

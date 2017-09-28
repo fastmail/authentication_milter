@@ -1,1 +1,97 @@
-{"collapse":true,"repeatIteration":null,"panels":[{"xaxis":{"values":[],"mode":"time","name":null,"show":true},"renderer":"flot","tooltip":{"msResolution":false,"sort":2,"shared":true,"value_type":"cumulative"},"lines":true,"grid":{},"id":12,"targets":[{"expr":"sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))","legendFormat":"Connections","refId":"A","metric":"authmilter_connect_total","intervalFactor":2,"step":4},{"interval":"","legendFormat":"Local connections","expr":"sum(rate(authmilter_localip_connect_total{node=~\"$node\"}[$ratetime]))","metric":"connect","refId":"B","step":4,"intervalFactor":2}],"pointradius":5,"links":[],"fill":1,"thresholds":[],"title":"Local/NonLocal IP rate","yaxes":[{"logBase":1,"min":null,"label":null,"max":null,"format":"short","show":true},{"show":true,"min":null,"logBase":1,"label":null,"max":null,"format":"short"}],"nullPointMode":"connected","aliasColors":{},"error":false,"seriesOverrides":[],"editable":true,"points":false,"legend":{"min":false,"total":false,"values":false,"max":false,"show":true,"current":false,"avg":false},"datasource":"${DS_PROMETHEUS}","timeShift":null,"span":12,"linewidth":2,"percentage":false,"type":"graph","stack":false,"timeFrom":null,"bars":false,"steppedLine":false}],"title":"LocalIP Handler","repeat":null,"titleSize":"h6","repeatRowId":null,"showTitle":true,"height":250}
+{
+   "collapse" : true,
+   "height" : 250,
+   "panels" : [
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 12,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))",
+               "intervalFactor" : 2,
+               "legendFormat" : "Connections",
+               "metric" : "authmilter_connect_total",
+               "refId" : "A",
+               "step" : 4
+            },
+            {
+               "expr" : "sum(rate(authmilter_localip_connect_total{node=~\"$node\"}[$ratetime]))",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "Local connections",
+               "metric" : "connect",
+               "refId" : "B",
+               "step" : 4
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Local/NonLocal IP rate",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      }
+   ],
+   "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "title" : "LocalIP Handler",
+   "titleSize" : "h6"
+}

@@ -1,1 +1,97 @@
-{"titleSize":"h6","title":"Auth Handler","repeat":null,"height":250,"showTitle":true,"repeatRowId":null,"repeatIteration":null,"collapse":true,"panels":[{"xaxis":{"values":[],"show":true,"mode":"time","name":null},"lines":true,"tooltip":{"msResolution":false,"sort":2,"shared":true,"value_type":"cumulative"},"renderer":"flot","grid":{},"id":40,"thresholds":[],"fill":1,"links":[],"targets":[{"expr":"sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))","legendFormat":"Connections","metric":"authmilter_connect_total","refId":"A","step":2,"intervalFactor":2},{"expr":"sum(rate(authmilter_authenticated_connect_total{node=~\"$node\"}[$ratetime]))","legendFormat":"Authenticated connections","interval":"","intervalFactor":2,"step":2,"refId":"B","metric":"connect"}],"pointradius":5,"aliasColors":{},"nullPointMode":"connected","yaxes":[{"show":true,"min":null,"logBase":1,"format":"short","label":null,"max":null},{"show":true,"min":null,"logBase":1,"format":"short","max":null,"label":null}],"title":"Authenticated connections IP rate","error":false,"seriesOverrides":[],"editable":true,"datasource":"${DS_PROMETHEUS}","legend":{"max":false,"values":false,"total":false,"min":false,"avg":false,"current":false,"show":true},"points":false,"timeShift":null,"linewidth":2,"span":12,"percentage":false,"type":"graph","stack":false,"bars":false,"timeFrom":null,"steppedLine":false}]}
+{
+   "collapse" : true,
+   "height" : 250,
+   "panels" : [
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 40,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))",
+               "intervalFactor" : 2,
+               "legendFormat" : "Connections",
+               "metric" : "authmilter_connect_total",
+               "refId" : "A",
+               "step" : 2
+            },
+            {
+               "expr" : "sum(rate(authmilter_authenticated_connect_total{node=~\"$node\"}[$ratetime]))",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "Authenticated connections",
+               "metric" : "connect",
+               "refId" : "B",
+               "step" : 2
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Authenticated connections IP rate",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      }
+   ],
+   "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "title" : "Auth Handler",
+   "titleSize" : "h6"
+}

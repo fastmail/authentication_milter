@@ -1,1 +1,97 @@
-{"panels":[{"error":false,"seriesOverrides":[],"thresholds":[],"fill":1,"targets":[{"expr":"sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))","legendFormat":"Connections","metric":"authmilter_connect_total","refId":"A","step":2,"intervalFactor":2},{"refId":"B","metric":"connect","intervalFactor":2,"step":2,"expr":"sum(rate(authmilter_trustedip_connect_total{node=~\"$node\"}[$ratetime]))","legendFormat":"Trusted connections","interval":""}],"pointradius":5,"links":[],"aliasColors":{},"nullPointMode":"connected","yaxes":[{"format":"short","label":null,"max":null,"min":null,"logBase":1,"show":true},{"logBase":1,"min":null,"format":"short","label":null,"max":null,"show":true}],"title":"Trusted connections IP rate","tooltip":{"msResolution":false,"sort":2,"value_type":"cumulative","shared":true},"lines":true,"renderer":"flot","grid":{},"id":39,"xaxis":{"values":[],"show":true,"mode":"time","name":null},"bars":false,"timeFrom":null,"steppedLine":false,"percentage":false,"type":"graph","stack":false,"timeShift":null,"linewidth":2,"span":12,"editable":true,"datasource":"${DS_PROMETHEUS}","points":false,"legend":{"max":false,"total":false,"values":false,"min":false,"avg":false,"current":false,"show":true}}],"collapse":true,"repeatIteration":null,"repeatRowId":null,"height":250,"showTitle":true,"title":"TrustedIP Handler","repeat":null,"titleSize":"h6"}
+{
+   "collapse" : true,
+   "height" : 250,
+   "panels" : [
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 39,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))",
+               "intervalFactor" : 2,
+               "legendFormat" : "Connections",
+               "metric" : "authmilter_connect_total",
+               "refId" : "A",
+               "step" : 2
+            },
+            {
+               "expr" : "sum(rate(authmilter_trustedip_connect_total{node=~\"$node\"}[$ratetime]))",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "Trusted connections",
+               "metric" : "connect",
+               "refId" : "B",
+               "step" : 2
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Trusted connections IP rate",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      }
+   ],
+   "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "title" : "TrustedIP Handler",
+   "titleSize" : "h6"
+}

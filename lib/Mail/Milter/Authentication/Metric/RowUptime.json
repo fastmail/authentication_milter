@@ -1,88 +1,87 @@
 {
-   "repeatRowId" : null,
-   "repeat" : null,
+   "collapse" : true,
+   "height" : "250px",
    "panels" : [
       {
-         "type" : "graph",
-         "grid" : {},
-         "stack" : false,
-         "span" : 12,
-         "timeShift" : null,
-         "lines" : true,
-         "datasource" : "${DS_PROMETHEUS}",
-         "steppedLine" : false,
-         "id" : 11,
-         "fill" : 0,
          "aliasColors" : {},
-         "seriesOverrides" : [],
-         "title" : "Uptime",
-         "renderer" : "flot",
-         "linewidth" : 2,
-         "links" : [],
-         "pointradius" : 5,
-         "nullPointMode" : "connected",
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
-         "yaxes" : [
-            {
-               "logBase" : 1,
-               "format" : "s",
-               "show" : true,
-               "max" : null,
-               "min" : null,
-               "label" : ""
-            },
-            {
-               "format" : "short",
-               "logBase" : 1,
-               "show" : true,
-               "min" : null,
-               "max" : null,
-               "label" : null
-            }
-         ],
+         "fill" : 0,
+         "grid" : {},
+         "id" : 11,
          "legend" : {
+            "avg" : false,
             "current" : false,
-            "show" : true,
-            "total" : false,
             "max" : false,
             "min" : false,
-            "avg" : false,
+            "show" : true,
+            "total" : false,
             "values" : false
          },
-         "bars" : false,
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
          "percentage" : false,
-         "tooltip" : {
-            "sort" : 2,
-            "value_type" : "cumulative",
-            "shared" : true,
-            "msResolution" : false
-         },
-         "timeFrom" : null,
-         "thresholds" : [],
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
          "targets" : [
             {
-               "intervalFactor" : 2,
-               "refId" : "A",
                "expr" : "sum(authmilter_uptime_seconds_total{node=~\"$node\"}) by(node)",
+               "intervalFactor" : 2,
                "legendFormat" : "Uptime {{ node }}",
+               "refId" : "A",
                "step" : 4
             }
          ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Uptime",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
          "xaxis" : {
             "mode" : "time",
-            "values" : [],
             "name" : null,
-            "show" : true
+            "show" : true,
+            "values" : []
          },
-         "points" : false
+         "yaxes" : [
+            {
+               "format" : "s",
+               "label" : "",
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
       }
    ],
-   "titleSize" : "h6",
-   "height" : "250px",
+   "repeat" : null,
    "repeatIteration" : null,
-   "collapse" : true,
+   "repeatRowId" : null,
    "showTitle" : true,
-   "title" : "Uptime"
+   "title" : "Uptime",
+   "titleSize" : "h6"
 }
-

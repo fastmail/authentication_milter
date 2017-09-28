@@ -1,91 +1,90 @@
 {
-   "showTitle" : true,
-   "repeat" : null,
    "collapse" : true,
-   "titleSize" : "h6",
-   "title" : "Errors",
-   "repeatIteration" : null,
-   "repeatRowId" : null,
    "height" : "250px",
    "panels" : [
       {
-         "id" : 10,
-         "linewidth" : 2,
          "aliasColors" : {},
-         "timeShift" : null,
-         "type" : "graph",
-         "xaxis" : {
-            "values" : [],
-            "name" : null,
-            "mode" : "time",
-            "show" : true
-         },
+         "bars" : false,
          "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
+         "error" : false,
          "fill" : 1,
          "grid" : {},
-         "span" : 12,
-         "bars" : false,
-         "renderer" : "flot",
-         "stack" : false,
-         "title" : "Callback Errors Total",
-         "links" : [],
-         "tooltip" : {
-            "msResolution" : false,
-            "value_type" : "cumulative",
-            "sort" : 2,
-            "shared" : true
+         "id" : 10,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "hideZero" : true,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
          },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
          "targets" : [
             {
-               "metric" : "authmilter_call",
-               "refId" : "A",
+               "expr" : "sum(authmilter_callback_error_total{node=~\"$node\"}) by(stage)",
                "interval" : "",
                "intervalFactor" : 2,
-               "step" : 4,
-               "expr" : "sum(authmilter_callback_error_total{node=~\"$node\"}) by(stage)",
-               "legendFormat" : "{{ stage }}"
+               "legendFormat" : "{{ stage }}",
+               "metric" : "authmilter_call",
+               "refId" : "A",
+               "step" : 4
             }
          ],
-         "lines" : true,
+         "thresholds" : [],
          "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Callback Errors Total",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
          "yaxes" : [
             {
-               "logBase" : 1,
                "format" : "short",
-               "show" : true,
-               "max" : null,
                "label" : null,
-               "min" : null
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
             },
             {
                "format" : "short",
-               "logBase" : 1,
-               "show" : true,
                "label" : null,
+               "logBase" : 1,
                "max" : null,
-               "min" : null
+               "min" : null,
+               "show" : true
             }
-         ],
-         "seriesOverrides" : [],
-         "percentage" : false,
-         "nullPointMode" : "connected",
-         "error" : false,
-         "points" : false,
-         "legend" : {
-            "avg" : false,
-            "values" : false,
-            "current" : false,
-            "min" : false,
-            "max" : false,
-            "show" : true,
-            "hideZero" : true,
-            "total" : false
-         },
-         "steppedLine" : false,
-         "thresholds" : [],
-         "pointradius" : 5
+         ]
       }
-   ]
+   ],
+   "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "title" : "Errors",
+   "titleSize" : "h6"
 }
-

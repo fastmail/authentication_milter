@@ -1,1 +1,105 @@
-{"repeatRowId":null,"showTitle":true,"height":250,"repeat":null,"title":"Size Handler","titleSize":"h6","panels":[{"lines":true,"tooltip":{"msResolution":false,"shared":true,"value_type":"cumulative","sort":2},"renderer":"flot","grid":{},"id":35,"xaxis":{"values":[],"show":true,"name":null,"mode":"time"},"error":false,"seriesOverrides":[],"thresholds":[],"fill":1,"targets":[{"interval":"","legendFormat":"Combined","expr":"sum(rate(authmilter_size_body_bytes_total{node=~\"$node\"}[$ratetime]))+sum(rate(authmilter_size_header_bytes_total{node=~\"$node\"}[$ratetime]))","step":4,"intervalFactor":2,"refId":"C"},{"expr":"sum(rate(authmilter_size_body_bytes_total{node=~\"$node\"}[$ratetime]))","legendFormat":"Body","interval":"","intervalFactor":2,"step":4,"refId":"A","metric":"authmilter_mail_"},{"legendFormat":"Header","expr":"sum(rate(authmilter_size_header_bytes_total{node=~\"$node\"}[$ratetime]))","refId":"B","intervalFactor":2,"step":4}],"pointradius":5,"links":[],"aliasColors":{},"title":"Data processed rate","yaxes":[{"show":true,"max":null,"label":null,"format":"Bps","min":null,"logBase":1},{"show":true,"max":null,"label":null,"format":"short","logBase":1,"min":null}],"nullPointMode":"connected","timeShift":null,"linewidth":2,"span":12,"editable":true,"datasource":"${DS_PROMETHEUS}","points":false,"legend":{"current":false,"avg":false,"values":false,"total":false,"min":false,"show":true,"hideZero":true,"max":false},"bars":false,"timeFrom":null,"steppedLine":false,"percentage":false,"stack":false,"type":"graph"}],"collapse":true,"repeatIteration":null}
+{
+   "collapse" : true,
+   "height" : 250,
+   "panels" : [
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 35,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "hideZero" : true,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_size_body_bytes_total{node=~\"$node\"}[$ratetime]))+sum(rate(authmilter_size_header_bytes_total{node=~\"$node\"}[$ratetime]))",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "Combined",
+               "refId" : "C",
+               "step" : 4
+            },
+            {
+               "expr" : "sum(rate(authmilter_size_body_bytes_total{node=~\"$node\"}[$ratetime]))",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "Body",
+               "metric" : "authmilter_mail_",
+               "refId" : "A",
+               "step" : 4
+            },
+            {
+               "expr" : "sum(rate(authmilter_size_header_bytes_total{node=~\"$node\"}[$ratetime]))",
+               "intervalFactor" : 2,
+               "legendFormat" : "Header",
+               "refId" : "B",
+               "step" : 4
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Data processed rate",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "Bps",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      }
+   ],
+   "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "title" : "Size Handler",
+   "titleSize" : "h6"
+}

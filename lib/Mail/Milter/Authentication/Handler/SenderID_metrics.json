@@ -1,1 +1,90 @@
-{"titleSize":"h6","title":"SenderID Handler","repeat":null,"height":250,"showTitle":true,"repeatRowId":null,"repeatIteration":null,"collapse":true,"panels":[{"aliasColors":{},"yaxes":[{"show":true,"min":null,"logBase":1,"format":"short","max":null,"label":null},{"show":true,"format":"short","label":null,"max":null,"logBase":1,"min":null}],"title":"SenderID results rate","nullPointMode":"connected","fill":1,"thresholds":[],"targets":[{"metric":"","refId":"A","step":240,"intervalFactor":2,"interval":"","legendFormat":"{{ result }}","expr":"sum(rate(authmilter_senderid_total{node=~\"$node\"}[$ratetime])) by(result)"}],"links":[],"pointradius":5,"seriesOverrides":[],"error":false,"xaxis":{"values":[],"name":null,"mode":"time","show":true},"id":38,"grid":{},"tooltip":{"sort":2,"shared":true,"value_type":"cumulative","msResolution":false},"lines":true,"renderer":"flot","type":"graph","stack":false,"percentage":false,"steppedLine":false,"bars":false,"timeFrom":null,"datasource":"${DS_PROMETHEUS}","legend":{"current":false,"avg":false,"values":false,"total":false,"min":false,"show":true,"hideZero":true,"max":false},"points":false,"editable":true,"linewidth":2,"span":12,"timeShift":null}]}
+{
+   "collapse" : true,
+   "height" : 250,
+   "panels" : [
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 38,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "hideZero" : true,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_senderid_total{node=~\"$node\"}[$ratetime])) by(result)",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "{{ result }}",
+               "metric" : "",
+               "refId" : "A",
+               "step" : 240
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "SenderID results rate",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      }
+   ],
+   "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "title" : "SenderID Handler",
+   "titleSize" : "h6"
+}

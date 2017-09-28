@@ -1,1 +1,90 @@
-{"panels":[{"title":"SPF results rate","yaxes":[{"show":true,"format":"short","label":null,"max":null,"logBase":1,"min":null},{"logBase":1,"min":null,"format":"short","max":null,"label":null,"show":true}],"nullPointMode":"connected","aliasColors":{},"targets":[{"interval":"","legendFormat":"{{ result }}","expr":"sum(rate(authmilter_spf_total{node=~\"$node\"}[$ratetime])) by(result)","step":4,"intervalFactor":2,"metric":"","refId":"A"}],"links":[],"pointradius":5,"fill":1,"thresholds":[],"seriesOverrides":[],"error":false,"xaxis":{"name":null,"mode":"time","show":true,"values":[]},"grid":{},"id":3,"renderer":"flot","tooltip":{"shared":true,"value_type":"cumulative","sort":2,"msResolution":false},"lines":true,"stack":false,"type":"graph","percentage":false,"steppedLine":false,"timeFrom":null,"bars":false,"legend":{"total":false,"values":false,"min":false,"avg":false,"current":false,"max":false,"hideZero":true,"show":true},"points":false,"datasource":"${DS_PROMETHEUS}","editable":true,"span":12,"linewidth":2,"timeShift":null}],"repeatIteration":null,"collapse":true,"showTitle":true,"height":"250px","repeatRowId":null,"titleSize":"h6","repeat":null,"title":"SPF Handler"}
+{
+   "collapse" : true,
+   "height" : "250px",
+   "panels" : [
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 3,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "hideZero" : true,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_spf_total{node=~\"$node\"}[$ratetime])) by(result)",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "{{ result }}",
+               "metric" : "",
+               "refId" : "A",
+               "step" : 4
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "SPF results rate",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      }
+   ],
+   "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "title" : "SPF Handler",
+   "titleSize" : "h6"
+}

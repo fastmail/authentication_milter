@@ -1,1 +1,91 @@
-{"repeatIteration":null,"showTitle":true,"collapse":true,"titleSize":"h6","panels":[{"seriesOverrides":[],"renderer":"flot","targets":[{"step":60,"interval":"","metric":"authmilter_dkim_error_total","intervalFactor":2,"refId":"A","expr":"sum(rate(authmilter_iprev_total{node=~\"$node\"}[$ratetime])) by(result)","legendFormat":"{{ result }}"}],"editable":true,"nullPointMode":"connected","error":false,"id":42,"lines":true,"title":"IPRev results rate","legend":{"max":false,"current":false,"show":true,"avg":false,"min":false,"hideEmpty":false,"hideZero":true,"total":false,"values":false},"datasource":"${DS_PROMETHEUS}","type":"graph","stack":false,"span":12,"aliasColors":{},"bars":false,"pointradius":5,"tooltip":{"msResolution":false,"sort":2,"shared":true,"value_type":"cumulative"},"points":false,"yaxes":[{"max":null,"min":null,"format":"short","show":true,"label":null,"logBase":1},{"format":"short","max":null,"min":null,"label":null,"show":true,"logBase":1}],"xaxis":{"show":true,"name":null,"values":[],"mode":"time"},"linewidth":2,"timeFrom":null,"timeShift":null,"grid":{},"thresholds":[],"steppedLine":false,"links":[],"percentage":false,"fill":1}],"repeatRowId":null,"height":250,"title":"IPRev Handler","repeat":null}
+{
+   "collapse" : true,
+   "height" : 250,
+   "panels" : [
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 42,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "hideEmpty" : false,
+            "hideZero" : true,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_iprev_total{node=~\"$node\"}[$ratetime])) by(result)",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "{{ result }}",
+               "metric" : "authmilter_dkim_error_total",
+               "refId" : "A",
+               "step" : 60
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "IPRev results rate",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      }
+   ],
+   "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "title" : "IPRev Handler",
+   "titleSize" : "h6"
+}

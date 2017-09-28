@@ -1,1 +1,89 @@
-{"repeatIteration":null,"titleSize":"h6","showTitle":true,"collapse":true,"panels":[{"title":"Sanitized headers rate","datasource":"${DS_PROMETHEUS}","legend":{"values":false,"total":false,"show":true,"current":false,"min":false,"max":false,"avg":false},"stack":false,"type":"graph","aliasColors":{},"span":12,"bars":false,"editable":true,"targets":[{"metric":"connect","interval":"","step":30,"legendFormat":"Headers Sanitized","expr":"sum(rate(authmilter_sanitize_remove_total{node=~\"$node\"}[$ratetime]))","refId":"B","intervalFactor":2}],"nullPointMode":"connected","id":40,"lines":true,"error":false,"seriesOverrides":[],"renderer":"flot","steppedLine":false,"links":[],"percentage":false,"fill":1,"yaxes":[{"format":"short","min":null,"max":null,"logBase":1,"show":true,"label":null},{"label":null,"show":true,"logBase":1,"format":"short","max":null,"min":null}],"linewidth":2,"xaxis":{"values":[],"name":null,"show":true,"mode":"time"},"timeFrom":null,"timeShift":null,"grid":{},"thresholds":[],"tooltip":{"shared":true,"sort":2,"msResolution":false,"value_type":"cumulative"},"points":false,"pointradius":5}],"repeatRowId":null,"repeat":null,"height":250,"title":"Sanitize Handler"}
+{
+   "collapse" : true,
+   "height" : 250,
+   "panels" : [
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 40,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_sanitize_remove_total{node=~\"$node\"}[$ratetime]))",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "Headers Sanitized",
+               "metric" : "connect",
+               "refId" : "B",
+               "step" : 30
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Sanitized headers rate",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      }
+   ],
+   "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
+   "title" : "Sanitize Handler",
+   "titleSize" : "h6"
+}
