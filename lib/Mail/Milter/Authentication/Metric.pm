@@ -277,6 +277,7 @@ sub child_handler {
 
         }
         elsif ( $request_uri eq '/' ){
+            my $config = get_config();
             print $socket "HTTP/1.0 200 OK\n";
             print $socket "Content-Type: text/html\n";
             print $socket "\n";
@@ -290,7 +291,8 @@ sub child_handler {
 <h1>Authentication Milter</h1>
 
     <ul>
-        <li>Version:} . $Mail::Milter::Authentication::VERSION . qq{</li>
+        <li>Version: } . $Mail::Milter::Authentication::VERSION . qq{</li>
+        <li>Ident: } . $Mail::Milter::Authentication::Config::IDENT . qq{</li>
         <li><a href="/metrics">Prometheus metrics endpoint</a></li>
         <li><a href="/grafana">Grafana Dashboard</a></li>
         <li>Installed Handlers
@@ -302,6 +304,18 @@ sub child_handler {
 
             print $socket qq{
             </ul>
+        </li>
+        <li>Connection Details
+            <ul>};
+            print $socket '<li>Protocol: ' . $config->{'protocol'} . '</li>';
+            my $connections = $config->{'connections'};
+            $connections->{'default'} = { 'connection' => $config->{'connection'} };
+            foreach my $connection ( sort keys %$connections ) {
+                print $socket '<li>' . $connection . ': ' . $connections->{ $connection }->{ 'connection' } . '</li>'
+            }
+            print $socket qq{
+            </ul>
+        </lu>
     </ul>
 </body>
 };
