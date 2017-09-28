@@ -15,7 +15,7 @@ sub default_config {
 sub grafana_rows {
     my ( $self ) = @_;
     my @rows;
-    push @rows , '{"repeatRowId":null,"showTitle":true,"height":250,"repeat":null,"title":"Size Handler","titleSize":"h6","panels":[{"lines":true,"tooltip":{"msResolution":false,"shared":true,"value_type":"cumulative","sort":2},"renderer":"flot","grid":{},"id":35,"xaxis":{"values":[],"show":true,"name":null,"mode":"time"},"error":false,"seriesOverrides":[],"thresholds":[],"fill":1,"targets":[{"interval":"","legendFormat":"Combined","expr":"sum(rate(authmilter_size_body_bytes_total{node=~\"$node\"}[$ratetime]))+sum(rate(authmilter_size_header_bytes_total{node=~\"$node\"}[$ratetime]))","step":4,"intervalFactor":2,"refId":"C"},{"expr":"sum(rate(authmilter_size_body_bytes_total{node=~\"$node\"}[$ratetime]))","legendFormat":"Body","interval":"","intervalFactor":2,"step":4,"refId":"A","metric":"authmilter_mail_"},{"legendFormat":"Header","expr":"sum(rate(authmilter_size_header_bytes_total{node=~\"$node\"}[$ratetime]))","refId":"B","intervalFactor":2,"step":4}],"pointradius":5,"links":[],"aliasColors":{},"title":"Data processed rate by result","yaxes":[{"show":true,"max":null,"label":null,"format":"Bps","min":null,"logBase":1},{"show":true,"max":null,"label":null,"format":"short","logBase":1,"min":null}],"nullPointMode":"connected","timeShift":null,"linewidth":2,"span":12,"editable":true,"datasource":"${DS_PROMETHEUS}","points":false,"legend":{"current":false,"avg":false,"values":false,"total":false,"min":false,"show":true,"hideZero":true,"max":false},"bars":false,"timeFrom":null,"steppedLine":false,"percentage":false,"stack":false,"type":"graph"}],"collapse":true,"repeatIteration":null}';
+    push @rows, $self->get_json( 'Size_metrics' );
     return \@rows;
 }
 

@@ -13,7 +13,7 @@ sub default_config {
 sub grafana_rows {
     my ( $self ) = @_;
     my @rows;
-    push @rows , '{"collapse":true,"repeatIteration":null,"panels":[{"xaxis":{"values":[],"mode":"time","name":null,"show":true},"renderer":"flot","tooltip":{"msResolution":false,"sort":2,"shared":true,"value_type":"cumulative"},"lines":true,"grid":{},"id":12,"targets":[{"expr":"sum(rate(authmilter_connect_total{node=~\"$node\"}[$ratetime]))","legendFormat":"Connections","refId":"A","metric":"authmilter_connect_total","intervalFactor":2,"step":4},{"interval":"","legendFormat":"Local connections","expr":"sum(rate(authmilter_localip_connect_total{node=~\"$node\"}[$ratetime]))","metric":"connect","refId":"B","step":4,"intervalFactor":2}],"pointradius":5,"links":[],"fill":1,"thresholds":[],"title":"Local/NonLocal IP rate","yaxes":[{"logBase":1,"min":null,"label":null,"max":null,"format":"short","show":true},{"show":true,"min":null,"logBase":1,"label":null,"max":null,"format":"short"}],"nullPointMode":"connected","aliasColors":{},"error":false,"seriesOverrides":[],"editable":true,"points":false,"legend":{"min":false,"total":false,"values":false,"max":false,"show":true,"current":false,"avg":false},"datasource":"${DS_PROMETHEUS}","timeShift":null,"span":12,"linewidth":2,"percentage":false,"type":"graph","stack":false,"timeFrom":null,"bars":false,"steppedLine":false}],"title":"LocalIP Handler","repeat":null,"titleSize":"h6","repeatRowId":null,"showTitle":true,"height":250}';
+    push @rows, $self->get_json( 'LocalIP_metrics' );
     return \@rows;
 }
 

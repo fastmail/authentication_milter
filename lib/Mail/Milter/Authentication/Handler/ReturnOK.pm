@@ -15,7 +15,7 @@ sub default_config {
 sub grafana_rows {
     my ( $self ) = @_;
     my @rows;
-    push @rows , '{"repeatIteration":null,"showTitle":true,"collapse":true,"titleSize":"h6","panels":[{"seriesOverrides":[],"renderer":"flot","targets":[{"step":60,"interval":"","metric":"authmilter_dkim_error_total","intervalFactor":2,"refId":"A","expr":"sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(result)","legendFormat":"{{ result }}"}],"editable":true,"nullPointMode":"connected","error":false,"id":42,"lines":true,"title":"ReturnOK results rate","legend":{"max":false,"current":false,"show":true,"avg":false,"min":false,"hideEmpty":false,"hideZero":true,"total":false,"values":false},"datasource":"${DS_PROMETHEUS}","type":"graph","stack":false,"span":12,"aliasColors":{},"bars":false,"pointradius":5,"tooltip":{"msResolution":false,"sort":2,"shared":true,"value_type":"cumulative"},"points":false,"yaxes":[{"max":null,"min":null,"format":"short","show":true,"label":null,"logBase":1},{"format":"short","max":null,"min":null,"label":null,"show":true,"logBase":1}],"xaxis":{"show":true,"name":null,"values":[],"mode":"time"},"linewidth":2,"timeFrom":null,"timeShift":null,"grid":{},"thresholds":[],"steppedLine":false,"links":[],"percentage":false,"fill":1}],"repeatRowId":null,"height":250,"title":"ReturnOK Handler","repeat":null}';
+    push @rows, $self->get_json( 'ReturnOK_metrics' );
     return \@rows;
 }
 

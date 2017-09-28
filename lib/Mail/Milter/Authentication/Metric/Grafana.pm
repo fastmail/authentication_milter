@@ -49,6 +49,7 @@ sub get_dashboard {
 
     my $J = JSON->new();
     $J->pretty();
+    $J->canonical();
 
     my $Base = $self->get_json( 'Base' );
     my $BaseData = $J->decode( $Base );
@@ -108,6 +109,10 @@ Returns the Row json for Errors
 =item get_RowUptime()
 
 Returns the Row json for Uptime
+
+=item get_json ( $file )
+
+Retrieve json data from external file
 
 =item get_dashboard( $server )
 

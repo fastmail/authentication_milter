@@ -26,6 +26,20 @@ sub new {
     return $self;
 }
 
+sub get_json {
+    my ( $self, $file ) = @_;
+    my $basefile = __FILE__;
+    $basefile =~ s/Handler\.pm$/Handler\/$file/;
+    $basefile .= '.json';
+    if ( ! -e $basefile ) {
+        die 'json file ' . $file . ' not found';
+    }
+    open my $InF, '<', $basefile;
+    my @Content = <$InF>;
+    close $InF;
+    return join( q{}, @Content );
+}
+
 sub metric_register {
     my ( $self, $id, $help ) = @_;
     $self->{'thischild'}->{'metric'}->register( $id, $help, $self->{'thischild'} );
@@ -1237,6 +1251,10 @@ and creates a new handler object.
 =head1 METHODS
 
 =over
+
+=item get_json ( $file )
+
+Retrieve json data from external file
 
 =item metric_register( $id, $help )
 
