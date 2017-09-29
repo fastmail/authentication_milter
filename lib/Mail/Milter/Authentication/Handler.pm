@@ -26,6 +26,14 @@ sub new {
     return $self;
 }
 
+sub get_version {
+    my ( $self ) = @_;
+    {
+        no strict 'refs'; ## no critic;
+        return ${ ref( $self ) . "::VERSION" }; # no critic;
+    }
+}
+
 sub get_json {
     my ( $self, $file ) = @_;
     my $basefile = __FILE__;
@@ -1251,6 +1259,10 @@ and creates a new handler object.
 =head1 METHODS
 
 =over
+
+=item get_version()
+
+Return the version of this handler
 
 =item get_json ( $file )
 

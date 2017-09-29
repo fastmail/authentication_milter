@@ -299,7 +299,8 @@ sub child_handler {
             <ul>};
 
             foreach my $Handler ( sort keys %{ $server->{ 'handler' } } ) {
-                print $socket '<li>' . $Handler . '</li>' if $Handler ne '_Handler';
+                next if $Handler eq '_Handler';
+                print $socket '<li>' . $Handler . ' (' . $server->{ 'handler' }->{ $Handler }->get_version(). ')</li>';
             }
 
             print $socket qq{
