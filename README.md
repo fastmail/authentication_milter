@@ -49,6 +49,13 @@ Metrics
 
 Authentication Milter optionally collects and exposes metrics in a promethius compatible format.
 
+The authentication milter metrics port it a http service which provides some basic information about the running
+server, and also provides a standard dashboard file for grafana.
+
+The grafana dashboard can be imported into grafana and provides rows for all installed modules which support the metrics feature.
+
+Point your browser at the port configured in metric_connection to access this feature.
+
 Design Decisions
 ----------------
 
