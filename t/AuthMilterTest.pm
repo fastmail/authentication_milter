@@ -226,6 +226,7 @@ sub test_metrics {
             # Uncomment to write out new json file
             #open my $OutF, '>', $expected;
             #$j->pretty();
+            #$j->canonical();
             #print $OutF $j->encode( $metrics );
             #close $OutF;
         }
