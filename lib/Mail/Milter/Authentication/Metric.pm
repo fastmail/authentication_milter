@@ -59,7 +59,7 @@ sub count {
             push @labels_list, $self->clean_label( $l ) .'="' . $self->clean_label( $labels->{$l} ) . '"';
         }
         if ( @labels_list ) {
-            $labels_txt = ' ' . join( ',', @labels_list );
+            $labels_txt = join( ',', @labels_list );
         }
     }
 
