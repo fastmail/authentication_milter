@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Metric::Grafana;
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v1.1.3');
+use version; our $VERSION = version->declare('v1.1.4');
 
 use JSON;
 
