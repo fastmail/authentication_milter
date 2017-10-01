@@ -95,11 +95,12 @@ sub register_metrics {
     $max_time = max( $max_time, $config->{ 'addheader_timeout' } ) if defined $config->{ 'addheader_timeout' };
     $max_time = 30 if ! $max_time;
     $max_time = 1000000 * $max_time;
+    my $bucket_size = $max_time / 20;;
 
     return {
         'connect_total'           => 'The number of connections made to authentication milter',
         'callback_error_total'    => 'The number of errors in callbacks',
-        'time_microseconds'       => { 'type' => 'histogram', 'help' => 'The time in microseconds spent in various handlers', 'bucketsize' => 100000, 'max' => $max_time },
+        'time_microseconds'       => { 'type' => 'histogram', 'help' => 'The time in microseconds spent in various handlers', 'bucketsize' => $bucket_size, 'max' => $max_time },
     };
 }
 
