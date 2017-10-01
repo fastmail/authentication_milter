@@ -24,7 +24,7 @@ install:
     - cpanm --quiet --notest Module::Install
     - cpanm --quiet --notest Mail::SPF --install-args="--install-path sbin=/tmp"
     - cpanm --quiet --notest Test::More Test::File::Contents Test::Perl::Critic
-    - cpanm --quiet --notest List::MoreUtils
+    - cpanm --quiet --notest List::MoreUtils List::Util
     - cpanm --quiet --notest Test::CheckManifest Test::Pod::Coverage Test::Pod
     - cpanm --quiet --notest Cwd Email::Date::Format Email::Simple
     - cpanm --quiet --notest English IO::Socket JSON Mail::DKIM::Verifier Mail::DKIM

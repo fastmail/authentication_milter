@@ -11,7 +11,7 @@ sub new {
     my ( $class ) = @_;
     my $self = {};
     $self->{'counter'}    = {};
-    $self->{'help'}       = {};
+    $self->{'meta'}       = {};
     $self->{'start_time'} = time;
     $self->{'queue'}      = [];
 
@@ -59,7 +59,7 @@ sub count {
             push @labels_list, $self->clean_label( $l ) .'="' . $self->clean_label( $labels->{$l} ) . '"';
         }
         if ( @labels_list ) {
-            $labels_txt = ' ' . join( ',', @labels_list );
+            $labels_txt = join( ',', @labels_list );
         }
     }
 
@@ -138,11 +138,17 @@ sub register_metrics {
     return if ( ! $self->{ 'enabled' } );
 
     foreach my $metric ( keys %$hash ) {
-        my $help = $hash->{ $metric };
+        my $meta = $hash->{ $metric };
         if ( ! exists( $self->{'counter'}->{ $metric } ) ) {
             $self->{'counter'}->{ $metric } = { '' => 0 };
         }
-        $self->{'help'}->{ $self->clean_label( $metric ) } = $help;
+        if ( ref $meta eq 'HASH' ) {
+            $self->{'meta'}->{ $self->clean_label( $metric ) } = $meta;
+        }
+        else {
+            $self->{'meta'}->{ $self->clean_label( $metric ) }->{ 'help' } = $meta;
+            $self->{'meta'}->{ $self->clean_label( $metric ) }->{ 'type' } = 'counter';
+        }
     }
     return;
 }
@@ -163,10 +169,13 @@ sub master_metric_get {
         print $socket 'authmilter_processes_' . $type . $ident . ' ' . $server->{'server'}->{'tally'}->{ $type } . "\n";
     }
     foreach my $key ( sort keys %{ $self->{'counter'} } ) {
-        print $socket '# TYPE authmilter_' . $key . " counter\n";
-        my $help = $self->{'help'}->{ $key };
+        my $help = $self->{'meta'}->{ $key }->{ 'help' };
+        my $type = $self->{'meta'}->{ $key }->{ 'type' };
+        if ( $type ) {
+            print $socket '# TYPE authmilter_' . $key . ' ' . $type . "\n";
+        }
         if ( $help ) {
-            print $socket '# HELP authmilter_' . $key . ' ' . $self->{'help'}->{ $key } . "\n";
+            print $socket '# HELP authmilter_' . $key . ' ' . $help . "\n";
         }
         foreach my $labels ( sort keys %{ $self->{'counter'}->{ $key } } ) {
             my $labels_txt = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"';
@@ -176,6 +185,19 @@ sub master_metric_get {
             $labels_txt .= '}';
             print $socket 'authmilter_' . $key . $labels_txt . ' ' . $self->{'counter'}->{ $key }->{ $labels } . "\n";
         }
+        if ( $type eq 'histogram' ) {
+            foreach my $add ( qw { _bucket _sum _count } ) {
+                foreach my $labels ( sort keys %{ $self->{'counter'}->{ $key . $add } } ) {
+                    my $labels_txt = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"';
+                    if ( $labels ne q{} ) {
+                        $labels_txt .= ',' . $labels;
+                    }
+                    $labels_txt .= '}';
+                    print $socket 'authmilter_' . $key . $add . $labels_txt . ' ' . $self->{'counter'}->{ $key . $add }->{ $labels } . "\n";
+                }
+            }
+        }
+        ## ToDo Add _sum _count labels for summary types (NYI)
     }
     print $socket "\0\n";
     return;
@@ -189,13 +211,46 @@ sub master_metric_count {
         my $count_id = $datum->{ 'count_id' };
         my $labels   = $datum->{ 'labels' };
         $labels = '' if ! $labels;
-        if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
-            $self->{'counter'}->{ $count_id } = { $labels => 0 };
+        my $type = $self->{'meta'}->{ $count_id }->{ 'type' };
+        if ( $type eq 'counter' ) {
+            if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
+                $self->{'counter'}->{ $count_id } = { $labels => 0 };
+            }
+            if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
+                $self->{'counter'}->{ $count_id }->{ $labels } = 0;
+            }
+            $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
         }
-        if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
-            $self->{'counter'}->{ $count_id }->{ $labels } = 0;
+        elsif ( $type eq 'histogram' ) {
+            my $bucketsize = $self->{'meta'}->{ $count_id }->{ 'bucketsize' };
+            my $max = $self->{'meta'}->{ $count_id }->{ 'max' };
+            my $current = 0;
+
+            while ( $current < $max ) {
+                $current = $current + $bucketsize;
+                my $bucketlabels = join( ',', $labels, "le=\"$current\"" );
+                if ( ! exists( $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } ) ) {
+                    $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = 0;
+                }
+                if ( $count <= $current ) {
+                    $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } + 1;
+                }
+            }
+            my $bucketlabels = join( ',', $labels, "le=\\"+Inf\"" );
+            if ( ! exists( $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } ) ) {
+                $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = 0;
+            }
+            $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } + 1;
+
+            if ( ! exists( $self->{'counter'}->{ $count_id . '_count' }->{ $labels } ) ) {
+                $self->{'counter'}->{ $count_id . '_count' }->{ $labels } = 0;
+            }
+            $self->{'counter'}->{ $count_id . '_count' }->{ $labels } = $self->{'counter'}->{ $count_id . '_count' }->{ $labels } + 1;
+            if ( ! exists( $self->{'counter'}->{ $count_id . '_sum' }->{ $labels } ) ) {
+                $self->{'counter'}->{ $count_id . '_sum' }->{ $labels } = 0;
+            }
+            $self->{'counter'}->{ $count_id . '_sum' }->{ $labels } = $self->{'counter'}->{ $count_id . '_sum' }->{ $labels } + $count;
         }
-        $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
     }
     print $socket "1\n";
     return;
