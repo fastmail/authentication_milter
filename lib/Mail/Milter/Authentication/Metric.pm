@@ -236,7 +236,7 @@ sub master_metric_count {
                     $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } + 1;
                 }
             }
-            my $bucketlabels = join( ',', $labels, "le=\\"+Inf\"" );
+            my $bucketlabels = join( ',', $labels, "le=\"+Inf\"" );
             if ( ! exists( $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } ) ) {
                 $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = 0;
             }
