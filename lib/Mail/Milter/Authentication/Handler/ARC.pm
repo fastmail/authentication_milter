@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::ARC;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.2');
+use version; our $VERSION = version->declare('v1.1.3');
 
 use Data::Dumper;
 use English qw{ -no_match_vars };
@@ -14,13 +14,6 @@ use Mail::DKIM::TextWrap;
 use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::ARC::Verifier;
 
-#sub add_auth_header {
-#    my ( $self, $value ) = @_;
-#    # Temporary override method to log arc results rather than adding a header
-#    $self->log_error( 'ARC Test: ' . $value );
-#    return;
-#}
-
 sub default_config {
     return {
         'hide_none'         => 0,
@@ -31,6 +24,13 @@ sub default_config {
         'arcseal_keyfile'   => undef,
         'arcseal_headers'   => undef,
     };
+}
+
+sub grafana_rows {
+    my ( $self ) = @_;
+    my @rows;
+    push @rows, $self->get_json( 'DKIM_metrics' );
+    return \@rows;
 }
 
 sub register_metrics {
@@ -357,10 +357,6 @@ sub addheader_callback {
 
         # these will prepend in reverse
         push @{$handler->{pre_headers}}, reverse @list;
-        # Just Log For Now
-        #foreach my $Header ( reverse @list ) {
-        #    $self->log_error( 'ARCSeal Test: ' . join( "\n", $Header->{'field'} . ': ' . $Header->{'value'} ) );
-        #}
     };
 
     if ( my $error = $@ ) {
