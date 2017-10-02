@@ -169,8 +169,8 @@ sub master_metric_get {
         print $socket 'authmilter_processes_' . $type . $ident . ' ' . $server->{'server'}->{'tally'}->{ $type } . "\n";
     }
     foreach my $key ( sort keys %{ $self->{'counter'} } ) {
-        my $help = $self->{'meta'}->{ $key }->{ 'help' };
-        my $type = $self->{'meta'}->{ $key }->{ 'type' };
+        my $help = $self->{'meta'}->{ $key }->{ 'help' } // q{};
+        my $type = $self->{'meta'}->{ $key }->{ 'type' } // q{};
         if ( $type ) {
             print $socket '# TYPE authmilter_' . $key . ' ' . $type . "\n";
         }
@@ -222,12 +222,10 @@ sub master_metric_count {
             $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
         }
         elsif ( $type eq 'histogram' ) {
-            my $bucketsize = $self->{'meta'}->{ $count_id }->{ 'bucketsize' };
+            my $buckets = $self->{'meta'}->{ $count_id }->{ 'buckets' };
             my $max = $self->{'meta'}->{ $count_id }->{ 'max' };
-            my $current = 0;
 
-            while ( $current < $max ) {
-                $current = $current + $bucketsize;
+            foreach my $current ( @{ $buckets } ) {
                 my $bucketlabels = join( ',', $labels, "le=\"$current\"" );
                 if ( ! exists( $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } ) ) {
                     $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = 0;

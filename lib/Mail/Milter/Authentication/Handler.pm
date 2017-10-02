@@ -12,6 +12,7 @@ use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 use Time::HiRes qw{ gettimeofday };
 use List::Util qw{ max };
+use POSIX qw{ floor };
 
 use Mail::Milter::Authentication::Constants qw { :all };
 use Mail::Milter::Authentication::Config qw{ get_config };
@@ -95,12 +96,21 @@ sub register_metrics {
     $max_time = max( $max_time, $config->{ 'addheader_timeout' } ) if defined $config->{ 'addheader_timeout' };
     $max_time = 30 if ! $max_time;
     $max_time = 1000000 * $max_time;
-    my $bucket_size = $max_time / 20;;
+
+    my $num_buckets = 20;
+    my @buckets;
+
+    my $current = $max_time;
+    for ( 1 .. $num_buckets ) {
+        push @buckets, $current;
+        last if $current == 1;
+        $current = floor( $current / 2 );
+    }
 
     return {
         'connect_total'           => 'The number of connections made to authentication milter',
         'callback_error_total'    => 'The number of errors in callbacks',
-        'time_microseconds'       => { 'type' => 'histogram', 'help' => 'The time in microseconds spent in various handlers', 'bucketsize' => $bucket_size, 'max' => $max_time },
+        'time_microseconds'       => { 'type' => 'histogram', 'help' => 'The time in microseconds spent in various handlers', 'buckets' => \@buckets, 'max' => $max_time },
     };
 }
 
