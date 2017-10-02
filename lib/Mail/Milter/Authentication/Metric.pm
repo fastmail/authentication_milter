@@ -69,6 +69,7 @@ sub count {
     my $ppid = $server->{ 'server' }->{ 'ppid' };
     if ( $ppid == $PID ) {
         warn "Parent counting metrics";
+        ## ToDo factor this out, the code has changed in the child
         eval {
             $labels = '' if ! $labels;
             if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
@@ -105,14 +106,14 @@ sub send { ## no critic
         return;
     }
 
-    my $psocket = $server->{'server'}->{'parent_sock'};
-    return if ! $psocket;
-
-    my $config = get_config();
-
     eval {
         local $SIG{'ALRM'} = sub{ die 'Timeout sending metrics' };
         alarm( $self->get_timeout() );
+
+        my $psocket = $server->{'server'}->{'parent_sock'};
+        return if ! $psocket;
+
+        my $config = get_config();
 
         print $psocket encode_json({
             'method' => 'METRIC.COUNT',
