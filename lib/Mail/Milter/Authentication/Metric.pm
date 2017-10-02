@@ -154,19 +154,20 @@ sub master_metric_get {
         'waiting'    => 'The number of authentication milter processes in a waiting state',
         'processing' => 'The number of authentication milter processes currently processing data',
     };
-    print $socket "# TYPE authmilter_uptime_seconds_total counter\n";
-    print $socket "# HELP authmilter_uptime_seconds_total Number of seconds since server startup\n";
-    print $socket 'authmilter_uptime_seconds_total' . $ident . ' ' . ( time - $self->{'start_time'} ) . "\n";
+    my $response = q{};
+    $response .= "# TYPE authmilter_uptime_seconds_total counter\n";
+    $response .= "# HELP authmilter_uptime_seconds_total Number of seconds since server startup\n";
+    $response .= 'authmilter_uptime_seconds_total' . $ident . ' ' . ( time - $self->{'start_time'} ) . "\n";
     foreach my $type ( qw { waiting processing } ) {
-        print $socket '# TYPE authmilter_processes_' . $type . " gauge\n";
-        print $socket '# HELP authmilter_processes_' . $type . ' ' . $guage_help->{ $type } . "\n";
-        print $socket 'authmilter_processes_' . $type . $ident . ' ' . $server->{'server'}->{'tally'}->{ $type } . "\n";
+        $response .= '# TYPE authmilter_processes_' . $type . " gauge\n";
+        $response .= '# HELP authmilter_processes_' . $type . ' ' . $guage_help->{ $type } . "\n";
+        $response .= 'authmilter_processes_' . $type . $ident . ' ' . $server->{'server'}->{'tally'}->{ $type } . "\n";
     }
     foreach my $key ( sort keys %{ $self->{'counter'} } ) {
-        print $socket '# TYPE authmilter_' . $key . " counter\n";
+        $response .= '# TYPE authmilter_' . $key . " counter\n";
         my $help = $self->{'help'}->{ $key };
         if ( $help ) {
-            print $socket '# HELP authmilter_' . $key . ' ' . $self->{'help'}->{ $key } . "\n";
+            $response .= '# HELP authmilter_' . $key . ' ' . $self->{'help'}->{ $key } . "\n";
         }
         foreach my $labels ( sort keys %{ $self->{'counter'}->{ $key } } ) {
             my $labels_txt = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"';
@@ -174,10 +175,10 @@ sub master_metric_get {
                 $labels_txt .= ',' . $labels;
             }
             $labels_txt .= '}';
-            print $socket 'authmilter_' . $key . $labels_txt . ' ' . $self->{'counter'}->{ $key }->{ $labels } . "\n";
+            $response .= 'authmilter_' . $key . $labels_txt . ' ' . $self->{'counter'}->{ $key }->{ $labels } . "\n";
         }
     }
-    print $socket "\0\n";
+    print $socket $response . "\0\n";
     return;
 }
 
