@@ -216,7 +216,10 @@ sub test_metrics {
                     is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $key" );
                 }
                 elsif ( $key =~ /microseconds_sum/ ) {
-                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $key" );
+                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics sum exists for $key" );
+                }
+                elsif ( $key =~ /microseconds_bucket/ ) {
+                    is( exists( $metrics->{ $key } ), exists( $data->{ $key } ), "Metrics bucket exists for $key" );
                 }
                 else {
                     is( $metrics->{ $key }, $data->{ $key }, "Metrics $key" );
