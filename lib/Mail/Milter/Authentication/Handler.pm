@@ -97,7 +97,7 @@ sub register_metrics {
     $max_time = 30 if ! $max_time;
     $max_time = 1000000 * $max_time;
 
-    my $num_buckets = 20;
+    my $num_buckets = 30;
     my @buckets;
 
     my $current = $max_time;
