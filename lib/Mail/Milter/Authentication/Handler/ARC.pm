@@ -29,7 +29,7 @@ sub default_config {
 sub grafana_rows {
     my ( $self ) = @_;
     my @rows;
-    push @rows, $self->get_json( 'DKIM_metrics' );
+    push @rows, $self->get_json( 'ARC_metrics' );
     return \@rows;
 }
 
