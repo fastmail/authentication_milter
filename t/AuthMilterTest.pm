@@ -215,12 +215,6 @@ sub test_metrics {
                 if ( $key =~ /seconds_total/ ) {
                     is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $key" );
                 }
-                elsif ( $key =~ /microseconds_sum/ ) {
-                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics sum exists for $key" );
-                }
-                elsif ( $key =~ /microseconds_bucket/ ) {
-                    is( exists( $metrics->{ $key } ), exists( $data->{ $key } ), "Metrics bucket exists for $key" );
-                }
                 else {
                     is( $metrics->{ $key }, $data->{ $key }, "Metrics $key" );
                 }
@@ -229,13 +223,11 @@ sub test_metrics {
         }
         else {
             fail( 'Metrics data does not exist' );
-            if ( $ENV{'WRITE_METRICS'} ) {
-                open my $OutF, '>', $expected;
-                $j->pretty();
-                $j->canonical();
-                print $OutF $j->encode( $metrics );
-                close $OutF;
-            }
+            # Uncomment to write out new json file
+            #open my $OutF, '>', $expected;
+            #$j->pretty();
+            #print $OutF $j->encode( $metrics );
+            #close $OutF;
         }
 
     };

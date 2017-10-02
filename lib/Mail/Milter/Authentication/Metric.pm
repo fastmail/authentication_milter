@@ -11,7 +11,7 @@ sub new {
     my ( $class ) = @_;
     my $self = {};
     $self->{'counter'}    = {};
-    $self->{'meta'}       = {};
+    $self->{'help'}       = {};
     $self->{'start_time'} = time;
     $self->{'queue'}      = [];
 
@@ -59,7 +59,7 @@ sub count {
             push @labels_list, $self->clean_label( $l ) .'="' . $self->clean_label( $labels->{$l} ) . '"';
         }
         if ( @labels_list ) {
-            $labels_txt = join( ',', @labels_list );
+            $labels_txt = ' ' . join( ',', @labels_list );
         }
     }
 
@@ -69,7 +69,6 @@ sub count {
     my $ppid = $server->{ 'server' }->{ 'ppid' };
     if ( $ppid == $PID ) {
         warn "Parent counting metrics";
-        ## ToDo factor this out, the code has changed in the child
         eval {
             $labels = '' if ! $labels;
             if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
@@ -106,14 +105,14 @@ sub send { ## no critic
         return;
     }
 
+    my $psocket = $server->{'server'}->{'parent_sock'};
+    return if ! $psocket;
+
+    my $config = get_config();
+
     eval {
         local $SIG{'ALRM'} = sub{ die 'Timeout sending metrics' };
         alarm( $self->get_timeout() );
-
-        my $psocket = $server->{'server'}->{'parent_sock'};
-        return if ! $psocket;
-
-        my $config = get_config();
 
         print $psocket encode_json({
             'method' => 'METRIC.COUNT',
@@ -139,17 +138,11 @@ sub register_metrics {
     return if ( ! $self->{ 'enabled' } );
 
     foreach my $metric ( keys %$hash ) {
-        my $meta = $hash->{ $metric };
+        my $help = $hash->{ $metric };
         if ( ! exists( $self->{'counter'}->{ $metric } ) ) {
             $self->{'counter'}->{ $metric } = { '' => 0 };
         }
-        if ( ref $meta eq 'HASH' ) {
-            $self->{'meta'}->{ $self->clean_label( $metric ) } = $meta;
-        }
-        else {
-            $self->{'meta'}->{ $self->clean_label( $metric ) }->{ 'help' } = $meta;
-            $self->{'meta'}->{ $self->clean_label( $metric ) }->{ 'type' } = 'counter';
-        }
+        $self->{'help'}->{ $self->clean_label( $metric ) } = $help;
     }
     return;
 }
@@ -170,13 +163,10 @@ sub master_metric_get {
         print $socket 'authmilter_processes_' . $type . $ident . ' ' . $server->{'server'}->{'tally'}->{ $type } . "\n";
     }
     foreach my $key ( sort keys %{ $self->{'counter'} } ) {
-        my $help = $self->{'meta'}->{ $key }->{ 'help' } // q{};
-        my $type = $self->{'meta'}->{ $key }->{ 'type' } // q{};
-        if ( $type ) {
-            print $socket '# TYPE authmilter_' . $key . ' ' . $type . "\n";
-        }
+        print $socket '# TYPE authmilter_' . $key . " counter\n";
+        my $help = $self->{'help'}->{ $key };
         if ( $help ) {
-            print $socket '# HELP authmilter_' . $key . ' ' . $help . "\n";
+            print $socket '# HELP authmilter_' . $key . ' ' . $self->{'help'}->{ $key } . "\n";
         }
         foreach my $labels ( sort keys %{ $self->{'counter'}->{ $key } } ) {
             my $labels_txt = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"';
@@ -186,19 +176,6 @@ sub master_metric_get {
             $labels_txt .= '}';
             print $socket 'authmilter_' . $key . $labels_txt . ' ' . $self->{'counter'}->{ $key }->{ $labels } . "\n";
         }
-        if ( $type eq 'histogram' ) {
-            foreach my $add ( qw { _bucket _sum _count } ) {
-                foreach my $labels ( sort keys %{ $self->{'counter'}->{ $key . $add } } ) {
-                    my $labels_txt = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"';
-                    if ( $labels ne q{} ) {
-                        $labels_txt .= ',' . $labels;
-                    }
-                    $labels_txt .= '}';
-                    print $socket 'authmilter_' . $key . $add . $labels_txt . ' ' . $self->{'counter'}->{ $key . $add }->{ $labels } . "\n";
-                }
-            }
-        }
-        ## ToDo Add _sum _count labels for summary types (NYI)
     }
     print $socket "\0\n";
     return;
@@ -212,44 +189,13 @@ sub master_metric_count {
         my $count_id = $datum->{ 'count_id' };
         my $labels   = $datum->{ 'labels' };
         $labels = '' if ! $labels;
-        my $type = $self->{'meta'}->{ $count_id }->{ 'type' };
-        if ( $type eq 'counter' ) {
-            if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
-                $self->{'counter'}->{ $count_id } = { $labels => 0 };
-            }
-            if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
-                $self->{'counter'}->{ $count_id }->{ $labels } = 0;
-            }
-            $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
+        if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
+            $self->{'counter'}->{ $count_id } = { $labels => 0 };
         }
-        elsif ( $type eq 'histogram' ) {
-            my $buckets = $self->{'meta'}->{ $count_id }->{ 'buckets' };
-            my $max = $self->{'meta'}->{ $count_id }->{ 'max' };
-
-            foreach my $current ( @{ $buckets } ) {
-                my $bucketlabels = join( ',', $labels, "le=\"$current\"" );
-                if ( ! exists( $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } ) ) {
-                    $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = 0;
-                }
-                if ( $count <= $current ) {
-                    $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } + 1;
-                }
-            }
-            my $bucketlabels = join( ',', $labels, "le=\"+Inf\"" );
-            if ( ! exists( $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } ) ) {
-                $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = 0;
-            }
-            $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } = $self->{'counter'}->{ $count_id . '_bucket' }->{ $bucketlabels } + 1;
-
-            if ( ! exists( $self->{'counter'}->{ $count_id . '_count' }->{ $labels } ) ) {
-                $self->{'counter'}->{ $count_id . '_count' }->{ $labels } = 0;
-            }
-            $self->{'counter'}->{ $count_id . '_count' }->{ $labels } = $self->{'counter'}->{ $count_id . '_count' }->{ $labels } + 1;
-            if ( ! exists( $self->{'counter'}->{ $count_id . '_sum' }->{ $labels } ) ) {
-                $self->{'counter'}->{ $count_id . '_sum' }->{ $labels } = 0;
-            }
-            $self->{'counter'}->{ $count_id . '_sum' }->{ $labels } = $self->{'counter'}->{ $count_id . '_sum' }->{ $labels } + $count;
+        if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
+            $self->{'counter'}->{ $count_id }->{ $labels } = 0;
         }
+        $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
     }
     print $socket "1\n";
     return;

@@ -11,11 +11,9 @@ use Net::DNS::Resolver;
 use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 use Time::HiRes qw{ gettimeofday };
-use List::Util qw{ max };
-use POSIX qw{ floor };
 
 use Mail::Milter::Authentication::Constants qw { :all };
-use Mail::Milter::Authentication::Config qw{ get_config };
+use Mail::Milter::Authentication::Config;
 
 our $TestResolver; # For Testing
 
@@ -86,31 +84,10 @@ sub get_microseconds {
 # Top Level Callbacks
 
 sub register_metrics {
-    my ( $self ) = @_;
-
-    my $max_time = 0;
-    my $config = get_config();
-    $max_time = max( $max_time, $config->{ 'connect_timeout' } ) if defined $config->{ 'connect_timeout' };
-    $max_time = max( $max_time, $config->{ 'command_timeout' } ) if defined $config->{ 'command_timeout' };
-    $max_time = max( $max_time, $config->{ 'content_timeout' } ) if defined $config->{ 'content_timeout' };
-    $max_time = max( $max_time, $config->{ 'addheader_timeout' } ) if defined $config->{ 'addheader_timeout' };
-    $max_time = 30 if ! $max_time;
-    $max_time = 1000000 * $max_time;
-
-    my $num_buckets = 30;
-    my @buckets;
-
-    my $current = $max_time;
-    for ( 1 .. $num_buckets ) {
-        push @buckets, $current;
-        last if $current == 1;
-        $current = floor( $current / 2 );
-    }
-
     return {
         'connect_total'           => 'The number of connections made to authentication milter',
         'callback_error_total'    => 'The number of errors in callbacks',
-        'time_microseconds'       => { 'type' => 'histogram', 'help' => 'The time in microseconds spent in various handlers', 'buckets' => \@buckets, 'max' => $max_time },
+        'time_microseconds_total' => 'The time in microseconds spent in various handlers',
     };
 }
 
@@ -124,7 +101,7 @@ sub top_setup_callback {
     foreach my $handler ( @$callbacks ) {
         my $start_time = $self->get_microseconds();
         $self->get_handler($handler)->setup_callback();
-        $self->metric_count( 'time_microseconds', { 'callback' => 'setup', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+        $self->metric_count( 'time_microseconds_total', { 'callback' => 'setup', 'handler' => $handler }, $self->get_microseconds() - $start_time );
     }
     $self->status('postsetup');
     return;
@@ -153,7 +130,7 @@ sub top_connect_callback {
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
             $self->get_handler($handler)->connect_callback( $hostname, $ip );
-            $self->metric_count( 'time_microseconds', { 'callback' => 'connect', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'connect', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
@@ -189,7 +166,7 @@ sub top_helo_callback {
             foreach my $handler ( @$callbacks ) {
                 my $start_time = $self->get_microseconds();
                 $self->get_handler($handler)->helo_callback($helo_host);
-                $self->metric_count( 'time_microseconds', { 'callback' => 'helo', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+                $self->metric_count( 'time_microseconds_total', { 'callback' => 'helo', 'handler' => $handler }, $self->get_microseconds() - $start_time );
             }
         }
         else {
@@ -233,7 +210,7 @@ sub top_envfrom_callback {
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
             $self->get_handler($handler)->envfrom_callback($env_from);
-            $self->metric_count( 'time_microseconds', { 'callback' => 'envfrom', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'envfrom', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
@@ -266,7 +243,7 @@ sub top_envrcpt_callback {
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
             $self->get_handler($handler)->envrcpt_callback($env_to);
-            $self->metric_count( 'time_microseconds', { 'callback' => 'rcptto', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'rcptto', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
@@ -303,7 +280,7 @@ sub top_header_callback {
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
             $self->get_handler($handler)->header_callback( $header, $value );
-            $self->metric_count( 'time_microseconds', { 'callback' => 'header', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'header', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
@@ -334,7 +311,7 @@ sub top_eoh_callback {
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
             $self->get_handler($handler)->eoh_callback();
-            $self->metric_count( 'time_microseconds', { 'callback' => 'eoh', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'eoh', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
@@ -366,7 +343,7 @@ sub top_body_callback {
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
             $self->get_handler($handler)->body_callback( $body_chunk );
-            $self->metric_count( 'time_microseconds', { 'callback' => 'body', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'body', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
@@ -398,7 +375,7 @@ sub top_eom_callback {
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
             $self->get_handler($handler)->eom_callback();
-            $self->metric_count( 'time_microseconds', { 'callback' => 'eom', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'eom', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
@@ -431,7 +408,7 @@ sub top_abort_callback {
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
             $self->get_handler($handler)->abort_callback();
-            $self->metric_count( 'time_microseconds', { 'callback' => 'abort', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'abort', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
@@ -462,7 +439,7 @@ sub top_close_callback {
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
             $self->get_handler($handler)->close_callback();
-            $self->metric_count( 'time_microseconds', { 'callback' => 'close', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'close', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
@@ -1114,7 +1091,7 @@ sub add_headers {
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
             $self->get_handler($handler)->addheader_callback($self);
-            $self->metric_count( 'time_microseconds', { 'callback' => 'addheader', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'addheader', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
