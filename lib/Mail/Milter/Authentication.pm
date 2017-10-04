@@ -257,9 +257,10 @@ sub child_is_talking_hook {
     my ( $self, $socket ) = @_;
 
     my $request;
+    my $raw_request;
 
     eval {
-        my $raw_request = <$socket>;
+        $raw_request = <$socket>;
         return if ! $raw_request;
         $request = decode_json( $raw_request );
     };
@@ -269,6 +270,10 @@ sub child_is_talking_hook {
     }
     else {
 
+        if ( ! $request ) {
+            warn "Ignoring Invalid child request: $raw_request;";
+            return;
+        }
         $request =~ s/[\n\r]+$//;
         if ( $request->{ 'method' } eq 'METRIC.GET' ) {
             $self->{'metric'}->master_handler( $request, $socket, $self );
