@@ -120,7 +120,7 @@ sub register_metrics {
 }
 
 sub get_dmarc_object {
-    my ( $self, $env_from ) = @_;
+    my ( $self ) = @_;
     my $dmarc = $self->get_object('dmarc');
     if ( $dmarc ) {
         return $dmarc;
