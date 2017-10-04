@@ -707,6 +707,7 @@ sub start {
     _warn "==========";
 
     my @start_times;
+    my $parent_pid = $PID;
     while ( 1 ) {
         unshift @start_times, time();
 
@@ -714,6 +715,10 @@ sub start {
             __PACKAGE__->run( %srvargs );
         };
         my $error = $@;
+        if ( $PID != $parent_pid ) {
+            _warn "Child exiting";
+            die;
+        }
         $error = 'unknown error' if ! $error;
         _warn "Server failed: $error";
 
