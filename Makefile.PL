@@ -36,7 +36,7 @@ build_requires (
 
 requires (
     'Mail::DKIM' => 0.44,
-    'Mail::Milter::Authentication' => 'v1.1.3',
+    'Mail::Milter::Authentication' => '1.1.3',
 );
 
 install_as_cpan;
