@@ -28,24 +28,51 @@ sub register_metrics {
 sub _check_address {
     my ( $self, $address, $type ) = @_;
 
-    my $resolver = $self->get_object('resolver');
-
     my $email = $self->get_address_from( $address );
 
     if ( ! $email ) {
         $self->log_error( "ReturnOK: No Address for $type" );
     }
 
-    my $domain = $self->get_domain_from( $email );
+    my $domain = lc $self->get_domain_from( $email );
+
+    $self->_check_domain ( $domain, $type, 0 );
+
+    # Get Org domain and check that if different.
+    if ( $self->is_handler_loaded( 'DMARC' ) ) {
+        my $dmarc_handler = $self->get_handler('DMARC');
+        my $dmarc_object = $dmarc_handler->get_dmarc_object();
+        my $org_domain = $dmarc_object->get_organizational_domain( $domain );
+        if ( $org_domain eq $domain ) {
+            $self->{ 'metrics' }->{ 'is_org_domain' } = 'yes';
+            push @{ $self->{ 'details' } }, 'is_org_domain=yes';
+        }
+        else {
+            $self->_check_domain( $org_domain, $type, 1 );
+            $self->{ 'metrics' }->{ 'is_org_domain' } = 'no';
+            push @{ $self->{ 'details' } }, 'is_org_domain=no';
+        }
+    }
+
+    return;
+}
+
+sub _check_domain {
+    my ( $self, $domain, $type, $is_org ) = @_;
+
+    my $resolver = $self->get_object('resolver');
 
     if ( ! $domain ) {
-        $self->log_error( "ReturnOK: No Domain for $type from $address" );
+        $self->log_error( "ReturnOK: No Domain for $type" );
+        $self->{ 'metrics' }->{ ( $is_org ? 'org_' : '' ) . $type } = 'empty';
+        return;
     }
 
     my $result = 'fail';
+    $self->{ 'metrics' }->{ ( $is_org ? 'org_' : '' ) . $type } = 'fail';
     my @details;
 
-    push @details, "type=$type";
+    push @details, "domain=$domain";
 
     my $has_mx   = 0;
     my $has_a    = 0;
@@ -58,6 +85,8 @@ sub _check_address {
             next unless $rr->type eq "MX";
             $has_mx = 1;
             $result = 'pass';
+            $self->{ 'metrics' }->{ 'result' } = 'pass' if ! $is_org;
+            $self->{ 'metrics' }->{ ( $is_org ? 'org_' : '' ) . $type } = 'mx_pass';
             last;
         }
     }
@@ -72,12 +101,14 @@ sub _check_address {
     }
 
     if ( ! $has_mx ) {
+
         $packet = $resolver->query( $domain, 'A' );
         if ($packet) {
             foreach my $rr ( $packet->answer ) {
                 next unless $rr->type eq "A";
                 $has_a = 1;
                 $result = 'warn';
+                $self->{ 'metrics' }->{ 'result' } = 'warn' if $self->{ 'metrics' }->{ 'result' } ne 'pass' and ! $is_org;
                 last;
             }
         }
@@ -95,8 +126,9 @@ sub _check_address {
         if ($packet) {
             foreach my $rr ( $packet->answer ) {
                 next unless $rr->type eq "AAAA";
-                $has_a = 1;
+                $has_aaaa = 1;
                 $result = 'warn';
+                $self->{ 'metrics' }->{ 'result' } = 'warn' if $self->{ 'metrics' }->{ 'result' } ne 'pass';
                 last;
             }
         }
@@ -109,32 +141,72 @@ sub _check_address {
                 push @details, 'aaaa.error=none';
             }
         }
+
+        if ( $has_a && $has_aaaa ) {
+            $self->{ 'metrics' }->{ ( $is_org ? 'org_' : '' ) . $type } = 'a_pass';
+        }
+        elsif ( $has_a ) {
+            $self->{ 'metrics' }->{ ( $is_org ? 'org_' : '' ) . $type } = 'a4_pass';
+        }
+        elsif ( $has_aaaa ) {
+            $self->{ 'metrics' }->{ ( $is_org ? 'org_' : '' ) . $type } = 'a6_pass';
+        }
     }
 
-    $self->dbgout( 'ReturnOKCheck', "$type: $result", LOG_DEBUG );
-    my $header = join( ' ',
-        $self->format_header_entry( 'x-return-mx', $result ),
-        @details,
-    );
+    push @details, 'result=' . $result;
 
-    $self->add_auth_header($header);
-    $self->metric_count( 'returnok_total', { 'result' => $result} );
+    my $prefix = $type . ( $is_org ? '_org' : q{} );
+    foreach my $detail ( @details ) {
+        push @{ $self->{ 'details' } }, $prefix . '.' . $detail;
+    }
 
     return;
 }
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
+
+    $self->{ 'metrics' } = { 'result' => 'fail' };
+    $self->{ 'details' } = [];
+
     $env_from = q{} if $env_from eq '<>';
     $self->_check_address( $env_from, 'smtp' );
+
     return;
 }
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
+
     if ( $header eq 'From' ) {
         $self->_check_address( $value, 'header' );
     }
+
+    return;
+}
+
+sub close_callback {
+    my ( $self ) = @_;
+    delete $self->{ 'metrics' };
+    delete $self->{ 'details' };
+    return;
+}
+
+sub eom_callback {
+    my ( $self ) = @_;
+
+    my $metrics = $self->{ 'metrics' };
+
+    $self->dbgout( 'ReturnOKCheck', $self->{ 'metrics' }->{ 'result'} , LOG_DEBUG );
+    my $header = join( ' ',
+        $self->format_header_entry( 'x-return-mx', $metrics->{ 'result' } ),
+        @{ $self->{ 'details' } },
+    );
+
+    $self->add_auth_header($header);
+
+    $self->metric_count( 'returnok_total', $metrics );
+
     return;
 }
 
