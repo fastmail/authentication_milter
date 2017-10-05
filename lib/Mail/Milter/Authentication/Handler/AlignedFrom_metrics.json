@@ -5,6 +5,8 @@
       {
          "aliasColors" : {},
          "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
          "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
@@ -30,6 +32,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "spaceLength" : 10,
          "span" : 12,
          "stack" : false,
          "steppedLine" : false,
@@ -56,6 +59,7 @@
          },
          "type" : "graph",
          "xaxis" : {
+            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,

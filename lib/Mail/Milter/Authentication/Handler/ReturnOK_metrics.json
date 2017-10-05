@@ -5,6 +5,8 @@
       {
          "aliasColors" : {},
          "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
          "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
@@ -31,6 +33,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "spaceLength" : 10,
          "span" : 12,
          "stack" : false,
          "steppedLine" : false,
@@ -42,7 +45,7 @@
                "legendFormat" : "{{ result }}",
                "metric" : "authmilter_dkim_error_total",
                "refId" : "A",
-               "step" : 60
+               "step" : 4
             }
          ],
          "thresholds" : [],
@@ -57,6 +60,268 @@
          },
          "type" : "graph",
          "xaxis" : {
+            "buckets" : null,
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      },
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 44,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "hideEmpty" : false,
+            "hideZero" : true,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "spaceLength" : 10,
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(smtp_is_org_domain)",
+               "format" : "time_series",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "SMTP {{ smtp_is_org_domain }}",
+               "metric" : "authmilter_dkim_error_total",
+               "refId" : "A",
+               "step" : 4
+            },
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(authmilter_size_header_bytes_total_is_org_domain)",
+               "format" : "time_series",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "Header {{ header_is_org_domain }}",
+               "refId" : "B",
+               "step" : 4
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Was mail from org domain",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "buckets" : null,
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      },
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 45,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "hideEmpty" : false,
+            "hideZero" : true,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "spaceLength" : 10,
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(header,smtp)",
+               "format" : "time_series",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "Header {{ header }} SMTP {{ smtp }}",
+               "metric" : "authmilter_dkim_error_total",
+               "refId" : "A",
+               "step" : 4
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Presented domain",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "buckets" : null,
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      },
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 46,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "hideEmpty" : false,
+            "hideZero" : true,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "spaceLength" : 10,
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(org_header,org_smtp)",
+               "format" : "time_series",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "Header {{ org_header }} SMTP {{ org_smtp }}",
+               "metric" : "authmilter_dkim_error_total",
+               "refId" : "A",
+               "step" : 4
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Org domain was used",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
