@@ -19,6 +19,7 @@ sub default_config {
         'check_adsp'        => 1,
         'show default_adsp' => 0,
         'adsp_hide_none'    => 0,
+        'extra_properties'  => 0,
     };
 }
 
@@ -258,7 +259,6 @@ sub eom_callback {
                 } );
 
                 if ( $type eq 'domainkeys' ) {
-                    ## DEBUGGING
                     if ( $self->show_domainkeys() ) {
                         my $header = join(
                             q{ },
@@ -271,12 +271,17 @@ sub eom_callback {
                               . ')',
                             $self->format_header_entry( 'header.d', $signature->domain() ),
                             $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
-                            $self->format_header_entry( 'x-bits', $key_size ),
-                            $self->format_header_entry( 'x-keytype', $key_type ),
-                            $self->format_header_entry( 'x-algorithm', $hash_algorithm ),
-                            $self->format_header_entry( 'x-selector', $selector ),
-
                         );
+                        if ( $config->{'extra_properties'} ) {
+                            $header = join(
+                                q{ },
+                                $header,
+                                $self->format_header_entry( 'x-bits', $key_size ),
+                                $self->format_header_entry( 'x-keytype', $key_type ),
+                                $self->format_header_entry( 'x-algorithm', $hash_algorithm ),
+                                $self->format_header_entry( 'x-selector', $selector ),
+                            );
+                        }
                         $self->add_auth_header($header);
                         }
                 }
@@ -293,11 +298,17 @@ sub eom_callback {
                         $self->format_header_entry( 'header.d', $signature->domain() ),
                         $self->format_header_entry( 'header.i', $signature->identity() ),
                         $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
-                        $self->format_header_entry( 'x-bits', $key_size ),
-                        $self->format_header_entry( 'x-keytype', $key_type ),
-                        $self->format_header_entry( 'x-algorithm', $hash_algorithm ),
-                        $self->format_header_entry( 'x-selector', $selector ),
                     );
+                    if ( $config->{'extra_properties'} ) {
+                        $header = join(
+                            q{ },
+                            $header,
+                            $self->format_header_entry( 'x-bits', $key_size ),
+                            $self->format_header_entry( 'x-keytype', $key_type ),
+                            $self->format_header_entry( 'x-algorithm', $hash_algorithm ),
+                            $self->format_header_entry( 'x-selector', $selector ),
+                        );
+                    }
                     $self->add_auth_header($header);
                 }
             }
@@ -429,7 +440,8 @@ Module for validation of DKIM and DomainKeys signatures, and application of ADSP
             "hide_domainkeys"   : 0,                    | Hide any DomainKeys results
             "check_adsp"        : 1,                    | Also check for ADSP
             "show_default_adsp" : 0,                    | Show the default ADSP result
-            "adsp_hide_none"    : 0                     | Hide auth ADSP if the result is 'none'
+            "adsp_hide_none"    : 0,                    | Hide auth ADSP if the result is 'none'
+            "extra_properties"  : 0                     | Add extra properties (not to rfc) relating to key and selector
         },
 
 =head1 SYNOPSIS
