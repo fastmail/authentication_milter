@@ -901,6 +901,7 @@ sub format_ctext_no_space {
     my ( $self, $text ) = @_;
     $text = $self->format_ctext($text);
     $text =~ s/ //g;
+    $text =~ s/;/_/g;
     return $text;
 }
 
