@@ -44,13 +44,13 @@ sub _check_address {
         my $dmarc_object = $dmarc_handler->get_dmarc_object();
         my $org_domain = $dmarc_object->get_organizational_domain( $domain );
         if ( $org_domain eq $domain ) {
-            $self->{ 'metrics' }->{ 'is_org_domain' } = 'yes';
-            push @{ $self->{ 'details' } }, 'is_org_domain=yes';
+            $self->{ 'metrics' }->{ $type . '_is_org_domain' } = 'yes';
+            push @{ $self->{ 'details' } }, $type . '_is_org_domain=yes';
         }
         else {
             $self->_check_domain( $org_domain, $type, 1 );
-            $self->{ 'metrics' }->{ 'is_org_domain' } = 'no';
-            push @{ $self->{ 'details' } }, 'is_org_domain=no';
+            $self->{ 'metrics' }->{ $type '_is_org_domain' } = 'no';
+            push @{ $self->{ 'details' } }, $type '_is_org_domain=no';
         }
     }
 
