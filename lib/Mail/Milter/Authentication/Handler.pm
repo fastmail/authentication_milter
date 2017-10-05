@@ -565,8 +565,10 @@ sub _parse_auth_header_comment {
 
 sub _parse_auth_header_entry {
     my ($self,$remain) = @_;
-    my ( $key, $remain )   = split( '=', $remain, 2 );
-    my ( $value, $remain ) = split( ' ', $remain, 2 );
+    my $key;
+    my $value;
+    ( $key, $remain )   = split( '=', $remain, 2 );
+    ( $value, $remain ) = split( ' ', $remain, 2 );
 
     $remain = q{} if ! defined $remain;
 
