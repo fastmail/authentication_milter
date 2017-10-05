@@ -49,8 +49,8 @@ sub _check_address {
         }
         else {
             $self->_check_domain( $org_domain, $type, 1 );
-            $self->{ 'metrics' }->{ $type '_is_org_domain' } = 'no';
-            push @{ $self->{ 'details' } }, $type '_is_org_domain=no';
+            $self->{ 'metrics' }->{ $type . '_is_org_domain' } = 'no';
+            push @{ $self->{ 'details' } }, $type . '_is_org_domain=no';
         }
     }
 
