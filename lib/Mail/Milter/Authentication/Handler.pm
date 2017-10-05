@@ -457,10 +457,120 @@ sub top_eom_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
+    $self->apply_policy();
     $self->add_headers();
     $self->dbgoutwrite();
     $self->status('posteom');
     return $self->get_return();
+}
+
+sub apply_policy {
+    my ($self) = @_;
+
+    my @auth_headers;
+    my $top_handler = $self->get_top_handler();
+    if ( exists( $top_handler->{'c_auth_headers'} ) ) {
+        @auth_headers = @{ $top_handler->{'c_auth_headers'} };
+    }
+    if ( exists( $top_handler->{'auth_headers'} ) ) {
+        @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
+    }
+
+    my @structured_headers;
+
+    return if ! @auth_headers;
+
+    foreach my $auth_header ( sort @auth_headers ) {
+        my $acting_on;
+        $self->_parse_auth_header( \$acting_on, $auth_header );
+        push @structured_headers, $acting_on;
+    }
+
+    #use Data::Dumper;
+    #print Dumper \@structured_headers;
+
+    return;
+}
+
+sub _parse_auth_header {
+    my ($self,$acting_on,$header) = @_;
+
+    # class entry/comment
+    # key
+    # value
+    # children
+
+    my $key;
+    my $value;
+
+    ( $key, $value, $header ) = $self->_parse_auth_header_entry( $header );
+    ${$acting_on}->{ 'class' } = 'entry';
+    ${$acting_on}->{ 'key' }   = $key;
+    ${$acting_on}->{ 'value' } = $value;
+    ${$acting_on}->{ 'children' } = [];
+
+    my @children;
+
+    my $comment_on = $acting_on;
+
+    while ( length $header > 0 ) {
+        $header =~ s/^\s+//;
+        if ( $header =~ /^\(/ ) {
+            # We have a comment
+            my $comment;
+            ( $comment, $header ) = $self->_parse_auth_header_entry( $header );
+            my $entry = {
+                'class' => 'comment',
+                'value' => $comment,
+            };
+            push @{ ${$comment_on}->{ 'children' } }, $entry;
+        }
+        else {
+            # We have another entry
+            ( $key, $value, $header ) = $self->_parse_auth_header_entry( $header );
+            my $entry = {
+                'class'    => 'entry',
+                'key'      => $key,
+                'value'    => $value,
+                'children' => [],
+            };
+            $comment_on = \$entry;
+            push @{ ${$acting_on}->{ 'children' } }, $entry;
+        }
+    }
+
+    return;
+}
+
+sub _parse_auth_header_comment {
+    my ($self,$remain) = @_;
+    my $value = q{};
+    my $depth = 0;
+
+    while ( length $remain > 0 ) {
+        my $first = substr( $remain,0,1 );
+        $remain   = substr( $remain,1 );
+        $value .= $first;
+        if ( $value eq '(' ) {
+            $depth++;
+        }
+        elsif ( $value eq ')' ) {
+            $depth--;
+            last if $depth == 0;
+        }
+    }
+
+    return($value,$remain);
+}
+
+sub _parse_auth_header_entry {
+    my ($self,$remain) = @_;
+    my ( $key, $remain )   = split( '=', $remain, 2 );
+    my ( $value, $remain ) = split( ' ', $remain, 2 );
+
+    $remain = q{} if ! defined $remain;
+
+    return ($key,$value,$remain);
 }
 
 sub top_abort_callback {
@@ -1414,6 +1524,10 @@ Top level handler for a Body Chunk event.
 =item top_eom_callback()
 
 Top level handler for the End of Message event.
+
+=item apply_policy()
+
+Apply a policy to the generated authentication results
 
 =item top_abort_callback()
 
