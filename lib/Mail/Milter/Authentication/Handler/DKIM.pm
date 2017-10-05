@@ -236,6 +236,7 @@ sub eom_callback {
 
                 my $key_size = 0;
                 my $key_type = q{};
+                my $selector = eval{ $signature->selector } || q{};
                 eval {
                     my $key = $signature->get_public_key();
                     $key_size = $key->size();
@@ -270,6 +271,11 @@ sub eom_callback {
                               . ')',
                             $self->format_header_entry( 'header.d', $signature->domain() ),
                             $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
+                            $self->format_header_entry( 'x-bits', $key_size ),
+                            $self->format_header_entry( 'x-keytype', $key_type ),
+                            $self->format_header_entry( 'x-algorithm', $hash_algorithm ),
+                            $self->format_header_entry( 'x-selector', $selector ),
+
                         );
                         $self->add_auth_header($header);
                         }
@@ -287,6 +293,10 @@ sub eom_callback {
                         $self->format_header_entry( 'header.d', $signature->domain() ),
                         $self->format_header_entry( 'header.i', $signature->identity() ),
                         $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
+                        $self->format_header_entry( 'x-bits', $key_size ),
+                        $self->format_header_entry( 'x-keytype', $key_type ),
+                        $self->format_header_entry( 'x-algorithm', $hash_algorithm ),
+                        $self->format_header_entry( 'x-selector', $selector ),
                     );
                     $self->add_auth_header($header);
                 }
