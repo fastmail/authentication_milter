@@ -457,7 +457,7 @@ sub top_eom_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    $self->apply_policy();
+    #$self->apply_policy();
     $self->add_headers();
     $self->dbgoutwrite();
     $self->status('posteom');
