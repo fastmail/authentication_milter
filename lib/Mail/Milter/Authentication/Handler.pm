@@ -509,6 +509,8 @@ sub _parse_auth_header {
     ${$acting_on}->{ 'value' } = $value;
     ${$acting_on}->{ 'children' } = [];
 
+    $header = q{} if ! $header;
+
     my @children;
 
     my $comment_on = $acting_on;
@@ -568,9 +570,8 @@ sub _parse_auth_header_entry {
     my $key;
     my $value;
     ( $key, $remain )   = split( '=', $remain, 2 );
-    ( $value, $remain ) = split( ' ', $remain, 2 );
-
     $remain = q{} if ! defined $remain;
+    ( $value, $remain ) = split( ' ', $remain, 2 );
 
     return ($key,$value,$remain);
 }
