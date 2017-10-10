@@ -132,7 +132,7 @@
                "step" : 4
             },
             {
-               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(authmilter_size_header_bytes_total_is_org_domain)",
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(header_is_org_domain)",
                "format" : "time_series",
                "interval" : "",
                "intervalFactor" : 2,
