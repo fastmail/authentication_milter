@@ -42,15 +42,17 @@ sub _check_address {
     if ( $self->is_handler_loaded( 'DMARC' ) ) {
         my $dmarc_handler = $self->get_handler('DMARC');
         my $dmarc_object = $dmarc_handler->get_dmarc_object();
-        my $org_domain = $dmarc_object->get_organizational_domain( $domain );
-        if ( $org_domain eq $domain ) {
-            $self->{ 'metrics' }->{ $type . '_is_org_domain' } = 'yes';
-            push @{ $self->{ 'details' } }, $type . '_is_org_domain=yes';
-        }
-        else {
-            $self->_check_domain( $org_domain, $type, 1 );
-            $self->{ 'metrics' }->{ $type . '_is_org_domain' } = 'no';
-            push @{ $self->{ 'details' } }, $type . '_is_org_domain=no';
+        if ( $domain ) {
+            my $org_domain = eval{ $dmarc_object->get_organizational_domain( $domain ); };
+            if ( $org_domain eq $domain ) {
+                $self->{ 'metrics' }->{ $type . '_is_org_domain' } = 'yes';
+                push @{ $self->{ 'details' } }, $type . '_is_org_domain=yes';
+            }
+            else {
+                $self->_check_domain( $org_domain, $type, 1 );
+                $self->{ 'metrics' }->{ $type . '_is_org_domain' } = 'no';
+                push @{ $self->{ 'details' } }, $type . '_is_org_domain=no';
+            }
         }
     }
 
