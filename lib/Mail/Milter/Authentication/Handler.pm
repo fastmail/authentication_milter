@@ -227,7 +227,7 @@ sub top_envfrom_callback {
         my $callbacks = $self->get_callbacks( 'envfrom' );
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
-            { $self->get_handler($handler)->envfrom_callback($env_from); };
+            eval { $self->get_handler($handler)->envfrom_callback($env_from); };
             if ( my $error = $@ ) {
                 $self->log_error( 'Env From callback error ' . $error );
                 $self->exit_on_close();
