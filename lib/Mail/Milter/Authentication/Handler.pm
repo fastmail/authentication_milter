@@ -134,7 +134,7 @@ sub top_connect_callback {
                 $self->log_error( 'Connect callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'connect' } );
+                $self->metric_count( 'callback_error_total', { 'stage' => 'connect', 'handler' => $handler } );
                 if ( $error =~ /Timeout/ ) {
                     alarm( 1 );
                 }
@@ -179,7 +179,7 @@ sub top_helo_callback {
                     $self->log_error( 'HELO callback error ' . $error );
                     $self->exit_on_close();
                     $self->tempfail_on_error();
-                    $self->metric_count( 'callback_error_total', { 'stage' => 'helo' } );
+                    $self->metric_count( 'callback_error_total', { 'stage' => 'helo', 'handler' => $handler } );
                     if ( $error =~ /Timeout/ ) {
                         alarm( 1 );
                     }
@@ -232,7 +232,7 @@ sub top_envfrom_callback {
                 $self->log_error( 'Env From callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom' } );
+                $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom', 'handler' => $handler } );
                 if ( $error =~ /Timeout/ ) {
                     alarm( 1 );
                 }
@@ -274,7 +274,7 @@ sub top_envrcpt_callback {
                 $self->log_error( 'Rcpt To callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto' } );
+                $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto', 'handler' => $handler } );
                 if ( $error =~ /Timeout/ ) {
                     alarm( 1 );
                 }
@@ -320,7 +320,7 @@ sub top_header_callback {
                 $self->log_error( 'Header callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'header' } );
+                $self->metric_count( 'callback_error_total', { 'stage' => 'header', 'handler' => $handler } );
                 if ( $error =~ /Timeout/ ) {
                     alarm( 1 );
                 }
@@ -360,7 +360,7 @@ sub top_eoh_callback {
                 $self->log_error( 'EOH callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'eoh' } );
+                $self->metric_count( 'callback_error_total', { 'stage' => 'eoh', 'handler' => $handler } );
                 if ( $error =~ /Timeout/ ) {
                     alarm( 1 );
                 }
@@ -401,7 +401,7 @@ sub top_body_callback {
                 $self->log_error( 'Body callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'body' } );
+                $self->metric_count( 'callback_error_total', { 'stage' => 'body', 'handler' => $handler } );
                 if ( $error =~ /Timeout/ ) {
                     alarm( 1 );
                 }
@@ -442,7 +442,7 @@ sub top_eom_callback {
                 $self->log_error( 'EOM callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'eom' } );
+                $self->metric_count( 'callback_error_total', { 'stage' => 'eom', 'handler' => $handler } );
                 if ( $error =~ /Timeout/ ) {
                     alarm( 1 );
                 }
@@ -597,7 +597,7 @@ sub top_abort_callback {
                 $self->log_error( 'Abort callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'abort' } );
+                $self->metric_count( 'callback_error_total', { 'stage' => 'abort', 'handler' => $handler } );
                 if ( $error =~ /Timeout/ ) {
                     alarm( 1 );
                 }
@@ -637,7 +637,7 @@ sub top_close_callback {
                 $self->log_error( 'Close callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'close' } );
+                $self->metric_count( 'callback_error_total', { 'stage' => 'close', 'handler' => $handler } );
                 if ( $error =~ /Timeout/ ) {
                     alarm( 1 );
                 }
