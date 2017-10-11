@@ -1,0 +1,32 @@
+# Test configuration for auth milter dryrun
+{
+
+    "debug"                           : 0,
+    "dryrun"                          : 1,
+    "logtoerr"                        : 0,
+    "error_log"                       : "tmp/milter.dryrun.err",
+    "connection"                      : "unix:tmp/authentication_milter_test.sock",
+    "umask"                           : "0000",
+    "connect_timeout"                 : 1,
+    "command_timeout"                 : 1,
+    "content_timeout"                 : 1,
+    "tempfail_on_error"               : 1,
+    "tempfail_on_error_authenticated" : 1,
+    "tempfail_on_error_local"         : 1,
+    "tempfail_on_error_trusted"       : 1,
+
+    "metric_connection"               : "unix:tmp/authentication_milter_test_metrics.sock",
+    "metric_umask"                    : "0000",
+
+    "listen_backlog"         : 1,
+    "min_children"           : 1,
+    "max_children"           : 2,
+    "min_spare_children"     : 1,
+    "max_spare_children"     : 1,
+    "max_requests_per_child" : 1000,
+
+    "handlers" : {
+        "TestTimeout" : {}
+    }
+
+}

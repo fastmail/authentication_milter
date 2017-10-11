@@ -1,0 +1,13 @@
+{
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",handler=\"testtimeout\",stage=\"abort\"}" : "1",
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",handler=\"testtimeout\",stage=\"body\"}" : "1",
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",handler=\"testtimeout\",stage=\"close\"}" : "1",
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",handler=\"testtimeout\",stage=\"connect\"}" : "1",
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",handler=\"testtimeout\",stage=\"envfrom\"}" : "1",
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",handler=\"testtimeout\",stage=\"eoh\"}" : "1",
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",handler=\"testtimeout\",stage=\"eom\"}" : "1",
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",handler=\"testtimeout\",stage=\"header\"}" : "15",
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",handler=\"testtimeout\",stage=\"helo\"}" : "1",
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",handler=\"testtimeout\",stage=\"rcptto\"}" : "1",
+   "authmilter_callback_error_total{ident=\"test_authentication_milter_test\"}" : "0"
+}

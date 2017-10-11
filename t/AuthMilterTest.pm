@@ -379,6 +379,23 @@ sub milter_process {
 
 sub run_milter_processing {
 
+    start_milter( 'config/timeout' );
+
+    milter_process({
+        'desc'   => 'Good message local',
+        'prefix' => 'config/normal',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good.timeout.eml',
+        'ip'     => '127.0.0.1',
+        'name'   => 'localhost',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    test_metrics( 'data/metrics/milter_timeout.json' );
+
+    stop_milter();
+
     start_milter( 'config/normal' );
 
     milter_process({
