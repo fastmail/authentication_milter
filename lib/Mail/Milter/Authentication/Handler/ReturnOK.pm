@@ -11,7 +11,6 @@ sub default_config {
     return {};
 }
 
-## ToDo
 sub grafana_rows {
     my ( $self ) = @_;
     my @rows;
@@ -81,68 +80,87 @@ sub _check_domain {
     my $has_aaaa = 0;
     my $packet;
 
-    $packet = $resolver->query( $domain, 'MX' );
-    if ($packet) {
-        foreach my $rr ( $packet->answer ) {
-            next unless $rr->type eq "MX";
-            $has_mx = 1;
-            $result = 'pass';
-            $self->{ 'metrics' }->{ 'result' } = 'pass' if ! $is_org;
-            $self->{ 'metrics' }->{ ( $is_org ? 'org_' : '' ) . $type } = 'mx_pass';
-            last;
-        }
-    }
-    else {
-        my $error = $resolver->errorstring;
-        if ( $error ) {
-            push @details, $self->format_header_entry('mx.error', $error);
+    eval {
+        $packet = $resolver->query( $domain, 'MX' );
+        if ($packet) {
+            foreach my $rr ( $packet->answer ) {
+                next unless $rr->type eq "MX";
+                $has_mx = 1;
+                $result = 'pass';
+                $self->{ 'metrics' }->{ 'result' } = 'pass' if ! $is_org;
+                $self->{ 'metrics' }->{ ( $is_org ? 'org_' : '' ) . $type } = 'mx_pass';
+                last;
+            }
         }
         else {
-            push @details, 'mx.error=none';
+            my $error = $resolver->errorstring;
+            if ( $error ) {
+                push @details, $self->format_header_entry('mx.error', $error);
+            }
+            else {
+                push @details, 'mx.error=none';
+            }
         }
+    };
+    if ( my $error = $@ ) {
+        $self->log_error( "ReturnOK: Domain lookup fatal error $error for $domain" );
+        push @details, $self->format_header_entry('mx.error', 'lookup_error');
     }
 
     if ( ! $has_mx ) {
 
-        $packet = $resolver->query( $domain, 'A' );
-        if ($packet) {
-            foreach my $rr ( $packet->answer ) {
-                next unless $rr->type eq "A";
-                $has_a = 1;
-                $result = 'warn';
-                $self->{ 'metrics' }->{ 'result' } = 'warn' if $self->{ 'metrics' }->{ 'result' } ne 'pass' and ! $is_org;
-                last;
-            }
-        }
-        else {
-            my $error = $resolver->errorstring;
-            if ( $error ) {
-                push @details, $self->format_header_entry('a.error', $error);
+        eval {
+            $packet = $resolver->query( $domain, 'A' );
+            if ($packet) {
+                foreach my $rr ( $packet->answer ) {
+                    next unless $rr->type eq "A";
+                    $has_a = 1;
+                    $result = 'warn';
+                    $self->{ 'metrics' }->{ 'result' } = 'warn' if $self->{ 'metrics' }->{ 'result' } ne 'pass' and ! $is_org;
+                    last;
+                }
             }
             else {
-                push @details, 'a.error=none';
+                my $error = $resolver->errorstring;
+                if ( $error ) {
+                    push @details, $self->format_header_entry('a.error', $error);
+                }
+                else {
+                    push @details, 'a.error=none';
+                }
             }
+        };
+        if ( my $error = $@ ) {
+            $self->log_error( "ReturnOK: Domain lookup fatal error $error for $domain" );
+            push @details, $self->format_header_entry('a.error', 'lookup_error');
         }
 
-        $packet = $resolver->query( $domain, 'AAAA' );
-        if ($packet) {
-            foreach my $rr ( $packet->answer ) {
-                next unless $rr->type eq "AAAA";
-                $has_aaaa = 1;
-                $result = 'warn';
-                $self->{ 'metrics' }->{ 'result' } = 'warn' if $self->{ 'metrics' }->{ 'result' } ne 'pass';
-                last;
-            }
-        }
-        else {
-            my $error = $resolver->errorstring;
-            if ( $error ) {
-                push @details, $self->format_header_entry('aaaa.error', $error);
+        eval {
+            $packet = $resolver->query( $domain, 'AAAA' );
+            if ($packet) {
+                foreach my $rr ( $packet->answer ) {
+                    next unless $rr->type eq "AAAA";
+                    $has_aaaa = 1;
+                    $result = 'warn';
+                    $self->{ 'metrics' }->{ 'result' } = 'warn' if $self->{ 'metrics' }->{ 'result' } ne 'pass';
+                    last;
+                }
             }
             else {
-                push @details, 'aaaa.error=none';
+                my $error = $resolver->errorstring;
+                if ( $error ) {
+                    push @details, $self->format_header_entry('aaaa.error', $error);
+                }
+                else {
+                    push @details, 'aaaa.error=none';
+                }
             }
+        };
+        if ( my $error = $@ ) {
+            $self->log_error( "ReturnOK: Domain lookup fatal error $error for $domain" );
+            push @details, $self->format_header_entry('aaaa.error', 'lookup_error');
         }
+
 
         if ( $has_a && $has_aaaa ) {
             $self->{ 'metrics' }->{ ( $is_org ? 'org_' : '' ) . $type } = 'a_pass';
