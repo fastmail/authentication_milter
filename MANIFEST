@@ -1,5 +1,3 @@
-lib/Mail/Milter/Authentication/Handler/AlignedFrom.pm
-lib/Mail/Milter/Authentication/Handler/AlignedFrom_metrics.json
 Changes
 LICENCE
 MANIFEST			This list of files
@@ -14,6 +12,8 @@ lib/Mail/Milter/Authentication/Config.pm
 lib/Mail/Milter/Authentication/Constants.pm
 lib/Mail/Milter/Authentication/Handler.pm
 lib/Mail/Milter/Authentication/Handler/AddID.pm
+lib/Mail/Milter/Authentication/Handler/AlignedFrom.pm
+lib/Mail/Milter/Authentication/Handler/AlignedFrom_metrics.json
 lib/Mail/Milter/Authentication/Handler/Auth.pm
 lib/Mail/Milter/Authentication/Handler/Auth_metrics.json
 lib/Mail/Milter/Authentication/Handler/DKIM.pm
@@ -62,6 +62,7 @@ t/02-mail-milter-authentication-handler.t
 t/03-milter.t
 t/03-smtp.t
 t/AuthMilterTest.pm
+t/Mail/Milter/Authentication/Handler/TestTimeout.pm
 t/config/dmarc_reject.smtp/authentication_milter.json
 t/config/dmarc_reject.smtp/mail-dmarc.ini
 t/config/dmarc_reject/authentication_milter.json
@@ -78,6 +79,8 @@ t/config/normal.smtp/authentication_milter.json
 t/config/normal.smtp/mail-dmarc.ini
 t/config/normal/authentication_milter.json
 t/config/normal/mail-dmarc.ini
+t/config/timeout/authentication_milter.json
+t/config/timeout/mail-dmarc.ini
 t/data/example/dmarc_reject.eml
 t/data/example/dmarc_reject.smtp.eml
 t/data/example/dmarc_reject_case.eml
@@ -100,6 +103,7 @@ t/data/example/google_apps_good.eml
 t/data/example/google_apps_good.local.eml
 t/data/example/google_apps_good.local.smtp.eml
 t/data/example/google_apps_good.smtp.eml
+t/data/example/google_apps_good.timeout.eml
 t/data/example/google_apps_good.trusted.eml
 t/data/example/google_apps_good.trusted.smtp.eml
 t/data/example/google_apps_good_case.local.eml
@@ -130,6 +134,7 @@ t/data/metrics/milter_1.json
 t/data/metrics/milter_2.json
 t/data/metrics/milter_3.json
 t/data/metrics/milter_4.json
+t/data/metrics/milter_timeout.json
 t/data/metrics/smtp_1.json
 t/data/metrics/smtp_2.json
 t/data/metrics/smtp_3.json
