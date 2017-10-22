@@ -1000,7 +1000,7 @@ sub format_ctext {
 
     # Return ctext (but with spaces intact)
     my ( $self, $text ) = @_;
-    $text = q{} if ! $text;
+    $text = q{} if ! defined $text;
     $text =~ s/\t/ /g;
     $text =~ s/\n/ /g;
     $text =~ s/\r/ /g;
