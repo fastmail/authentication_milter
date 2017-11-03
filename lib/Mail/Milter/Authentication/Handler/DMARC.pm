@@ -389,14 +389,19 @@ sub eom_callback {
                     if ( $config->{'hard_reject'} ) {
                         if ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
                             $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
+                            $dmarc_result->reason( 'type' => 'mailing_list', 'comment' => 'Reject ignored due to local mailing list policy' );
                         }
                         elsif ( $self->is_whitelisted() ) {
                             $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
+                            $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Reject ignored due to local white list' );
                         }
                         else {
                             $self->reject_mail( '550 5.7.0 DMARC policy violation' );
                             $self->dbgout( 'DMARCReject', "Policy reject", LOG_INFO );
                         }
+                    }
+                    else {
+                        $dmarc_result->reason( 'type' => 'local_policy', 'comment' => 'Reject ignored due to local policy' );
                     }
                 }
 
