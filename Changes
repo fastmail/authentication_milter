@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 1.1.5   FUTURE
+        - Added Mail::Milter::Authentication::Tester module to help with testing handlers
 
 1.1.4   2017-10-19
         - Added a FromAlignment checker handler
