@@ -32,6 +32,7 @@ sub get_version {
         no strict 'refs'; ## no critic;
         return ${ ref( $self ) . "::VERSION" }; # no critic;
     }
+    return;
 }
 
 sub get_json {

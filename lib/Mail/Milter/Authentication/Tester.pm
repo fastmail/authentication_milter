@@ -1,11 +1,11 @@
 package Mail::Milter::Authentication::Tester;
-
-use Exporter;
-@ISA = qw{ Exporter };
-@EXPORT = qw{ start_milter stop_milter get_metrics test_metrics smtp_process smtp_process_multi milter_process smtpput send_smtp_packet smtpcat };
-
 use strict;
 use warnings;
+
+use Exporter;
+our @ISA = qw{ Exporter };
+our @EXPORT = qw{ start_milter stop_milter get_metrics test_metrics smtp_process smtp_process_multi milter_process smtpput send_smtp_packet smtpcat };
+
 use Net::DNS::Resolver::Mock;
 use Test::More;
 use Test::File::Contents;
@@ -48,7 +48,7 @@ our $MASTER_PROCESS_PID = $$;
             $Mail::Milter::Authentication::Config::IDENT  = 'test_authentication_milter_test';
             my $Resolver = Net::DNS::Resolver::Mock->new();
             $Resolver->zonefile_read( 'zonefile' );
-            $Mail::Milter::Authentication::Handler::TestResolver = $Resolver,
+            $Mail::Milter::Authentication::Handler::TestResolver = $Resolver;
             Mail::Milter::Authentication::start({
                 'pid_file'   => 'tmp/authentication_milter.pid',
                 'daemon'     => 0,
@@ -332,7 +332,6 @@ sub smtpput {
 
     if ( ! $line =~ /250/ ) {
         die "Unexpected SMTP response $line";
-        return 0;
     }
 
     send_smtp_packet( $sock, 'EHLO ' . $mailer_name,       '250' ) || die;

@@ -15,15 +15,15 @@ sub _timeout {
 }
 
 
-sub connect_callback { _timeout(); }
-sub helo_callback {  _timeout(); }
-sub envfrom_callback { _timeout(); }
-sub envrcpt_callback { _timeout(); }
-sub header_callback { _timeout(); }
-sub eoh_callback { _timeout(); }
-sub body_callback { _timeout(); }
-sub eom_callback { _timeout(); }
-sub abort_callback { _timeout(); }
-sub close_callback { _timeout(); }
+sub connect_callback { return _timeout(); }
+sub helo_callback { return  _timeout(); }
+sub envfrom_callback { return _timeout(); }
+sub envrcpt_callback { return _timeout(); }
+sub header_callback { return _timeout(); }
+sub eoh_callback { return _timeout(); }
+sub body_callback { return _timeout(); }
+sub eom_callback { return _timeout(); }
+sub abort_callback { return _timeout(); }
+sub close_callback { return _timeout(); }
 
 1;

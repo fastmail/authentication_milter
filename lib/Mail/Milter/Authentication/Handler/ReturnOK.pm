@@ -116,7 +116,7 @@ sub _check_domain {
                     next unless $rr->type eq "A";
                     $has_a = 1;
                     $result = 'warn';
-                    $self->{ 'metrics' }->{ 'result' } = 'warn' if $self->{ 'metrics' }->{ 'result' } ne 'pass' and ! $is_org;
+                    $self->{ 'metrics' }->{ 'result' } = 'warn' if $self->{ 'metrics' }->{ 'result' } ne 'pass' and ( ! $is_org );
                     last;
                 }
             }
