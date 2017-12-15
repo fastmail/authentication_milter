@@ -365,28 +365,6 @@ sub run_milter_processing {
     return;
 }
 
-sub run_milter_processing_spam {
-
-    start_milter( 'config/spam' );
-
-    milter_process({
-        'desc'   => 'Gtube',
-        'prefix' => 'config/spam',
-        'source' => 'gtube.eml',
-        'dest'   => 'gtube.eml',
-        'ip'     => '74.125.82.171',
-        'name'   => 'mail-we0-f171.google.com',
-        'from'   => 'marc@marcbradshaw.net',
-        'to'     => 'marc@fastmail.com',
-    });
-
-    test_metrics( 'data/metrics/milter_spam_1.json' );
-
-    stop_milter();
-
-    return;
-}
-
 sub run_smtp_processing {
 
     start_milter( 'config/normal.smtp' );
