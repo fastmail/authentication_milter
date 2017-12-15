@@ -12,6 +12,7 @@ use Sys::Syslog qw{:standard :macros};
 sub _timeout {
     alarm ( 1 );
     sleep 10;
+    return;
 }
 
 

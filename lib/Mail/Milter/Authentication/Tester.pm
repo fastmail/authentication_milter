@@ -3,8 +3,8 @@ use strict;
 use warnings;
 
 use Exporter;
-our @ISA = qw{ Exporter };
-our @EXPORT = qw{ start_milter stop_milter get_metrics test_metrics smtp_process smtp_process_multi milter_process smtpput send_smtp_packet smtpcat };
+our @ISA = qw{ Exporter }; ## no critic
+our @EXPORT = qw{ start_milter stop_milter get_metrics test_metrics smtp_process smtp_process_multi milter_process smtpput send_smtp_packet smtpcat }; ## no critic
 
 use Net::DNS::Resolver::Mock;
 use Test::More;
