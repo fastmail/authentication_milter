@@ -1,5 +1,8 @@
 Revision history for Mail-Milter-Authentication-ARC
 
+1.1.5   2017-12-16
+        - First production ready release
+
 1.1.3   2017-10-02
         - First public release of ARC handler
         - This handler is experimental
