@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::ARC;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.5');
+use version; our $VERSION = version->declare('v1.1.6');
 
 use Data::Dumper;
 use English qw{ -no_match_vars };
@@ -280,6 +280,7 @@ sub addheader_callback {
         my $arcseal = Mail::DKIM::ARC::Signer->new(
             Algorithm => $config->{arcseal_algorithm},
             Domain => $config->{arcseal_domain},
+            SrvId => $self->get_my_hostname(),
             Selector =>  $config->{arcseal_selector},
             Headers => $config->{arcseal_result},
             # chain value is arc_result from previous seal validation
