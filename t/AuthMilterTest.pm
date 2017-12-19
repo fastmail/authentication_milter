@@ -176,6 +176,17 @@ sub run_milter_processing {
     });
 
     milter_process({
+        'desc'   => 'Good message CNAME',
+        'prefix' => 'config/normal',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_cn.eml',
+        'ip'     => '74.125.82.172',
+        'name'   => 'mail-we0-f172.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    milter_process({
         'desc'   => 'SPF Fail',
         'prefix' => 'config/normal',
         'source' => 'google_apps_good.eml',
@@ -499,6 +510,17 @@ sub run_smtp_processing {
         'dest'   => 'google_apps_good.smtp.eml',
         'ip'     => '74.125.82.171',
         'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    smtp_process({
+        'desc'   => 'Good message CNAME',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_cn.smtp.eml',
+        'ip'     => '74.125.82.172',
+        'name'   => 'mail-we0-f172.google.com',
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });

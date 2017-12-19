@@ -109,6 +109,8 @@ t/data/example/google_apps_good.trusted.eml
 t/data/example/google_apps_good.trusted.smtp.eml
 t/data/example/google_apps_good_case.local.eml
 t/data/example/google_apps_good_case.local.smtp.eml
+t/data/example/google_apps_good_cn.eml
+t/data/example/google_apps_good_cn.smtp.eml
 t/data/example/google_apps_good_dryrun.eml
 t/data/example/google_apps_good_dryrun.smtp.eml
 t/data/example/google_apps_good_nofrom.eml

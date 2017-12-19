@@ -1,4 +1,6 @@
 171.82.125.74.in-addr.arpa.	62004	IN	PTR	mail-we0-f171.google.com.
+172.82.125.74.in-addr.arpa.	62004	IN	CNAME	cnameptr.example.com.
+cnameptr.example.com.  62004   IN      PTR mail-we0-f172.google.com.
 20130820._domainkey.1e100.net.	61954	IN	TXT	( "k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnOv6+Txyz+SEc7mT719QQtOj6g2MjpErYUGVrRGGc7f5rmE1cRP1lhwx8PVoHOiuRzyok7IqjvAub9kk9fBoE9uXJB1QaRdMnKz7W/UhWemK5TEUgW1xT5qtBfUIpFRL34h6FbHbeysb4szi7aTg" erxI15o73cP5BoPVkQj4BQKkfTQYGNH03J5Db9uMqW/NNJ8fKCLKWO5C1e+NQ1lD6uwFCjJ6PWFmAIeUu9+LfYW89Tz1NnwtSkFC96Oky1cmnlBf4dhZ/Up/FMZmB9l7TA6gLEu6JijlDrNmx1o50WADPjjN4rGELLt3VuXn09y2piBPlZPU2SIiDQC0qX0JWQIDAQAB )
 ;ERROR,1.2.3.4,PTR,NXDOMAIN
 ;ERROR,123.123.123.123,PTR,NXDOMAIN
@@ -42,6 +44,8 @@ goestheweasel.com.	3600	IN	TXT	( google-site-verification=d1EpeghHs1csmxXOLpyPWD
 goestheweasel.com._report._dmarc.ops.twofiftyeight.ltd.uk.	3570	IN	TXT	( v=DMARC1 )
 google._domainkey.marcbradshaw.net.	61969	IN	TXT	( "v=DKIM1; k=rsa; t=y; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC5zl5SXilsFKevQGiqBlayLeL+bBzi4N98RjV/yiM+unz+317bWhTU63biRyHbv0DZ431uqj8mPURgnLef+SBOYkEDv/dhizcqNVWHWHJou/I/oXpjPWJqVIBu242wxNLI3R92LhLGKg0W/J++PosQvlZ3ogYdmDNY+wmRYFPJlwIDAQAB" )
 mail-we0-f171.google.com.	56383	IN	A	74.125.82.171
+mail-we0-f172.google.com.	56383	IN	CNAME   cnamea.example.com.
+cnamea.example.com  56383 IN A	74.125.82.172
 marcbradshaw.net.	61879	IN	NS	ns1.linode.com.
 marcbradshaw.net.	61879	IN	NS	ns2.linode.com.
 marcbradshaw.net.	61879	IN	NS	ns3.linode.com.

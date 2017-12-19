@@ -114,7 +114,7 @@ sub connect_callback {
     my @lookup_list = sort keys %$ptr_list;
     DOMAINLOOKUP:
     foreach my $domain ( @lookup_list ) {
-
+    warn "***** looking up $domain\n\n";
         my $ip_list = [];
         my $cname;
 
@@ -125,15 +125,21 @@ sub connect_callback {
             my $errors4;
             ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $domain, $lookup_limit );
             if ( $cname ) {
-                push @lookup_list, $cname;
                 push @error_list, 'Found CNAME in AAAA response';
+                ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $cname, $lookup_limit );
+                if ( ! @$ip_list ) {
+                    ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'A', $cname, $lookup_limit );
+                }
             }
             if ( ! @$ip_list ) {
                 # We got nothing, try ip4
                 ( $lookup_limit, $ip_list, $errors4, $cname ) = $self->_address_for_domain( 'A', $domain, $lookup_limit );
                 if ( $cname ) {
-                    push @lookup_list, $cname;
                     push @error_list, 'Found CNAME in A response';
+                    ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $cname, $lookup_limit );
+                    if ( ! @$ip_list ) {
+                        ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'A', $cname, $lookup_limit );
+                    }
                 }
             }
             if ( ! @$ip_list ) {
@@ -152,15 +158,21 @@ sub connect_callback {
             my $errors4;
             ( $lookup_limit, $ip_list, $errors4, $cname ) = $self->_address_for_domain( 'A', $domain, $lookup_limit );
             if ( $cname ) {
-                push @lookup_list, $cname;
                 push @error_list, 'Found CNAME in A response';
+                ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'A', $cname, $lookup_limit );
+                if ( ! @$ip_list ) {
+                    ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $cname, $lookup_limit );
+                }
             }
             if ( ! @$ip_list ) {
                 # We got nothing, try ip6
                 ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $domain, $lookup_limit );
                 if ( $cname ) {
-                    push @lookup_list, $cname;
                     push @error_list, 'Found CNAME in AAAA response';
+                    ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'A', $cname, $lookup_limit );
+                    if ( ! @$ip_list ) {
+                        ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $cname, $lookup_limit );
+                    }
                 }
             }
             if ( ! @$ip_list ) {
@@ -234,12 +246,12 @@ sub _address_for_domain {
 
     if ($packet) {
         foreach my $rr ( $packet->answer ) {
-            if ( $rr->type eq 'CNAME' ) {
+            if (  lc $rr->type eq 'cname' ) {
                 $cname = $rr->rdatastr;
                 # Multiple CNAMES are broken, but we don't check for that
                 # We just take the last one we found
             }
-            if ( $rr->type eq $type ) {
+            if ( lc $rr->type eq lc $type ) {
                 push @ip_list, $rr->rdatastr;
             }
         }
