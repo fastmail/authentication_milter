@@ -36,7 +36,7 @@ build_requires (
     'Test::CheckManifest'  => 0,
     'Test::Pod::Coverage'  => 0,
     'Test::Pod'            => 0,
-    'Net::DNS::Resolver::Mock' => 0,
+    'Net::DNS::Resolver::Mock' => '1.20171219',
 );
 
 requires (
