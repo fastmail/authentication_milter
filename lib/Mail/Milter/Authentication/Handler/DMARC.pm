@@ -220,7 +220,11 @@ sub _process_dmarc_for {
             $self->log_error( 'DMARCPolicyError ' . $error );
         }
     }
-    $dmarc_policy = 'none' if ! $dmarc_policy;
+    # Pass results do not set disposition, if we didn't get a policy above
+    # then check the published policy in the results object.
+    $dmarc_policy = eval{ $dmarc_result->published()->p(); } if ! $dmarc_policy;
+    # If we still didn't get a result, give up and say unknown.
+    $dmarc_policy = 'unknown' if ! $dmarc_policy;
     $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
 
     # Write Metrics
