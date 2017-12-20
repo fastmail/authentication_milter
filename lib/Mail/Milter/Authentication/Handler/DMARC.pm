@@ -119,6 +119,187 @@ sub register_metrics {
     };
 }
 
+sub _process_dmarc_for {
+    my ( $self, $env_domain_from, $header_domain ) = @_;
+
+    my $config = $self->handler_config();
+
+    # Get a fresh DMARC object each time.
+    $self->destroy_object('dmarc');
+    my $dmarc = $self->get_dmarc_object();
+
+    # Set the DMARC Envelope From Domain
+    eval {
+        $dmarc->envelope_from( $env_domain_from );
+    };
+    if ( my $error = $@ ) {
+        if ( $error =~ /invalid envelope_from at / ) {
+            $self->log_error( 'DMARC Invalid envelope from <' . $env_domain_from . '>' );
+            $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
+            $self->add_auth_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+        }
+        else {
+            $self->log_error( 'DMARC Mail From Error for <' . $env_domain_from . '> ' . $error );
+            $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
+            $self->add_auth_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+        }
+        return;
+    }
+
+    # Add the Envelope To
+    eval {
+        $dmarc->envelope_to( $self->{ 'env_to'  })
+    };
+    if ( my $error = $@ ) {
+        $self->log_error( 'DMARC Rcpt To Error ' . $error );
+        #$self->add_auth_header('dmarc=permerror');
+        #$self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
+        #return;
+    }
+
+    # Add the From Header
+    eval { $dmarc->header_from( $header_domain ) };
+    if ( my $error = $@ ) {
+        $self->log_error( 'DMARC Header From Error ' . $error );
+        $self->add_auth_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+        $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
+        return;
+    }
+
+    # Add the SPF Results Object
+    eval {
+        my $spf = $self->get_handler('SPF');
+        if ( $spf ) {
+            $dmarc->spf(
+                'domain' => $spf->{'dmarc_domain'},
+                'scope'  => $spf->{'dmarc_scope'},
+                'result' => $spf->{'dmarc_result'},
+            );
+        }
+        else {
+            ## ToDo Check this works
+            $dmarc->spf(
+                'domain' => '',
+                'scope'  => '',
+                'result' => '',
+            );
+        }
+    };
+    if ( my $error = $@ ) {
+        $self->log_error( 'DMARC SPF Error: ' . $error );
+        $self->add_auth_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+        $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
+        return;
+    }
+
+    # Add the DKIM Results
+    my $dkim_handler = $self->get_handler('DKIM');
+    if ( $dkim_handler->{'failmode'} ) {
+        $dmarc->{'dkim'} = [];
+    }
+    elsif ( $dkim_handler->{'has_dkim'} ) {
+        $dmarc->dkim( $self->get_object('dkim') );
+    }
+    else {
+        # Workaround reporting issue
+        $dmarc->{'dkim'} = [];
+        #$dmarc->dkim( $empty_dkim );
+    }
+
+    # Run the Validator
+    my $dmarc_result = $dmarc->validate();
+
+    # ToDo Set multiple dmarc_result objects here
+    $self->set_object('dmarc_result', $dmarc_result,1 );
+
+    my $dmarc_code   = $dmarc_result->result;
+    $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
+
+    my $dmarc_policy = eval { $dmarc_result->disposition() };
+    if ( my $error = $@ ) {
+        if ( $dmarc_code ne 'pass' ) {
+            $self->log_error( 'DMARCPolicyError ' . $error );
+        }
+    }
+    $dmarc_policy = 'none' if ! $dmarc_policy;
+
+    # Metrics
+    my $metric_data = {
+        'result'         => $dmarc_code,
+        'policy'         => $dmarc_policy,
+        'is_list'        => ( $self->{'is_list'}      ? '1' : '0' ),
+        'is_whitelisted' => ( $self->is_whitelisted() ? '1' : '0'),
+    };
+    $self->metric_count( 'dmarc_total', $metric_data );
+
+    $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
+
+    # Add the AR Header
+    if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
+        my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
+
+        my $is_list_entry = q{};
+        if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
+            $is_list_entry = ';has-list-id=yes';
+        }
+
+        if ($dmarc_policy) {
+            $dmarc_header .= ' ('
+              . $self->format_header_comment(
+                $self->format_header_entry( 'p', $dmarc_policy ) )
+              . $is_list_entry
+            . ')';
+        }
+        $dmarc_header .= ' ' . $self->format_header_entry( 'header.from', $header_domain );
+        $self->add_auth_header($dmarc_header);
+    }
+
+    # Reject mail and/or set policy override reasons
+    if ( $dmarc_code eq 'fail' && $dmarc_policy eq 'reject' ) {
+        if ( $config->{'hard_reject'} ) {
+            if ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
+                $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
+                $dmarc_result->reason( 'type' => 'mailing_list', 'comment' => 'Reject ignored due to local mailing list policy' );
+            }
+            elsif ( $self->is_whitelisted() ) {
+                $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
+                $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Reject ignored due to local white list' );
+            }
+            else {
+                $self->reject_mail( '550 5.7.0 DMARC policy violation' );
+                $self->dbgout( 'DMARCReject', "Policy reject", LOG_INFO );
+            }
+        }
+        else {
+            $dmarc_result->reason( 'type' => 'local_policy', 'comment' => 'Reject ignored due to local policy' );
+        }
+    }
+
+    # Try as best we can to save a report, but don't stress if it fails.
+    my $rua = eval { $dmarc_result->published()->rua(); };
+    if ($rua) {
+        if ( ! $config->{'no_report'} ) {
+            if ( ! $self->{'skip_report'} ) {
+                eval {
+                    $self->dbgout( 'DMARCReportTo', $rua, LOG_INFO );
+                    $dmarc->save_aggregate();
+                };
+                if ( my $error = $@ ) {
+                    $self->log_error( 'DMARC Report Error ' . $error );
+                }
+            }
+            else {
+                $self->dbgout( 'DMARCReportTo (skipped flag)', $rua, LOG_INFO );
+            }
+        }
+        else {
+            $self->dbgout( 'DMARCReportTo (skipped)', $rua, LOG_INFO );
+        }
+    }
+
+    return;
+}
+
 sub get_dmarc_object {
     my ( $self ) = @_;
     my $dmarc = $self->get_object('dmarc');
@@ -172,11 +353,9 @@ sub envfrom_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     delete $self->{'from_header'};
-    $self->{'failmode'}     = 0;
     $self->{'is_list'}      = 0;
     $self->{'skip_report'}  = 0;
     $self->{'failmode'}     = 0;
-    $self->destroy_object('dmarc');
 
     $env_from = q{} if $env_from eq '<>';
 
@@ -193,54 +372,14 @@ sub envfrom_callback {
         return;
     }
 
-    my $dmarc = $self->get_dmarc_object();
-
-    my $domain_from;
     if ( $env_from ) {
-        $domain_from = $self->get_domain_from($env_from);
-        eval {
-            $dmarc->envelope_from($domain_from);
-        };
-        if ( my $error = $@ ) {
-            if ( $error =~ /invalid envelope_from at / ) {
-                $self->log_error( 'DMARC Invalid envelope from <' . $domain_from . '>' );
-                $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
-                $self->add_auth_header( 'dmarc=permerror' );
-            }
-            else {
-                $self->log_error( 'DMARC Mail From Error for <' . $domain_from . '> ' . $error );
-                $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-                $self->add_auth_header('dmarc=temperror');
-            }
-            $self->{'failmode'} = 1;
-            return;
-        }
+        $self->{ 'env_from' } = $env_from;
+    }
+    else {
+        $self->{ 'env_from' } = q{};
     }
 
-    my $spf_handler = $self->get_handler('SPF');
-    if ( $spf_handler->{'failmode'} ) {
-        $self->log_error('SPF is in failmode, Skipping DMARC');
-        $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-        $self->add_auth_header('dmarc=temperror');
-        $self->{'failmode'} = 1;
-        return;
-    }
-
-    eval {
-        my $spf = $self->get_handler('SPF');
-        $dmarc->spf(
-            'domain' => $spf->{'dmarc_domain'},
-            'scope'  => $spf->{'dmarc_scope'},
-            'result' => $spf->{'dmarc_result'},
-        );
-    };
-    if ( my $error = $@ ) {
-        $self->log_error( 'DMARC SPF Error: ' . $error );
-        $self->add_auth_header('dmarc=temperror');
-        $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-        $self->{'failmode'} = 1;
-        return;
-    }
+    $self->{ 'from_headers' } = [];
 
     return;
 }
@@ -264,20 +403,9 @@ sub envrcpt_callback {
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
-    return if ( $self->{'failmode'} );
-    $self->check_skip_address( $env_to );
-    my $dmarc       = $self->get_dmarc_object();
-    return if ( $self->{'failmode'} );
-    my $envelope_to = $self->get_domain_from($env_to);
-    eval { $dmarc->envelope_to($envelope_to) };
 
-    if ( my $error = $@ ) {
-        $self->log_error( 'DMARC Rcpt To Error ' . $error );
-        $self->add_auth_header('dmarc=temperror');
-        $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-        $self->{'failmode'} = 1;
-        return;
-    }
+    $self->{ 'env_to' } = $env_to;
+    $self->check_skip_address( $env_to );
 
     return;
 }
@@ -288,6 +416,7 @@ sub header_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
+
     if ( lc $header eq 'list-id' ) {
         $self->dbgout( 'DMARCListId', 'List ID detected: ' . $value, LOG_INFO );
         $self->{'is_list'} = 1;
@@ -296,29 +425,19 @@ sub header_callback {
         $self->dbgout( 'DMARCListId', 'List Post detected: ' . $value, LOG_INFO );
         $self->{'is_list'} = 1;
     }
+
     if ( lc $header eq 'from' ) {
         if ( exists $self->{'from_header'} ) {
             $self->dbgout( 'DMARCFail', 'Multiple RFC5322 from fields', LOG_INFO );
-            # ToDo handle this by eveluating DMARC for each field in turn as
-            # suggested in the DMARC spec part 5.6.1
-            # Currently this does not give reporting feedback to the author domain, this should be changed.
+            # We add an explicit fail header with a comment.
             $self->add_auth_header( 'dmarc=fail (multiple RFC5322 from fields in message)' );
-            $self->metric_count( 'dmarc_total', { 'result' => 'fail', 'reason' => 'bad_from_header' } );
+            # TODO Report this better for metrics.
+            #$self->metric_count( 'dmarc_total', { 'result' => 'fail', 'reason' => 'bad_from_header' } );
             $self->{'failmode'} = 1;
             return;
         }
         $self->{'from_header'} = $value;
-        my $dmarc = $self->get_dmarc_object();
-        return if ( $self->{'failmode'} );
-        my $header_domain = $self->get_domain_from( $value );
-        eval { $dmarc->header_from( $header_domain ) };
-        if ( my $error = $@ ) {
-            $self->log_error( 'DMARC Header From Error ' . $error );
-            $self->add_auth_header('dmarc=temperror');
-            $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-            $self->{'failmode'} = 1;
-            return;
-        }
+        push @{ $self->{ 'from_headers' } }, $value;
     }
     return;
 }
@@ -332,141 +451,59 @@ sub eom_requires {
 sub eom_callback {
     my ($self) = @_;
     my $config = $self->handler_config();
+
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     return if ( $self->{'failmode'} );
-    eval {
-        my $dmarc = $self->get_dmarc_object();
-        return if ( $self->{'failmode'} );
-        my $dkim_handler = $self->get_handler('DKIM');
-        if ( $dkim_handler->{'failmode'} ) {
-            $self->log_error('DKIM is in failmode, Skipping DMARC');
-            $self->add_auth_header('dmarc=temperror');
-            $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-            $self->{'failmode'} = 1;
-            return;
-        }
-        if ( $dkim_handler->{'has_dkim'} ) {
-            $dmarc->dkim( $self->get_object('dkim') );
-        }
-        else {
-            # Workaround reporting issue
-            $dmarc->{'dkim'} = [];
-#           $dmarc->dkim( $empty_dkim );
-        }
-        my $dmarc_result = $dmarc->validate();
-        $self->set_object('dmarc_result', $dmarc_result,1 );
-        my $dmarc_code   = $dmarc_result->result;
-        $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
 
-        my $dmarc_policy;
+    my $env_from = $self->{ 'env_from' };
+    my $env_domains_from = $self->get_domains_from($env_from);
+    $env_domains_from = [''] if ! $env_domains_from;
 
-        if ( $dmarc_code ne 'pass' ) {
-            $dmarc_policy = eval { $dmarc_result->disposition() };
-            if ( my $error = $@ ) {
-                $self->log_error( 'DMARCPolicyError ' . $error );
-            }
-        }
+    my $from_headers = $self->{ 'from_headers' };
 
-        if ( $dmarc_code eq 'fail' ) {
-            my $metric_data = {
-                'result'         => $dmarc_code,
-                'policy'         => $dmarc_policy,
-                'is_list'        => ( $self->{'is_list'}      ? '1' : '0' ),
-                'is_whitelisted' => ( $self->is_whitelisted() ? '1' : '0'),
-            };
-            $self->metric_count( 'dmarc_total', $metric_data );
-        }
-        else {
-            $self->metric_count( 'dmarc_total', { 'result' => $dmarc_code } );
-        }
 
-        if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
-            if ( $dmarc_code ne 'pass' ) {
-                $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
-                if ( $dmarc_code eq 'fail' && $dmarc_policy eq 'reject' ) {
-                    if ( $config->{'hard_reject'} ) {
-                        if ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
-                            $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
-                            $dmarc_result->reason( 'type' => 'mailing_list', 'comment' => 'Reject ignored due to local mailing list policy' );
-                        }
-                        elsif ( $self->is_whitelisted() ) {
-                            $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
-                            $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Reject ignored due to local white list' );
-                        }
-                        else {
-                            $self->reject_mail( '550 5.7.0 DMARC policy violation' );
-                            $self->dbgout( 'DMARCReject', "Policy reject", LOG_INFO );
-                        }
+    my $Processed = 0;
+    foreach my $env_domain_from ( @$env_domains_from ) {
+        foreach my $from_header ( @$from_headers ) {
+            my $header_domains = $self->get_domains_from( $from_header );
+            foreach my $header_domain ( @$header_domains ) {
+                eval {
+                    $self->_process_dmarc_for( $env_domain_from, $header_domain );
+                    $Processed = 1;
+                };
+                if ( my $error = $@ ) {
+                    if ( $error =~ /invalid header_from at / ) {
+                        $self->log_error( 'DMARC Error invalid header_from <' . $self->{'from_header'} . '>' );
+                        $self->add_auth_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
                     }
                     else {
-                        $dmarc_result->reason( 'type' => 'local_policy', 'comment' => 'Reject ignored due to local policy' );
+                        $self->log_error( 'DMARC Error ' . $error );
+                        $self->add_auth_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
                     }
                 }
-
-            }
-            my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
-            my $is_list_entry = q{};
-            if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
-                $is_list_entry = ';has-list-id=yes';
-            }
-            if ($dmarc_policy) {
-                $dmarc_header .= ' ('
-                  . $self->format_header_comment(
-                    $self->format_header_entry( 'p', $dmarc_policy ) )
-                  . $is_list_entry
-                . ')';
-            }
-            $dmarc_header .= ' '
-              . $self->format_header_entry( 'header.from',
-                $self->get_domain_from( $self->{'from_header'} ) );
-            $self->add_auth_header($dmarc_header);
-        }
-
-        # Try as best we can to save a report, but don't stress if it fails.
-        my $rua = eval { $dmarc_result->published()->rua(); };
-        if ($rua) {
-            if ( ! $config->{'no_report'} ) {
-                if ( ! $self->{'skip_report'} ) {
-                    eval {
-                        $self->dbgout( 'DMARCReportTo', $rua, LOG_INFO );
-                        $dmarc->save_aggregate();
-                    };
-                    if ( my $error = $@ ) {
-                        $self->log_error( 'DMARC Report Error ' . $error );
-                    }
-                }
-                else {
-                    $self->dbgout( 'DMARCReportTo (skipped flag)', $rua, LOG_INFO );
-                }
-            }
-            else {
-                $self->dbgout( 'DMARCReportTo (skipped)', $rua, LOG_INFO );
             }
         }
-    };
-    if ( my $error = $@ ) {
-        if ( $error =~ /invalid header_from at / ) {
-            $self->log_error( 'DMARC Error invalid header_from <' . $self->{'from_header'} . '>' );
-            $self->add_auth_header('dmarc=permerror');
-        }
-        else {
-            $self->log_error( 'DMARC Error ' . $error );
-            $self->add_auth_header('dmarc=temperror');
-        }
-        return;
     }
+    if ( ! $Processed ) {
+        $self->add_auth_header('dmarc=permerror');
+        # Add none entry
+    }
+
     return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'helo_name'};
+    delete $self->{'env_from'};
+    delete $self->{'env_to'};
     delete $self->{'failmode'};
     delete $self->{'skip_report'};
     delete $self->{'is_list'};
     delete $self->{'from_header'};
+    delete $self->{'from_heades'};
     $self->destroy_object('dmarc');
     $self->destroy_object('dmarc_result');
     return;
