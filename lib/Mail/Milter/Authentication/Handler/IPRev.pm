@@ -114,7 +114,6 @@ sub connect_callback {
     my @lookup_list = sort keys %$ptr_list;
     DOMAINLOOKUP:
     foreach my $domain ( @lookup_list ) {
-    warn "***** looking up $domain\n\n";
         my $ip_list = [];
         my $cname;
 
