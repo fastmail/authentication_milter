@@ -12,7 +12,7 @@ Received: from test.module (localhost [127.0.0.1])
 Authentication-Results: server.example.com;
     dkim-adsp=pass (ADSP policy from marcbradshaw.net);
     dkim=pass (1024-bit rsa key sha256) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3;
-    dmarc=pass header.from=marcbradshaw.net;
+    dmarc=pass (p=none) header.from=marcbradshaw.net;
     iprev=pass policy.iprev=74.125.82.171 (mail-we0-f171.google.com);
     spf=pass smtp.mailfrom= smtp.helo=marcbradshaw.net;
     x-google-dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
