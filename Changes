@@ -4,6 +4,7 @@ Revision history for Mail-Milter-Authentication
         - DMARC processing for all domains found in message headers
         - Avoid semicolon in DMARC result comment
         - Updated IPRev (and PTR) to follow CNAMEs
+        - Added experimental "Best Guess SPF" option
 
 1.1.5   2017-12-16
         - Added Mail::Milter::Authentication::Tester module to help with testing handlers

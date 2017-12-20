@@ -12,6 +12,7 @@ sub default_config {
     return {
         'hide_received-spf_header' => 0,
         'hide_none'                => 0,
+        'best_guess'               => 0,
     };
 }
 
@@ -121,7 +122,32 @@ sub envfrom_callback {
         my $spf_result = $spf_server->process($spf_request);
 
         my $result_code = $spf_result->code();
-        
+
+        # Best Guess SPF based on org domain
+        if ( $spf_result eq 'none' ) {
+            if ( $config->{'best_guess'} ) {
+                if ( $self->is_handler_loaded( 'DMARC' ) ) {
+                    my $dmarc_handler = $self->get_handler('DMARC');
+                    my $dmarc_object = $dmarc_handler->get_dmarc_object();
+                    if ( $domain ) {
+                        my $org_domain = eval{ $dmarc_object->get_organizational_domain( $domain ); };
+                        if ( $org_domain eq $domain ) {
+                            $spf_request = Mail::SPF::Request->new(
+                                'versions'         => [1],
+                                'scope'            => $scope,
+                                'identity'         => $identity,
+                                'authority_domain' => $org_domain,
+                                'ip_address'       => $self->ip_address(),
+                                'helo_identity'    => $self->{'helo_name'},
+                            );
+                            $spf_result = $spf_server->process($spf_request);
+                            $result_code = $spf_result->code();
+                        }
+                    }
+                }
+            }
+        }
+
         $self->metric_count( 'spf_total', { 'result' => $result_code } );
 
         my $auth_header = join( q{ },
@@ -186,8 +212,10 @@ Implements the SPF standard checks.
 
         "SPF" : {                                       | Config for the SPF Module
             "hide_received-spf_header" : 0,             | Do not add the "Received-SPF" header
-            "hide_none"                : 0              | Hide auth line if the result is 'none'
+            "hide_none"                : 0,             | Hide auth line if the result is 'none'
                                                         | if not hidden at all
+            "best_guess"               : 0              | Fallback to Org domain for SPF checks
+                                                        | if result is none.
         },
 
 =head1 SYNOPSIS
