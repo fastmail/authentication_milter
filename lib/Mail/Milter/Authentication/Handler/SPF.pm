@@ -124,6 +124,7 @@ sub envfrom_callback {
         my $result_code = $spf_result->code();
 
         # Best Guess SPF based on org domain
+        # ToDo report this in both metrics and AR header
         if ( $spf_result eq 'none' ) {
             if ( $config->{'best_guess'} ) {
                 if ( $self->is_handler_loaded( 'DMARC' ) ) {
