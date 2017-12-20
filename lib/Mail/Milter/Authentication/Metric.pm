@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Metric;
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v1.1.5');
+use version; our $VERSION = version->declare('v1.1.6');
 use English qw{ -no_match_vars };
 use JSON;
 use Mail::Milter::Authentication::Config qw{ get_config };
