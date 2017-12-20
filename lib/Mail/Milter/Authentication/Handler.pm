@@ -1047,6 +1047,24 @@ sub get_domain_from {
     return lc $domain;
 }
 
+sub get_domains_from {
+    my ( $self, $addresstxt ) = @_;
+    $addresstxt = q{} if ! defined $addresstxt;
+    my $addresses = $self->get_addresses_from($addresstxt);
+    my $domains = [];
+    foreach my $address ( @$addresses ) {
+        my $domain;
+        $address =~ s/<//g;
+        $address =~ s/>//g;
+        if ( $address =~ /\@/ ) {
+            ($domain) = $address =~ /.*\@(.*)/;
+        }
+        $domain =~ s/\s//g;
+        push @$domains, lc $domain;
+    }
+    return $domains;
+}
+
 use constant IsSep => 0;
 use constant IsPhrase => 1;
 use constant IsEmail => 2;
@@ -1054,15 +1072,23 @@ use constant IsComment => 3;
 
 sub get_address_from {
     my ( $self, $Str ) = @_;
+    my $addresses = $self->get_addresses_from( $Str );
+    return $addresses->[0];
+}
+
+sub get_addresses_from {
+    my ( $self, $Str ) = @_;
     $Str = q{} if !defined $Str;
 
     if ( $Str eq q{} ) {
         $self->log_error( 'Could not parse empty address' );
-        return $Str;
+        return [ $Str ];
     }
 
     my $IDNComponentRE = qr/[^\x20-\x2c\x2e\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/;
     my $IDNRE = qr/(?:$IDNComponentRE\.)+$IDNComponentRE/;
+    my $RFC_atom = qr/[a-z0-9\!\#\$\%\&\'\*\+\-\/\=\?\^\_\`\{\|\}\~]+/i;
+    my $RFC_dotatom = qr/${RFC_atom}(?:\.${RFC_atom})*/;
 
     # Break everything into Tokens
     my ( @Tokens, @Types );
@@ -1108,14 +1134,24 @@ sub get_address_from {
         }
     }
 
-    my $ParsedAddress;
-    my $Email;
-    my $MaybeEmail;
-
-    PARSE_LOOP:
+    # Now massage Tokens into [ "phrase", "emailaddress", "comment" ]
+    my @Addrs;
+    my ($Phrase, $Email, $Comment, $Type);
     for (my $i = 0; $i < scalar(@Tokens); $i++) {
         my ($Type, $Token) = ($Types[$i], $Tokens[$i]);
 
+        # If  - a separator OR
+        #     - email address and already got one OR
+        #     - phrase and already got email address
+        # then add current data as token
+        if (($Type == IsSep) ||
+            ($Type == IsEmail && defined($Email)) ||
+            ($Type == IsPhrase && defined($Email)) ) {
+            push @Addrs, $Email if defined $Email;
+            ($Phrase, $Email, $Comment) = (undef, undef, undef);
+        }
+
+        # A phrase...
         if ($Type == IsPhrase) {
             # Strip '...' around token
             $Token =~ s/^'(.*)'$/$1/;
@@ -1123,51 +1159,77 @@ sub get_address_from {
             $Token =~ s/\r?\n//g;
 
             # Email like token?
-            if ($Token =~ /^[\w\.\-\#\$\%\*\+\=\/\'\&\~]+\@$IDNRE$/) {
+            if ($Token =~ /^$RFC_dotatom\@$IDNRE$/o) {
                 $Token =~ s/^\s+//;
                 $Token =~ s/\s+$//;
                 $Token =~ s/\s+\@/\@/;
                 $Token =~ s/\@\s+/\@/;
-                $MaybeEmail = $Token;
+                # Yes, check if next token is definitely email. If yes,
+                #  make this a phrase, otherwise make it an email item
+                if ($i+1 < scalar(@Tokens) && $Types[$i+1] == IsEmail) {
+                    $Phrase = defined($Phrase) ? $Phrase . " " . $Token : $Token;
+                }
+                else {
+                    # If we've already got an email address, add current address
+                    if (defined($Email)) {
+                        push @Addrs, $Email;
+                        ($Phrase, $Email, $Comment) = (undef, undef, undef);
+                    }
+                    $Email = $Token;
+                }
+            }
+            else {
+                # No, just add as phrase
+                $Phrase = defined($Phrase) ? $Phrase . " " . $Token : $Token;
             }
         }
         elsif ($Type == IsEmail) {
-            $Email = $Token;
+             # If an email, set email addr. Should be empty
+             $Email = $Token;
+        }
+        elsif ($Type == IsComment) {
+            $Comment = defined($Comment) ? $Comment . ", " . $Token : $Token;
         }
         # Must be separator, do nothing
     }
 
     # Add any remaining addresses
+    push @Addrs, $Email if defined($Email);
 
-    if ( ! defined $ParsedAddress ) {
-        $ParsedAddress = $Email if defined $Email;
-    }
-
-    if ( ! defined $ParsedAddress ) {
-        $ParsedAddress = $MaybeEmail if defined $MaybeEmail;
-    }
-
-    if ( ! defined $ParsedAddress ) {
+    if ( ! @Addrs ) {
         # We couldn't parse, so just run with it and hope for the best
-        $ParsedAddress = $Str;
+        push @Addrs, $Str;
         $self->log_error( 'Could not parse address ' . $Str );
     }
 
-    if ( $ParsedAddress ) {
-        $ParsedAddress = $Str if $ParsedAddress =~ /\@unspecified-domain$/;
-        if ( $ParsedAddress =~ /^mailto:(.*)$/ ) {
-            $ParsedAddress = $1;
+    my @TidyAddresses;
+    foreach my $Address ( @Addrs ) {
+
+        next if ( $Address =~ /\@unspecified-domain$/ );
+
+        if ( $Address =~ /^mailto:(.*)$/ ) {
+            $Address = $1;
         }
-        # Trim whitelist that's possible, but not useful and$
+
+        # Trim whitelist that's possible, but not useful and
         #  almost certainly a copy/paste issue
         #  e.g. < foo @ bar.com >
-        $ParsedAddress =~ s/^\s+//;
-        $ParsedAddress =~ s/\s+$//;
-        $ParsedAddress =~ s/\s+\@/\@/;
-        $ParsedAddress =~ s/\@\s+/\@/;
+
+        $Address =~ s/^\s+//;
+        $Address =~ s/\s+$//;
+        $Address =~ s/\s+\@/\@/;
+        $Address =~ s/\@\s+/\@/;
+
+        push @TidyAddresses, $Address;
     }
 
-    return $ParsedAddress;
+    if ( ! @TidyAddresses ) {
+        # We really couldn't parse, so just run with it and hope for the best
+        push @TidyAddresses, $Str;
+    }
+
+    return \@TidyAddresses;
+
 }
 
 sub get_my_hostname {
@@ -1691,9 +1753,17 @@ Format text as a key value pair for use in authentication header.
 
 Extract the domain from an email address.
 
+=item get_domains_from( $address )
+
+Extract the domains from an email address as an arrayref.
+
 =item get_address_from( $text )
 
 Extract an email address from a string.
+
+=item get_addresses_from( $text )
+
+Extract all email address from a string as an arrayref.
 
 =item get_my_hostname()
 

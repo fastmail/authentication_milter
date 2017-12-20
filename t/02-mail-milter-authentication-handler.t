@@ -15,7 +15,22 @@ if ( ! -e 't/01-tools.t' ) {
 
 chdir 't';
 
-my $Tests = {
+my $AddressTests = {
+    '"Dear Customer
+
+ Happy new Year Ray-Ban Sunglasses items on online shop.
+ All items are in new condition,and new style.Ray-Ban Sunglasses Just 19.
+  99$ & Up To 87% OFF
+ Welcome to check our website: http://www.example.com/
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ",
+        <noreply@example.com>'                  => [ 'noreply@example.com', 'example.com' ],
     'Dear Customer
 
 this is a very long long email address
@@ -28,9 +43,15 @@ this is a very long long email address
     'test@example.com'                          => [ 'test@example.com', 'example.com' ],
     'test@goestheweasel.com'                    => [ 'test@goestheweasel.com', 'goestheweasel.com' ],
     'nothing in here is an address'             => [ 'nothing in here is an address', 'localhost.localdomain' ],
+    ''                                          => [ '', 'localhost.localdomain' ],
 };
 
-my $NumTests = ( scalar keys %$Tests ) * 2;
+my $AddressesTests = {
+    '<security@example.net>, <foo@example.com>'    => [ [ 'security@example.net', 'foo@example.com' ], [ 'example.net', 'example.com' ] ],
+};
+
+my $NumTests = ( ( scalar keys %$AddressTests ) + ( scalar keys %$AddressesTests ) ) * 2;
+
 plan tests => $NumTests;
 
 ## Set up a fake handler object
@@ -45,15 +66,29 @@ $Authentication->{'config'} = $Authentication->get_config();
 my $Handler = Mail::Milter::Authentication::Handler->new( $Authentication );
 
 {
-    foreach my $Line ( sort keys %$Tests )  {
+    foreach my $Line ( sort keys %$AddressTests )  {
 
-        my $ExpectedAddress = $Tests->{ $Line }->[0];
+        my $ExpectedAddress = $AddressTests->{ $Line }->[0];
         my $ReturnedAddress = $Handler->get_address_from( $Line );
         is( $ReturnedAddress, $ExpectedAddress, 'get_address_from()' );
 
-        my $ExpectedDomain = $Tests->{ $Line }->[1];
+        my $ExpectedDomain = $AddressTests->{ $Line }->[1];
         my $ReturnedDomain = $Handler->get_domain_from( $Line );
         is( $ReturnedDomain, $ExpectedDomain, 'get_domain_from()' );
+    }
+
+}
+
+{
+    foreach my $Line ( sort keys %$AddressesTests )  {
+
+        my $ExpectedAddresses = $AddressesTests->{ $Line }->[0];
+        my $ReturnedAddresses = $Handler->get_addresses_from( $Line );
+        is_deeply( $ReturnedAddresses, $ExpectedAddresses, 'get_addresses_from()' );
+
+        my $ExpectedDomains = $AddressesTests->{ $Line }->[1];
+        my $ReturnedDomains = $Handler->get_domains_from( $Line );
+        is_deeply( $ReturnedDomains, $ExpectedDomains, 'get_domains_from()' );
     }
 
 }
