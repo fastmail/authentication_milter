@@ -1809,6 +1809,12 @@ Write out logs to disc.
 Logs are not written immediately, they are written at the end of a connection so we can
 include a queue id. This is not available at the start of the process.
 
+=item header_sort()
+
+Sorting function for sorting the Authentication-Results headers
+Calls out to __HANDLER__->header_sort() to sort headers of a particular type if available,
+otherwise sorts alphabetically.
+
 =item add_headers()
 
 Send the header changes to the MTA.
