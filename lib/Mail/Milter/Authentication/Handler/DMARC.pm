@@ -151,7 +151,7 @@ sub _process_dmarc_for {
 
     # Add the Envelope To
     eval {
-        $dmarc->envelope_to( $self->{ 'env_to'  })
+        $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Rcpt To Error ' . $error );
