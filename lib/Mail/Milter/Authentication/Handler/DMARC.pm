@@ -129,21 +129,23 @@ sub _process_dmarc_for {
     my $dmarc = $self->get_dmarc_object();
 
     # Set the DMARC Envelope From Domain
-    eval {
-        $dmarc->envelope_from( $env_domain_from );
-    };
-    if ( my $error = $@ ) {
-        if ( $error =~ /invalid envelope_from at / ) {
-            $self->log_error( 'DMARC Invalid envelope from <' . $env_domain_from . '>' );
-            $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
-            $self->add_auth_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+    if ( $env_domain_from ne q{} ) {
+        eval {
+            $dmarc->envelope_from( $env_domain_from );
+        };
+        if ( my $error = $@ ) {
+            if ( $error =~ /invalid envelope_from at / ) {
+                $self->log_error( 'DMARC Invalid envelope from <' . $env_domain_from . '>' );
+                $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
+                $self->add_auth_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+            }
+            else {
+                $self->log_error( 'DMARC Mail From Error for <' . $env_domain_from . '> ' . $error );
+                $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
+                $self->add_auth_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+            }
+            return;
         }
-        else {
-            $self->log_error( 'DMARC Mail From Error for <' . $env_domain_from . '> ' . $error );
-            $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-            $self->add_auth_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
-        }
-        return;
     }
 
     # Add the Envelope To
@@ -462,7 +464,6 @@ sub eom_callback {
     $env_domains_from = [''] if ! $env_domains_from;
 
     my $from_headers = $self->{ 'from_headers' };
-
 
     my $Processed = 0;
     foreach my $env_domain_from ( @$env_domains_from ) {
