@@ -138,12 +138,12 @@ sub _process_dmarc_for {
             if ( $error =~ /invalid envelope_from at / ) {
                 $self->log_error( 'DMARC Invalid envelope from <' . $env_domain_from . '>' );
                 $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
-                $self->add_auth_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+                $self->_add_dmarc_header('dmarc=permerror (envelope from invalid))' . $self->format_header_entry( 'header.from', $header_domain ) );
             }
             else {
                 $self->log_error( 'DMARC Mail From Error for <' . $env_domain_from . '> ' . $error );
                 $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-                $self->add_auth_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+                $self->_add_dmarc_header('dmarc=temperror (envelope from failed)' . $self->format_header_entry( 'header.from', $header_domain ) );
             }
             return;
         }
@@ -155,16 +155,13 @@ sub _process_dmarc_for {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Rcpt To Error ' . $error );
-        #$self->add_auth_header('dmarc=permerror');
-        #$self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
-        #return;
     }
 
     # Add the From Header
     eval { $dmarc->header_from( $header_domain ) };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Header From Error ' . $error );
-        $self->add_auth_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+        $self->_add_dmarc_header('dmarc=permerror (from header invalid)' . $self->format_header_entry( 'header.from', $header_domain ) );
         $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
         return;
     }
@@ -180,19 +177,12 @@ sub _process_dmarc_for {
             );
         }
         else {
-            ## ToDo Check this works
-            $dmarc->spf(
-                'domain' => '',
-                'scope'  => '',
-                'result' => '',
-            );
+            $dmarc->{'spf'} = [];
         }
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC SPF Error: ' . $error );
-        $self->add_auth_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
-        $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-        return;
+        $dmarc->{'spf'} = [];
     }
 
     # Add the DKIM Results
@@ -201,19 +191,25 @@ sub _process_dmarc_for {
         $dmarc->{'dkim'} = [];
     }
     elsif ( $dkim_handler->{'has_dkim'} ) {
-        $dmarc->dkim( $self->get_object('dkim') );
+        my $dkim_object = $self->get_object('dkim');
+        if ( $dkim_object ) {
+            $dmarc->dkim( $dkim_object );
+        }
+        else {
+            $dmarc->{'dkim'} = [];
+        }
     }
     else {
-        # Workaround reporting issue
         $dmarc->{'dkim'} = [];
-        #$dmarc->dkim( $empty_dkim );
     }
 
     # Run the Validator
     my $dmarc_result = $dmarc->validate();
 
     # ToDo Set multiple dmarc_result objects here
-    $self->set_object('dmarc_result', $dmarc_result,1 );
+    # this will become relevant when the BIMI handler
+    # is production ready.
+    $self->set_object('dmarc_result', $dmarc_result, 1 );
 
     my $dmarc_code   = $dmarc_result->result;
     $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
@@ -225,8 +221,9 @@ sub _process_dmarc_for {
         }
     }
     $dmarc_policy = 'none' if ! $dmarc_policy;
+    $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
 
-    # Metrics
+    # Write Metrics
     my $metric_data = {
         'result'         => $dmarc_code,
         'policy'         => $dmarc_policy,
@@ -235,15 +232,13 @@ sub _process_dmarc_for {
     };
     $self->metric_count( 'dmarc_total', $metric_data );
 
-    $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
-
     # Add the AR Header
     if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
         my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
 
         my $is_list_entry = q{};
         if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
-            $is_list_entry = ';has-list-id=yes';
+            $is_list_entry = ',has-list-id=yes';
         }
 
         if ($dmarc_policy) {
@@ -254,7 +249,7 @@ sub _process_dmarc_for {
             . ')';
         }
         $dmarc_header .= ' ' . $self->format_header_entry( 'header.from', $header_domain );
-        $self->add_auth_header($dmarc_header);
+        $self->_add_dmarc_header($dmarc_header);
     }
 
     # Reject mail and/or set policy override reasons
@@ -432,12 +427,6 @@ sub header_callback {
     if ( lc $header eq 'from' ) {
         if ( exists $self->{'from_header'} ) {
             $self->dbgout( 'DMARCFail', 'Multiple RFC5322 from fields', LOG_INFO );
-            # We add an explicit fail header with a comment.
-            $self->add_auth_header( 'dmarc=fail (multiple RFC5322 from fields in message)' );
-            # TODO Report this better for metrics.
-            #$self->metric_count( 'dmarc_total', { 'result' => 'fail', 'reason' => 'bad_from_header' } );
-            $self->{'failmode'} = 1;
-            return;
         }
         $self->{'from_header'} = $value;
         push @{ $self->{ 'from_headers' } }, $value;
@@ -469,38 +458,82 @@ sub eom_callback {
     # Build a list of all from header domains used
     my @header_domains;
     foreach my $from_header ( @$from_headers ) {
-        my $from_header_header_domains = $self->get_domains_from( $from_header );
+    my $from_header_header_domains = $self->get_domains_from( $from_header );
         foreach my $header_domain ( @$from_header_header_domains ) {
-            push @header_domains, $header_domain;
+        push @header_domains, $header_domain;
         }
     }
 
-    my $Processed = 0;
+    $self->{ 'dmarc_ar_headers' } = [];
     # There will usually be only one, however this could be a source route
     # so we consider multiples just incase
-    foreach my $env_domain_from ( sort uniq @$env_domains_from ) {
-        foreach my $header_domain ( sort uniq @header_domains ) {
+    foreach my $env_domain_from ( uniq sort @$env_domains_from ) {
+        foreach my $header_domain ( uniq sort @header_domains ) {
             eval {
                 $self->_process_dmarc_for( $env_domain_from, $header_domain );
-                $Processed = 1;
             };
             if ( my $error = $@ ) {
                 if ( $error =~ /invalid header_from at / ) {
                     $self->log_error( 'DMARC Error invalid header_from <' . $self->{'from_header'} . '>' );
-                    $self->add_auth_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+                    $self->_add_dmarc_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
                 }
                 else {
                     $self->log_error( 'DMARC Error ' . $error );
-                    $self->add_auth_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+                    $self->_add_dmarc_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
                 }
             }
         }
     }
-    if ( ! $Processed ) {
+
+    if ( @{ $self->{ 'dmarc_ar_headers' } } ) {
+        foreach my $dmarc_header ( @{ $self->_get_sorted_dmarc_headers() } ) {
+            $self->add_auth_header( $dmarc_header );
+        }
+    }
+    else {
+        # We got no headers at all? That's bogus!
         $self->add_auth_header('dmarc=permerror');
-        # Add none entry
     }
 
+    delete $self->{ 'dmarc_ar_headers' };
+
+    return;
+}
+
+sub header_sort {
+    my ( $self, $pa, $pb ) = @_;
+
+    my ( $result_a, $policy_a ) = $pa =~ /^dmarc=([a-z]+) \(p=([a-z]+)/;
+    my ( $result_b, $policy_b ) = $pb =~ /^dmarc=([a-z]+) \(p=([a-z]+)/;
+
+    # Fail then None then Pass
+    if ( $result_a ne $result_b ) {
+        return -1 if $result_a eq 'fail';
+        return  1 if $result_b eq 'fail';
+        return -1 if $result_a eq 'none';
+        return  1 if $result_b eq 'none';
+    }
+
+    # Reject then Quarantine then None
+    if ( $policy_a ne $policy_b ) {
+        return -1 if $policy_a eq 'reject';
+        return  1 if $policy_b eq 'reject';
+        return -1 if $policy_a eq 'quarantine';
+        return  1 if $policy_b eq 'quarantine';
+    }
+
+    return $pa cmp $pb;
+}
+
+sub _get_sorted_dmarc_headers {
+    my ( $self ) = @_;
+    my @sorted_uniq_headers = uniq sort @{ $self->{ 'dmarc_ar_headers' } };
+    return \@sorted_uniq_headers;
+}
+
+sub _add_dmarc_header {
+    my ( $self, $header ) = @_;
+    push @{ $self->{ 'dmarc_ar_headers' } }, $header;
     return;
 }
 

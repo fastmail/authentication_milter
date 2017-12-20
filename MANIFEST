@@ -82,6 +82,8 @@ t/config/normal/authentication_milter.json
 t/config/normal/mail-dmarc.ini
 t/config/timeout/authentication_milter.json
 t/config/timeout/mail-dmarc.ini
+t/data/example/dmarc_multi.eml
+t/data/example/dmarc_multi_2.eml
 t/data/example/dmarc_reject.eml
 t/data/example/dmarc_reject.smtp.eml
 t/data/example/dmarc_reject_case.eml
@@ -142,6 +144,7 @@ t/data/metrics/smtp_1.json
 t/data/metrics/smtp_2.json
 t/data/metrics/smtp_3.json
 t/data/metrics/smtp_4.json
+t/data/source/dmarc_multi.eml
 t/data/source/dmarc_reject.eml
 t/data/source/dmarc_reject_case.eml
 t/data/source/dmarc_reject_wl.eml

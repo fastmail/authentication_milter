@@ -1,0 +1,6 @@
+From: test@goestheweasel.com
+From: test@marcbradshaw.net, test@example.com
+To: test@example.com
+Subject: This is a test
+
+This should have multiple dmarc entries

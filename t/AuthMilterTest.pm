@@ -296,6 +296,28 @@ sub run_milter_processing {
         'to'     => 'marc@fastmail.com',
     });
 
+    milter_process({
+        'desc'   => 'DMARC Multi',
+        'prefix' => 'config/normal',
+        'source' => 'dmarc_multi.eml',
+        'dest'   => 'dmarc_multi.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'test@goestheweasel.com',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    milter_process({
+        'desc'   => 'DMARC Multi',
+        'prefix' => 'config/normal',
+        'source' => 'dmarc_multi.eml',
+        'dest'   => 'dmarc_multi_2.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'bad.name.google.com',
+        'from'   => 'test@goestheweasel.com, test@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
     test_metrics( 'data/metrics/milter_1.json' );
 
     stop_milter();

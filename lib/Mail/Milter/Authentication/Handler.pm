@@ -1325,6 +1325,29 @@ sub dbgoutwrite {
 
 # Header handling
 
+sub header_sort {
+    my ( $self, $sa, $sb ) = @_;
+
+    my $config = $self->config();
+
+    my ( $handler_a ) = split( '=', $sa, 2 );
+    my ( $handler_b ) = split( '=', $sb, 2 );
+
+    if ( $handler_a eq $handler_b ) {
+        # Check for a handler specific sort method
+        foreach my $name ( @{$config->{'load_handlers'}} ) {
+            if ( lc $name eq lc $handler_a ) {
+                my $handler = $self->get_handler($name);
+                if ( $handler->can( 'header_sort' ) ) {
+                    return $handler->header_sort( $sa, $sb );
+                }
+            }
+        }
+    }
+
+    return $sa cmp $sb;
+}
+
 sub add_headers {
     my ($self) = @_;
 
@@ -1341,7 +1364,7 @@ sub add_headers {
     }
     if (@auth_headers) {
         $header .= ";\n    ";
-        $header .= join( ";\n    ", sort @auth_headers );
+        $header .= join( ";\n    ", sort { $self->header_sort( $a, $b ) } @auth_headers );
     }
     else {
         $header .= '; none';
