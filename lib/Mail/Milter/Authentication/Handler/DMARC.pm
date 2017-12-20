@@ -8,6 +8,7 @@ use Data::Dumper;
 use English qw{ -no_match_vars };
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
+use List::MoreUtils qw{ uniq };
 
 use Mail::DMARC::PurePerl;
 
@@ -465,24 +466,32 @@ sub eom_callback {
 
     my $from_headers = $self->{ 'from_headers' };
 
+    # Build a list of all from header domains used
+    my @header_domains;
+    foreach my $from_header ( @$from_headers ) {
+        my $from_header_header_domains = $self->get_domains_from( $from_header );
+        foreach my $header_domain ( @$from_header_header_domains ) {
+            push @header_domains, $header_domain;
+        }
+    }
+
     my $Processed = 0;
-    foreach my $env_domain_from ( @$env_domains_from ) {
-        foreach my $from_header ( @$from_headers ) {
-            my $header_domains = $self->get_domains_from( $from_header );
-            foreach my $header_domain ( @$header_domains ) {
-                eval {
-                    $self->_process_dmarc_for( $env_domain_from, $header_domain );
-                    $Processed = 1;
-                };
-                if ( my $error = $@ ) {
-                    if ( $error =~ /invalid header_from at / ) {
-                        $self->log_error( 'DMARC Error invalid header_from <' . $self->{'from_header'} . '>' );
-                        $self->add_auth_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
-                    }
-                    else {
-                        $self->log_error( 'DMARC Error ' . $error );
-                        $self->add_auth_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
-                    }
+    # There will usually be only one, however this could be a source route
+    # so we consider multiples just incase
+    foreach my $env_domain_from ( sort uniq @$env_domains_from ) {
+        foreach my $header_domain ( sort uniq @header_domains ) {
+            eval {
+                $self->_process_dmarc_for( $env_domain_from, $header_domain );
+                $Processed = 1;
+            };
+            if ( my $error = $@ ) {
+                if ( $error =~ /invalid header_from at / ) {
+                    $self->log_error( 'DMARC Error invalid header_from <' . $self->{'from_header'} . '>' );
+                    $self->add_auth_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+                }
+                else {
+                    $self->log_error( 'DMARC Error ' . $error );
+                    $self->add_auth_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
                 }
             }
         }
