@@ -147,10 +147,10 @@ sub test_metrics {
             if ( $ENV{'WRITE_METRICS'} ) {
                 foreach my $key ( sort keys %$metrics ) {
                     if ( $key =~ /seconds_total/ ) {
-                        $metrics->{ $key } = 123456;
+                        $metrics->{ $key } = 123456 if $metrics->{ $key } > 0;
                     }
                     elsif ( $key =~ /microseconds_sum/ ) {
-                        $metrics->{ $key } = 123456;
+                        $metrics->{ $key } = 123456 if $metrics->{ $key } > 0;
                     }
                 }
                 open my $OutF, '>', $expected;
