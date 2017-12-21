@@ -1,5 +1,9 @@
 Revision history for Mail-Milter-Authentication
 
+1.1.7   2017-12-21
+        - Removed nasty recursion bug in header sorting
+        - Updated DMARC policy reporting
+
 1.1.6   2017-12-20
         - DMARC processing for all domains found in message headers
         - Avoid semicolon in DMARC result comment

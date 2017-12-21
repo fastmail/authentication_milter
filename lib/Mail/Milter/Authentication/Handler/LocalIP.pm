@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::LocalIP;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.6');
+use version; our $VERSION = version->declare('v1.1.7');
 
 use Sys::Syslog qw{:standard :macros};
 
