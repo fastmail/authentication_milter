@@ -1,7 +1,7 @@
 Authentication-Results: test.module;
     dkim-adsp=unknown (ADSP policy from goestheweasel.com);
     dkim=pass (2048-bit rsa key sha1) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=S/mtomBF;
-    dmarc=fail (p=reject) header.from=goestheweasel.com;
+    dmarc=fail (p=reject,d=reject) header.from=goestheweasel.com;
     iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
     spf=softfail smtp.mailfrom=marc@marcbradshaw.net smtp.helo=bad.name.google.com;
     x-ptr=fail x-ptr-helo=bad.name.google.com x-ptr-lookup=

@@ -6,7 +6,7 @@
    "authmilter_dkim_signatures{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_dkim_total{ident=\"test_authentication_milter_test\",result=\"pass\"}" : "1",
    "authmilter_dkim_total{ident=\"test_authentication_milter_test\"}" : "0",
-   "authmilter_dmarc_total{ident=\"test_authentication_milter_test\",is_list=\"0\",is_whitelisted=\"0\",policy=\"none\",result=\"pass\"}" : "1",
+   "authmilter_dmarc_total{ident=\"test_authentication_milter_test\",disposition=\"none\",is_list=\"0\",is_whitelisted=\"0\",policy=\"none\",result=\"pass\"}" : "1",
    "authmilter_dmarc_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_forked_children_total{ident=\"test_authentication_milter_test\"}" : "2",
    "authmilter_iprev_total{ident=\"test_authentication_milter_test\",result=\"pass\"}" : "1",

@@ -214,58 +214,37 @@ sub _process_dmarc_for {
     my $dmarc_code   = $dmarc_result->result;
     $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
 
-    my $dmarc_policy = eval { $dmarc_result->disposition() };
+    my $dmarc_disposition = eval { $dmarc_result->disposition() };
     if ( my $error = $@ ) {
         if ( $dmarc_code ne 'pass' ) {
             $self->log_error( 'DMARCPolicyError ' . $error );
         }
     }
-    # Pass results do not set disposition, if we didn't get a policy above
-    # then check the published policy in the results object.
-    $dmarc_policy = eval{ $dmarc_result->published()->p(); } if ! $dmarc_policy;
-    # If we still didn't get a result, give up and say unknown.
-    $dmarc_policy = 'unknown' if ! $dmarc_policy;
+    $self->dbgout( 'DMARCDisposition', $dmarc_disposition, LOG_INFO );
+
+    my $dmarc_policy = eval{ $dmarc_result->published()->p(); };
+    # If we didn't get a result, set to none.
+    $dmarc_policy = 'none' if ! $dmarc_policy;
     $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
 
-    # Write Metrics
-    my $metric_data = {
-        'result'         => $dmarc_code,
-        'policy'         => $dmarc_policy,
-        'is_list'        => ( $self->{'is_list'}      ? '1' : '0' ),
-        'is_whitelisted' => ( $self->is_whitelisted() ? '1' : '0'),
-    };
-    $self->metric_count( 'dmarc_total', $metric_data );
-
-    # Add the AR Header
-    if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
-        my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
-
-        my $is_list_entry = q{};
-        if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
-            $is_list_entry = ',has-list-id=yes';
-        }
-
-        if ($dmarc_policy) {
-            $dmarc_header .= ' ('
-              . $self->format_header_comment(
-                $self->format_header_entry( 'p', $dmarc_policy ) )
-              . $is_list_entry
-            . ')';
-        }
-        $dmarc_header .= ' ' . $self->format_header_entry( 'header.from', $header_domain );
-        $self->_add_dmarc_header($dmarc_header);
-    }
+    my $policy_override;
 
     # Reject mail and/or set policy override reasons
     if ( $dmarc_code eq 'fail' && $dmarc_policy eq 'reject' ) {
         if ( $config->{'hard_reject'} ) {
             if ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
                 $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
-                $dmarc_result->reason( 'type' => 'mailing_list', 'comment' => 'Reject ignored due to local mailing list policy' );
+                $policy_override = 'mailing_list';
+                $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local mailing list policy' );
+                #$dmarc_result->disposition('none');
+                #$dmarc_disposition = 'none';
             }
             elsif ( $self->is_whitelisted() ) {
                 $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
-                $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Reject ignored due to local white list' );
+                $policy_override = 'trusted_forwarder';
+                $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local white list' );
+                #$dmarc_result->disposition('none');
+                #$dmarc_disposition = 'none';
             }
             else {
                 $self->reject_mail( '550 5.7.0 DMARC policy violation' );
@@ -273,9 +252,49 @@ sub _process_dmarc_for {
             }
         }
         else {
-            $dmarc_result->reason( 'type' => 'local_policy', 'comment' => 'Reject ignored due to local policy' );
+            $policy_override = 'local_policy';
+            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local policy' );
+            #$dmarc_result->disposition('none');
+            #$dmarc_disposition = 'none';
         }
     }
+
+    # Add the AR Header
+    if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
+        my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
+
+        # What comments can we add?
+        my @comments;
+        if ( $dmarc_policy ) {
+            push @comments, $self->format_header_entry( 'p', $dmarc_policy );
+        }
+        if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
+            push @comments, 'has-list-id=yes';
+        }
+        if ( $dmarc_disposition ) {
+            push @comments, $self->format_header_entry( 'd', $dmarc_disposition );
+        }
+        #if ( $policy_override ) {
+        #    push @comments, $self->format_header_entry( 'override', $policy_override );
+        #}
+
+        if ( @comments ) {
+            $dmarc_header .= ' (' . $self->format_header_comment( join( ',', @comments ) ) . ')';
+        }
+
+        $dmarc_header .= ' ' . $self->format_header_entry( 'header.from', $header_domain );
+        $self->_add_dmarc_header($dmarc_header);
+    }
+
+    # Write Metrics
+    my $metric_data = {
+        'result'         => $dmarc_code,
+        'disposition'    => $dmarc_disposition,
+        'policy'         => $dmarc_policy,
+        'is_list'        => ( $self->{'is_list'}      ? '1' : '0' ),
+        'is_whitelisted' => ( $self->is_whitelisted() ? '1' : '0'),
+    };
+    $self->metric_count( 'dmarc_total', $metric_data );
 
     # Try as best we can to save a report, but don't stress if it fails.
     my $rua = eval { $dmarc_result->published()->rua(); };
