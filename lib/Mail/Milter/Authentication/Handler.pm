@@ -1814,6 +1814,11 @@ Write out logs to disc.
 Logs are not written immediately, they are written at the end of a connection so we can
 include a queue id. This is not available at the start of the process.
 
+=item can_sort_header( $header )
+
+Returns 1 is this handler has a header_sort method capable or sorting entries for $header
+Returns 0 otherwise
+
 =item header_sort()
 
 Sorting function for sorting the Authentication-Results headers
