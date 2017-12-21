@@ -145,6 +145,14 @@ sub test_metrics {
         else {
             fail( 'Metrics data does not exist' );
             if ( $ENV{'WRITE_METRICS'} ) {
+                foreach my $key ( sort keys %$metrics ) {
+                    if ( $key =~ /seconds_total/ ) {
+                        $metrics->{ $key } = 123456;
+                    }
+                    elsif ( $key =~ /microseconds_sum/ ) {
+                        $metrics->{ $key } = 123456;
+                    }
+                }
                 open my $OutF, '>', $expected;
                 $j->pretty();
                 $j->canonical();
