@@ -1338,8 +1338,8 @@ sub header_sort {
         foreach my $name ( @{$config->{'load_handlers'}} ) {
             if ( lc $name eq lc $handler_a ) {
                 my $handler = $self->get_handler($name);
-                if ( $handler->can( 'header_sort' ) ) {
-                    return $handler->header_sort( $sa, $sb );
+                if ( $handler->can( 'handler_header_sort' ) ) {
+                    return $handler->handler_header_sort( $sa, $sb );
                 }
             }
         }

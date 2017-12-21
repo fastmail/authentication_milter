@@ -523,7 +523,7 @@ sub eom_callback {
     return;
 }
 
-sub header_sort {
+sub handler_header_sort {
     my ( $self, $pa, $pb ) = @_;
 
     my ( $result_a, $policy_a ) = $pa =~ /^dmarc=([a-z]+) \(p=([a-z]+)/;
