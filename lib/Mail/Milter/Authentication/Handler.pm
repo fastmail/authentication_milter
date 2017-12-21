@@ -1325,6 +1325,11 @@ sub dbgoutwrite {
 
 # Header handling
 
+sub can_sort_header {
+    my ( $self, $header ) = @_;
+    return 0;
+}
+
 sub header_sort {
     my ( $self, $sa, $sb ) = @_;
 
@@ -1336,8 +1341,8 @@ sub header_sort {
     if ( $handler_a eq $handler_b ) {
         # Check for a handler specific sort method
         foreach my $name ( @{$config->{'load_handlers'}} ) {
-            if ( lc $name eq lc $handler_a ) {
-                my $handler = $self->get_handler($name);
+            my $handler = $self->get_handler($name);
+            if ( $handler->can_sort_header( lc $handler_a ) ) {
                 if ( $handler->can( 'handler_header_sort' ) ) {
                     return $handler->handler_header_sort( $sa, $sb );
                 }

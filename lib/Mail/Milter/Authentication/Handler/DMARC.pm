@@ -523,6 +523,13 @@ sub eom_callback {
     return;
 }
 
+sub can_sort_header {
+    my ( $self, $header ) = @_;
+    return 1 if $header eq 'dmarc';
+    return 0;
+}
+
+
 sub handler_header_sort {
     my ( $self, $pa, $pb ) = @_;
 
