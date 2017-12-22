@@ -14,7 +14,7 @@ use Time::HiRes qw{ gettimeofday };
 
 use Mail::Milter::Authentication::Constants qw { :all };
 use Mail::Milter::Authentication::Config;
-use Mail::Milter::Authentication::Parser;
+#use Mail::AuthenticationResults::Parser;
 
 our $TestResolver; # For Testing
 
@@ -478,7 +478,7 @@ sub apply_policy {
         @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
     }
 
-    my $parsed_headers = Mail::Milter::Authentication::Parser->new( \@auth_headers );;
+    #my $parsed_headers = Mail::AuthenticationResults::Parser->new( \@auth_headers );;
 
     #use Data::Dumper;
     #print Dumper \@structured_headers;
