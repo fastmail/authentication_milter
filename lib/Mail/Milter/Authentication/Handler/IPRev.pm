@@ -83,7 +83,7 @@ sub connect_callback {
 
     if ( $resolver->errorstring() ) {
         $self->_dns_error( 'PTR', $ip_address, $resolver->errorstring );
-        push @error_list, 'Error ' . $resolver->errorstring() . " looking up $ip_address PTR";
+        push @error_list, 'Error ' . $resolver->errorstring() . " looking up $ip_address PTR" if ( $resolver->errorstring() ne 'unknown error or no error' );
     }
 
     foreach my $cname_host ( @cname_hosts ) {
@@ -102,7 +102,7 @@ sub connect_callback {
         }
         if ( $resolver->errorstring() ) {
             $self->_dns_error( 'PTR', $cname_host, $resolver->errorstring );
-            push @error_list, 'Error ' . $resolver->errorstring() . " looking up $cname_host PTR";
+            push @error_list, 'Error ' . $resolver->errorstring() . " looking up $cname_host PTR" if ( $resolver->errorstring() ne 'unknown error or no error' );
         }
         last; # Because multiple CNAMES for a given record is also busted
     }
@@ -176,10 +176,10 @@ sub connect_callback {
             }
             if ( ! @$ip_list ) {
                 foreach my $error ( @$errors4 ) {
-                    push @error_list, "Error $error looking up $domain A";
+                    push @error_list, "Error $error looking up $domain A" if ( $resolver->errorstring() ne 'unknown error or no error' );
                 }
                 foreach my $error ( @$errors6 ) {
-                    push @error_list, "Error $error looking up $domain AAAA";
+                    push @error_list, "Error $error looking up $domain AAAA" if ( $resolver->errorstring() ne 'unknown error or no error' );
                 }
             }
 
