@@ -18,6 +18,11 @@
     "metric_connection"               : "unix:tmp/authentication_milter_test_metrics.sock",
     "metric_umask"                    : "0000",
 
+    "ip_map" : {
+        "4.3.2.1" : { "ip" : "74.125.82.171" , "helo" : "mail-we0-f171.google.com" },
+        "5.4.3.0/24" : { "ip" : "74.125.82.171", "helo" : "mail-we0-f171.google.com" }
+    },
+
     "listen_backlog"         : 1,
     "min_children"           : 1,
     "max_children"           : 2,

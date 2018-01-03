@@ -115,6 +115,10 @@ t/data/example/google_apps_good_cn.eml
 t/data/example/google_apps_good_cn.smtp.eml
 t/data/example/google_apps_good_dryrun.eml
 t/data/example/google_apps_good_dryrun.smtp.eml
+t/data/example/google_apps_good_map.eml
+t/data/example/google_apps_good_map.smtp.eml
+t/data/example/google_apps_good_map_cidr.eml
+t/data/example/google_apps_good_map_cidr.smtp.eml
 t/data/example/google_apps_good_nofrom.eml
 t/data/example/google_apps_good_nofrom.smtp.eml
 t/data/example/google_apps_good_sanitize.eml

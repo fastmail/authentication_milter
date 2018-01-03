@@ -8,6 +8,7 @@ use English qw{ -no_match_vars };
 use Mail::SPF;
 use MIME::Base64;
 use Net::DNS::Resolver;
+use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 use Sys::Hostname;
 use Time::HiRes qw{ gettimeofday };
@@ -124,9 +125,30 @@ sub top_connect_callback {
             alarm( $config->{'connect_timeout'} );
         }
 
-        $self->{'ip_object'} = $ip;
-
         $self->dbgout( 'ConnectFrom', $ip->ip(), LOG_DEBUG );
+        $self->{'raw_ip_object'} = $ip;
+
+        if ( exists ( $config->{ 'ip_map' } ) ) {
+            foreach my $ip_map ( sort keys %{ $config->{ 'ip_map' } } ) {
+                my $map_obj = Net::IP->new( $ip_map );
+                my $is_overlap = $ip->overlaps($map_obj) || 0;
+                if (
+                       $is_overlap == $IP_A_IN_B_OVERLAP
+                    || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
+                    || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
+                    || $is_overlap == $IP_IDENTICAL
+                  )
+                {
+                    if ( exists ( $config->{ 'ip_map' }->{ $ip_map }->{ 'ip' } ) ) {
+                        $ip = Net::IP->new( $config->{ 'ip_map' }->{ $ip_map }->{ 'ip' } );
+                        $self->dbgout( 'ConnectFromRemapped', $self->{'raw_ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
+                        last;
+                    }
+                }
+            }
+        }
+
+        $self->{'ip_object'} = $ip;
 
         my $callbacks = $self->get_callbacks( 'connect' );
         foreach my $handler ( @$callbacks ) {
@@ -172,6 +194,30 @@ sub top_helo_callback {
 
         # Take only the first HELO from a connection
         if ( !( $self->{'helo_name'} ) ) {
+
+            $self->{'raw_helo_name'} = $helo_host;
+            if ( exists ( $config->{ 'ip_map' } ) ) {
+                my $ip_object = $self->{ 'raw_ip_object' };
+                foreach my $ip_map ( sort keys %{ $config->{ 'ip_map' } } ) {
+                    my $map_obj = Net::IP->new( $ip_map );
+                    my $is_overlap = $ip_object->overlaps($map_obj) || 0;
+                    if (
+                           $is_overlap == $IP_A_IN_B_OVERLAP
+                        || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
+                        || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
+                        || $is_overlap == $IP_IDENTICAL
+                      )
+                    {
+                        my $mapped_to = $config->{ 'ip_map' }->{ $ip_map };
+                        if ( exists ( $config->{ 'ip_map' }->{ $ip_map }->{ 'helo' } ) ) {
+                            $helo_host = $config->{ 'ip_map' }->{ $ip_map }->{ 'helo' };
+                            $self->dbgout( 'HELORemapped', $self->{'raw_helo_name'} . ' > ' . $helo_host, LOG_DEBUG );
+                            last;
+                        }
+                    }
+                }
+            }
+
             $self->{'helo_name'} = $helo_host;
             my $callbacks = $self->get_callbacks( 'helo' );
             foreach my $handler ( @$callbacks ) {
@@ -563,11 +609,13 @@ sub top_close_callback {
         $self->tempfail_on_error();
     }
     delete $self->{'helo_name'};
+    delete $self->{'raw_helo_name'};
     delete $self->{'c_auth_headers'};
     delete $self->{'auth_headers'};
     delete $self->{'pre_headers'};
     delete $self->{'add_headers'};
     delete $self->{'ip_object'};
+    delete $self->{'raw_ip_object'};
     $self->dbgoutwrite();
     $self->clear_all_symbols();
     $self->status('postclose');

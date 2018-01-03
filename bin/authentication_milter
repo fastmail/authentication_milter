@@ -313,6 +313,15 @@ __END__
     "tempfail_on_error_local"         : "0",            | Tempfail on errors for Local IP Connections
     "tempfail_on_error_trusted"       : "0",            | Tempfail on errors for Trusted IP Connections
 
+    "ip_map" : {                                        | List of IP Addresses or CIDR ranges to remap.
+        "1.2.3.4" : {                                   | Any incoming IP address which matches a given key
+            "ip": "5.6.7.8", "helo" : mx.test"          | will be remapped to use the value supplied
+        },                                              | This is useful, for example, when internal infrastructure
+        "dead:beef::/32" : {                            | connects to your MX via a private internal address, but you
+            "ip" : "5.6.7.8", "helo" : "mx.test"        | want to run IP based checks (eg SPF) against its external
+        }                                               | IP address instead.
+    },
+
     "handlers" : {                                      | Config for each handlers, can be prefixed with !
                                                         | to disable that handler without having to remove
                                                         | its config.

@@ -176,6 +176,28 @@ sub run_milter_processing {
     });
 
     milter_process({
+        'desc'   => 'Good message ip map',
+        'prefix' => 'config/normal',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_map.eml',
+        'ip'     => '4.3.2.1',
+        'name'   => 'some.local.host',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    milter_process({
+        'desc'   => 'Good message ip map cidr',
+        'prefix' => 'config/normal',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_map_cidr.eml',
+        'ip'     => '5.4.3.2',
+        'name'   => 'some.local.host',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    milter_process({
         'desc'   => 'Good message CNAME',
         'prefix' => 'config/normal',
         'source' => 'google_apps_good.eml',
@@ -532,6 +554,28 @@ sub run_smtp_processing {
         'dest'   => 'google_apps_good.smtp.eml',
         'ip'     => '74.125.82.171',
         'name'   => 'mail-we0-f171.google.com',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    smtp_process({
+        'desc'   => 'Good message map',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_map.smtp.eml',
+        'ip'     => '4.3.2.1',
+        'name'   => 'some.local.host',
+        'from'   => 'marc@marcbradshaw.net',
+        'to'     => 'marc@fastmail.com',
+    });
+
+    smtp_process({
+        'desc'   => 'Good message map cidr',
+        'prefix' => 'config/normal.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_map_cidr.smtp.eml',
+        'ip'     => '5.4.3.2',
+        'name'   => 'some.local.host',
         'from'   => 'marc@marcbradshaw.net',
         'to'     => 'marc@fastmail.com',
     });

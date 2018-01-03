@@ -1,5 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
+1.1.8   - FUTURE
+        - Allow remapping of IP address/HELO based on source IP address
+
 1.1.7   2017-12-21
         - Removed nasty recursion bug in header sorting
         - Updated DMARC policy reporting
