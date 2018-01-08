@@ -6,6 +6,7 @@ use version; our $VERSION = version->declare('v1.1.7');
 
 use Net::DNS;
 use Sys::Syslog qw{:standard :macros};
+use Mail::AuthenticationResults::Header::Entry;
 
 sub default_config {
     return {};
@@ -133,7 +134,8 @@ sub eom_callback {
 
 
     $self->dbgout( 'AlignedFrom', $result, LOG_DEBUG );
-    $self->add_auth_header( $self->format_header_entry( 'x-aligned-from', $result ) );
+    $self->add_auth_header( Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-aligned-from' )->set_value( $result ) );
+    #$self->add_auth_header( $self->format_header_entry( 'x-aligned-from', $result ) );
 
     $self->metric_count( 'alignedfrom_total', { 'result' => $result } );
 

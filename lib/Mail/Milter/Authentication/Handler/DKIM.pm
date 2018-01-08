@@ -11,6 +11,9 @@ use Sys::Syslog qw{:standard :macros};
 use Mail::DKIM;
 use Mail::DKIM::Verifier;
 use Mail::DKIM::DNS;
+use Mail::AuthenticationResults::Header::Entry;
+use Mail::AuthenticationResults::Header::SubEntry;
+use Mail::AuthenticationResults::Header::Comment;
 
 sub default_config {
     return {
@@ -83,9 +86,9 @@ sub eoh_callback {
         $self->metric_count( 'dkim_total', { 'result' => 'none' } );
         $self->dbgout( 'DKIMResult', 'No DKIM headers', LOG_INFO );
         if ( !( $config->{'hide_none'} ) ) {
-            $self->add_auth_header(
-                $self->format_header_entry( 'dkim', 'none' )
-                . ' (no signatures found)' );
+            my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dkim' )->set_value( 'none' );
+            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'no signatures found' ) );
+            $self->add_auth_header( $header );
         }
         delete $self->{'headers'};
     }
@@ -189,9 +192,9 @@ sub eom_callback {
 
         if ( !$dkim->signatures() ) {
             if ( !( $config->{'hide_none'} && $dkim_result eq 'none' ) ) {
-                $self->add_auth_header(
-                    $self->format_header_entry( 'dkim', $dkim_result )
-                      . ' (no signatures found)' );
+                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dkim' )->set_value( $dkim_result );
+                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'no signatures found' ) );
+                $self->add_auth_header( $header );
             }
         }
         foreach my $signature ( $dkim->signatures() ) {
@@ -260,54 +263,30 @@ sub eom_callback {
 
                 if ( $type eq 'domainkeys' ) {
                     if ( $self->show_domainkeys() ) {
-                        my $header = join(
-                            q{ },
-                            $self->format_header_entry( $type, $signature_result ),
-                            '('
-                              . $self->format_header_comment(
-                                  $result_comment
-                                  . $key_data
-                                )
-                              . ')',
-                            $self->format_header_entry( 'header.d', $signature->domain() ),
-                            $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
-                        );
+                        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( $type )->set_value( $signature_result );
+                        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( $result_comment . $key_data ) );
+                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.d' )->set_value( $signature->domain() ) );
+                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.b' )->set_value( substr( $signature->data(), 0, 8 ) ) );
                         if ( $config->{'extra_properties'} ) {
-                            $header = join(
-                                q{ },
-                                $header,
-                                $self->format_header_entry( 'x-bits', $key_size ),
-                                $self->format_header_entry( 'x-keytype', $key_type ),
-                                $self->format_header_entry( 'x-algorithm', $hash_algorithm ),
-                                $self->format_header_entry( 'x-selector', $selector ),
-                            );
+                            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-bits' )->set_value( $key_size ) );
+                            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-keytype' )->set_value( $key_type ) );
+                            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-algorithm' )->set_value( $hash_algorithm ) );
+                            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-selector' )->set_value( $selector ) );
                         }
                         $self->add_auth_header($header);
-                        }
+                    }
                 }
                 else {
-                    my $header = join(
-                        q{ },
-                        $self->format_header_entry( $type, $signature_result ),
-                        '('
-                          . $self->format_header_comment(
-                            $result_comment
-                            . $key_data
-                          )
-                          . ')',
-                        $self->format_header_entry( 'header.d', $signature->domain() ),
-                        $self->format_header_entry( 'header.i', $signature->identity() ),
-                        $self->format_header_entry( 'header.b', substr( $signature->data(), 0, 8 ) ),
-                    );
+                    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( $type )->set_value( $signature_result );
+                    $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( $result_comment . $key_data ) );
+                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.d' )->set_value( $signature->domain() ) );
+                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.i' )->set_value( $signature->identity() ) );
+                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.b' )->set_value( substr( $signature->data(), 0, 8 ) ) );
                     if ( $config->{'extra_properties'} ) {
-                        $header = join(
-                            q{ },
-                            $header,
-                            $self->format_header_entry( 'x-bits', $key_size ),
-                            $self->format_header_entry( 'x-keytype', $key_type ),
-                            $self->format_header_entry( 'x-algorithm', $hash_algorithm ),
-                            $self->format_header_entry( 'x-selector', $selector ),
-                        );
+                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-bits' )->set_value( $key_size ) );
+                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-keytype' )->set_value( $key_type ) );
+                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-algorithm' )->set_value( $hash_algorithm ) );
+                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-selector' )->set_value( $selector ) );
                     }
                     $self->add_auth_header($header);
                 }
@@ -351,16 +330,13 @@ sub eom_callback {
 
                 if ( ! ( $config->{'adsp_hide_none'} && $result eq 'none' ) ) {
                     if ( ( ! $default ) or $config->{'show_default_adsp'} ) {
-                        my $comment = '('
-                          . $self->format_header_comment( ( $default ? 'default ' : q{} )
-                            . "$name policy"
-                            . ( $location ? " from $location" : q{} )
-#                            . ( $string   ? "; $string"       : q{} )
-                          )
-                          . ')';
-
-                        my $header = join( q{ },
-                            $self->format_header_entry( $type, $result ), $comment, );
+                        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( $type )->set_value( $result );
+                        my $comment = ( $default ? 'default ' : q{} )
+                                    . "$name policy"
+                                    . ( $location ? " from $location" : q{} )
+#                                   . ( $string   ? "; $string"       : q{} )
+                        ;
+                        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( $comment ) );
                         $self->add_auth_header( $header );
                     }
                 }
@@ -396,11 +372,15 @@ sub _check_error {
             or $error =~ /^DNS query timeout/
     ){
         $self->log_error( 'Temp DKIM Error - ' . $error );
-        $self->add_auth_header('dkim=temperror (dns timeout)');
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dkim' )->set_value( 'temperror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'dns timeout' ) );
+        $self->add_auth_header( $header );
     }
     elsif ( $error =~ /^DNS error: SERVFAIL/ ){
         $self->log_error( 'Temp DKIM Error - ' . $error );
-        $self->add_auth_header('dkim=temperror (dns servfail)');
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dkim' )->set_value( 'temperror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'dns servfail' ) );
+        $self->add_auth_header( $header );
     }
     elsif ( $error =~ /^no domain to fetch policy for$/
             or $error =~ /^policy syntax error$/
@@ -408,11 +388,14 @@ sub _check_error {
             or $error =~ /^invalid name /
     ){
         $self->log_error( 'Perm DKIM Error - ' . $error );
-        $self->add_auth_header('dkim=permerror (syntax or domain error)');
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dkim' )->set_value( 'permerror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'syntax or domain error' ) );
+        $self->add_auth_header( $header );
     }
     else {
         $self->log_error( 'Unexpected DKIM Error - ' . $error );
-        $self->add_auth_header('dkim=temperror');
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dkim' )->set_value( 'temperror' );
+        $self->add_auth_header( $header );
         # Fill these in as they occur, but for unknowns err on the side of caution
         # and tempfail/exit
         $self->exit_on_close();

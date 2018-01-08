@@ -47,6 +47,7 @@ requires (
     'ExtUtils::Installed'   => 0,
     'IO::Socket'            => 0,
     'JSON'                  => 0,
+    'Mail::AuthenticationResults' => 0,
     'List::MoreUtils'       => 0,
     'Mail::DKIM::Verifier'  => '0.39',
     'Mail::DMARC'           => '1.20160612',

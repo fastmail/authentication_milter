@@ -1292,8 +1292,27 @@ sub header_sort {
 
     my $config = $self->config();
 
-    my ( $handler_a ) = split( '=', $sa, 2 );
-    my ( $handler_b ) = split( '=', $sb, 2 );
+    my $string_a;
+    my $string_b;
+
+    my $handler_a;
+    if ( ref $sa eq 'Mail::AuthenticationResults::Header::Entry' ) {
+        $handler_a = $sa->key();
+        $string_a = $sa->as_string();
+    }
+    else {
+        ( $handler_a ) = split( '=', $sa, 2 );
+        $string_a = $sa;
+    }
+    my $handler_b;
+    if ( ref $sb eq 'Mail::AuthenticationResults::Header::Entry' ) {
+        $handler_b = $sb->key();
+        $string_b = $sb->as_string();
+    }
+    else {
+        ( $handler_b ) = split( '=', $sb, 2 );
+        $string_b = $sb;
+    }
 
     if ( $handler_a eq $handler_b ) {
         # Check for a handler specific sort method
@@ -1307,7 +1326,15 @@ sub header_sort {
         }
     }
 
-    return $sa cmp $sb;
+    return $string_a cmp $string_b;
+}
+
+sub _stringify_header {
+    my ( $self, $header ) = @_;
+    if ( ref $header eq 'Mail::AuthenticationResults::Header::Entry' ) {
+        return $header->as_string();
+    }
+    return $header;
 }
 
 sub add_headers {
@@ -1325,8 +1352,9 @@ sub add_headers {
         @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
     }
     if (@auth_headers) {
+        @auth_headers = sort { $self->header_sort( $a, $b ) } @auth_headers;
         $header .= ";\n    ";
-        $header .= join( ";\n    ", sort { $self->header_sort( $a, $b ) } @auth_headers );
+        $header .= join( ";\n    ", map { $self->_stringify_header( $_ ) } @auth_headers );
     }
     else {
         $header .= '; none';
