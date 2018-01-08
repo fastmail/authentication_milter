@@ -11,6 +11,9 @@ use Sys::Syslog qw{:standard :macros};
 use List::MoreUtils qw{ uniq };
 
 use Mail::DMARC::PurePerl;
+use Mail::AuthenticationResults::Header::Entry;
+use Mail::AuthenticationResults::Header::SubEntry;
+use Mail::AuthenticationResults::Header::Comment;
 
 my $PSL_CHECKED_TIME;
 
@@ -138,12 +141,18 @@ sub _process_dmarc_for {
             if ( $error =~ /invalid envelope_from at / ) {
                 $self->log_error( 'DMARC Invalid envelope from <' . $env_domain_from . '>' );
                 $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
-                $self->_add_dmarc_header('dmarc=permerror (envelope from invalid))' . $self->format_header_entry( 'header.from', $header_domain ) );
+                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'permerror' );
+                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'envelope from invalid' ) );
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+                $self->_add_dmarc_header( $header );
             }
             else {
                 $self->log_error( 'DMARC Mail From Error for <' . $env_domain_from . '> ' . $error );
                 $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-                $self->_add_dmarc_header('dmarc=temperror (envelope from failed)' . $self->format_header_entry( 'header.from', $header_domain ) );
+                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'temperror' );
+                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'envelope from failed' ) );
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+                $self->_add_dmarc_header( $header );
             }
             return;
         }
@@ -161,8 +170,11 @@ sub _process_dmarc_for {
     eval { $dmarc->header_from( $header_domain ) };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Header From Error ' . $error );
-        $self->_add_dmarc_header('dmarc=permerror (from header invalid)' . $self->format_header_entry( 'header.from', $header_domain ) );
         $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'permerror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'from header invalid' ) );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+        $self->_add_dmarc_header( $header );
         return;
     }
 
@@ -261,7 +273,7 @@ sub _process_dmarc_for {
 
     # Add the AR Header
     if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
-        my $dmarc_header = $self->format_header_entry( 'dmarc', $dmarc_code );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( $dmarc_code );
 
         # What comments can we add?
         my @comments;
@@ -279,11 +291,11 @@ sub _process_dmarc_for {
         #}
 
         if ( @comments ) {
-            $dmarc_header .= ' (' . $self->format_header_comment( join( ',', @comments ) ) . ')';
+            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( join( ',', @comments ) ) );
         }
 
-        $dmarc_header .= ' ' . $self->format_header_entry( 'header.from', $header_domain );
-        $self->_add_dmarc_header($dmarc_header);
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+        $self->_add_dmarc_header( $header );
     }
 
     # Write Metrics
@@ -348,7 +360,8 @@ sub get_dmarc_object {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC IP Error ' . $error );
-        $self->add_auth_header('dmarc=permerror');
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'permerror' );
+        $self->add_auth_header( $header );
         $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
         $self->{'failmode'} = 1;
     }
@@ -498,24 +511,29 @@ sub eom_callback {
             if ( my $error = $@ ) {
                 if ( $error =~ /invalid header_from at / ) {
                     $self->log_error( 'DMARC Error invalid header_from <' . $self->{'from_header'} . '>' );
-                    $self->_add_dmarc_header('dmarc=permerror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+                    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'permerror' );
+                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+                    $self->_add_dmarc_header( $header );
                 }
                 else {
                     $self->log_error( 'DMARC Error ' . $error );
-                    $self->_add_dmarc_header('dmarc=temperror ' . $self->format_header_entry( 'header.from', $header_domain ) );
+                    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'temperror' );
+                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+                    $self->_add_dmarc_header( $header );
                 }
             }
         }
     }
 
     if ( @{ $self->{ 'dmarc_ar_headers' } } ) {
-        foreach my $dmarc_header ( @{ $self->_get_sorted_dmarc_headers() } ) {
+        foreach my $dmarc_header ( @{ $self->_get_unique_dmarc_headers() } ) {
             $self->add_auth_header( $dmarc_header );
         }
     }
     else {
         # We got no headers at all? That's bogus!
-        $self->add_auth_header('dmarc=permerror');
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'permerror' );
+        $self->add_auth_header( $header );
     }
 
     delete $self->{ 'dmarc_ar_headers' };
@@ -533,8 +551,9 @@ sub can_sort_header {
 sub handler_header_sort {
     my ( $self, $pa, $pb ) = @_;
 
-    my ( $result_a, $policy_a ) = $pa =~ /^dmarc=([a-z]+) \(p=([a-z]+)/;
-    my ( $result_b, $policy_b ) = $pb =~ /^dmarc=([a-z]+) \(p=([a-z]+)/;
+    # ToDo, do this without stringify
+    my ( $result_a, $policy_a ) = $pa->as_string() =~ /^dmarc=([a-z]+) \(p=([a-z]+)/;
+    my ( $result_b, $policy_b ) = $pb->as_string() =~ /^dmarc=([a-z]+) \(p=([a-z]+)/;
 
     # Fail then None then Pass
     if ( $result_a ne $result_b ) {
@@ -555,10 +574,21 @@ sub handler_header_sort {
     return $pa cmp $pb;
 }
 
-sub _get_sorted_dmarc_headers {
+sub _get_unique_dmarc_headers {
     my ( $self ) = @_;
-    my @sorted_uniq_headers = uniq sort @{ $self->{ 'dmarc_ar_headers' } };
-    return \@sorted_uniq_headers;
+
+    my $unique_strings = {};
+    my @unique_headers;
+
+    # Returns unique headers based on as_string for each header
+    foreach my $header ( @{ $self->{ 'dmarc_ar_headers' } } ) {
+        my $as_string = $header->as_string();
+        next if exists $unique_strings->{ $as_string };
+        $unique_strings->{ $as_string } = 1;
+        push @unique_headers, $header;
+    }
+
+    return \@unique_headers;
 }
 
 sub _add_dmarc_header {
