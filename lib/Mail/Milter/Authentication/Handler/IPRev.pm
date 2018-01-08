@@ -7,6 +7,9 @@ use version; our $VERSION = version->declare('v1.1.7');
 use Net::DNS;
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
+use Mail::AuthenticationResults::Header::Entry;
+use Mail::AuthenticationResults::Header::SubEntry;
+use Mail::AuthenticationResults::Header::Comment;
 
 sub default_config {
     return {};
@@ -205,10 +208,9 @@ sub connect_callback {
         # Failed to match IP against looked up domains
         my $comment = join( ',', @error_list );
         $self->dbgout( 'IPRevCheck', "fail - $comment", LOG_DEBUG );
-        my $header =
-            $self->format_header_entry( 'iprev',        'fail' ) . ' '
-          . $self->format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
-          . $self->format_header_comment($comment) . ')';
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'iprev' )->set_value( 'fail' );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.iprev' )->set_value( $ip_address ) );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( $comment ) );
         $self->add_c_auth_header($header);
         $self->metric_count( 'iprev_total', { 'result' => 'fail'} );
     }
@@ -217,10 +219,9 @@ sub connect_callback {
         my $comment = join( ',', @match_list );
         $self->{'verified_ptr'} = $comment;
         $self->dbgout( 'IPRevCheck', "pass - $comment", LOG_DEBUG );
-        my $header =
-            $self->format_header_entry( 'iprev',        'pass' ) . ' '
-          . $self->format_header_entry( 'policy.iprev', $ip_address ) . ' ' . '('
-          . $self->format_header_comment($comment) . ')';
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'iprev' )->set_value( 'pass' );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.iprev' )->set_value( $ip_address ) );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( $comment ) );
         $self->add_c_auth_header($header);
         $self->metric_count( 'iprev_total', { 'result' => 'pass'} );
     }
