@@ -5,6 +5,9 @@ use base 'Mail::Milter::Authentication::Handler';
 use version; our $VERSION = version->declare('v1.1.7');
 
 use Sys::Syslog qw{:standard :macros};
+use Mail::AuthenticationResults::Header::Entry;
+use Mail::AuthenticationResults::Header::SubEntry;
+use Mail::AuthenticationResults::Header::Comment;
 
 use Mail::SPF;
 
@@ -84,7 +87,8 @@ sub envfrom_callback {
     if ( ! $spf_server ) {
         $self->log_error( 'SPF Setup Error' );
         $self->metric_count( 'spf_total', { 'result' => 'error' } );
-        $self->add_auth_header('spf=temperror');
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->set_value( 'temperror' );
+        $self->add_auth_header($header);
         return;
     }
 
@@ -151,13 +155,11 @@ sub envfrom_callback {
 
         $self->metric_count( 'spf_total', { 'result' => $result_code } );
 
-        my $auth_header = join( q{ },
-            $self->format_header_entry( 'spf',           $result_code ),
-            $self->format_header_entry( 'smtp.mailfrom', $self->get_address_from( $env_from ) ),
-            $self->format_header_entry( 'smtp.helo',     $self->{'helo_name'} ),
-        );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->set_value( $result_code );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->set_value( $self->get_address_from( $env_from ) ) );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->set_value( $self->{ 'helo_name' } ) );
         if ( !( $config->{'hide_none'} && $result_code eq 'none' ) ) {
-            $self->add_auth_header($auth_header);
+            $self->add_auth_header($header);
         }
 
         # Set for DMARC
@@ -179,7 +181,8 @@ sub envfrom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'SPF Error ' . $error );
-        $self->add_auth_header('spf=temperror');
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->set_value( 'temperror' );
+        $self->add_auth_header($header);
         $self->metric_count( 'spf_total', { 'result' => 'error' } );
         $self->{'failmode'} = 1;
     }

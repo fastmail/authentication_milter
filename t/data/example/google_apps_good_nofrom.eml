@@ -3,7 +3,7 @@ Authentication-Results: test.module;
     dkim=pass (1024-bit rsa key sha256) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3;
     dmarc=pass (p=none,d=none) header.from=marcbradshaw.net;
     iprev=pass policy.iprev=74.125.82.171 (mail-we0-f171.google.com);
-    spf=pass smtp.mailfrom= smtp.helo=marcbradshaw.net;
+    spf=pass smtp.mailfrom="" smtp.helo=marcbradshaw.net;
     x-google-dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
     x-ptr=fail x-ptr-helo=marcbradshaw.net x-ptr-lookup=mail-we0-f171.google.com
 Received-SPF: pass
