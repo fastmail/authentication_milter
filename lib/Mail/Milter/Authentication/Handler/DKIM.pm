@@ -228,7 +228,7 @@ sub eom_callback {
             if ( $signature_result ne 'pass' and $signature_result ne 'none' ) {
                 $signature_result_detail =~ /$signature_result \((.*)\)/;
                 if ( $1 ) {
-                    $result_comment = $1 . '; ';
+                    $result_comment = $1 . ', ';
                 }
             }
             if (
@@ -334,7 +334,7 @@ sub eom_callback {
                         my $comment = ( $default ? 'default ' : q{} )
                                     . "$name policy"
                                     . ( $location ? " from $location" : q{} )
-#                                   . ( $string   ? "; $string"       : q{} )
+#                                   . ( $string   ? ", $string"       : q{} )
                         ;
                         $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( $comment ) );
                         $self->add_auth_header( $header );

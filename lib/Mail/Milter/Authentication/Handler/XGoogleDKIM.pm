@@ -217,7 +217,7 @@ sub eom_callback {
             if ( $signature_result ne 'pass' and $signature_result ne 'none' ) {
                 $signature_result_detail =~ /$signature_result \((.*)\)/;
                 if ( $1 ) {
-                    $result_comment = $1 . '; ';
+                    $result_comment = $1 . ', ';
                 }
             }
             if (
