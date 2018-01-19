@@ -4,7 +4,7 @@ Authentication-Results: test.module;
     dmarc=fail (p=none,d=none) header.from=marcbradshaw.net;
     iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
     spf=softfail smtp.mailfrom=marc@marcbradshaw.net smtp.helo=bad.name.google.com;
-    x-ptr=fail x-ptr-helo=bad.name.google.com x-ptr-lookup=
+    x-ptr=fail x-ptr-helo=bad.name.google.com x-ptr-lookup=""
 Received-SPF: softfail
     (marcbradshaw.net: Sender is not authorized by default to use 'marc@marcbradshaw.net' in 'mfrom' identity, however domain is not currently prepared for false failures (mechanism '~all' matched))
     receiver=test.module;

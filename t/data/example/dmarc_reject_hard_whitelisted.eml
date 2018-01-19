@@ -3,7 +3,7 @@ Authentication-Results: test.module;
     dmarc=fail (p=reject,d=reject) header.from=goestheweasel.com;
     iprev=fail policy.iprev=99.123.123.123 (NOT FOUND);
     spf=fail smtp.mailfrom=test@goestheweasel.com smtp.helo=bad.name.google.com;
-    x-ptr=fail x-ptr-helo=bad.name.google.com x-ptr-lookup=
+    x-ptr=fail x-ptr-helo=bad.name.google.com x-ptr-lookup=""
 Received-SPF: fail
     (goestheweasel.com: Sender is not authorized by default to use 'test@goestheweasel.com' in 'mfrom' identity (mechanism '-all' matched))
     receiver=test.module;

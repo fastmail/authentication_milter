@@ -5,6 +5,9 @@ use base 'Mail::Milter::Authentication::Handler';
 use version; our $VERSION = version->declare('v1.1.7');
 
 use Sys::Syslog qw{:standard :macros};
+use Mail::AuthenticationResults::Header::Entry;
+use Mail::AuthenticationResults::Header::SubEntry;
+use Mail::AuthenticationResults::Header::Comment;
 
 sub default_config {
     return {};
@@ -50,22 +53,14 @@ sub helo_callback {
         }
     }
 
-    if ( $found_match ) {
-        $self->dbgout( 'PTRMatch', 'pass', LOG_DEBUG );
-        $self->add_c_auth_header(
-                $self->format_header_entry( 'x-ptr',        'pass' ) . q{ }
-              . $self->format_header_entry( 'x-ptr-helo',   $helo_host ) . q{ }
-              . $self->format_header_entry( 'x-ptr-lookup', $domains ) );
-        $self->metric_count( 'ptr_total', { 'result' => 'pass'} );
-    }
-    else {
-        $self->dbgout( 'PTRMatch', 'fail', LOG_DEBUG );
-        $self->add_c_auth_header(
-                $self->format_header_entry( 'x-ptr',        'fail' ) . q{ }
-              . $self->format_header_entry( 'x-ptr-helo',   $helo_host ) . q{ }
-              . $self->format_header_entry( 'x-ptr-lookup', $domains ) );
-        $self->metric_count( 'ptr_total', { 'result' => 'fail'} );
-    }
+    my $result = $found_match ? 'pass' : 'fail';
+    $self->dbgout( 'PTRMatch', $result, LOG_DEBUG );
+    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-ptr' )->set_value( $result );
+    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-ptr-helo' )->set_value( $helo_host ) );
+    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-ptr-lookup' )->set_value( $domains ) );
+    $self->add_c_auth_header( $header );
+    $self->metric_count( 'ptr_total', { 'result' => $result} );
+
     return;
 }
 
