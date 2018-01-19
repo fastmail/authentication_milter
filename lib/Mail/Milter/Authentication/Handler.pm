@@ -102,6 +102,7 @@ sub top_setup_callback {
     $self->set_return( $self->smfis_continue() );
     my $callbacks = $self->get_callbacks( 'setup' );
     foreach my $handler ( @$callbacks ) {
+        $self->dbgout( 'CALLBACK', 'Setup ' . $handler, LOG_DEBUG );
         my $start_time = $self->get_microseconds();
         $self->get_handler($handler)->setup_callback();
         $self->metric_count( 'time_microseconds_total', { 'callback' => 'setup', 'handler' => $handler }, $self->get_microseconds() - $start_time );
@@ -152,6 +153,7 @@ sub top_connect_callback {
 
         my $callbacks = $self->get_callbacks( 'connect' );
         foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'CALLBACK', 'Connect ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->connect_callback( $hostname, $ip ); };
             if ( my $error = $@ ) {
@@ -221,6 +223,7 @@ sub top_helo_callback {
             $self->{'helo_name'} = $helo_host;
             my $callbacks = $self->get_callbacks( 'helo' );
             foreach my $handler ( @$callbacks ) {
+                $self->dbgout( 'CALLBACK', 'Helo ' . $handler, LOG_DEBUG );
                 my $start_time = $self->get_microseconds();
                 eval{ $self->get_handler($handler)->helo_callback($helo_host); };
                 if ( my $error = $@ ) {
@@ -274,6 +277,7 @@ sub top_envfrom_callback {
 
         my $callbacks = $self->get_callbacks( 'envfrom' );
         foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'CALLBACK', 'EnvFrom ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval { $self->get_handler($handler)->envfrom_callback($env_from); };
             if ( my $error = $@ ) {
@@ -316,6 +320,7 @@ sub top_envrcpt_callback {
         }
         my $callbacks = $self->get_callbacks( 'envrcpt' );
         foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'CALLBACK', 'EnvRcpt ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->envrcpt_callback($env_to); };
             if ( my $error = $@ ) {
@@ -362,6 +367,7 @@ sub top_header_callback {
 
         my $callbacks = $self->get_callbacks( 'header' );
         foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'CALLBACK', 'Header ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->header_callback( $header, $value ); };
             if ( my $error = $@ ) {
@@ -402,6 +408,7 @@ sub top_eoh_callback {
         }
         my $callbacks = $self->get_callbacks( 'eoh' );
         foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'CALLBACK', 'EOH ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->eoh_callback(); };
             if ( my $error = $@ ) {
@@ -443,6 +450,7 @@ sub top_body_callback {
         }
         my $callbacks = $self->get_callbacks( 'body' );
         foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'CALLBACK', 'Body ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->body_callback( $body_chunk ); };
             if ( my $error = $@ ) {
@@ -484,6 +492,7 @@ sub top_eom_callback {
         }
         my $callbacks = $self->get_callbacks( 'eom' );
         foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'CALLBACK', 'EOM ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->eom_callback(); };
             if ( my $error = $@ ) {
@@ -547,6 +556,7 @@ sub top_abort_callback {
         }
         my $callbacks = $self->get_callbacks( 'abort' );
         foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'CALLBACK', 'Abort ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->abort_callback(); };
             if ( my $error = $@ ) {
@@ -587,6 +597,7 @@ sub top_close_callback {
         }
         my $callbacks = $self->get_callbacks( 'close' );
         foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'CALLBACK', 'Close ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->close_callback(); };
             if ( my $error = $@ ) {
