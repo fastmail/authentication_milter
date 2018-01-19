@@ -1,7 +1,7 @@
 # Test configuration for auth milter
 {
 
-    "debug"                           : 0,
+    "debug"                           : 1,
     "dryrun"                          : 0,
     "logtoerr"                        : 0,
     "error_log"                       : "tmp/milter.err",

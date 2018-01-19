@@ -1,7 +1,7 @@
 # Test configuration for auth milter smtp dryrun
 {
 
-    "debug"                           : 0,
+    "debug"                           : 1,
     "dryrun"                          : 1,
     "logtoerr"                        : 0,
     "error_log"                       : "tmp/smtp.dryrun.err",
