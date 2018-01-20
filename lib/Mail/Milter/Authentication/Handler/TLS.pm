@@ -5,6 +5,9 @@ use base 'Mail::Milter::Authentication::Handler';
 use version; our $VERSION = version->declare('v1.1.7');
 
 use Sys::Syslog qw{:standard :macros};
+use Mail::AuthenticationResults::Header::Entry;
+use Mail::AuthenticationResults::Header::SubEntry;
+use Mail::AuthenticationResults::Header::Comment;
 
 sub default_config {
     return {};
@@ -49,17 +52,16 @@ sub envfrom_callback {
     if ($version) {
         $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits$trusted", LOG_INFO );
 
-        my $header = q{};
         my $metric_data = {};
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-tls' )->set_value( 'pass' );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'version' )->set_value( $version ) );
 
-        $header .= $self->format_header_entry( 'x-tls', 'pass' ) . ' ';
-        $header .= $self->format_header_entry( 'version', $version );
         if ( $cipher ) {
-            $header .= ' ' . $self->format_header_entry( 'cipher', $cipher );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'cipher' )->set_value( $cipher ) );
             $metric_data->{ 'cipher' } = $cipher;
         }
         if ( $bits ) {
-            $header .= ' ' . $self->format_header_entry( 'bits', $bits );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'bits' )->set_value( $bits ) );
             $metric_data->{ 'bits' } = $bits;
         }
         $metric_data->{ 'trusted' } = $trusted ? 1 : 0;
@@ -99,17 +101,16 @@ sub header_callback {
     if ($version) {
         $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits", LOG_INFO );
 
-        my $header = q{};
         my $metric_data = {};
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-tls' )->set_value( 'pass' );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'version' )->set_value( $version ) );
 
-        $header .= $self->format_header_entry( 'x-tls', 'pass' ) . ' ';
-        $header .= $self->format_header_entry( 'version', $version );
         if ( $cipher ) {
-            $header .= ' ' . $self->format_header_entry( 'cipher', $cipher );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'cipher' )->set_value( $cipher ) );
             $metric_data->{ 'cipher' } = $cipher;
         }
         if ( $bits ) {
-            $header .= ' ' . $self->format_header_entry( 'bits', $bits );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'bits' )->set_value( $bits ) );
             $metric_data->{ 'bits' } = $bits;
         }
 

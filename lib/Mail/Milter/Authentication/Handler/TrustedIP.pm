@@ -6,6 +6,9 @@ use version; our $VERSION = version->declare('v1.1.7');
 
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
+use Mail::AuthenticationResults::Header::Entry;
+use Mail::AuthenticationResults::Header::SubEntry;
+use Mail::AuthenticationResults::Header::Comment;
 
 sub default_config {
     return {
@@ -52,7 +55,8 @@ sub connect_callback {
     $self->{'is_trusted_ip_address'} = 0;
     if ( $self->is_trusted_ip_address($ip) ) {
         $self->dbgout( 'TrustedIP', 'pass', LOG_DEBUG );
-        $self->add_c_auth_header('x-trusted-ip=pass');
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-trusted-ip' )->set_value( 'pass' );
+        $self->add_c_auth_header( $header );
         $self->{'is_trusted_ip_address'} = 1;
         $self->metric_count( 'trustedip_connect_total' );
     }

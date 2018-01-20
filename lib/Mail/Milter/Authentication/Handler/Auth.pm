@@ -5,6 +5,9 @@ use base 'Mail::Milter::Authentication::Handler';
 use version; our $VERSION = version->declare('v1.1.7');
 
 use Sys::Syslog qw{:standard :macros};
+use Mail::AuthenticationResults::Header::Entry;
+use Mail::AuthenticationResults::Header::SubEntry;
+use Mail::AuthenticationResults::Header::Comment;
 
 sub default_config {
     return {};
@@ -56,7 +59,8 @@ sub envfrom_callback {
         $top_handler->{'auth_headers'}   = [];
         $self->{'is_authenticated'}       = 1;
         $self->metric_count( 'authenticated_connect_total' );
-        $self->add_auth_header('auth=pass');
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'auth' )->set_value( 'pass' );
+        $self->add_auth_header( $header );
     }
     return;
 }
