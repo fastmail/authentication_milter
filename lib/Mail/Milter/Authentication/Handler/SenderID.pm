@@ -109,8 +109,8 @@ sub eoh_callback {
         $self->dbgout( 'SenderIdCode', $result_code, LOG_INFO );
 
         if ( ! ( $config->{'hide_none'} && $result_code eq 'none' ) ) {
-            my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->set_value( $result_code );
-            $self->add_auth_header( $header );
+            my $auth_header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->set_value( $result_code );
+            $self->add_auth_header( $auth_header );
 #my $result_local  = $spf_result->local_explanation;
 #my $result_auth   = $spf_result->can( 'authority_explanation' ) ? $spf_result->authority_explanation() : '';
             my $result_header = $spf_result->received_spf_header();
