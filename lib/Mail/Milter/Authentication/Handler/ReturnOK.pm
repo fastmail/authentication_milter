@@ -6,6 +6,9 @@ use version; our $VERSION = version->declare('v1.1.7');
 
 use Net::DNS;
 use Sys::Syslog qw{:standard :macros};
+use Mail::AuthenticationResults::Header::Entry;
+use Mail::AuthenticationResults::Header::SubEntry;
+use Mail::AuthenticationResults::Header::Comment;
 
 sub default_config {
     return {};
@@ -45,12 +48,12 @@ sub _check_address {
             my $org_domain = eval{ $dmarc_object->get_organizational_domain( $domain ); };
             if ( $org_domain eq $domain ) {
                 $self->{ 'metrics' }->{ $type . '_is_org_domain' } = 'yes';
-                push @{ $self->{ 'details' } }, $type . '_is_org_domain=yes';
+                push @{ $self->{ 'details' } }, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( $type . '_is_org_domain' )->set_value( 'yes' );
             }
             else {
                 $self->_check_domain( $org_domain, $type, 1 );
                 $self->{ 'metrics' }->{ $type . '_is_org_domain' } = 'no';
-                push @{ $self->{ 'details' } }, $type . '_is_org_domain=no';
+                push @{ $self->{ 'details' } }, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( $type . '_is_org_domain' )->set_value( 'no' );
             }
         }
     }
@@ -73,7 +76,7 @@ sub _check_domain {
     $self->{ 'metrics' }->{ ( $is_org ? 'org_' : '' ) . $type } = 'fail';
     my @details;
 
-    push @details, "domain=$domain";
+    push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'domain' )->set_value( $domain );
 
     my $has_mx   = 0;
     my $has_a    = 0;
@@ -95,16 +98,16 @@ sub _check_domain {
         else {
             my $error = $resolver->errorstring;
             if ( $error ) {
-                push @details, $self->format_header_entry('mx.error', $error);
+                push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'mx.error' )->set_value( $error );
             }
             else {
-                push @details, 'mx.error=none';
+                push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'mx.error' )->set_value( 'none' );
             }
         }
     };
     if ( my $error = $@ ) {
         $self->log_error( "ReturnOK: Domain lookup fatal error $error for $domain" );
-        push @details, $self->format_header_entry('mx.error', 'lookup_error');
+        push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'mx.error' )->set_value( 'lookup_error' );
     }
 
     if ( ! $has_mx ) {
@@ -123,16 +126,16 @@ sub _check_domain {
             else {
                 my $error = $resolver->errorstring;
                 if ( $error ) {
-                    push @details, $self->format_header_entry('a.error', $error);
+                    push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'a.error' )->set_value( $error );
                 }
                 else {
-                    push @details, 'a.error=none';
+                    push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'a.error' )->set_value( 'none' );
                 }
             }
         };
         if ( my $error = $@ ) {
             $self->log_error( "ReturnOK: Domain lookup fatal error $error for $domain" );
-            push @details, $self->format_header_entry('a.error', 'lookup_error');
+            push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'a.error' )->set_value( 'lookup_error' );
         }
 
         eval {
@@ -149,16 +152,16 @@ sub _check_domain {
             else {
                 my $error = $resolver->errorstring;
                 if ( $error ) {
-                    push @details, $self->format_header_entry('aaaa.error', $error);
+                    push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'aaaa.error' )->set_value( $error );
                 }
                 else {
-                    push @details, 'aaaa.error=none';
+                    push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'aaaa.error' )->set_value( 'none' );
                 }
             }
         };
         if ( my $error = $@ ) {
             $self->log_error( "ReturnOK: Domain lookup fatal error $error for $domain" );
-            push @details, $self->format_header_entry('aaaa.error', 'lookup_error');
+            push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'aaaa.error' )->set_value( 'lookup_error' );
         }
 
 
@@ -173,11 +176,12 @@ sub _check_domain {
         }
     }
 
-    push @details, 'result=' . $result;
+    push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'result' )->set_value( $result );
 
     my $prefix = $type . ( $is_org ? '_org' : q{} );
     foreach my $detail ( @details ) {
-        push @{ $self->{ 'details' } }, $prefix . '.' . $detail;
+        $detail->set_key( $prefix . '.' . $detail->key() );
+        push @{ $self->{ 'details' } }, $detail;
     }
 
     return;
@@ -218,10 +222,10 @@ sub eom_callback {
     my $metrics = $self->{ 'metrics' };
 
     $self->dbgout( 'ReturnOKCheck', $self->{ 'metrics' }->{ 'result'} , LOG_DEBUG );
-    my $header = join( ' ',
-        $self->format_header_entry( 'x-return-mx', $metrics->{ 'result' } ),
-        @{ $self->{ 'details' } },
-    );
+    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-return-mx' )->set_value( $metrics->{ 'result' } );
+    foreach my $detail ( @{ $self->{ 'details' } } ) {
+        $header->add_child( $detail );
+    }
 
     $self->add_auth_header($header);
 
