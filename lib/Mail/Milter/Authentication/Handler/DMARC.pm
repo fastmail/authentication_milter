@@ -141,17 +141,17 @@ sub _process_dmarc_for {
             if ( $error =~ /invalid envelope_from at / ) {
                 $self->log_error( 'DMARC Invalid envelope from <' . $env_domain_from . '>' );
                 $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
-                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'permerror' );
-                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'envelope from invalid' ) );
-                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
+                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'envelope from invalid' ) );
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
                 $self->_add_dmarc_header( $header );
             }
             else {
                 $self->log_error( 'DMARC Mail From Error for <' . $env_domain_from . '> ' . $error );
                 $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'temperror' );
-                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'envelope from failed' ) );
-                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'temperror' );
+                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'envelope from failed' ) );
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
                 $self->_add_dmarc_header( $header );
             }
             return;
@@ -171,9 +171,9 @@ sub _process_dmarc_for {
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC Header From Error ' . $error );
         $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'permerror' );
-        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'from header invalid' ) );
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'from header invalid' ) );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
         $self->_add_dmarc_header( $header );
         return;
     }
@@ -273,7 +273,7 @@ sub _process_dmarc_for {
 
     # Add the AR Header
     if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( $dmarc_code );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( $dmarc_code );
 
         # What comments can we add?
         my @comments;
@@ -291,10 +291,10 @@ sub _process_dmarc_for {
         #}
 
         if ( @comments ) {
-            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( join( ',', @comments ) ) );
+            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( join( ',', @comments ) ) );
         }
 
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
         $self->_add_dmarc_header( $header );
     }
 
@@ -360,7 +360,7 @@ sub get_dmarc_object {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DMARC IP Error ' . $error );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'permerror' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
         $self->add_auth_header( $header );
         $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
         $self->{'failmode'} = 1;
@@ -511,14 +511,14 @@ sub eom_callback {
             if ( my $error = $@ ) {
                 if ( $error =~ /invalid header_from at / ) {
                     $self->log_error( 'DMARC Error invalid header_from <' . $self->{'from_header'} . '>' );
-                    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'permerror' );
-                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+                    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
+                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
                     $self->_add_dmarc_header( $header );
                 }
                 else {
                     $self->log_error( 'DMARC Error ' . $error );
-                    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'temperror' );
-                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->set_value( $header_domain ) );
+                    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'temperror' );
+                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
                     $self->_add_dmarc_header( $header );
                 }
             }
@@ -532,7 +532,7 @@ sub eom_callback {
     }
     else {
         # We got no headers at all? That's bogus!
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->set_value( 'permerror' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
         $self->add_auth_header( $header );
     }
 

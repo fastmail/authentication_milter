@@ -75,7 +75,7 @@ sub eoh_callback {
     my $spf_server = $self->get_object('spf_server');
     if ( ! $spf_server ) {
         $self->log_error( 'SenderID Setup Error' );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->set_value( 'temperror' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->safe_set_value( 'temperror' );
         $self->add_auth_header($header);
         $self->metric_count( 'senderid_total', { 'result' => 'error' } );
         return;
@@ -87,7 +87,7 @@ sub eoh_callback {
 
     if ( ! $identity ) {
         $self->log_error( 'SENDERID Error No Identity' );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->set_value( 'permerror' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->safe_set_value( 'permerror' );
         $self->add_auth_header( $header );
         $self->metric_count( 'senderid_total', { 'result' => 'permerror' } );
         return;
@@ -109,7 +109,7 @@ sub eoh_callback {
         $self->dbgout( 'SenderIdCode', $result_code, LOG_INFO );
 
         if ( ! ( $config->{'hide_none'} && $result_code eq 'none' ) ) {
-            my $auth_header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->set_value( $result_code );
+            my $auth_header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->safe_set_value( $result_code );
             $self->add_auth_header( $auth_header );
 #my $result_local  = $spf_result->local_explanation;
 #my $result_auth   = $spf_result->can( 'authority_explanation' ) ? $spf_result->authority_explanation() : '';
@@ -122,7 +122,7 @@ sub eoh_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'SENDERID Error ' . $error );
         $self->metric_count( 'senderid_total', { 'result' => 'error' } );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->set_value( 'temperror' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->safe_set_value( 'temperror' );
         $self->add_auth_header($header);
         return;
     }

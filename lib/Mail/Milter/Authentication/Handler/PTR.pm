@@ -55,9 +55,9 @@ sub helo_callback {
 
     my $result = $found_match ? 'pass' : 'fail';
     $self->dbgout( 'PTRMatch', $result, LOG_DEBUG );
-    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-ptr' )->set_value( $result );
-    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-ptr-helo' )->set_value( $helo_host ) );
-    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-ptr-lookup' )->set_value( $domains ) );
+    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-ptr' )->safe_set_value( $result );
+    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-ptr-helo' )->safe_set_value( $helo_host ) );
+    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-ptr-lookup' )->safe_set_value( $domains ) );
     $self->add_c_auth_header( $header );
     $self->metric_count( 'ptr_total', { 'result' => $result} );
 

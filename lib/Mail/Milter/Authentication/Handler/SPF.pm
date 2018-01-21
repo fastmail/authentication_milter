@@ -87,7 +87,7 @@ sub envfrom_callback {
     if ( ! $spf_server ) {
         $self->log_error( 'SPF Setup Error' );
         $self->metric_count( 'spf_total', { 'result' => 'error' } );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->set_value( 'temperror' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( 'temperror' );
         $self->add_auth_header($header);
         return;
     }
@@ -155,9 +155,9 @@ sub envfrom_callback {
 
         $self->metric_count( 'spf_total', { 'result' => $result_code } );
 
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->set_value( $result_code );
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->set_value( $self->get_address_from( $env_from ) ) );
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->set_value( $self->{ 'helo_name' } ) );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( $result_code );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->safe_set_value( $self->get_address_from( $env_from ) ) );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->safe_set_value( $self->{ 'helo_name' } ) );
         if ( !( $config->{'hide_none'} && $result_code eq 'none' ) ) {
             $self->add_auth_header($header);
         }
@@ -181,7 +181,7 @@ sub envfrom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'SPF Error ' . $error );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->set_value( 'temperror' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( 'temperror' );
         $self->add_auth_header($header);
         $self->metric_count( 'spf_total', { 'result' => 'error' } );
         $self->{'failmode'} = 1;

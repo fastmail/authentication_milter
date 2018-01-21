@@ -59,7 +59,7 @@ sub envfrom_callback {
         $top_handler->{'auth_headers'}   = [];
         $self->{'is_authenticated'}       = 1;
         $self->metric_count( 'authenticated_connect_total' );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'auth' )->set_value( 'pass' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'auth' )->safe_set_value( 'pass' );
         $self->add_auth_header( $header );
     }
     return;

@@ -65,7 +65,7 @@ sub connect_callback {
     $self->{'is_local_ip_address'} = 0;
     if ( $self->is_local_ip_address($ip) ) {
         $self->dbgout( 'LocalIP', 'pass', LOG_DEBUG );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-local-ip' )->set_value( 'pass' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-local-ip' )->safe_set_value( 'pass' );
         $self->add_c_auth_header( $header );
         $self->{'is_local_ip_address'} = 1;
         $self->metric_count( 'localip_connect_total' );

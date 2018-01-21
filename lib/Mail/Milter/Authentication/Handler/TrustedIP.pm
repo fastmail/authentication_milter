@@ -55,7 +55,7 @@ sub connect_callback {
     $self->{'is_trusted_ip_address'} = 0;
     if ( $self->is_trusted_ip_address($ip) ) {
         $self->dbgout( 'TrustedIP', 'pass', LOG_DEBUG );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-trusted-ip' )->set_value( 'pass' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-trusted-ip' )->safe_set_value( 'pass' );
         $self->add_c_auth_header( $header );
         $self->{'is_trusted_ip_address'} = 1;
         $self->metric_count( 'trustedip_connect_total' );

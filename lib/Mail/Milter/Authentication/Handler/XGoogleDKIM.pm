@@ -80,8 +80,8 @@ sub eoh_callback {
         $self->metric_count( 'xgoogledkim_total', { 'result' => 'none' } );
         $self->dbgout( 'XGoogleDKIMResult', 'No X-Google-DKIM headers', LOG_INFO );
         if ( !( $config->{'hide_none'} ) ) {
-            my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->set_value( 'none' );
-            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'no signatures found' ) );
+            my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->safe_set_value( 'none' );
+            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'no signatures found' ) );
             $self->add_auth_header( $header );
         }
         delete $self->{'headers'};
@@ -186,8 +186,8 @@ sub eom_callback {
 
         if ( !$dkim->signatures() ) {
             if ( !( $config->{'hide_none'} && $dkim_result eq 'none' ) ) {
-                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->set_value( $dkim_result );
-                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'no signatures found' ) );
+                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->safe_set_value( $dkim_result );
+                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'no signatures found' ) );
                 $self->add_auth_header( $header );
             }
         }
@@ -233,11 +233,11 @@ sub eom_callback {
                     $key_data = $key->size() . '-bit ' . $key->type() . ' key';
                 };
 
-                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->set_value( $signature_result );
-                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( $result_comment . $key_data ) );
-                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.d' )->set_value( $signature->domain() ) );
-                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.i' )->set_value( $signature->identity() ) );
-                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.b' )->set_value( substr( $signature->data(), 0, 8 ) ) );
+                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->safe_set_value( $signature_result );
+                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( $result_comment . $key_data ) );
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.d' )->safe_set_value( $signature->domain() ) );
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.i' )->safe_set_value( $signature->identity() ) );
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.b' )->safe_set_value( substr( $signature->data(), 0, 8 ) ) );
                 $self->add_auth_header($header);
             }
         }
@@ -271,8 +271,8 @@ sub _check_error {
             or $error =~ /^DNS query timeout/
     ){
         $self->log_error( 'Temp XGoogleDKIM Error - ' . $error );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->set_value( 'temperror' );
-        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'dns timeout' ) );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->safe_set_value( 'temperror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'dns timeout' ) );
         $self->add_auth_header( $header );
     }
     elsif ( $error =~ /^no domain to fetch policy for$/
@@ -281,13 +281,13 @@ sub _check_error {
             or $error =~ /^invalid name /
     ){
         $self->log_error( 'Perm XGoogleDKIM Error - ' . $error );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->set_value( 'perlerror' );
-        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'syntax or domain error' ) );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->safe_set_value( 'perlerror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'syntax or domain error' ) );
         $self->add_auth_header( $header );
     }
     else {
         $self->log_error( 'Unexpected XGoogleDKIM Error - ' . $error );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->set_value( 'temperror' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->safe_set_value( 'temperror' );
         $self->add_auth_header( $header );
         # Fill these in as they occur, but for unknowns err on the side of caution
         # and tempfail/exit
