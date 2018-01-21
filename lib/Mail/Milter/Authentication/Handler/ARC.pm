@@ -95,8 +95,8 @@ sub eoh_callback {
         $self->metric_count( 'arc_total', { 'result' => 'none' } );
         $self->dbgout( 'ARCResult', 'No ARC headers', LOG_INFO );
         unless ($config->{'hide_none'}) {
-            my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->set_value( 'none' );
-            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'no signatures found' ) );
+            my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( 'none' );
+            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'no signatures found' ) );
             $self->add_auth_header( $header );
         }
         $self->{arc_result} = 'none';
@@ -200,7 +200,7 @@ sub eom_callback {
 
         $self->dbgout( 'ARCResult', $arc_result_detail, LOG_INFO );
 
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->set_value( $arc_result_detail );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( $arc_result_detail );
         $self->add_auth_header( $header );
 
         $self->{arc_result} = $arc_result;
@@ -232,14 +232,14 @@ sub _check_error {
             or $error =~ /^DNS query timeout/
     ){
         $self->log_error( 'Temp ARC Error - ' . $error );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->set_value( 'temperror' );
-        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'dns timeout' ) );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( 'temperror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'dns timeout' ) );
         $self->add_auth_header( $header );
     }
     elsif ( $error =~ /^DNS error: SERVFAIL/ ){
         $self->log_error( 'Temp ARC Error - ' . $error );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->set_value( 'temperror' );
-        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'dns servfail' ) );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( 'temperror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'dns servfail' ) );
         $self->add_auth_header( $header );
     }
     elsif ( $error =~ /^no domain to fetch policy for$/
@@ -248,13 +248,13 @@ sub _check_error {
             or $error =~ /^invalid name /
     ){
         $self->log_error( 'Perm ARC Error - ' . $error );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->set_value( 'permerror' );
-        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->set_value( 'syntax or domain error' ) );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( 'permerror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'syntax or domain error' ) );
         $self->add_auth_header( $header );
     }
     else {
         $self->log_error( 'Unexpected ARC Error - ' . $error );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->set_value( 'temperror' );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( 'temperror' );
         $self->add_auth_header( $header );
         # Fill these in as they occur, but for unknowns err on the side of caution
         # and tempfail/exit
