@@ -200,7 +200,6 @@ sub eom_callback {
 
         $self->dbgout( 'ARCResult', $arc_result_detail, LOG_INFO );
 
-
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( $arc_result );
 
         my @items;
@@ -212,10 +211,21 @@ sub eom_callback {
             push @items,
                 "$type."
               . ( $signature->instance()      || '' )       . '.'
-              . ( $signature->domain()        || '_none_' ) . '='
+              . ( $signature->domain()        || '(none)' ) . '='
               . ( $signature->result_detail() || '?' );
         }
-        $header->add_child( Mail::AuthenticationResults::header::Comment->new()->safe_set_value(join( ', ', @items )  ) );
+
+        if ( @items ) {
+            my $header_comment = Mail::AuthenticationResults::header::Comment->new();
+            my $header_comment_text = join( ', ', @items );
+            # Try set_value first (required for potential nested comment), if this fails then
+            # set using safe_set_value
+            eval { $header_comment->set_value( $header_comment_text ); };
+            if ( my $error = $@ ) {
+                $header_comment->safe_set_value( $header_comment_text );
+            }
+            $header->add_child( $header_comment );
+        }
 
         $self->add_auth_header( $header );
 
