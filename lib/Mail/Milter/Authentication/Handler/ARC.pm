@@ -200,7 +200,23 @@ sub eom_callback {
 
         $self->dbgout( 'ARCResult', $arc_result_detail, LOG_INFO );
 
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( $arc_result_detail );
+
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( $arc_result );
+
+        my @items;
+        foreach my $signature ( @{ $arc->{signatures} } ) {
+            my $type =
+                ref($signature) eq 'Mail::DKIM::ARC::Seal'             ? 'as'
+              : ref($signature) eq 'Mail::DKIM::ARC::MessageSignature' ? 'ams'
+              : ref($signature);
+            push @items,
+                "$type."
+              . ( $signature->instance()      || '' )    i  . '.'
+              . ( $signature->domain()        || '_none_' ) . '='
+              . ( $signature->result_detail() || '?' );
+        }
+        $header->add_child( Mail::AuthenticationResults::header::Comment->new()->safe_set_value(join( ', ', @items )  ) );
+
         $self->add_auth_header( $header );
 
         $self->{arc_result} = $arc_result;
