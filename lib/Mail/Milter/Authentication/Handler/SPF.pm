@@ -129,14 +129,17 @@ sub envfrom_callback {
 
         # Best Guess SPF based on org domain
         # ToDo report this in both metrics and AR header
-        if ( $spf_result eq 'none' ) {
+        my $auth_domain;
+        if ( $result_code eq 'none' ) {
+        $self->dbgout( 'SPFX1', $result_code, LOG_INFO );
             if ( $config->{'best_guess'} ) {
                 if ( $self->is_handler_loaded( 'DMARC' ) ) {
                     my $dmarc_handler = $self->get_handler('DMARC');
                     my $dmarc_object = $dmarc_handler->get_dmarc_object();
                     if ( $domain ) {
                         my $org_domain = eval{ $dmarc_object->get_organizational_domain( $domain ); };
-                        if ( $org_domain eq $domain ) {
+                        if ( $org_domain ne $domain ) {
+                            $auth_domain = $org_domain;
                             $spf_request = Mail::SPF::Request->new(
                                 'versions'         => [1],
                                 'scope'            => $scope,
@@ -156,6 +159,9 @@ sub envfrom_callback {
         $self->metric_count( 'spf_total', { 'result' => $result_code } );
 
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( $result_code );
+        if ( $auth_domain ) {
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-authority-domain' )->safe_set_value( $auth_domain ) );
+        }
         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->safe_set_value( $self->get_address_from( $env_from ) ) );
         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->safe_set_value( $self->{ 'helo_name' } ) );
         if ( !( $config->{'hide_none'} && $result_code eq 'none' ) ) {
