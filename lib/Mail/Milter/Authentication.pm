@@ -509,6 +509,12 @@ sub start {
 
     $srvargs{'no_client_stdout'} = 1;
 
+    # Early redirection to log file if possible
+    if ( $config->{'error_log'} ) {
+        open( STDERR, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
+        open( STDOUT, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
+    }
+
     if ( $args->{'daemon'} ) {
         if ( $EUID == 0 ) {
             _warn(

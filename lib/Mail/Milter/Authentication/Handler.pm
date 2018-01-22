@@ -1231,7 +1231,7 @@ sub dbgout {
         return;
     }
 
-    if ( $self->config()->{'logtoerr'} ) {
+    if ( $config->{'logtoerr'} ) {
         Mail::Milter::Authentication::_warn( "$queue_id: $key: $value" );
     }
 
