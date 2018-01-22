@@ -15,6 +15,9 @@ if ( ! -e 't/01-tools.t' ) {
 
 chdir 't';
 
+open( STDERR, '>>', 'tmp/misc.err' ) || die "Cannot open errlog [$!]";
+open( STDOUT, '>>', 'tmp/misc.err' ) || die "Cannot open errlog [$!]";
+
 my $AddressTests = {
     '"Dear Customer
 
