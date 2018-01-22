@@ -211,7 +211,7 @@ sub eom_callback {
               : ref($signature);
             push @items,
                 "$type."
-              . ( $signature->instance()      || '' )    i  . '.'
+              . ( $signature->instance()      || '' )       . '.'
               . ( $signature->domain()        || '_none_' ) . '='
               . ( $signature->result_detail() || '?' );
         }
