@@ -38,7 +38,7 @@ sub tools_test {
 
     waitpid( $cat_pid,0 );
 
-    files_eq( 'data/example/tools_test.eml', 'tmp/result/tools_test.eml', 'tools test');
+    files_eq_or_diff( 'data/example/tools_test.eml', 'tmp/result/tools_test.eml', 'tools test');
 
     return;
 }
@@ -94,7 +94,7 @@ sub tools_pipeline_test {
 
     sleep 1;
 
-    files_eq( 'data/example/tools_pipeline_test.eml', 'tmp/result/tools_pipeline_test.eml', 'tools pipeline test');
+    files_eq_or_diff( 'data/example/tools_pipeline_test.eml', 'tmp/result/tools_pipeline_test.eml', 'tools pipeline test');
 
     return;
 }

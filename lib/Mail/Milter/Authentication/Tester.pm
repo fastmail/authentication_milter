@@ -205,7 +205,7 @@ sub smtp_process {
 
     if ( ! $args->{'no_cat'} ) {
         waitpid( $cat_pid,0 );
-        files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
+        files_eq_or_diff( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
     }
     else {
         is( $return, 1, 'SMTP Put Returned ok' );
@@ -272,7 +272,7 @@ sub smtp_process_multi {
 
     waitpid( $cat_pid,0 );
 
-    files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
+    files_eq_or_diff( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
 
     return;
 }
@@ -299,7 +299,7 @@ sub milter_process {
         'output'       => 'tmp/result/' . $args->{'dest'},
     });
 
-    files_eq( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'milter ' . $args->{'desc'} );
+    files_eq_or_diff( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'milter ' . $args->{'desc'} );
 
     return;
 }
