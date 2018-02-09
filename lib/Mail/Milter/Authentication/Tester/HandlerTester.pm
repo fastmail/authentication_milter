@@ -5,6 +5,7 @@ use warnings;
 
 use Carp;
 use Clone qw{ clone };
+use English qw{ -no_match_vars };
 use Mail::AuthenticationResults::Header;
 use Mail::AuthenticationResults::Header::AuthServID;
 use Mail::Milter::Authentication;
@@ -42,7 +43,7 @@ sub new {
     push @Mail::Milter::Authentication::ISA, 'Mail::Milter::Authentication::Protocol::SMTP';
 
     # Setup a fake server object
-    $authmilter->{ 'server' }->{ 'ppid' } = 123;
+    $authmilter->{ 'server' }->{ 'ppid' } = $PID;
 
     # Load handlers
     foreach my $name ( @{$config->{'load_handlers'}} ) {

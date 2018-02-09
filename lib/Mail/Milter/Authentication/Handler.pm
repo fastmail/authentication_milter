@@ -633,6 +633,32 @@ sub top_close_callback {
     return $self->get_return();
 }
 
+sub top_addheader_callback {
+    my ( $self ) = @_;
+    my $config = $self->config();
+
+    eval {
+        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        if ( $config->{'addheader_timeout'} ) {
+            alarm( $config->{'addheader_timeout'} );
+        }
+        my $callbacks = $self->get_callbacks( 'addheader' );
+        foreach my $handler ( @$callbacks ) {
+            my $start_time = $self->get_microseconds();
+            $self->get_handler($handler)->addheader_callback($self);
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'addheader', 'handler' => $handler }, $self->get_microseconds() - $start_time );
+        }
+        alarm(0);
+    };
+    if ( my $error = $@ ) {
+        $self->metric_count( 'callback_error_total', { 'stage' => 'addheader' } );
+        $self->log_error( 'Final callback error ' . $error );
+        $self->exit_on_close();
+        $self->tempfail_on_error();
+    }
+
+    return;
+}
 
 
 # Other methods
@@ -1354,8 +1380,9 @@ sub add_headers {
     my $config = $self->config();
 
     my $header = $self->get_my_hostname();
-    my @auth_headers;
     my $top_handler = $self->get_top_handler();
+
+    my @auth_headers;
     if ( exists( $top_handler->{'c_auth_headers'} ) ) {
         @auth_headers = @{ $top_handler->{'c_auth_headers'} };
     }
@@ -1373,25 +1400,7 @@ sub add_headers {
 
     $self->prepend_header( 'Authentication-Results', $header );
 
-    eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
-        if ( $config->{'addheader_timeout'} ) {
-            alarm( $config->{'addheader_timeout'} );
-        }
-        my $callbacks = $self->get_callbacks( 'addheader' );
-        foreach my $handler ( @$callbacks ) {
-            my $start_time = $self->get_microseconds();
-            $self->get_handler($handler)->addheader_callback($self);
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'addheader', 'handler' => $handler }, $self->get_microseconds() - $start_time );
-        }
-        alarm(0);
-    };
-    if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'addheader' } );
-        $self->log_error( 'Final callback error ' . $error );
-        $self->exit_on_close();
-        $self->tempfail_on_error();
-    }
+    $top_handler->top_addheader_callback();
 
     if ( exists( $top_handler->{'pre_headers'} ) ) {
         foreach my $header ( @{ $top_handler->{'pre_headers'} } ) {
@@ -1622,6 +1631,12 @@ Apply a policy to the generated authentication results
 =item top_abort_callback()
 
 Top level handler for the Abort event.
+
+=item top_addheader_callback()
+
+Top level handler for the addheader event.
+
+Called after the Authentication-Results header has been added, but before any other headers.
 
 =item top_close_callback()
 
