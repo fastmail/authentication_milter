@@ -132,11 +132,8 @@ sub eom_callback {
 
     }
 
-
     $self->dbgout( 'AlignedFrom', $result, LOG_DEBUG );
     $self->add_auth_header( Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-aligned-from' )->safe_set_value( $result ) );
-    #$self->add_auth_header( $self->format_header_entry( 'x-aligned-from', $result ) );
-
     $self->metric_count( 'alignedfrom_total', { 'result' => $result } );
 
     return;
