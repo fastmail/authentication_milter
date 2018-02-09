@@ -53,6 +53,7 @@ lib/Mail/Milter/Authentication/Metric/RowUptime.json
 lib/Mail/Milter/Authentication/Protocol/Milter.pm
 lib/Mail/Milter/Authentication/Protocol/SMTP.pm
 lib/Mail/Milter/Authentication/Tester.pm
+lib/Mail/Milter/Authentication/Tester/HandlerTester.pm
 share/authentication_milter.init
 share/authentication_milter.json
 share/mail-dmarc.ini

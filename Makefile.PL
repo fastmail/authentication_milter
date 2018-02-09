@@ -41,6 +41,7 @@ build_requires (
 
 requires (
     'Cwd'                   => 0,
+    'Clone'                 => 0,
     'Email::Date::Format'   => 0,
     'Email::Simple'         => 0,
     'English'               => 0,
