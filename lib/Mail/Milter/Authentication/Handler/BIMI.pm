@@ -39,6 +39,7 @@ sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     delete $self->{'bimi_header_index'};
     delete $self->{'remove_bimi_headers'};
+    $self->{ 'header_added' } = 0;
     return;
 }
 
@@ -76,6 +77,7 @@ sub header_callback {
             $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'multiple BIMI-Selector fields in message' ) );
             $self->add_auth_header( $header );
             $self->metric_count( 'bimi_total', { 'result' => 'fail', 'reason' => 'bad_selector_header' } );
+            $self->{ 'header_added' } = 1;
             $self->{'failmode'} = 1;
             return;
         }
@@ -88,6 +90,7 @@ sub header_callback {
             $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'multiple RFC5322 from fields in message' ) );
             $self->add_auth_header( $header );
             $self->metric_count( 'bimi_total', { 'result' => 'fail', 'reason' => 'bad_from_header' } );
+            $self->{ 'header_added' } = 1;
             $self->{'failmode'} = 1;
             return;
         }
@@ -115,6 +118,7 @@ sub eom_callback {
         }
     }
 
+    return if ( $self->{ 'header_added' } );
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
@@ -129,39 +133,47 @@ sub eom_callback {
         my $DMARCResult = $self->get_object( 'dmarc_result' );
 
         if ( ! $DMARCResult ) {
+
             $self->log_error( 'BIMI Error No DMARC Results object');
             my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'temperror' );
             $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Internal DMARC error' ) );
             $self->add_auth_header( $header );
-            return;
+            $self->{ 'header_added' } = 1;
+
         }
+        else {
 
-        $BIMI->set_resolver( $self->get_object( 'resolver' ) );
-        $BIMI->set_dmarc_object( $DMARCResult );
-        $BIMI->set_from_domain( $Domain );
-        $BIMI->set_selector( $Selector );
-        $BIMI->validate();
+            $BIMI->set_resolver( $self->get_object( 'resolver' ) );
+            $BIMI->set_dmarc_object( $DMARCResult );
+            $BIMI->set_from_domain( $Domain );
+            $BIMI->set_selector( $Selector );
+            $BIMI->validate();
 
-        my $Result = $BIMI->result();
-        my $AuthResults = $Result->get_authentication_results_object();
-        $self->add_auth_header( $AuthResults );
-        my $Record = $BIMI->record();
-        my $URLList = $Record->url_list();
-        if ( $Result->result() eq 'pass' ) {
-            $self->prepend_header( 'BIMI-Location', join( "\n",
-                'v=BIMI1;',
-                '    l=' . join( ',', @$URLList ) ) );
+            my $Result = $BIMI->result();
+            my $AuthResults = $Result->get_authentication_results_object();
+            $self->add_auth_header( $AuthResults );
+            $self->{ 'header_added' } = 1;
+            my $Record = $BIMI->record();
+            my $URLList = $Record->url_list();
+            if ( $Result->result() eq 'pass' ) {
+                $self->prepend_header( 'BIMI-Location', join( "\n",
+                    'v=BIMI1;',
+                    '    l=' . join( ',', @$URLList ) ) );
+            }
+
+            $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
         }
-
-        $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
 
     };
     if ( my $error = $@ ) {
         $self->log_error( 'BIMI Error ' . $error );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'temperror' );
-        $self->add_auth_header( $header );
-        return;
+        if ( ! $self->{ 'header_added' } ) {
+            my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'temperror' );
+            $self->add_auth_header( $header );
+            $self->{ 'header_added' } = 1;
+        }
     }
+
     return;
 }
 
@@ -172,6 +184,7 @@ sub close_callback {
     delete $self->{'failmode'};
     delete $self->{'remove_bimi_headers'};
     delete $self->{'bimi_header_index'};
+    delete $self->{ 'header_added' };
     return;
 }
 
