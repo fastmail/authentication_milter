@@ -84,6 +84,8 @@ sub new {
 
     $self->handler()->top_setup_callback();
 
+    $self->snapshot( '_new' );
+
     return $self;
 }
 
@@ -151,6 +153,82 @@ sub end_of_message {
 sub close {
     my ( $self ) = @_;
     return $self->handler()->top_close_callback();
+}
+
+sub abort {
+    my ( $self ) = @_;
+    return $self->handler()->top_abort_callback();
+}
+
+sub addheader {
+    my ( $self ) = @_;
+    return $self->handler()->top_addheader_callback();
+}
+
+sub run {
+    my ( $self, $args ) = @_;
+
+    $self->switch( '_new' );
+
+    my $returncode;
+    $returncode = $self->connect( $args->{ 'connect_name' }, $args->{ 'connect_ip' } );
+    die 'connect' if ( $returncode != SMFIS_CONTINUE );
+    $returncode = $self->helo( $args->{ 'helo' } );
+    die 'helo' if ( $returncode != SMFIS_CONTINUE );
+    $returncode = $self->mailfrom( $args->{ 'mailfrom' } );
+    die 'mailfrom' if ( $returncode != SMFIS_CONTINUE );
+    foreach my $rcptto ( @{ $args->{ 'rcptto' } } ) {
+        $returncode = $self->rcptto( $rcptto );
+        die 'rcptto ' . $rcptto if ( $returncode != SMFIS_CONTINUE );
+    }
+
+    my $body = $args->{ 'body' };
+    $body =~ s/\r?\n/\n/g;
+
+    my @lines = split( /\n/, $body );
+
+    # Process headers
+    my $buffer = q{};
+    while ( my $line = shift @lines ) {
+        chomp $line;
+        last if $line eq q{};
+
+        if ( $line =~ /^\s/ ) {
+            $buffer .= "\n" . $line;
+        }
+        else {
+            if ( $buffer ) {
+                my ( $key, $value ) = split( $buffer, ':', 2 );
+                $key =~ s/\s+$//;
+                $value =~ s/^\s+//;
+                $returncode = $self->header( $key, $value );
+                die "header $key: $value" if ( $returncode != SMFIS_CONTINUE );
+            }
+            $buffer = $line;
+        }
+
+    }
+    if ( $buffer ) {
+        my ( $key, $value ) = split( $buffer, ':', 2 );
+        $key =~ s/\s+$//;
+        $value =~ s/^\s+//;
+        $returncode = $self->header( $key, $value );
+        die "header $key: $value" if ( $returncode != SMFIS_CONTINUE );
+    }
+
+    $returncode = $self->end_of_headers();
+    die 'eoh' if ( $returncode != SMFIS_CONTINUE );
+
+    $returncode = $self->body( join( "\n", @lines) );
+    die 'body' if ( $returncode != SMFIS_CONTINUE );
+
+    $returncode = $self->end_of_message();
+    die 'body' if ( $returncode != SMFIS_CONTINUE );
+
+    $self->addheader();
+    #    $self->close();
+
+    return;
 }
 
 sub get_return {
@@ -292,6 +370,50 @@ Returns the value of get_return()
 Call the close callbacks.
 
 Returns the value of get_return()
+
+=item abort()
+
+Call the abort callbacks.
+
+=item addheader()
+
+Call the addheader callbacks.
+
+=item run( $args )
+
+Run with a given set of data as defined in $args hashref.
+
+Dies if the mail would be rejected.
+
+Arguments of $args are.
+
+=over
+
+=item connect_name
+
+The name of the connecting server.
+
+=item connect_ip
+
+The ip address of the connecting server.
+
+=item helo
+
+The helo string.
+
+=item mailfrom
+
+The envelope MAILFROM address.
+
+=item rcptto
+
+Arrayref of the envelope RCPTTO addresses.
+
+=item body
+
+The email body.
+
+=back
 
 =item get_return()
 
