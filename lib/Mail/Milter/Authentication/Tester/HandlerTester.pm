@@ -198,7 +198,7 @@ sub run {
         }
         else {
             if ( $buffer ) {
-                my ( $key, $value ) = split( $buffer, ':', 2 );
+                my ( $key, $value ) = split( ':', $buffer, 2 );
                 $key =~ s/\s+$//;
                 $value =~ s/^\s+//;
                 $returncode = $self->header( $key, $value );

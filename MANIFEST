@@ -63,8 +63,11 @@ t/01-tools.t
 t/02-mail-milter-authentication-handler.t
 t/03-milter.t
 t/03-smtp.t
+t/04-handler-aligned-from_dmarc.t
+t/04-handler-aligned-from_nodmarc.t
 t/AuthMilterTest.pm
 t/Mail/Milter/Authentication/Handler/TestTimeout.pm
+t/TestAlignedFromHandler.pm
 t/config/dmarc_reject.smtp/authentication_milter.json
 t/config/dmarc_reject.smtp/mail-dmarc.ini
 t/config/dmarc_reject/authentication_milter.json
@@ -77,6 +80,10 @@ t/config/dryrun.smtp/authentication_milter.json
 t/config/dryrun.smtp/mail-dmarc.ini
 t/config/dryrun/authentication_milter.json
 t/config/dryrun/mail-dmarc.ini
+t/config/handler/aligned-from/authentication_milter.json
+t/config/handler/aligned-from/mail-dmarc.ini
+t/config/handler/aligned-from_no-dmarc/authentication_milter.json
+t/config/handler/aligned-from_no-dmarc/mail-dmarc.ini
 t/config/normal.smtp/authentication_milter.json
 t/config/normal.smtp/mail-dmarc.ini
 t/config/normal/authentication_milter.json
