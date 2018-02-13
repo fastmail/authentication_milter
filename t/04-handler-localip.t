@@ -20,18 +20,24 @@ my $tester = Mail::Milter::Authentication::Tester::HandlerTester->new({
     'zonefile' => $basedir . 't/zonefile',
 });
 
-test( $tester, { 'name' => 'IANA local', 'result' => 'pass', 'ip' => '0.1.2.3' });
-test( $tester, { 'name' => 'localhost', 'result' => 'pass', 'ip' => '127.0.0.1' });
-test( $tester, { 'name' => 'loopback', 'result' => 'pass', 'ip' => '127.1.2.3' });
-test( $tester, { 'name' => 'IANA private', 'result' => 'pass', 'ip' => '10.2.3.4' });
-test( $tester, { 'name' => 'IANA shared', 'result' => 'pass', 'ip' => '100.64.0.0' });
-test( $tester, { 'name' => 'Link local', 'result' => 'pass', 'ip' => '169.254.2.3' });
+subtest 'Local IP Ranges' => sub{
+    test( $tester, { 'name' => 'IANA local', 'result' => 'pass', 'ip' => '0.1.2.3' });
+    test( $tester, { 'name' => 'localhost', 'result' => 'pass', 'ip' => '127.0.0.1' });
+    test( $tester, { 'name' => 'loopback', 'result' => 'pass', 'ip' => '127.1.2.3' });
+    test( $tester, { 'name' => 'IANA private', 'result' => 'pass', 'ip' => '10.2.3.4' });
+    test( $tester, { 'name' => 'IANA shared', 'result' => 'pass', 'ip' => '100.64.0.0' });
+    test( $tester, { 'name' => 'Link local', 'result' => 'pass', 'ip' => '169.254.2.3' });
+};
 
-test( $tester, { 'name' => 'Private use 172', 'result' => 'pass', 'ip' => '172.16.3.4' });
-test( $tester, { 'name' => 'Private use 192', 'result' => 'pass', 'ip' => '192.168.0.1' });
+subtest 'Private IP Ranges' => sub {
+    test( $tester, { 'name' => 'Private use 172', 'result' => 'pass', 'ip' => '172.16.3.4' });
+    test( $tester, { 'name' => 'Private use 192', 'result' => 'pass', 'ip' => '192.168.0.1' });
+};
 
-test( $tester, { 'name' => '8.8.8.8', 'result' => '', 'ip' => '8.8.8.8' });
-test( $tester, { 'name' => '1.2.3.4', 'result' => '', 'ip' => '1.2.3.4' });
+subtest 'Global IP Ranges' => sub {
+    test( $tester, { 'name' => '8.8.8.8', 'result' => '', 'ip' => '8.8.8.8' });
+    test( $tester, { 'name' => '1.2.3.4', 'result' => '', 'ip' => '1.2.3.4' });
+};
 
 #test( $tester, { 'name' => '', 'result' => 'pass', 'ip' => '' });
 
