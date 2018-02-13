@@ -39,6 +39,14 @@ subtest 'Global IP Ranges' => sub {
     test( $tester, { 'name' => '1.2.3.4', 'result' => '', 'ip' => '1.2.3.4' });
 };
 
+subtest 'Private IPv6 Ranges' => sub {
+    test( $tester, { 'name' => 'Private use', 'result' => 'pass', 'ip' => 'FD00:ABCD::1234' });
+};
+
+subtest 'Global IPv6 Ranges' => sub {
+    test( $tester, { 'name' => 'Global', 'result' => '', 'ip' => '2400:8900::f03c:91ff:fe6e:84c7' });
+};
+
 #test( $tester, { 'name' => '', 'result' => 'pass', 'ip' => '' });
 
 $tester->close();
