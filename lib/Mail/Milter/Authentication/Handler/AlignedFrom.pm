@@ -48,7 +48,7 @@ sub envfrom_callback {
 sub header_callback {
     my ( $self, $header, $value ) = @_;
 
-    return if $header ne 'From';
+    return if lc $header ne 'from';
 
     $self->{ 'from_header_count' } = $self->{ 'from_header_count' } + 1;
 
