@@ -35,6 +35,8 @@ test( $tester, { 'name' => '1.2.3.4', 'result' => '', 'ip' => '1.2.3.4' });
 
 #test( $tester, { 'name' => '', 'result' => 'pass', 'ip' => '' });
 
+$tester->close();
+
 done_testing();
 
 sub test {

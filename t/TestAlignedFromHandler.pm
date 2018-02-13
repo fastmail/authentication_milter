@@ -38,7 +38,10 @@ sub test_dmarc_or_not {
     test($tester,{ 'name' => 'no domains', 'mailfrom' => '', 'from' => 'X-Null: Nothing', 'result' => 'null', 'comment' => 'No domains found'  });
 
     # Envelope variations
+    test($tester,{ 'name' => '<> in envelope', 'mailfrom' => '<test@example.com>', 'from' => 'From: test@example.com', 'result' => 'pass', 'comment' => 'Address match' });
     test($tester,{ 'name' => 'null envelope', 'mailfrom' => '', 'from' => 'From: test@example.com', 'result' => 'null_smtp', 'comment' => 'No envelope domain' });
+    test($tester,{ 'name' => 'null <> envelope', 'mailfrom' => '<>', 'from' => 'From: test@example.com', 'result' => 'null_smtp', 'comment' => 'No envelope domain' });
+    test($tester,{ 'name' => 'multiple envelope address in <>', 'mailfrom' => '<test@example.com> <test2@example.com>', 'from' => 'From: test@example.com', 'result' => 'error', 'comment' => 'Multiple addresses in envelope' });
     test($tester,{ 'name' => 'multiple envelope address', 'mailfrom' => 'test@example.com test2@example.com', 'from' => 'From: test@example.com', 'result' => 'error', 'comment' => 'Multiple addresses in envelope' });
     test($tester,{ 'name' => 'multiple envelope domain', 'mailfrom' => 'test@example.com test@example.net', 'from' => 'From: test@example.com', 'result' => 'error', 'comment' => 'Multiple addresses in envelope' });
 

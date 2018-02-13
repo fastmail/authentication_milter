@@ -24,5 +24,7 @@ my $tester_no_dmarc = Mail::Milter::Authentication::Tester::HandlerTester->new({
 TestAlignedFromHandler::test_dmarc_or_not( $tester_no_dmarc );
 TestAlignedFromHandler::test_no_dmarc( $tester_no_dmarc );
 
+$tester_no_dmarc->close();
+
 done_testing();
 
