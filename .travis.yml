@@ -25,6 +25,8 @@ before_install:
    - source ~/travis-perl-helpers/init
    - build-perl
    - perl -V
+   - cpanm -n Devel::Cover::Report::Coveralls
+   - coverage-setup
 
 install:
     - cpanm --quiet --notest Module::Install
