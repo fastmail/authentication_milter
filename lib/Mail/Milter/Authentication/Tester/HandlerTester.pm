@@ -9,7 +9,7 @@ use English qw{ -no_match_vars };
 use Mail::AuthenticationResults::Header;
 use Mail::AuthenticationResults::Header::AuthServID;
 use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Config qw{ get_config default_config };
+use Mail::Milter::Authentication::Config qw{ set_config get_config default_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
@@ -17,14 +17,56 @@ use Module::Load;
 use Net::DNS::Resolver::Mock;
 use Net::IP;
 
+sub _build_config_smtp {
+    my ( $self, $handler_config ) = @_;
+
+    my $config = {
+
+        '_is_test'                        => 1,
+        'debug'                           => 1,
+        'dryrun'                          => 0,
+        'logtoerr'                        => 1,
+        'error_log'                       => 'tmp/smtp.err',
+        'connection'                      => 'unix:tmp/authentication_milter_test.sock',
+        'umask'                           => '0000',
+        'connect_timeout'                 => 55,
+        'command_timeout'                 => 55,
+        'content_timeout'                 => 595,
+        'tempfail_on_error'               => 1,
+        'tempfail_on_error_authenticated' => 1,
+        'tempfail_on_error_local'         => 1,
+        'tempfail_on_error_trusted'       => 1,
+
+        'metric_connection'               => 'unix:tmp/authentication_milter_test_metrics.sock',
+        'metric_umask'                    => '0000',
+
+        'protocol' => 'smtp',
+        'smtp' => {
+            'sock_type' => 'unix',
+            'sock_path' => 'tmp/authentication_milter_smtp_out.sock',
+            'pipeline_limit' => '4',
+        },
+
+        'handlers' => $handler_config,
+
+    };
+
+    return $config;
+}
+
 sub new {
     my ( $class, $args ) = @_;
     my $self = {};
+    bless $self, $class;
 
     $self->{ 'snapshots' } = {};
 
     foreach my $arg ( qw{ prefix zonefile } ) {
         $self->{ $arg } = $args->{ $arg } // croak "Missing arg $arg";
+    }
+
+    if ( exists( $args->{ 'handler_config' } ) ) {
+        set_config( $self->_build_config_smtp( $args->{ 'handler_config' } ) );
     }
 
     $Mail::Milter::Authentication::Config::PREFIX = $self->{ 'prefix' };
@@ -79,8 +121,6 @@ sub new {
     $authmilter->setup_handlers();
 
     $self->{ 'authmilter' } = $authmilter;
-
-    bless $self, $class;
 
     $self->handler()->top_setup_callback();
 

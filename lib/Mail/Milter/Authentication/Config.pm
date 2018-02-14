@@ -9,6 +9,7 @@ use Module::Load;
 use Exporter qw{ import };
 our @EXPORT_OK = qw{
   get_config
+  set_config
   default_config
 };
 
@@ -63,6 +64,20 @@ sub default_config {
 
     return $config;
 
+}
+
+sub set_config {
+    my ( $config ) = @_;
+
+    my @load_handlers = keys %{ $config->{'handlers'} };
+    @load_handlers = grep { ! /^\!/ } @load_handlers;
+    $config->{'load_handlers'} = \@load_handlers;
+
+    my $protocol = $config->{'protocol'} || 'milter';
+    $config->{'protocol'} = $protocol;
+    $CONFIG = $config;
+
+    return;
 }
 
 sub load_file {
@@ -163,6 +178,10 @@ Internal function used to load the config from /etc/authentication_milter.json
 =item I<get_config()>
 
 Return the config hashref, load from file(s) if required.
+
+=item I<set_config( $config )>
+
+Set the config hashref, primarily used for testing.
 
 =back
 

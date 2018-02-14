@@ -16,8 +16,18 @@ open( STDERR, '>>', $basedir . 't/tmp/misc.err' ) || die "Cannot open errlog [$!
 #open( STDOUT, '>>', $basedir . 't/tmp/misc.err' ) || die "Cannot open errlog [$!]";
 
 my $tester = Mail::Milter::Authentication::Tester::HandlerTester->new({
-    'prefix'   => $basedir . 't/config/handler/trustedip',
+    'prefix'   => $basedir . 't/config/handler/etc',
     'zonefile' => $basedir . 't/zonefile',
+    'handler_config' => {
+        'TrustedIP' => {
+            'trusted_ip_list' => [
+                '100.200.100.2',
+                '200.200.100.0/24',
+                '2001:44c2:3881:aa00::/56',
+                '2001:44b8:3021:123:dead:beef:abcd:1234',
+            ],
+        },
+    },
 });
 
 subtest 'Trusted IP Ranges' => sub{

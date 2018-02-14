@@ -16,8 +16,11 @@ open( STDERR, '>>', $basedir . 't/tmp/misc.err' ) || die "Cannot open errlog [$!
 #open( STDOUT, '>>', $basedir . 't/tmp/misc.err' ) || die "Cannot open errlog [$!]";
 
 my $tester = Mail::Milter::Authentication::Tester::HandlerTester->new({
-    'prefix'   => $basedir . 't/config/handler/localip',
+    'prefix'   => $basedir . 't/config/handler/etc',
     'zonefile' => $basedir . 't/zonefile',
+    'handler_config' => {
+        'LocalIP' => {},
+    },
 });
 
 subtest 'Local IP Ranges' => sub{
