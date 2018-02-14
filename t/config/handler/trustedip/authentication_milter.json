@@ -1,0 +1,40 @@
+# Test configuration for auth milter smtp
+{
+
+    "debug"                           : 1,
+    "dryrun"                          : 0,
+    "logtoerr"                        : 1,
+    "error_log"                       : "tmp/smtp.err",
+    "connection"                      : "unix:tmp/authentication_milter_test.sock",
+    "umask"                           : "0000",
+    "connect_timeout"                 : 55,
+    "command_timeout"                 : 55,
+    "content_timeout"                 : 595,
+    "tempfail_on_error"               : 1,
+    "tempfail_on_error_authenticated" : 1,
+    "tempfail_on_error_local"         : 1,
+    "tempfail_on_error_trusted"       : 1,
+
+    "metric_connection"               : "unix:tmp/authentication_milter_test_metrics.sock",
+    "metric_umask"                    : "0000",
+
+    "protocol" : "smtp",
+    "smtp" : {
+        "sock_type" : "unix",
+        "sock_path" : "tmp/authentication_milter_smtp_out.sock",
+        "pipeline_limit" : "4",
+    },
+
+
+    "handlers" : {
+        "TrustedIP" : {
+            "trusted_ip_list" : [
+                "100.200.100.2",
+                "200.200.100.0/24",
+                "2001:44c2:3881:aa00::/56",
+                "2001:44b8:3021:123:dead:beef:abcd:1234"
+            ]
+        },
+    }
+
+}
