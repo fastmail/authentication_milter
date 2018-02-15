@@ -36,8 +36,7 @@ install:
     - cpanm --quiet --notest List::MoreUtils::XS List::MoreUtils
     - cpanm --quiet --notest Test::CheckManifest Test::Pod::Coverage Test::Pod
     - cpanm --quiet --notest Cwd Email::Date::Format Email::Simple
-    - cpanm --quiet --notest English IO::Socket JSON Mail::DKIM::Verifier Mail::DKIM
-    - cpanm --quiet git@github.com:marcbradshaw/Mail-AuthenticationResults.git
+    - cpanm --quiet --notest English IO::Socket JSON Mail::DKIM::Verifier Mail::DKIM Mail::AuthenticationResults
     - cpanm --quiet --notest MIME::Base64 Module::Load Module::Loaded
     - cpanm --quiet --notest Net::DNS
     - cpanm --quiet --notest Net::DNS::Resolver::Mock
