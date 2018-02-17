@@ -17,7 +17,7 @@ open( STDERR, '>>', $basedir . 't/tmp/misc.err' ) || die "Cannot open errlog [$!
 
 my $tester = Mail::Milter::Authentication::Tester::HandlerTester->new({
     'prefix'   => $basedir . 't/config/handler/etc',
-    'zonefile' => $basedir . 't/zonefile',
+    'zonedata' => '',
     'handler_config' => {
         'TrustedIP' => {
             'trusted_ip_list' => [
