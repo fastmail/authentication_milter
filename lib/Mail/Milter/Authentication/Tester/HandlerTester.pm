@@ -54,6 +54,38 @@ sub _build_config_smtp {
     return $config;
 }
 
+sub _build_config_milter {
+    my ( $self, $handler_config ) = @_;
+
+    my $config = {
+
+        '_is_test'                        => 1,
+        'debug'                           => 1,
+        'dryrun'                          => 0,
+        'logtoerr'                        => 1,
+        'error_log'                       => 'tmp/milter.err',
+        'connection'                      => 'unix:tmp/authentication_milter_test.sock',
+        'umask'                           => '0000',
+        'connect_timeout'                 => 55,
+        'command_timeout'                 => 55,
+        'content_timeout'                 => 595,
+        'tempfail_on_error'               => 1,
+        'tempfail_on_error_authenticated' => 1,
+        'tempfail_on_error_local'         => 1,
+        'tempfail_on_error_trusted'       => 1,
+
+        'metric_connection'               => 'unix:tmp/authentication_milter_test_metrics.sock',
+        'metric_umask'                    => '0000',
+
+        'protocol' => 'milter',
+
+        'handlers' => $handler_config,
+
+    };
+
+    return $config;
+}
+
 sub new {
     my ( $class, $args ) = @_;
     my $self = {};
@@ -61,19 +93,31 @@ sub new {
 
     $self->{ 'snapshots' } = {};
 
-    foreach my $arg ( qw{ prefix zonefile } ) {
-        $self->{ $arg } = $args->{ $arg } // croak "Missing arg $arg";
+    foreach my $arg ( qw{ prefix zonefile zonedata } ) {
+        $self->{ $arg } = $args->{ $arg } if exists $args->{ $arg };
     }
 
+    croak 'prefix must be supplies' if ! exists $self->{ 'prefix' };
+    croak 'zonefile or zonedata cannot both be supplied' if ( exists $self->{ 'zonefile' } ) && ( exists $self->{ 'zonedata' });
+    $self->{ 'zonedata' } = q{} if ( ! exists $self->{ 'zonefile' } ) && ( ! exists $self->{ 'zonedata' });
+
+    my $protocol = $args->{ 'protocol' } // 'smtp';
+
     if ( exists( $args->{ 'handler_config' } ) ) {
-        set_config( $self->_build_config_smtp( $args->{ 'handler_config' } ) );
+        if ( $protocol eq 'smtp' ) {
+            set_config( $self->_build_config_smtp( $args->{ 'handler_config' } ) );
+        }
+        else {
+            set_config( $self->_build_config_milter( $args->{ 'handler_config' } ) );
+        }
     }
 
     $Mail::Milter::Authentication::Config::PREFIX = $self->{ 'prefix' };
     my $config = get_config();
 
     my $Resolver = Net::DNS::Resolver::Mock->new();
-    $Resolver->zonefile_read( $self->{ 'zonefile' } );
+    $Resolver->zonefile_read( $self->{ 'zonefile' } ) if exists $self->{ 'zonefile' };
+    $Resolver->zonefile_parse( $self->{ 'zonedata' } ) if exists $self->{ 'zonedata' };
     $Mail::Milter::Authentication::Handler::TestResolver = $Resolver;
 
     # Setup a new authentication milter object
@@ -81,8 +125,12 @@ sub new {
     $authmilter->{'metric'} = Mail::Milter::Authentication::Metric->new();
     $authmilter->{'config'} = $config;
 
-    # Pretend to be SMTP based
-    push @Mail::Milter::Authentication::ISA, 'Mail::Milter::Authentication::Protocol::SMTP';
+    # if ( $protocol eq 'smtp' ) {
+        push @Mail::Milter::Authentication::ISA, 'Mail::Milter::Authentication::Protocol::SMTP';
+        #}
+        #else {
+        #push @Mail::Milter::Authentication::ISA, 'Mail::Milter::Authentication::Protocol::Milter';
+        #}
 
     # Setup a fake server object
     $authmilter->{ 'server' }->{ 'ppid' } = $PID;
@@ -325,19 +373,38 @@ Can snapshot and restore state at any point.
 
 Instantiate a new HandlerTester object.
 
-$args is a hashref with the following required entries.
+$args is a hashref with the following entries.
 
 =over
 
 =item prefix
 
-The Prefix path containing the authentication milter config file
+Required
+
+The Prefix path containing the authentication milter config file(s). This should contain
+all configuration files required for your test, the main authentication_milter.json file
+can be overridden by the handler_config option (see below).
+
+This location should, for example, contain a valid mail-dmarc.ini for any tests using
+the DMARC handler.
+
+=item handler_config
+
+If present, the config will be built from a generic default SMTP environment, with the given
+HASHREF substituted as the Handler configuration. This eliminates the need to have a config file
+for each handler configuration you wish to test.
+
+=item zonedata
+
+The zonefile data for use with Net::DNS::Resolver::Mock
 
 =item zonefile
 
 A zonefile for use with Net::DNS::Resolver::Mock
 
 =back
+
+
 
 =back
 
