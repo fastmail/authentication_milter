@@ -65,6 +65,7 @@ t/03-milter.t
 t/03-smtp.t
 t/04-handler-aligned-from_dmarc.t
 t/04-handler-aligned-from_nodmarc.t
+t/04-handler-auth.t
 t/04-handler-localip.t
 t/04-handler-trustedip.t
 t/AuthMilterTest.pm
