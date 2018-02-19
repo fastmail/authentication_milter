@@ -200,7 +200,10 @@ sub handler {
 sub connect {
     my ( $self, $name, $ip ) = @_;
     my $authmilter = $self->{ 'authmilter' };
-    return $self->handler()->top_connect_callback( $name, Net::IP->new( $ip ) );
+    my $ip_obj = eval{ Net::IP->new( $ip ) } // undef;
+    # An undef here should not make it through to handlers, however
+    # for testing we will allow this.
+    return $self->handler()->top_connect_callback( $name, $ip_obj );
 }
 
 sub helo {
