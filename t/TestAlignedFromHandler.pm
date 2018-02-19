@@ -14,6 +14,7 @@ sub test_dmarc {
         test($tester,{ 'name' => 'org pass 1', 'mailfrom' => 'test@test.example.com', 'from' => 'From: test@example.com', 'result' => 'orgdomain_pass', 'comment' => 'Domain org match' });
         test($tester,{ 'name' => 'org pass 2', 'mailfrom' => 'test@example.com', 'from' => 'From: test@test.example.com', 'result' => 'orgdomain_pass', 'comment' => 'Domain org match' });
         test($tester,{ 'name' => 'org pass 3', 'mailfrom' => 'test@test2.example.com', 'from' => 'From: test@test.example.com', 'result' => 'orgdomain_pass', 'comment' => 'Domain org match' });
+        test($tester,{ 'name' => 'fail', 'mailfrom' => 'test@test.example.net', 'from' => 'From: test@test.example.com', 'result' => 'fail', 'comment' => '' });
     };
 }
 
@@ -24,6 +25,7 @@ sub test_no_dmarc {
         test($tester,{ 'name' => 'org pass 1', 'mailfrom' => 'test@test.example.com', 'from' => 'From: test@example.com', 'result' => 'fail', 'comment' => '' });
         test($tester,{ 'name' => 'org pass 2', 'mailfrom' => 'test@example.com', 'from' => 'From: test@test.example.com', 'result' => 'fail', 'comment' => '' });
         test($tester,{ 'name' => 'org pass 3', 'mailfrom' => 'test@test2.example.com', 'from' => 'From: test@test.example.com', 'result' => 'fail', 'comment' => '' });
+        test($tester,{ 'name' => 'fail', 'mailfrom' => 'test@test.example.net', 'from' => 'From: test@test.example.com', 'result' => 'fail', 'comment' => '' });
     };
 }
 
