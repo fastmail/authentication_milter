@@ -89,6 +89,7 @@ Testing',
     my $header = $tester->get_authresults_header()->search({ 'key' => 'x-aligned-from' });
     #print Dumper $header;
     my $result = eval{ $header->children()->[0]->value(); };
+    is( scalar @{ $header->children() }, 1, '1 Entry' );
     my $comment = eval{ $header->search({ 'isa' => 'comment' })->children()->[0]->value(); } // q{};
 
     is( $result, $args->{ 'result' }, $args->{ 'name' } . ' result' );

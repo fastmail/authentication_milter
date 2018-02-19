@@ -74,6 +74,12 @@ Testing',
 
     my $header = $tester->get_authresults_header()->search({ 'key' => 'x-local-ip' });
     #print Dumper $header;
+    if ( $args->{ 'result' } eq q{} ) {
+        is( scalar @{ $header->children() }, 0, 'No Entries' );
+    }
+    else {
+        is( scalar @{ $header->children() }, 1, '1 Entry' );
+    }
     my $result = eval{ $header->children()->[0]->value(); } // q{};
 
     is( $result, $args->{ 'result' }, $args->{ 'name' } . ' result' );

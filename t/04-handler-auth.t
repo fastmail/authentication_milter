@@ -40,8 +40,8 @@ Testing',
     });
 
     my $header = $tester->get_authresults_header()->search({ 'key' => 'auth' });
+    is( scalar @{ $header->children() }, 0, 'No Entries' );
     my $result = eval{ $header->children()->[0]->value(); } // q{};
-
     is( $result, q{}, 'Unauthenticated' );
 }
 
@@ -59,6 +59,7 @@ Testing',
     $tester->end_of_message();
 
     my $header = $tester->get_authresults_header()->search({ 'key' => 'auth' });
+    is( scalar @{ $header->children() }, 1, '1 Entry' );
     my $result = eval{ $header->children()->[0]->value(); } // q{};
     is( $result, 'pass', 'Authenticated' );
 
