@@ -8,7 +8,9 @@ use Data::Dumper;
 
 use Mail::Milter::Authentication::Tester::HandlerTester;
 use Mail::Milter::Authentication::Constants qw{ :all };
+use Test::Exception;
 use Test::More;
+use JSON;
 
 my $basedir = q{};
 
@@ -29,6 +31,17 @@ my $tester = Mail::Milter::Authentication::Tester::HandlerTester->new({
         },
     },
 });
+
+subtest 'config' => sub {
+    my $config = $tester->{ 'authmilter' }->{ 'handler' }->{ 'TrustedIP' }->default_config();
+    is_deeply( $config, { 'trusted_ip_list' => [] }, 'Returns correct config' );
+};
+
+subtest 'metrics' => sub {
+    my $grafana_rows = $tester->{ 'authmilter' }->{ 'handler' }->{ 'TrustedIP' }->grafana_rows();
+    is( scalar @$grafana_rows, 1, '1 Grafana row returned' );
+    lives_ok( sub{ JSON->new()->decode( $grafana_rows->[0] ); }, 'Metrics returns valid JSON' );
+};
 
 subtest 'Trusted IP Ranges' => sub{
     test( $tester, { 'name' => 'Listed IP', 'result' => 'pass', 'ip' => '100.200.100.2' });

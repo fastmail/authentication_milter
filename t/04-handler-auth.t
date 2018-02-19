@@ -8,7 +8,9 @@ use Data::Dumper;
 
 use Mail::Milter::Authentication::Tester::HandlerTester;
 use Mail::Milter::Authentication::Constants qw{ :all };
+use Test::Exception;
 use Test::More;
+use JSON;
 
 my $basedir = q{};
 
@@ -23,6 +25,17 @@ my $tester = Mail::Milter::Authentication::Tester::HandlerTester->new({
         'Auth' => {},
     },
 });
+
+subtest 'config' => sub {
+    my $config = $tester->{ 'authmilter' }->{ 'handler' }->{ 'Auth' }->default_config();
+    is_deeply( $config, {}, 'Returns correct config' );
+};
+
+subtest 'metrics' => sub {
+    my $grafana_rows = $tester->{ 'authmilter' }->{ 'handler' }->{ 'Auth' }->grafana_rows();
+    is( scalar @$grafana_rows, 1, '1 Grafana row returned' );
+    lives_ok( sub{ JSON->new()->decode( $grafana_rows->[0] ); }, 'Metrics returns valid JSON' );
+};
 
 {
 
