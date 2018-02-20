@@ -2,6 +2,7 @@ package Mail::Milter::Authentication::Tester::HandlerTester;
 
 use strict;
 use warnings;
+# VERSION
 
 use Carp;
 use Clone qw{ clone };

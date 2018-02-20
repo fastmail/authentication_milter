@@ -12,6 +12,8 @@ use Mail::Milter::Authentication::Protocol::SMTP;
 use Mail::Milter::Authentication::Config qw{ get_config default_config };
 use Module::Load;
 use Pod::Usage;
+# VERSION
+# PODNAME: authentication_milter
 
 # CONFIG
 my $pid_file = '/run/authentication_milter.pid';

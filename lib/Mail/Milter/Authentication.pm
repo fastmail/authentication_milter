@@ -1,8 +1,29 @@
 package Mail::Milter::Authentication;
+# ABSTRACT: A Perl Mail Authentication Milter
 use strict;
 use warnings;
 use base 'Net::Server::PreFork';
-use version; our $VERSION = version->declare('v1.1.7');
+# VERSION
+
+=head1 DESCRIPTION
+
+A Perl Implementation of email authentication standards rolled up into a single easy to use milter.
+
+=head1 SYNOPSIS
+
+Subclass of Net::Server::PreFork for bringing up the main server process for authentication_milter.
+
+This class handles the server aspects of Authentication Milter.
+
+For individual Protocol handling please see the Mail::Milter::Authentication::Protocol::* classes
+
+For request handling please see Mail::Milter::Authentication::Handler
+
+Please see Net::Server docs for more detail of the server code.
+
+Please see the output of 'authentication_milter --help' for usage help.
+
+=cut
 
 use English qw{ -no_match_vars };
 use ExtUtils::Installed;
@@ -32,6 +53,12 @@ sub _warn {
     return;
 }
 
+=func I<get_installed_handlers()>
+
+Return an array ref of installed handler modules.
+
+=cut
+
 sub get_installed_handlers {
     my @installed_handlers;
     my $installed = ExtUtils::Installed->new( 'skip_cwd' => 1 );
@@ -46,6 +73,12 @@ sub get_installed_handlers {
     }
     return \@installed_handlers;
 }
+
+=method I<pre_loop_hook()>
+
+Hook which runs in the master before looping.
+
+=cut
 
 sub pre_loop_hook {
     my ( $self ) = @_;
@@ -96,6 +129,12 @@ sub pre_loop_hook {
 
 }
 
+=method I<run_n_children_hook()>
+
+Hook which runs in parent before it forks children.
+
+=cut
+
 sub run_n_children_hook {
     my ( $self ) = @_;
 
@@ -113,6 +152,12 @@ sub run_n_children_hook {
 
     return;
 }
+
+=method I<child_init_hook()>
+
+Hook which runs after forking, sets up per process items.
+
+=cut
 
 sub child_init_hook {
     my ( $self ) = @_;
@@ -181,6 +226,12 @@ sub child_init_hook {
     return;
 }
 
+=method I<child_finish_hook()>
+
+Hook which runs when the child is about to finish.
+
+=cut
+
 sub child_finish_hook {
     my ($self) = @_;
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':exiting';
@@ -191,11 +242,23 @@ sub child_finish_hook {
     return;
 }
 
+=method I<pre_server_close_hook()>
+
+Hook which runs before the server closes.
+
+=cut
+
 sub pre_server_close_hook {
     my ($self) = @_;
     $self->loginfo( 'Server closing down' );
     return;
 }
+
+=method I<get_client_proto()>
+
+Get the protocol of the connecting client.
+
+=cut
 
 sub get_client_proto {
     my ( $self ) = @_;
@@ -223,11 +286,23 @@ sub get_client_proto {
     return;
 }
 
+=method I<get_client_port()>
+
+Get the port of the connecting client.
+
+=cut
+
 sub get_client_port {
     my ( $self ) = @_;
     my $socket = $self->{server}{client};
     return $socket->sockport();
 }
+
+=method I<get_client_host()>
+
+Get the host of the connecting client.
+
+=cut
 
 sub get_client_host {
     my ( $self ) = @_;
@@ -235,11 +310,23 @@ sub get_client_host {
     return $socket->sockhost();
 }
 
+=method I<get_client_path()>
+
+Get the path of the connecting client.
+
+=cut
+
 sub get_client_path {
     my ( $self ) = @_;
     my $socket = $self->{server}{client};
     return $socket->hostpath();
 }
+
+=method I<get_client_details()>
+
+Get the details of the connecting client.
+
+=cut
 
 sub get_client_details {
     my ( $self ) = @_;
@@ -252,6 +339,12 @@ sub get_client_details {
     }
     return;
 }
+
+=method I<child_is_talking_hook( $sock )>
+
+Hook which runs when a child wishes to communicate with the parent.
+
+=cut
 
 sub child_is_talking_hook {
     my ( $self, $socket ) = @_;
@@ -285,6 +378,12 @@ sub child_is_talking_hook {
 
     return;
 }
+
+=method I<process_request()>
+
+Hook which runs for each request, passes control to metrics handler or process_main as appropriate.
+
+=cut
 
 sub process_request {
     my ( $self ) = @_;
@@ -328,6 +427,11 @@ sub process_request {
     return;
 }
 
+=method I<process_main()>
+
+Method which runs for each request, sets up per request items and processes the request.
+
+=cut
 
 sub process_main {
     my ( $self ) = @_;
@@ -373,7 +477,11 @@ sub process_main {
 
 
 
+=func I<get_valid_pid($pid_file)>
 
+Given a pid file, check for a valid process ID and return if valid.
+
+=cut
 
 sub get_valid_pid {
     my ( $pid_file ) = @_;
@@ -419,6 +527,12 @@ sub get_valid_pid {
     return undef; ## no critic
 }
 
+=func I<find_process()>
+
+Search the process table for an authentication_milter master process
+
+=cut
+
 sub find_process {
     my $process_table = Proc::ProcessTable->new();
     foreach my $process ( @{$process_table->table} ) {
@@ -428,6 +542,12 @@ sub find_process {
     }
     return undef; ## no critic
 }
+
+=func I<control($command)>
+
+Run a daemon command.  Command can be one of start/restart/stop/status.
+
+=cut
 
 sub control {
     my ( $args ) = @_;
@@ -480,6 +600,17 @@ sub control {
 
     return;
 }
+
+=func I<start($hashref)>
+
+Start the server. This method does not return.
+
+    $hashref = {
+        'pid_file'   => 'The pid file to use', #
+        'daemon'     => 1/0,                   # Daemonize process?
+    }
+
+=cut
 
 sub start {
     my ($args)     = @_;
@@ -746,11 +877,23 @@ sub start {
 
 ##### Protocol methods
 
+=method I<fatal($error)>
+
+Log a fatal error and die in child
+
+=cut
+
 sub fatal {
     my ( $self, $error ) = @_;
     $self->logerror( "Child process $PID shutting down due to fatal error: $error" );
     die "$error\n";
 }
+
+=method I<fatal_global($error)>
+
+Log a fatal error and die in child and parent
+
+=cut
 
 sub fatal_global {
     my ( $self, $error ) = @_;
@@ -764,6 +907,12 @@ sub fatal_global {
     }
     die "$error\n";
 }
+
+=method I<setup_handlers()>
+
+Setup the Handler objects.
+
+=cut
 
 sub setup_handlers {
     my ( $self ) = @_;
@@ -783,6 +932,12 @@ sub setup_handlers {
     return;
 }
 
+=method I<load_handler( $name )>
+
+Load the $name Handler module
+
+=cut
+
 sub load_handler {
     my ( $self, $name ) = @_;
 
@@ -799,6 +954,12 @@ sub load_handler {
     }
     return;
 }
+
+=method I<setup_handler( $name )>
+
+Setup the $name Handler object
+
+=cut
 
 sub setup_handler {
     my ( $self, $name ) = @_;
@@ -819,6 +980,12 @@ sub setup_handler {
     return;
 }
 
+=method I<destroy_handler( $name )>
+
+Remove the $name Handler
+
+=cut
+
 sub destroy_handler {
     # Unused!
     my ( $self, $name ) = @_;
@@ -828,6 +995,12 @@ sub destroy_handler {
     delete $self->{'handler'}->{$name};
     return;
 }
+
+=method I<register_callback( $name, $callback )>
+
+Register the specified callback
+
+=cut
 
 sub register_callback {
     my ( $self, $name, $callback ) = @_;
@@ -839,6 +1012,12 @@ sub register_callback {
     return;
 }
 
+=method I<sort_all_callbacks()>
+
+Sort the callbacks into the order in which they must be called
+
+=cut
+
 sub sort_all_callbacks {
     my ($self) = @_;
     foreach my $callback ( qw { setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
@@ -846,6 +1025,12 @@ sub sort_all_callbacks {
     }
     return;
 }
+
+=method I<sort_callbacks( $callback )>
+
+Sort the callbacks for the $callback callback into the right order
+
+=cut
 
 sub sort_callbacks {
     my ( $self, $callback ) = @_;
@@ -907,6 +1092,12 @@ sub sort_callbacks {
     return;
 }
 
+=method I<destroy_objects()>
+
+Remove references to all objects
+
+=cut
+
 sub destroy_objects {
     my ( $self ) = @_;
     $self->logdebug ( 'destroy objects' );
@@ -929,6 +1120,12 @@ sub destroy_objects {
 
 ## Logging
 
+=method I<get_queue_id()>
+
+Return the queue ID (for logging) if possible.
+
+=cut
+
 sub get_queue_id {
     my ( $self ) = @_;
     my $queue_id;
@@ -945,6 +1142,12 @@ sub get_queue_id {
     return $queue_id;
 }
 
+=method I<enable_extra_debugging()>
+
+Turn on extra debugging mode, will cause child to exit on close.
+
+=cut
+
 sub enable_extra_debugging {
     my ($self) = @_;
     my $config = $self->{'config'} || get_config();
@@ -957,6 +1160,12 @@ sub enable_extra_debugging {
     return;
 }
 
+=method I<extra_debugging( $line )>
+
+Cause $line to be written to log if extra debugging mode is enabled.
+
+=cut
+
 sub extra_debugging {
     my ($self,$line) = @_;
     if ( $self->{'extra_debugging'} ) {
@@ -964,6 +1173,12 @@ sub extra_debugging {
     }
     return;
 }
+
+=method I<logerror( $line )>
+
+Log to the error log.
+
+=cut
 
 sub logerror {
     my ($self,$line) = @_;
@@ -976,6 +1191,12 @@ sub logerror {
     return;
 }
 
+=method I<loginfo( $line )>
+
+Log to the info log.
+
+=cut
+
 sub loginfo {
     my ($self,$line) = @_;
     my $config = $self->{'config'} || get_config();
@@ -986,6 +1207,12 @@ sub loginfo {
     syslog( LOG_INFO, $line );
     return;
 }
+
+=method I<logdebug( $line )>
+
+Log to the debug log.
+
+=cut
 
 sub logdebug {
     my ($self,$line) = @_;
@@ -1003,175 +1230,6 @@ sub logdebug {
 1;
 
 __END__
-
-=head1 NAME
-
-Mail::Milter::Authentication - A Perl Mail Authentication Milter
-
-=head1 DESCRIPTION
-
-A Perl Implementation of email authentication standards rolled up into a single easy to use milter.
-
-=head1 SYNOPSIS
-
-Subclass of Net::Server::PreFork for bringing up the main server process for authentication_milter.
-
-Please see Net::Server docs for more detail of the server code.
-
-Please see the output of 'authentication_milter --help' for usage help.
-
-=head1 FUNCTIONS
-
-=over
-
-=item I<get_installed_handlers()>
-
-Return an array ref of installed handler modules.
-
-=back
-
-=head1 METHODS
-
-=over
-
-=item I<child_init_hook()>
-
-Hook which runs after forking, sets up per process items.
-
-=item I<run_n_children_hook()>
-
-Hook which runs in parent before it forks children.
-
-=item I<child_is_talking_hook( $sock )>
-
-Hook which runs when a child wishes to communicate with the parent.
-
-=item I<process_request()>
-
-Hook which runs for each request, passes control to metrics handler or process_main as appropriate.
-
-=item I<process_main()>
-
-Method which runs for each request, sets up per request items and processes the request.
-
-=item I<control($command)>
-
-Run a daemon command.  Command can be one of start/restart/stop/status.
-
-=item I<find_process()>
-
-Search the process table for an authentication_milter master process
-
-=item I<get_valid_pid($pid_file)>
-
-Given a pid file, check for a valid process ID and return if valid.
-
-=item I<start($hashref)>
-
-Start the server. This method does not return.
-
-    $hashref = {
-        'pid_file'   => 'The pid file to use', #
-        'daemon'     => 1/0,                   # Daemonize process?
-    }
-
-=item I<fatal($error)>
-
-Log a fatal error and die in child
-
-=item I<fatal_global($error)>
-
-Log a fatal error and die in child and parent
-
-=item I<setup_handlers()>
-
-Setup the Handler objects.
-
-=item I<load_handler( $name )>
-
-Load the $name Handler module
-
-=item I<setup_handler( $name )>
-
-Setup the $name Handler object
-
-=item I<destroy_handler( $name )>
-
-Remove the $name Handler
-
-=item I<register_callback( $name, $callback )>
-
-Register the specified callback
-
-=item I<sort_all_callbacks()>
-
-Sort the callbacks into the order in which they must be called
-
-=item I<sort_callbacks( $callback )>
-
-Sort the callbacks for the $callback callback into the right order
-
-=item I<destroy_objects()>
-
-Remove references to all objects
-
-=item I<get_queue_id()>
-
-Return the queue ID (for logging) if possible.
-
-=item I<logerror( $line )>
-
-Log to the error log.
-
-=item I<loginfo( $line )>
-
-Log to the info log.
-
-=item I<logdebug( $line )>
-
-Log to the debug log.
-
-=item I<enable_extra_debugging()>
-
-Turn on extra debugging mode, will cause child to exit on close.
-
-=item I<extra_debugging( $line )>
-
-Cause $line to be written to log if extra debugging mode is enabled.
-
-=item I<child_finish_hook()>
-
-Hook which runs when the child is about to finish.
-
-=item I<get_client_details()>
-
-Get the details of the connecting client.
-
-=item I<get_client_path()>
-
-Get the path of the connecting client.
-
-=item I<get_client_port()>
-
-Get the port of the connecting client.
-
-=item I<get_client_host()>
-
-Get the host of the connecting client.
-
-=item I<get_client_proto()>
-
-Get the protocol of the connecting client.
-
-=item I<pre_loop_hook()>
-
-Hook which runs in the master before looping.
-
-=item I<pre_server_close_hook()>
-
-Hook which runs before the server closes.
-
-=back
 
 =head1 DEPENDENCIES
 
@@ -1191,13 +1249,3 @@ Hook which runs before the server closes.
   Sys::Hostname
   Sys::Syslog
 
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.

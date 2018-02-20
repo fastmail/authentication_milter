@@ -1,8 +1,8 @@
 package Mail::Milter::Authentication::Tester;
 use strict;
 use warnings;
+# VERSION
 
-use Exporter;
 our @ISA = qw{ Exporter }; ## no critic
 our @EXPORT = qw{ start_milter stop_milter get_metrics test_metrics smtp_process smtp_process_multi milter_process smtpput send_smtp_packet smtpcat }; ## no critic
 

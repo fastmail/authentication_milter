@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Client;
 
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v1.1.7');
+# VERSION
 
 use Data::Dumper;
 use Digest::MD5 qw{ md5_base64 };
