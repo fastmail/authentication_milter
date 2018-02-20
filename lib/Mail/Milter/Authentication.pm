@@ -1228,24 +1228,3 @@ sub logdebug {
 }
 
 1;
-
-__END__
-
-=head1 DEPENDENCIES
-
-  English
-  JSON
-  Mail::DKIM
-  Mail::DMARC
-  Mail::SPF
-  MIME::Base64
-  Module::Load
-  Module::Loaded
-  Net::DNS
-  Net::IP
-  Net::Server
-  Pod::Usage
-  Proc::ProcessTable
-  Sys::Hostname
-  Sys::Syslog
-

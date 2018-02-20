@@ -1,4 +1,5 @@
 package Mail::Milter::Authentication::Config;
+# ABSTRACT: Load config files for Authentication Milter
 use strict;
 use warnings;
 # VERSION
@@ -15,9 +16,32 @@ our @EXPORT_OK = qw{
 
 use JSON;
 
+=head1 DESCRIPTION
+
+Load in configuration data.
+
+=head1 SYNOPSIS
+
+Load in the configuration data, does some processing on handlers loaded before returning
+config to the caller.
+
+If the $Mail::Milter::Authentication::Config::PREFIX variable is set then the config file
+will be read from the supplied directory rather than /etc/
+
+=cut
+
 our $PREFIX = '/etc';
 our $IDENT  = 'authentication_milter';
 my  $CONFIG;
+
+=func I<default_config()>
+
+Return a default configuration including defaults from handler modules.
+
+This is not the default config used by the system if no config is present, rather it is the config
+which is presented to the user as an example default config when using the help feature.
+
+=cut
 
 sub default_config {
     my $config = {
@@ -66,6 +90,12 @@ sub default_config {
 
 }
 
+=func I<set_config( $config )>
+
+Set the config hashref, primarily used for testing.
+
+=cut
+
 sub set_config {
     my ( $config ) = @_;
 
@@ -79,6 +109,12 @@ sub set_config {
 
     return;
 }
+
+=func I<load_file( $file )>
+
+Internal function used to load the config from /etc/authentication_milter.json
+
+=cut
 
 sub load_file {
     my ( $file ) = @_;
@@ -103,6 +139,12 @@ sub load_file {
 
     return $data;
 }
+
+=func I<get_config()>
+
+Return the config hashref, load from file(s) if required.
+
+=cut
 
 sub get_config {
 
@@ -144,59 +186,3 @@ sub get_config {
 }
 
 1;
-
-__END__
-
-=head1 NAME
-
-Mail::Milter::Authentication::Config - Load config files for Authentication Milter
-
-=head1 DESCRIPTION
-
-Load in configuration data.
-
-=head1 SYNOPSIS
-
-Load in the configuration data, does some processing on handlers loaded before returning
-config to the caller.
-
-If the $Mail::Milter::Authentication::Config::PREFIX variable is set then the config file
-will be read from the supplied directory rather than /etc/
-
-=head1 FUNCTIONS
-
-=over
-
-=item I<default_config()>
-
-Return a default configuration including defaults from handler modules.
-
-=item I<load_file()>
-
-Internal function used to load the config from /etc/authentication_milter.json
-
-=item I<get_config()>
-
-Return the config hashref, load from file(s) if required.
-
-=item I<set_config( $config )>
-
-Set the config hashref, primarily used for testing.
-
-=back
-
-=head1 DEPENDENCIES
-
-  JSON
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
