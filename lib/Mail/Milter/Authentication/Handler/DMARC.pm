@@ -10,7 +10,7 @@ use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 use List::MoreUtils qw{ uniq };
 
-use Mail::DMARC::PurePerl;
+use Mail::DMARC::PurePerl 1.20160612;
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;
 use Mail::AuthenticationResults::Header::Comment;

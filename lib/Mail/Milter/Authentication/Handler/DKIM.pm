@@ -8,8 +8,8 @@ use Data::Dumper;
 use English qw{ -no_match_vars };
 use Sys::Syslog qw{:standard :macros};
 
-use Mail::DKIM;
-use Mail::DKIM::Verifier;
+use Mail::DKIM 0.39;
+use Mail::DKIM::Verifier 0.39;
 use Mail::DKIM::DNS;
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;
