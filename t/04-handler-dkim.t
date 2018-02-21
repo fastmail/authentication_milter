@@ -257,6 +257,8 @@ sub add_key {
 
 # Need to add
 # domainkeys
+# body chunk carry
+# more properties and comments
 # adsp
 # garbage in Signature header
 # garbage in DNS record
