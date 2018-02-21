@@ -79,6 +79,19 @@ my $testers = {
     }),
 };
 
+subtest 'config' => sub {
+    my $tester = $testers->{ 'basic' };
+    my $config = $tester->{ 'authmilter' }->{ 'handler' }->{ 'DKIM' }->default_config();
+    is_deeply( $config, { 'hide_none' => 0, 'hide_domainkeys' => 0, 'check_adsp' => 1, 'show default_adsp' => 0, 'adsp_hide_none' => 0, 'extra_properties' => 0, }, 'Returns correct config' );
+};
+
+subtest 'metrics' => sub {
+    my $tester = $testers->{ 'basic' };
+    my $grafana_rows = $tester->{ 'authmilter' }->{ 'handler' }->{ 'DKIM' }->grafana_rows();
+    is( scalar @$grafana_rows, 1, '1 Grafana row returned' );
+    lives_ok( sub{ JSON->new()->decode( $grafana_rows->[0] ); }, 'Metrics returns valid JSON' );
+};
+
 subtest 'none hidden' => sub {
     my $tester = $testers->{ 'hide_none' };
     $TestWith->{ 'body' } = $TestMail;
