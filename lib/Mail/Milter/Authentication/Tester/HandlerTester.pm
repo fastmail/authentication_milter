@@ -301,7 +301,7 @@ sub run {
 
     }
     if ( $buffer ) {
-        my ( $key, $value ) = split( $buffer, ':', 2 );
+        my ( $key, $value ) = split( ':', $buffer, 2 );
         $key =~ s/\s+$//;
         $value =~ s/^\s+//;
         $returncode = $self->header( $key, $value );
@@ -311,7 +311,7 @@ sub run {
     $returncode = $self->end_of_headers();
     die 'eoh' if ( $returncode != SMFIS_CONTINUE );
 
-    $returncode = $self->body( join( "\n", @lines) );
+    $returncode = $self->body( join( "\n", @lines) . "\n" );
     die 'body' if ( $returncode != SMFIS_CONTINUE );
 
     $returncode = $self->end_of_message();
