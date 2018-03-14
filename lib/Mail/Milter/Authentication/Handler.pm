@@ -15,7 +15,7 @@ use Time::HiRes qw{ gettimeofday };
 
 use Mail::Milter::Authentication::Constants qw { :all };
 use Mail::Milter::Authentication::Config;
-use Mail::AuthenticationResults 1.20180113;
+use Mail::AuthenticationResults 1.20180314;
 
 our $TestResolver; # For Testing
 
