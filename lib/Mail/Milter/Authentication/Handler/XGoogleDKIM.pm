@@ -301,10 +301,6 @@ sub _check_error {
 
 __END__
 
-=head1 NAME
-
-  Authentication-Milter - X Google DKIM Module
-
 =head1 DESCRIPTION
 
 Module for validation of X-Google-DKIM signatures.
@@ -314,18 +310,4 @@ Module for validation of X-Google-DKIM signatures.
         "XGoogleDKIM" : {                               | Config for the X-Google-DKIM Module
             "hide_none"         : 0,                    | Hide auth line if the result is 'none'
         },
-
-=head1 SYNOPSIS
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
 

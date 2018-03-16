@@ -953,10 +953,6 @@ sub insert_header {
 
 __END__
 
-=head1 NAME
-
-Mail::Milter::Authentication::Protocol::SMTP - SMTP protocol specific methods
-
 =head1 DESCRIPTION
 
 A Perl implenmetation of email authentication standards rolled up into a single easy to use milter.
@@ -1083,16 +1079,4 @@ Update the process name status line
   English
   Digest::MD5
   Net::IP
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
 

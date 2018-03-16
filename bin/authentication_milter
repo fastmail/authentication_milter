@@ -12,6 +12,7 @@ use Mail::Milter::Authentication::Protocol::SMTP;
 use Mail::Milter::Authentication::Config qw{ get_config default_config };
 use Module::Load;
 use Pod::Usage;
+# ABSTRACT: A Perl Mail Authentication Milter
 # VERSION
 # PODNAME: authentication_milter
 
@@ -126,10 +127,6 @@ sub show_default_config {
 }
 
 __END__
-
-=head1 NAME
-
-  Authentication-Milter - Email Authentication by SPF/DKIM/DMARC etc.
 
 =head1 USAGE
 
@@ -355,15 +352,4 @@ At this time forensic reports are not supported by Mail::DMARC or this milter. O
 
 To check reports please use the dmarc_view_reports command, to send reports please use the dmarc_send_reports command.
 These are included with the Mail::DMARC module.
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
 

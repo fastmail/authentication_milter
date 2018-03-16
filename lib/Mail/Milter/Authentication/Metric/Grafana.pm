@@ -62,10 +62,6 @@ sub get_dashboard {
 
 __END__
 
-=head1 NAME
-
-Mail::Milter::Authentication::Metric::Grafana - Automatically generate Grafana dashboard
-
 =head1 DESCRIPTION
 
 Automatically generate a grafana dashboard for installed handlers
@@ -121,15 +117,4 @@ Returns the json for the grafana dashboard
 $server is the current handler object
 
 =back
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
 

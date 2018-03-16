@@ -1535,10 +1535,6 @@ sub change_header {
 
 __END__
 
-=head1 NAME
-
-Mail::Milter::Authentication::Handler - Main handler class and methods
-
 =head1 DESCRIPTION
 
 Handle the milter requests and pass off to individual handlers
@@ -1897,17 +1893,4 @@ Write a Change Header packet to the MTA (calls Protocol object)
 =head1 WRITING HANDLERS
 
 tbc
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
-
 

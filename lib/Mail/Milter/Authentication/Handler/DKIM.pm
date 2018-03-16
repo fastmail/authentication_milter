@@ -408,10 +408,6 @@ sub _check_error {
 
 __END__
 
-=head1 NAME
-
-  Authentication-Milter - DKIM Module
-
 =head1 DESCRIPTION
 
 Module for validation of DKIM and DomainKeys signatures, and application of ADSP policies.
@@ -426,18 +422,4 @@ Module for validation of DKIM and DomainKeys signatures, and application of ADSP
             "adsp_hide_none"    : 0,                    | Hide auth ADSP if the result is 'none'
             "extra_properties"  : 0                     | Add extra properties (not to rfc) relating to key and selector
         },
-
-=head1 SYNOPSIS
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
 

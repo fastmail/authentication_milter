@@ -348,10 +348,6 @@ sub child_handler {
 
 __END__
 
-=head1 NAME
-
-Mail::Milter::Authentication::Metric - Collect and produce metrics data
-
 =head1 DESCRIPTION
 
 Handle metrics collection and production for prometheus
@@ -393,13 +389,3 @@ Handle a request for metrics in a child process.
 
 =back
 
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.

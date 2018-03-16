@@ -291,10 +291,6 @@ sub write_packet {
 
 __END__
 
-=head1 NAME
-
-Mail::Milter::Authentication::Protocol::Milter - Milter protocol specific methods
-
 =head1 DESCRIPTION
 
 A Perl implementation of email authentication standards rolled up into a single easy to use milter.
@@ -360,15 +356,4 @@ Receive a new command from the protocol stream and process it.
 
   English
   Net::IP
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
 

@@ -210,10 +210,6 @@ sub close_callback {
 
 __END__
 
-=head1 NAME
-
-  Authentication-Milter - SPF Module
-
 =head1 DESCRIPTION
 
 Implements the SPF standard checks.
@@ -227,18 +223,4 @@ Implements the SPF standard checks.
             "best_guess"               : 0              | Fallback to Org domain for SPF checks
                                                         | if result is none.
         },
-
-=head1 SYNOPSIS
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
 

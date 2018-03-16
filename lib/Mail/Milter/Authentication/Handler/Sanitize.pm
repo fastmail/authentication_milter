@@ -124,10 +124,6 @@ sub close_callback {
 
 __END__
 
-=head1 NAME
-
-  Authentication-Milter - Sanitize Module
-
 =head1 DESCRIPTION
 
 Remove unauthorized (forged) Authentication-Results headers from processed email.
@@ -146,18 +142,4 @@ Remove unauthorized (forged) Authentication-Results headers from processed email
                                                         | "silent" : remove silently
                                                         | Does not run for trusted IP address connections
         }
-
-=head1 SYNOPSIS
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
 

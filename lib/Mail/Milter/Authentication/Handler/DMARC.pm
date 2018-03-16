@@ -616,10 +616,6 @@ sub close_callback {
 
 __END__
 
-=head1 NAME
-
-  Authentication-Milter - DMARC Module
-
 =head1 DESCRIPTION
 
 Module implementing the DMARC standard checks.
@@ -648,18 +644,4 @@ This handler requires the SPF and DKIM handlers to be installed and active.
             "no_report"          : "1",                  | If set then we will not attempt to store DMARC reports.
             "config_file"        : "/etc/mail-dmarc.ini" | Optional path to dmarc config file
         },
-
-=head1 SYNOPSIS
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
 

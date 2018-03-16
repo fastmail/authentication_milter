@@ -10,6 +10,7 @@ use Pod::Usage;
 use Mail::Milter::Authentication::Client;
 use Mail::Milter::Authentication::Config;
 # VERSION
+# ABSTRACT: A Perl Mail Authentication Milter client
 # PODNAME: authentication_milter_client
 
 # CONFIG
@@ -88,10 +89,6 @@ print $client->result();
 
 __END__
 
-=head1 NAME
-
-  Authentication-Milter-Client - Email Authentication by SPF/DKIM/DMARC etc.
-
 =head1 USAGE
 
   authentication_milter_client [--mailer_name <name>] \
@@ -151,16 +148,4 @@ The string passed in the MAIL FROM stage of the SMTP transaction.
 The string passed in the RCPT TO stage of the SMTP transaction.
 
 =back
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
 
