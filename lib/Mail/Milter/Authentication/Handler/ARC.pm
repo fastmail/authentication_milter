@@ -3,13 +3,13 @@ use strict;
 use warnings;
 use Mail::Milter::Authentication 2;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.6');
-
+# VERSION
+# ABSTRACT: Authentication Milter Module for validation of ARC signatures
 use Data::Dumper;
 use English qw{ -no_match_vars };
 use Sys::Syslog qw{:standard :macros};
 
-use Mail::DKIM;
+use Mail::DKIM 0.50;
 use Mail::DKIM::DNS;
 use Mail::DKIM::TextWrap;
 use Mail::DKIM::ARC::Signer;
@@ -409,10 +409,6 @@ sub addheader_callback {
 
 __END__
 
-=head1 NAME
-
-  Authentication-Milter - ARC Module
-
 =head1 DESCRIPTION
 
 Module for validation of ARC signatures
@@ -428,18 +424,4 @@ Module for validation of ARC signatures
             "arcseal_keyfile"   => undef,               | File containing ARC Seal key
             "arcseal_headers"   => undef,               | Additional headers to cover in ARC-Message-Signature
         },
-
-=head1 SYNOPSIS
-
-=head1 AUTHORS
-
-Bron Gondwana E<lt>brong@fastmailteam.comE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2017
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
 
