@@ -30,6 +30,9 @@ before_install:
    - coverage-setup
 
 install:
+    - cpanm --quiet --notest --skip-satisfied Dist::Zilla
+    - "dzil authordeps          --missing | grep -vP '[^\\w:]' | xargs -n 5 -P 10 cpanm --quiet --notest"
+    - "dzil listdeps   --author --missing | grep -vP '[^\\w:]' | cpanm --verbose"
     - cpanm --quiet --notest Module::Install
     - cpanm --quiet --notest Mail::SPF --install-args="--install-path sbin=/tmp"
     - cpanm --quiet --notest Test::More Test::File::Contents Test::Perl::Critic
@@ -46,7 +49,7 @@ install:
     - cpan-install --coverage
 
 script:
-   - HARNESS_IS_VERBOSE=1 prove -v -l t
+   - dzil test
 
 after_success:
   - coverage-report
