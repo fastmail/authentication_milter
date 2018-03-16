@@ -9,6 +9,8 @@ use Pod::Usage;
 
 use Mail::Milter::Authentication::Client;
 use Mail::Milter::Authentication::Config;
+# VERSION
+# PODNAME: authentication_milter_client
 
 # CONFIG
 my $help         = 0;

@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::TLS;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.7');
+# VERSION
 
 use Sys::Syslog qw{:standard :macros};
 use Mail::AuthenticationResults::Header::Entry;

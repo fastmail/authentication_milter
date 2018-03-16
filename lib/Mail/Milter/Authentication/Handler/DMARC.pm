@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::DMARC;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.7');
+# VERSION
 
 use Data::Dumper;
 use English qw{ -no_match_vars };
@@ -10,7 +10,7 @@ use Net::IP;
 use Sys::Syslog qw{:standard :macros};
 use List::MoreUtils qw{ uniq };
 
-use Mail::DMARC::PurePerl;
+use Mail::DMARC::PurePerl 1.20160612;
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;
 use Mail::AuthenticationResults::Header::Comment;

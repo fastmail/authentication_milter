@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::Size;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.7');
+# VERSION
 
 use Data::Dumper;
 use English qw{ -no_match_vars };

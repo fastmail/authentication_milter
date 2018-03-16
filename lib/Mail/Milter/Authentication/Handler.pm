@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Handler;
 use strict;
 use warnings;
-use version; our $VERSION = version->declare('v1.1.7');
+# VERSION
 
 use Digest::MD5 qw{ md5_hex };
 use English qw{ -no_match_vars };
@@ -15,7 +15,7 @@ use Time::HiRes qw{ gettimeofday };
 
 use Mail::Milter::Authentication::Constants qw { :all };
 use Mail::Milter::Authentication::Config;
-#use Mail::AuthenticationResults::Parser;
+use Mail::AuthenticationResults 1.20180314;
 
 our $TestResolver; # For Testing
 

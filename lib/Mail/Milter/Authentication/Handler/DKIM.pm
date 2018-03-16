@@ -2,14 +2,14 @@ package Mail::Milter::Authentication::Handler::DKIM;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.7');
+# VERSION
 
 use Data::Dumper;
 use English qw{ -no_match_vars };
 use Sys::Syslog qw{:standard :macros};
 
-use Mail::DKIM;
-use Mail::DKIM::Verifier;
+use Mail::DKIM 0.39;
+use Mail::DKIM::Verifier 0.39;
 use Mail::DKIM::DNS;
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;

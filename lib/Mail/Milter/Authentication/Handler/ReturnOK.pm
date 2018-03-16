@@ -2,7 +2,7 @@ package Mail::Milter::Authentication::Handler::ReturnOK;
 use strict;
 use warnings;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.7');
+# VERSION
 
 use Net::DNS;
 use Sys::Syslog qw{:standard :macros};
