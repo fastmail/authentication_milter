@@ -45,6 +45,9 @@ install:
     - cpanm --quiet --notest git://github.com/fastmailops/mail-dmarc.git@fastmail
     - cpan-install --coverage
 
+script:
+   - HARNESS_IS_VERBOSE=1 prove -v -Ilib t
+
 after_success:
   - coverage-report
 
