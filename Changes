@@ -1,7 +1,14 @@
 Revision history for Mail-Milter-Authentication
 
-1.1.8   - FUTURE
+{{$NEXT}}
         - Allow remapping of IP address/HELO based on source IP address
+        - Authentication-Results headers are now passed as objects internally
+        - Added Mail::Milter::Authentication::Tester::HandlerTester to improve testing of handlers
+        - Improved testing frameworks
+        - Switched build framework to Dist::Zilla
+        - Minimum Perl version is now 5.10 due to dependencies in Mail::DMARC
+        - Improve output from tests when there are failures
+        - Fix Best guess SPF mode
 
 1.1.7   2017-12-21
         - Removed nasty recursion bug in header sorting
