@@ -1,9 +1,9 @@
 package Mail::Milter::Authentication::Handler::BIMI;
 use strict;
 use warnings;
+use Mail::Milter::Authentication 2;
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.2');
-
+# VERSION
 # ABSTRACT: BIMI handler for authentication milter
 
 use English qw{ -no_match_vars };
