@@ -1,5 +1,8 @@
 Revision history for Mail-Milter-Authentication-ARC
 
+{{$NEXT}}
+        - Pass headers as objects
+
 1.1.6   2017-12-18
         - Fix bug which prevented ARCSealing when Domain != ServerId
 
