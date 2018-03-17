@@ -9,7 +9,7 @@ use AuthMilterTest;
 use Mail::Milter::Authentication::Handler;
 use Net::DNS::Resolver::Mock;
 
-if ( ! -e 't/01-tools.t' ) {
+if ( ! -e 't/00-load.t' ) {
     die 'Could not find required files, are we in the correct directory?';
 }
 

@@ -12,7 +12,7 @@ if ( $ENV{SKIP_SMTP_TESTS} ) {
     plan( skip_all => "Tests skipped by environment" );
 }
 
-if ( ! -e 't/01-tools.t' ) {
+if ( ! -e 't/00-load.t' ) {
     die 'Could not find required files, are we in the correct directory?';
 }
 

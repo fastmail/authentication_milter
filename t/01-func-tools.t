@@ -8,7 +8,7 @@ use Test::File::Contents;
 use Net::DNS::Resolver::Mock;
 use AuthMilterTest;
 
-if ( ! -e 't/01-tools.t' ) {
+if ( ! -e 't/00-load.t' ) {
     die 'Could not find required files, are we in the correct directory?';
 }
 
