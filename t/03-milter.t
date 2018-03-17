@@ -8,6 +8,10 @@ use Test::File::Contents;
 use Net::DNS::Resolver::Mock;
 use AuthMilterTest;
 
+if ( $ENV{SKIP_MILTER_TESTS} ) {
+    plan( skip_all => "Tests skipped by environment" );
+}
+
 if ( ! -e 't/01-tools.t' ) {
     die 'Could not find required files, are we in the correct directory?';
 }
