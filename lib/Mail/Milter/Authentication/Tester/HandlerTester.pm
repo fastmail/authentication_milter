@@ -198,7 +198,7 @@ sub handler {
     return $self->{ 'authmilter' }->{ 'handler' }->{ '_Handler' };
 }
 
-sub connect {
+sub connect { ## no critic
     my ( $self, $name, $ip ) = @_;
     my $authmilter = $self->{ 'authmilter' };
     my $ip_obj = eval{ Net::IP->new( $ip ) } // undef;
@@ -242,7 +242,7 @@ sub end_of_message {
     return $self->handler()->top_eom_callback();
 }
 
-sub close {
+sub close { ## no critic
     my ( $self ) = @_;
     return $self->handler()->top_close_callback();
 }

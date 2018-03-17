@@ -1,4 +1,5 @@
 package Mail::Milter::Authentication::Net::Milter;
+## no critic
 use strict;
 use Carp;
 use vars qw($DEBUG);
