@@ -131,7 +131,6 @@ sub envfrom_callback {
         # ToDo report this in both metrics and AR header
         my $auth_domain;
         if ( $result_code eq 'none' ) {
-        $self->dbgout( 'SPFX1', $result_code, LOG_INFO );
             if ( $config->{'best_guess'} ) {
                 if ( $self->is_handler_loaded( 'DMARC' ) ) {
                     my $dmarc_handler = $self->get_handler('DMARC');
