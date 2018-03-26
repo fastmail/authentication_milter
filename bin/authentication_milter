@@ -307,6 +307,17 @@ __END__
     "dns_timeout"           : 10,                       | Timeout for DNS lookups
     "dns_retry"             : 2,                        | Number of times a lookup will retry per call
 
+    "header_indent_style"   : "entry",                  | Optional style to indent/fold Authentication-Results header by
+    "header_indent_by"      : 4,                        | Optional number of spaces to indent/fold Authentication-Results header by
+                                                        | The style matches those defined in Mail::AuthenticationResults
+                                                        | options are none; no folding
+                                                        |             entry; fold on each entry
+                                                        |             subentry; fold on each subentry
+                                                        |             full; fold on each item
+                                                        | the default style is entry, and the default by is 4
+                                                        | NB. This only apply when there are no handlers using the
+                                                        | legacy string method of adding a section to the header.
+
     "tempfail_on_error"               : "1",            | Tempfail on errors
     "tempfail_on_error_authenticated" : "0",            | Tempfail on errors for Authenticated IP Connections
     "tempfail_on_error_local"         : "0",            | Tempfail on errors for Local IP Connections
