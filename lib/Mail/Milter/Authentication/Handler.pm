@@ -1418,7 +1418,7 @@ sub add_headers {
                 $header_obj->set_indent_style( $config->{'header_indent_style'} );
             }
             else {
-                $header_obj->set_indent_style( 'subentry' );
+                $header_obj->set_indent_style( 'entry' );
             }
             if ( exists( $config->{'header_indent_by'} ) ) {
                 $header_obj->set_indent_by( $config->{'header_indent_by'} );
