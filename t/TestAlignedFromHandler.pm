@@ -33,7 +33,7 @@ sub test_dmarc_or_not {
     my ( $tester ) = @_;
 
     # Pass cases
-    subtest 'Simple pass casse' => sub{
+    subtest 'Simple pass case' => sub{
         test($tester,{ 'name' => 'simple pass', 'mailfrom' => 'test@example.com', 'from' => 'From: test@example.com', 'result' => 'pass', 'comment' => 'Address match' });
         test($tester,{ 'name' => 'header lower case', 'mailfrom' => 'test@example.com', 'from' => 'from: test@example.com', 'result' => 'pass', 'comment' => 'Address match' });
         test($tester,{ 'name' => 'header upper case', 'mailfrom' => 'test@example.com', 'from' => 'FROM: test@example.com', 'result' => 'pass', 'comment' => 'Address match' });

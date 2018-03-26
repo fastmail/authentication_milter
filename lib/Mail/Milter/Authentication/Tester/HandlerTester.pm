@@ -346,6 +346,7 @@ sub get_authresults_header {
     my @added_ar_headers = ( @{ $c_auth_headers }, @{ $auth_headers } );
     my $header = Mail::AuthenticationResults::Header->new()->set_value( Mail::AuthenticationResults::Header::AuthServID->new()->set_value( $self->servername() ) );
     foreach my $ar_header ( @added_ar_headers ) {
+        eval{ $ar_header->orphan(); }; # Remove parent for testing.
         $header->add_child( $ar_header );
     }
     return $header;

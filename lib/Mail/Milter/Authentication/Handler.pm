@@ -16,6 +16,8 @@ use Time::HiRes qw{ gettimeofday };
 use Mail::Milter::Authentication::Constants qw { :all };
 use Mail::Milter::Authentication::Config;
 use Mail::AuthenticationResults 1.20180314;
+use Mail::AuthenticationResults::Header;
+use Mail::AuthenticationResults::Header::AuthServID;
 
 our $TestResolver; # For Testing
 
@@ -1390,9 +1392,43 @@ sub add_headers {
         @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
     }
     if (@auth_headers) {
+
         @auth_headers = sort { $self->header_sort( $a, $b ) } @auth_headers;
-        $header .= ";\n    ";
-        $header .= join( ";\n    ", map { $self->_stringify_header( $_ ) } @auth_headers );
+
+        # Do we have any legacy type headers?
+        my $are_string_headers = 0;
+        my $header_obj = Mail::AuthenticationResults::Header->new();
+        foreach my $header ( @auth_headers ) {
+            if ( ref $header ne 'Mail::AuthenticationResults::Header::Entry' ) {
+                $are_string_headers = 1;
+                last;
+            }
+            $header_obj->add_child( $header );
+        }
+
+        if ( $are_string_headers ) {
+            # We have legacy headers, add in a legacy way
+            $header .= ";\n    ";
+            $header .= join( ";\n    ", map { $self->_stringify_header( $_ ) } @auth_headers );
+        }
+        else {
+            $header_obj->set_value( Mail::AuthenticationResults::Header::AuthServID->new()->safe_set_value( $self->get_my_hostname() ) );
+            $header_obj->set_eol( "\n" );
+            if ( exists( $config->{'header_indent_style'} ) ) {
+                $header_obj->set_indent_style( $config->{'header_indent_style'} );
+            }
+            else {
+                $header_obj->set_indent_style( 'entry' );
+            }
+            if ( exists( $config->{'header_indent_by'} ) ) {
+                $header_obj->set_indent_by( $config->{'header_indent_by'} );
+            }
+            else {
+                $header_obj->set_indent_by( 4 );
+            }
+            $header = $header_obj->as_string();
+        }
+
     }
     else {
         $header .= '; none';
