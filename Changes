@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20180326 2018-03-26 13:09:14+11:00 Australia/Melbourne
         - Allow indent/fold style and depth to be configured
         - Build the internal AR header list using objects
 
