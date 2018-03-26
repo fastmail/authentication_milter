@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Allow indent/fold style and depth to be configured
+        - Build the internal AR header list using objects
 
 2.20180318 2018-03-18 Australia/Melbourne
         - Allow remapping of IP address/HELO based on source IP address
