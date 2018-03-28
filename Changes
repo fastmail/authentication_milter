@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Updated config processor to be a generic external callback handler
 
 2.20180328 2018-03-28 21:26:54+11:00 Australia/Melbourne
         - Add config option to process loaded config with a named Perl module
