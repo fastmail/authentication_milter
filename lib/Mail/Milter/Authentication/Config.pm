@@ -6,6 +6,7 @@ use warnings;
 
 use Mail::Milter::Authentication;
 use Module::Load;
+use Module::Loaded;
 
 use Exporter qw{ import };
 our @EXPORT_OK = qw{
@@ -140,6 +141,50 @@ sub load_file {
     return $data;
 }
 
+=func I<process_config()>
+
+Process the loaded config with the callback if required.
+
+This is the name of a Module to load, the process method of the module
+will be called with $config as the argument, it expects the processed config
+to be returned.
+
+    package ConfigProcessor;
+
+    sub process {
+        my ( $self, $config ) = @_;
+        return $config;
+    }
+
+    1;
+
+=cut
+
+sub process_config {
+    my ( $config ) = @_;
+
+    if ( exists( $config->{ 'config_processor' } ) ) {
+
+        # Try and load the handler
+        my $handler = $config->{ 'config_processor' };
+        if ( ! is_loaded ( $handler ) ) {
+            eval { load $handler; };
+            if ( my $error = $@ ) {
+                warn "Error loading config processor module: $error";
+                return $config;
+            }
+        }
+
+        eval{
+            no strict 'refs'; ## no critic;
+            $config = $handler->process( $config );
+        };
+
+    }
+
+    return $config;
+}
+
 =func I<get_config()>
 
 Return the config hashref, load from file(s) if required.
@@ -148,7 +193,9 @@ Return the config hashref, load from file(s) if required.
 
 sub get_config {
 
-    return $CONFIG if $CONFIG;
+    if ( $CONFIG ) {
+        return process_config( $CONFIG );
+    }
 
     my $file = $PREFIX . '/authentication_milter.json';
 
@@ -181,7 +228,7 @@ sub get_config {
 
     $CONFIG = $config;
 
-    return $config;
+    return process_config( $config );
 
 }
 

@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Add config option to process loaded config with a named Perl module
 
 2.20180326 2018-03-26 13:09:14+11:00 Australia/Melbourne
         - Allow indent/fold style and depth to be configured
