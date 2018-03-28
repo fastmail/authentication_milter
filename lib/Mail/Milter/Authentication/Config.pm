@@ -145,15 +145,18 @@ sub load_file {
 
 Process the loaded config with the callback if required.
 
-This is the name of a Module to load, the process method of the module
-will be called with $config as the argument, it expects the processed config
-to be returned.
+This is the name of a Module to load, the process_config method of the instantiated object
+will be called with $config as the argument.g
 
     package ConfigProcessor;
 
-    sub process {
+    sub new {
+        ...
+    }
+
+    sub process_config {
         my ( $self, $config ) = @_;
-        return $config;
+        return;
     }
 
     1;
@@ -161,28 +164,14 @@ to be returned.
 =cut
 
 sub process_config {
-    my ( $config ) = @_;
 
-    if ( exists( $config->{ 'config_processor' } ) ) {
-
-        # Try and load the handler
-        my $handler = $config->{ 'config_processor' };
-        if ( ! is_loaded ( $handler ) ) {
-            eval { load $handler; };
-            if ( my $error = $@ ) {
-                warn "Error loading config processor module: $error";
-                return $config;
-            }
+    if ( exists( $CONFIG->{ '_external_callback_processor' } ) ) {
+        if ( $CONFIG->{ '_external_callback_processor' }->can( 'process_config' ) ) {
+            $CONFIG->{ '_external_callback_processor' }->process_config( $CONFIG );
         }
-
-        eval{
-            no strict 'refs'; ## no critic;
-            $config = $handler->process( $config );
-        };
-
     }
 
-    return $config;
+    return $CONFIG;
 }
 
 =func I<get_config()>
@@ -194,7 +183,7 @@ Return the config hashref, load from file(s) if required.
 sub get_config {
 
     if ( $CONFIG ) {
-        return process_config( $CONFIG );
+        return process_config();
     }
 
     my $file = $PREFIX . '/authentication_milter.json';
@@ -226,9 +215,26 @@ sub get_config {
     my $protocol = $config->{'protocol'} || 'milter';
     $config->{'protocol'} = $protocol;
 
+    # Have we specified an external callback processor?
+    if ( exists( $config->{ 'external_callback_processor' } ) ) {
+        # Try and load the handler
+        my $handler = $config->{ 'external_callback_processor' };
+        warn "Loading external callback processor $handler\n";
+        if ( ! is_loaded ( $handler ) ) {
+            eval {
+                no strict 'refs'; ## no critic;
+                load $handler;
+                $config->{ '_external_callback_processor' } = $handler->new();
+            };
+            if ( my $error = $@ ) {
+                warn "Error loading config processor module: $error";
+            }
+        }
+    }
+
     $CONFIG = $config;
 
-    return process_config( $config );
+    return process_config();
 
 }
 

@@ -212,7 +212,7 @@ __END__
   The configuration file format is as follows...
 
   {
-    "config_processor" : "My::Module",                  | Process config after loading.
+    "external_callback_processor" : "My::Module",       | Name of module containing external callback methods
 
     "debug"     : 0,                                    | Verbose debugging output
     "dryrun"    : 0,                                    | Dryrun (do not alter or reject mail)
