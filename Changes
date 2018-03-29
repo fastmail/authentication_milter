@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20180329 2018-03-29 11:12:49+11:00 Australia/Melbourne
         - Updated config processor to be a generic external callback handler
 
 2.20180328 2018-03-28 21:26:54+11:00 Australia/Melbourne
