@@ -15,7 +15,7 @@ use Time::HiRes qw{ gettimeofday };
 
 use Mail::Milter::Authentication::Constants qw { :all };
 use Mail::Milter::Authentication::Config;
-use Mail::AuthenticationResults 1.20180314;
+use Mail::AuthenticationResults 1.20180328;
 use Mail::AuthenticationResults::Header;
 use Mail::AuthenticationResults::Header::AuthServID;
 
@@ -1425,6 +1425,9 @@ sub add_headers {
             }
             else {
                 $header_obj->set_indent_by( 4 );
+            }
+            if ( exists( $config->{'header_fold_at'} ) ) {
+                $header_obj->set_fold_at( $config->{'header_fold_at'} );
             }
             $header = $header_obj->as_string();
         }
