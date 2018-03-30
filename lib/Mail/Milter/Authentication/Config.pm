@@ -219,7 +219,6 @@ sub get_config {
     if ( exists( $config->{ 'external_callback_processor' } ) ) {
         # Try and load the handler
         my $handler = $config->{ 'external_callback_processor' };
-        warn "Loading external callback processor $handler\n";
         if ( ! is_loaded ( $handler ) ) {
             eval {
                 no strict 'refs'; ## no critic;
@@ -227,7 +226,8 @@ sub get_config {
                 $config->{ '_external_callback_processor' } = $handler->new();
             };
             if ( my $error = $@ ) {
-                warn "Error loading config processor module: $error";
+                delete $config->{ 'external_callback_processor' };
+                warn "Error loading external callback processor module: $error";
             }
         }
     }
