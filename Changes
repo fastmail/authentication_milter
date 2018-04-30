@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20180430 2018-04-30 21:02:23+10:00 Australia/Melbourne
         - Allow folding of Authentication-Results header
         - Fix bug where handlers could receive emptystring instead of 0
 
