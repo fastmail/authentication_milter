@@ -188,7 +188,7 @@ sub top_helo_callback {
     $self->status('helo');
     $self->dbgout( 'CALLBACK', 'Helo', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-    $helo_host = q{} if not $helo_host;
+    $helo_host = q{} if ! defined $helo_host;
     my $config = $self->config();
     eval {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
@@ -264,7 +264,7 @@ sub top_envfrom_callback {
     $self->status('envfrom');
     $self->dbgout( 'CALLBACK', 'EnvFrom', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-    $env_from = q{} if not $env_from;
+    $env_from = q{} if ! defined $env_from;
     my $config = $self->config();
     eval {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
@@ -313,7 +313,7 @@ sub top_envrcpt_callback {
     $self->status('envrcpt');
     $self->dbgout( 'CALLBACK', 'EnvRcpt', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-    $env_to = q{} if not $env_to;
+    $env_to = q{} if ! defined $env_to;
     my $config = $self->config();
     eval {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
@@ -355,7 +355,7 @@ sub top_header_callback {
     $self->status('header');
     $self->dbgout( 'CALLBACK', 'Header', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-    $value = q{} if not $value;
+    $value = q{} if ! defined $value;
     my $config = $self->config();
     eval {
         local $SIG{'ALRM'} = sub{ die "Timeout\n" };
@@ -1074,7 +1074,7 @@ sub get_address_from {
 
 sub get_addresses_from {
     my ( $self, $Str ) = @_;
-    $Str = q{} if !defined $Str;
+    $Str = q{} if ! defined $Str;
 
     if ( $Str eq q{} ) {
         $self->log_error( 'Could not parse empty address' );
