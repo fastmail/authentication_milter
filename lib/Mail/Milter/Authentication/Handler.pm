@@ -1055,6 +1055,7 @@ sub get_domains_from {
         if ( $address =~ /\@/ ) {
             ($domain) = $address =~ /.*\@(.*)/;
         }
+        next if ! defined $domain;
         $domain =~ s/\s//g;
         push @$domains, lc $domain;
     }

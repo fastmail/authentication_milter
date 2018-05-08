@@ -487,16 +487,16 @@ sub eom_callback {
 
     my $env_from = $self->{ 'env_from' };
     my $env_domains_from = $self->get_domains_from($env_from);
-    $env_domains_from = [''] if ! $env_domains_from;
+    $env_domains_from = [''] if ! @$env_domains_from;
 
     my $from_headers = $self->{ 'from_headers' };
 
     # Build a list of all from header domains used
     my @header_domains;
     foreach my $from_header ( @$from_headers ) {
-    my $from_header_header_domains = $self->get_domains_from( $from_header );
+        my $from_header_header_domains = $self->get_domains_from( $from_header );
         foreach my $header_domain ( @$from_header_header_domains ) {
-        push @header_domains, $header_domain;
+            push @header_domains, $header_domain;
         }
     }
 

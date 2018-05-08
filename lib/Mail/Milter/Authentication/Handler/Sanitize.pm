@@ -30,6 +30,8 @@ sub is_hostname_mine {
     my ( $self, $check_hostname ) = @_;
     my $config = $self->handler_config();
 
+    return 0 if ! defined $check_hostname;
+
     my $hostname = $self->get_my_hostname();
     my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
 

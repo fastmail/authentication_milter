@@ -354,14 +354,15 @@ sub child_is_talking_hook {
 
     eval {
         $raw_request = <$socket>;
-        return if ! $raw_request;
-        $request = decode_json( $raw_request );
+        $request = decode_json( $raw_request ) if defined $raw_request;
     };
     if ( my $error = $@ ) {
         warn "Error $error reading from child";
         return;
     }
     else {
+
+        return if ! defined $raw_request;
 
         if ( ! $request ) {
             warn "Ignoring Invalid child request: $raw_request;";
