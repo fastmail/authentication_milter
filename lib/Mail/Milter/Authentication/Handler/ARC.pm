@@ -14,9 +14,13 @@ use Mail::DKIM::DNS;
 use Mail::DKIM::TextWrap;
 use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::ARC::Verifier;
+use Mail::AuthenticationResults;
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;
 use Mail::AuthenticationResults::Header::Comment;
+
+## todo add trusted domains
+##      add method to get the earliest trusted values for aar entries of given type
 
 sub default_config {
     return {
@@ -46,13 +50,14 @@ sub register_metrics {
 }
 
 sub envfrom_callback {
-    my ( $self, $env_from )  = @_;
-    $self->{'failmode'}      = 0;
-    $self->{'headers'}       = [];
-    $self->{'body'}          = [];
-    $self->{'has_arc'}       = 0;
-    $self->{'valid_domains'} = {};
-    $self->{'carry'}         = q{};
+    my ( $self, $env_from ) = @_;
+    $self->{'failmode'}         = 0;
+    $self->{'headers'}          = [];
+    $self->{'body'}             = [];
+    $self->{'has_arc'}          = 0;
+    $self->{'valid_domains'}    = {};
+    $self->{'carry'}            = q{};
+    $self->{'arc_auth_results'} = {};
     $self->destroy_object('arc');
     return;
 }
@@ -66,6 +71,11 @@ sub header_callback {
 
     if ( lc($header) eq 'arc-authentication-results' ) {
         $self->{'has_arc'} = 1;
+        my ( $instance, $aar ) = split( ';', $value, 2 );
+        $instance =~ s/.*i=(\d+).*$/\1/;
+        ## TODO eval this
+        my $parsed = Mail::AuthenticationResults->parser()->parse( $aar );
+        $self->{'arc_auth_results'}->{ $instance } = $parsed;
     }
 
     if ( lc($header) eq 'arc-seal' ) {
