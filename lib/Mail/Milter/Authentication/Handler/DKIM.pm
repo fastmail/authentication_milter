@@ -106,9 +106,10 @@ sub eoh_callback {
         };
         if ( my $error = $@ ) {
             $self->log_error( 'DKIM Setup Error ' . $error );
+            $self->{'failmode'} = 1;
+            die $error if $error =~ /Timeout/;
             $self->_check_error( $error );
             $self->metric_count( 'dkim_total', { 'result' => 'error' } );
-            $self->{'failmode'} = 1;
             delete $self->{'headers'};
             return;
         }
@@ -121,9 +122,10 @@ sub eoh_callback {
         };
         if ( my $error = $@ ) {
             $self->log_error( 'DKIM Headers Error ' . $error );
+            $self->{'failmode'} = 1;
+            die $error if $error =~ /Timeout/;
             $self->_check_error( $error );
             $self->metric_count( 'dkim_total', { 'result' => 'error' } );
-            $self->{'failmode'} = 1;
         }
 
         delete $self->{'headers'};
@@ -162,9 +164,10 @@ sub body_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'DKIM Body Error ' . $error );
+        $self->{'failmode'} = 1;
+        die $error if $error =~ /Timeout/;
         $self->_check_error( $error );
         $self->metric_count( 'dkim_total', { 'result' => 'error' } );
-        $self->{'failmode'} = 1;
     }
     return;
 }
@@ -347,9 +350,10 @@ sub eom_callback {
 
         # Also in DMARC module
         $self->log_error( 'DKIM EOM Error ' . $error );
+        $self->{'failmode'} = 1;
+        die $error if $error =~ /Timeout/;
         $self->_check_error( $error );
         $self->metric_count( 'dkim_total', { 'result' => 'error' } );
-        $self->{'failmode'} = 1;
         return;
     }
 }

@@ -100,9 +100,10 @@ sub eoh_callback {
         };
         if ( my $error = $@ ) {
             $self->log_error( 'XGoogleDKIM Setup Error ' . $error );
+            $self->{'failmode'} = 1;
+            die $error if $error =~ /Timeout/;
             $self->_check_error( $error );
             $self->metric_count( 'xgoogledkim_total', { 'result' => 'error' } );
-            $self->{'failmode'} = 1;
             delete $self->{'headers'};
             return;
         }
@@ -115,9 +116,10 @@ sub eoh_callback {
         };
         if ( my $error = $@ ) {
             $self->log_error( 'XGoogleDKIM Headers Error ' . $error );
+            $self->{'failmode'} = 1;
+            die $error if $error =~ /Timeout/;
             $self->_check_error( $error );
             $self->metric_count( 'xgoogledkim_total', { 'result' => 'error' } );
-            $self->{'failmode'} = 1;
         }
 
         delete $self->{'headers'};
@@ -156,9 +158,10 @@ sub body_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'XGoogleDKIM Body Error ' . $error );
+        $self->{'failmode'} = 1;
+        die $error if $error =~ /Timeout/;
         $self->_check_error( $error );
         $self->metric_count( 'xgoogledkim_total', { 'result' => 'error' } );
-        $self->{'failmode'} = 1;
     }
     return;
 }
@@ -244,12 +247,12 @@ sub eom_callback {
 
     };
     if ( my $error = $@ ) {
-
         # Also in DMARC module
         $self->log_error( 'XGoogleDKIM EOM Error ' . $error );
+        $self->{'failmode'} = 1;
+        die $error if $error =~ /Timeout/;
         $self->_check_error( $error );
         $self->metric_count( 'xgoogledkim_total', { 'result' => 'error' } );
-        $self->{'failmode'} = 1;
         return;
     }
 }
