@@ -168,6 +168,7 @@ sub eom_callback {
     if ( my $error = $@ ) {
         $self->log_error( 'BIMI Error ' . $error );
         if ( ! $self->{ 'header_added' } ) {
+            die $error if $error =~ /Timeout/;
             my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'temperror' );
             $self->add_auth_header( $header );
             $self->{ 'header_added' } = 1;
