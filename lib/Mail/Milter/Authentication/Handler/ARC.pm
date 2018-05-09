@@ -125,6 +125,7 @@ sub eoh_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'ARC Setup Error ' . $error );
+        die $error if $error =~ /Timeout/;
         $self->_check_error( $error );
         $self->metric_count( 'arc_total', { 'result' => 'error' } );
         $self->{'failmode'} = 1;
@@ -141,6 +142,7 @@ sub eoh_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'ARC Headers Error ' . $error );
+        die $error if $error =~ /Timeout/;
         $self->_check_error( $error );
         $self->metric_count( 'arc_total', { 'result' => 'error' } );
         $self->{'failmode'} = 1;
@@ -178,6 +180,7 @@ sub body_callback {
         };
         if ( my $error = $@ ) {
             $self->log_error( 'ARC Body Error ' . $error );
+            die $error if $error =~ /Timeout/;
             $self->_check_error( $error );
             $self->metric_count( 'arc_total', { 'result' => 'error' } );
             $self->{'failmode'} = 1;
@@ -233,6 +236,7 @@ sub eom_callback {
             # set using safe_set_value
             eval { $header_comment->set_value( $header_comment_text ); };
             if ( my $error = $@ ) {
+                die $error if $error =~ /Timeout/;
                 $header_comment->safe_set_value( $header_comment_text );
             }
             $header->add_child( $header_comment );
@@ -244,6 +248,7 @@ sub eom_callback {
     };
     if ( my $error = $@ ) {
         $self->log_error( 'ARC EOM Error ' . $error );
+        die $error if $error =~ /Timeout/;
         $self->_check_error( $error );
         $self->metric_count( 'arc_total', { 'result' => 'error' } );
         $self->{'failmode'} = 1;
@@ -410,6 +415,7 @@ sub addheader_callback {
 
     if ( my $error = $@ ) {
         $self->log_error( 'ARCSeal Error ' . $error );
+        die $error if $error =~ /Timeout/;
         $self->metric_count( 'arcseal_total', { 'result' => 'error' } );
         return;
     }
