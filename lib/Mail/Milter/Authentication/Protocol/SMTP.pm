@@ -542,9 +542,11 @@ sub smtp_command_data {
                 push @{ $smtp->{'headers'} } , $value;
                 my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
                 $hvalue =~ s/^ //;
-                my $returncode = $handler->top_header_callback( $hkey, $hvalue );
-                if ( $returncode != SMFIS_CONTINUE ) {
-                    $fail = 1;
+                if ( ! $fail ) {
+                    my $returncode = $handler->top_header_callback( $hkey, $hvalue );
+                    if ( $returncode != SMFIS_CONTINUE ) {
+                        $fail = 1;
+                    }
                 }
             }
             $value = $header_line;
@@ -554,14 +556,18 @@ sub smtp_command_data {
         push @{ $smtp->{'headers'} } , $value;
         my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
         $hvalue =~ s/^ //;
-        my $returncode = $handler->top_header_callback( $hkey, $hvalue );
+        if ( ! $fail ) {
+            my $returncode = $handler->top_header_callback( $hkey, $hvalue );
+            if ( $returncode != SMFIS_CONTINUE ) {
+                $fail = 1;
+            }
+        }
+    }
+    if ( ! $fail ) {
+        $returncode = $handler->top_eoh_callback();
         if ( $returncode != SMFIS_CONTINUE ) {
             $fail = 1;
         }
-    }
-    $returncode = $handler->top_eoh_callback();
-    if ( $returncode != SMFIS_CONTINUE ) {
-        $fail = 1;
     }
 
     $self->smtp_status('smtp.i.body');
@@ -580,9 +586,11 @@ sub smtp_command_data {
                 $body .= $dataline;
                 alarm( $smtp->{'smtp_timeout_in'} );
             }
-            $returncode = $handler->top_body_callback( $body );
-            if ( $returncode != SMFIS_CONTINUE ) {
-                $fail = 1;
+            if ( ! $fail ) {
+                $returncode = $handler->top_body_callback( $body );
+                if ( $returncode != SMFIS_CONTINUE ) {
+                    $fail = 1;
+                }
             }
         };
         if ( my $error = $@ ) {
@@ -593,10 +601,13 @@ sub smtp_command_data {
         alarm( 0 );
     }
 
-    $returncode = $handler->top_eom_callback();
-    if ( $returncode != SMFIS_CONTINUE ) {
-        $fail = 1;
+    if ( ! $fail ) {
+        $returncode = $handler->top_eom_callback();
+        if ( $returncode != SMFIS_CONTINUE ) {
+            $fail = 1;
+        }
     }
+
     $self->smtp_status('smtp.i.data.received');
 
     if ( ! $fail ) {
