@@ -153,12 +153,17 @@ sub eom_callback {
             my $AuthResults = $Result->get_authentication_results_object();
             $self->add_auth_header( $AuthResults );
             $self->{ 'header_added' } = 1;
-            my $Record = $BIMI->record();
-            my $URLList = $Record->url_list();
             if ( $Result->result() eq 'pass' ) {
-                $self->prepend_header( 'BIMI-Location', join( "\n",
-                    'v=BIMI1;',
-                    '    l=' . join( ',', @$URLList ) ) );
+                my $Record = $BIMI->record();
+                if ( $Record ) {
+                    my $URLList = $Record->url_list();
+                    $self->prepend_header( 'BIMI-Location', join( "\n",
+                        'v=BIMI1;',
+                        '    l=' . join( ',', @$URLList ) ) );
+                }
+                else {
+                    $self->log_error( 'BIMI Record not found for passing domain' );
+                }
             }
 
             $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
