@@ -46,7 +46,7 @@ sub _check_address {
         my $dmarc_object = $dmarc_handler->get_dmarc_object();
         if ( $domain ) {
             my $org_domain = eval{ $dmarc_object->get_organizational_domain( $domain ); };
-            if ( my $error = $@ ) { die $error if $error =~ /Timeout/; }
+            $self->handle_exception( $@ );
             if ( $org_domain eq $domain ) {
                 $self->{ 'metrics' }->{ $type . '_is_org_domain' } = 'yes';
                 push @{ $self->{ 'details' } }, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( $type . '_is_org_domain' )->safe_set_value( 'yes' );
@@ -107,8 +107,8 @@ sub _check_domain {
         }
     };
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( "ReturnOK: Domain lookup fatal error $error for $domain" );
-        die $error if $error =~ /Timeout/;
         push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'mx.error' )->safe_set_value( 'lookup_error' );
     }
 
@@ -136,8 +136,8 @@ sub _check_domain {
             }
         };
         if ( my $error = $@ ) {
+            $self->handle_exception( $error );
             $self->log_error( "ReturnOK: Domain lookup fatal error $error for $domain" );
-            die $error if $error =~ /Timeout/;
             push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'a.error' )->safe_set_value( 'lookup_error' );
         }
 
@@ -163,8 +163,8 @@ sub _check_domain {
             }
         };
         if ( my $error = $@ ) {
+            $self->handle_exception( $error );
             $self->log_error( "ReturnOK: Domain lookup fatal error $error for $domain" );
-            die $error if $error =~ /Timeout/;
             push @details, Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'aaaa.error' )->safe_set_value( 'lookup_error' );
         }
 

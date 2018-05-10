@@ -42,8 +42,8 @@ sub setup_callback {
             );
         };
         if ( my $error = $@ ) {
+            $self->handle_exception( $error );
             $self->log_error( 'SPF Object Setup Error ' . $error );
-            die $error if $error =~ /Timeout/;
         }
         $thischild->{'object'}->{$name} = {
             'object'  => $object,
@@ -186,9 +186,9 @@ sub envfrom_callback {
         }
     };
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( 'SPF Error ' . $error );
         $self->{'failmode'} = 1;
-        die $error if $error =~ /Timeout/;
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( 'temperror' );
         $self->add_auth_header($header);
         $self->metric_count( 'spf_total', { 'result' => 'error' } );

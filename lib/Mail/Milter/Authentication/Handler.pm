@@ -15,6 +15,7 @@ use Time::HiRes qw{ gettimeofday };
 
 use Mail::Milter::Authentication::Constants qw { :all };
 use Mail::Milter::Authentication::Config;
+use Mail::Milter::Authentication::Exception;
 use Mail::AuthenticationResults 1.20180328;
 use Mail::AuthenticationResults::Header;
 use Mail::AuthenticationResults::Header::AuthServID;
@@ -113,6 +114,24 @@ sub top_setup_callback {
     return;
 }
 
+sub is_exception_type {
+    my ( $self, $exception ) = @_;
+    return if ! defined $exception;
+    return if ! $exception;
+    return if ref $exception ne 'Mail::Milter::Authentication::Exception';
+    my $Type = $exception->{ 'Type' } || 'Unknown';
+    return 1;
+}
+
+sub handle_exception {
+    my ( $self, $exception ) = @_;
+    my $Type = $self->is_exception_type( $exception );
+    return if ! $Type;
+    die if $Type eq 'Timeout';
+    #my $Text = $exception->{ 'Text' } || 'Unknown';
+    return;
+}
+
 sub top_connect_callback {
 
     # On Connect
@@ -123,7 +142,7 @@ sub top_connect_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Connect callback timeout' }) };
         if ( $config->{'connect_timeout'} ) {
             alarm( $config->{'connect_timeout'} );
         }
@@ -159,23 +178,27 @@ sub top_connect_callback {
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->connect_callback( $hostname, $ip ); };
             if ( my $error = $@ ) {
+                $self->handle_exception( $error );
                 $self->log_error( 'Connect callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'connect', 'handler' => $handler } );
-                if ( $error =~ /Timeout/ ) {
-                    alarm( 1 );
-                }
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'connect', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->log_error( 'Connect callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'Connect callback error ' . $type . ' - ' . $error->{ 'Text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'connect', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'Connect callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'connect' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
-        $self->metric_count( 'callback_error_total', { 'stage' => 'connect' } );
     }
     $self->status('postconnect');
     return $self->get_return();
@@ -191,7 +214,7 @@ sub top_helo_callback {
     $helo_host = q{} if ! defined $helo_host;
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'HELO callback timeout' }) };
         if ( $config->{'command_timeout'} ) {
             alarm( $config->{'command_timeout'} );
         }
@@ -229,13 +252,11 @@ sub top_helo_callback {
                 my $start_time = $self->get_microseconds();
                 eval{ $self->get_handler($handler)->helo_callback($helo_host); };
                 if ( my $error = $@ ) {
+                    $self->handle_exception( $error );
                     $self->log_error( 'HELO callback error ' . $error );
                     $self->exit_on_close();
                     $self->tempfail_on_error();
                     $self->metric_count( 'callback_error_total', { 'stage' => 'helo', 'handler' => $handler } );
-                    if ( $error =~ /Timeout/ ) {
-                        alarm( 1 );
-                    }
                 }
                 $self->metric_count( 'time_microseconds_total', { 'callback' => 'helo', 'handler' => $handler }, $self->get_microseconds() - $start_time );
             }
@@ -247,8 +268,14 @@ sub top_helo_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'helo' } );
-        $self->log_error( 'HELO callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'HELO error ' . $type . ' - ' . $error->{ 'Text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'helo', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'HELO callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'helo' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
@@ -267,7 +294,7 @@ sub top_envfrom_callback {
     $env_from = q{} if ! defined $env_from;
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EnvFrom callback timeout' }) };
         if ( $config->{'command_timeout'} ) {
             alarm( $config->{'command_timeout'} );
         }
@@ -283,21 +310,25 @@ sub top_envfrom_callback {
             my $start_time = $self->get_microseconds();
             eval { $self->get_handler($handler)->envfrom_callback($env_from); };
             if ( my $error = $@ ) {
+                $self->handle_exception( $error );
                 $self->log_error( 'Env From callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom', 'handler' => $handler } );
-                if ( $error =~ /Timeout/ ) {
-                    alarm( 1 );
-                }
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'envfrom', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom' } );
-        $self->log_error( 'Env From callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'EnvFrom error ' . $type . ' - ' . $error->{ 'Text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'EnvFrom callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
@@ -316,7 +347,7 @@ sub top_envrcpt_callback {
     $env_to = q{} if ! defined $env_to;
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EnvRcpt callback timeout' }) };
         if ( $config->{'command_timeout'} ) {
             alarm( $config->{'command_timeout'} );
         }
@@ -326,21 +357,25 @@ sub top_envrcpt_callback {
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->envrcpt_callback($env_to); };
             if ( my $error = $@ ) {
+                $self->handle_exception( $error );
                 $self->log_error( 'Rcpt To callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto', 'handler' => $handler } );
-                if ( $error =~ /Timeout/ ) {
-                    alarm( 1 );
-                }
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'rcptto', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto' } );
-        $self->log_error( 'Rcpt To callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'EnvRcpt error ' . $type . ' - ' . $error->{ 'Text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'EnvRcpt callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
@@ -358,7 +393,7 @@ sub top_header_callback {
     $value = q{} if ! defined $value;
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Header callback timeout' }) };
         if ( $config->{'content_timeout'} ) {
             $self->dbgout( 'Content Timeout set', $config->{'content_timeout'}, LOG_DEBUG );
             alarm( $config->{'content_timeout'} );
@@ -373,21 +408,25 @@ sub top_header_callback {
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->header_callback( $header, $value ); };
             if ( my $error = $@ ) {
+                $self->handle_exception( $error );
                 $self->log_error( 'Header callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'header', 'handler' => $handler } );
-                if ( $error =~ /Timeout/ ) {
-                    alarm( 1 );
-                }
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'header', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'header' } );
-        $self->log_error( 'Header callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'Header error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'header', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'Header callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'header' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
@@ -404,7 +443,7 @@ sub top_eoh_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EOH callback timeout' }) };
         if ( $config->{'content_timeout'} ) {
             alarm( $config->{'content_timeout'} );
         }
@@ -414,21 +453,25 @@ sub top_eoh_callback {
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->eoh_callback(); };
             if ( my $error = $@ ) {
+                $self->handle_exception( $error );
                 $self->log_error( 'EOH callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'eoh', 'handler' => $handler } );
-                if ( $error =~ /Timeout/ ) {
-                    alarm( 1 );
-                }
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'eoh', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'eoh' } );
-        $self->log_error( 'EOH callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'EOH error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'eoh', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'EOH callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'eoh' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
@@ -446,7 +489,7 @@ sub top_body_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Body callback timeout' }) };
         if ( $config->{'content_timeout'} ) {
             alarm( $config->{'content_timeout'} );
         }
@@ -456,21 +499,25 @@ sub top_body_callback {
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->body_callback( $body_chunk ); };
             if ( my $error = $@ ) {
+                $self->handle_exception( $error );
                 $self->log_error( 'Body callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'body', 'handler' => $handler } );
-                if ( $error =~ /Timeout/ ) {
-                    alarm( 1 );
-                }
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'body', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'body' } );
-        $self->log_error( 'Body callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'Body error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'body', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'Body callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'body' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
@@ -488,7 +535,7 @@ sub top_eom_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EOM callback timeout' }) };
         if ( $config->{'content_timeout'} ) {
             alarm( $config->{'content_timeout'} );
         }
@@ -498,21 +545,25 @@ sub top_eom_callback {
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->eom_callback(); };
             if ( my $error = $@ ) {
+                $self->handle_exception( $error );
                 $self->log_error( 'EOM callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'eom', 'handler' => $handler } );
-                if ( $error =~ /Timeout/ ) {
-                    alarm( 1 );
-                }
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'eom', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'eom' } );
-        $self->log_error( 'EOM callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'EOM error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'eom', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'EOM callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'eom' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
@@ -552,7 +603,7 @@ sub top_abort_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Abord callback timeout' }) };
         if ( $config->{'command_timeout'} ) {
             alarm( $config->{'command_timeout'} );
         }
@@ -562,21 +613,25 @@ sub top_abort_callback {
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->abort_callback(); };
             if ( my $error = $@ ) {
+                $self->handle_exception( $error );
                 $self->log_error( 'Abort callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'abort', 'handler' => $handler } );
-                if ( $error =~ /Timeout/ ) {
-                    alarm( 1 );
-                }
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'abort', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'abort' } );
-        $self->log_error( 'Abort callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'Abort error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'abort', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'Abort callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'abort' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
@@ -593,7 +648,7 @@ sub top_close_callback {
     $self->set_return( $self->smfis_continue() );
     my $config = $self->config();
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Close callback timeout' }) };
         if ( $config->{'content_timeout'} ) {
             alarm( $config->{'content_timeout'} );
         }
@@ -603,21 +658,25 @@ sub top_close_callback {
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->close_callback(); };
             if ( my $error = $@ ) {
+                $self->handle_exception( $error );
                 $self->log_error( 'Close callback error ' . $error );
                 $self->exit_on_close();
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'close', 'handler' => $handler } );
-                if ( $error =~ /Timeout/ ) {
-                    alarm( 1 );
-                }
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'close', 'handler' => $handler }, $self->get_microseconds() - $start_time );
         }
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'close' } );
-        $self->log_error( 'Close callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'Close error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'close', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'Close callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'close' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
@@ -640,7 +699,7 @@ sub top_addheader_callback {
     my $config = $self->config();
 
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'AddHeader callback timeout' }) };
         if ( $config->{'addheader_timeout'} ) {
             alarm( $config->{'addheader_timeout'} );
         }
@@ -653,8 +712,14 @@ sub top_addheader_callback {
         alarm(0);
     };
     if ( my $error = $@ ) {
-        $self->metric_count( 'callback_error_total', { 'stage' => 'addheader' } );
-        $self->log_error( 'Final callback error ' . $error );
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->log_error( 'AddHeader error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'addheader', 'type' => $type } );
+        }
+        else {
+            $self->log_error( 'AddHeader callback error ' . $error );
+            $self->metric_count( 'callback_error_total', { 'stage' => 'addheader' } );
+        }
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
@@ -1315,6 +1380,9 @@ sub dbgoutwrite {
         }
         delete $top_handler->{'dbgout'};
     };
+    $self->handle_exception( $@ );  # Not usually called within an eval, however we shouldn't
+                                    # ever get a Timeout (for example) here, so it is safe to
+                                    # pass to handle_exception anyway.
     return;
 }
 

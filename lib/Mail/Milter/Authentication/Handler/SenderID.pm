@@ -120,8 +120,8 @@ sub eoh_callback {
         }
     };
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( 'SENDERID Error ' . $error );
-        die $error if $error =~ /Timeout/;
         $self->metric_count( 'senderid_total', { 'result' => 'error' } );
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->safe_set_value( 'temperror' );
         $self->add_auth_header($header);

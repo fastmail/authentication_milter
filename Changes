@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Improve handling of timeouts
 
 2.20180509 2018-05-09 15:19:12+10:00 Australia/Melbourne
         - Make sure timeout events are propigated correctly

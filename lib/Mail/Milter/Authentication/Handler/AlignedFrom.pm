@@ -146,9 +146,9 @@ sub eom_callback {
             my $dmarc_handler = $self->get_handler('DMARC');
             my $dmarc_object = $dmarc_handler->get_dmarc_object();
             my $org_smtp_domain   = eval{ $dmarc_object->get_organizational_domain( $self->{ 'smtp_domain' } ); };
-            if ( my $error = $@ ) { die $error if $error =~ /Timeout/; }
+            $self->handle_exception( $@ );
             my $org_header_domain = eval{ $dmarc_object->get_organizational_domain( $self->{ 'header_domain' } ); };
-            if ( my $error = $@ ) { die $error if $error =~ /Timeout/; }
+            $self->handle_exception( $@ );
 
             if ( $org_smtp_domain eq $org_header_domain ) {
                 $result = 'orgdomain_pass';

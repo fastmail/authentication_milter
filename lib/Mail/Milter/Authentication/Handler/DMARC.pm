@@ -81,7 +81,7 @@ sub pre_loop_setup {
         $dmarc->config( $config->{ 'config_file' } );
     }
     my $psl = eval { $dmarc->get_public_suffix_list(); };
-    if ( my $error = $@ ) { die $error if $error =~ /Timeout/; }
+    $self->handle_exception( $@ );
     if ( $psl ) {
         $self->{'thischild'}->loginfo( 'DMARC Preloaded PSL' );
     }
@@ -139,9 +139,9 @@ sub _process_dmarc_for {
             $dmarc->envelope_from( $env_domain_from );
         };
         if ( my $error = $@ ) {
+            $self->handle_exception( $error );
             if ( $error =~ /invalid envelope_from at / ) {
                 $self->log_error( 'DMARC Invalid envelope from <' . $env_domain_from . '>' );
-                die $error if $error =~ /Timeout/; # Should never happen
                 $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
                 my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
                 $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'envelope from invalid' ) );
@@ -150,7 +150,6 @@ sub _process_dmarc_for {
             }
             else {
                 $self->log_error( 'DMARC Mail From Error for <' . $env_domain_from . '> ' . $error );
-                die $error if $error =~ /Timeout/;
                 $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
                 my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'temperror' );
                 $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'envelope from failed' ) );
@@ -166,15 +165,15 @@ sub _process_dmarc_for {
         $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
     };
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( 'DMARC Rcpt To Error ' . $error );
-        die $error if $error =~ /Timeout/;
     }
 
     # Add the From Header
     eval { $dmarc->header_from( $header_domain ) };
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( 'DMARC Header From Error ' . $error );
-        die $error if $error =~ /Timeout/;
         $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
         $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'from header invalid' ) );
@@ -198,8 +197,8 @@ sub _process_dmarc_for {
         }
     };
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( 'DMARC SPF Error: ' . $error );
-        die $error if $error =~ /Timeout/;
         $dmarc->{'spf'} = [];
     }
 
@@ -234,7 +233,7 @@ sub _process_dmarc_for {
 
     my $dmarc_disposition = eval { $dmarc_result->disposition() };
     if ( my $error = $@ ) {
-        die $error if $error =~ /Timeout/;
+        $self->handle_exception( $error );
         if ( $dmarc_code ne 'pass' ) {
             $self->log_error( 'DMARCPolicyError ' . $error );
         }
@@ -242,7 +241,7 @@ sub _process_dmarc_for {
     $self->dbgout( 'DMARCDisposition', $dmarc_disposition, LOG_INFO );
 
     my $dmarc_policy = eval{ $dmarc_result->published()->p(); };
-    if ( my $error = $@ ) { die $error if $error =~ /Timeout/; }
+    $self->handle_exception( $@ );
     # If we didn't get a result, set to none.
     $dmarc_policy = 'none' if ! $dmarc_policy;
     $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
@@ -318,7 +317,7 @@ sub _process_dmarc_for {
 
     # Try as best we can to save a report, but don't stress if it fails.
     my $rua = eval { $dmarc_result->published()->rua(); };
-    if ( my $error = $@ ) { die $error if $error =~ /Timeout/; }
+    $self->handle_exception( $@ );
     if ($rua) {
         if ( ! $config->{'no_report'} ) {
             if ( ! $self->{'skip_report'} ) {
@@ -327,8 +326,8 @@ sub _process_dmarc_for {
                     $dmarc->save_aggregate();
                 };
                 if ( my $error = $@ ) {
+                    $self->handle_exception( $error );
                     $self->log_error( 'DMARC Report Error ' . $error );
-                    die $error if $error =~ /Timeout/;
                 }
             }
             else {
@@ -369,8 +368,8 @@ sub get_dmarc_object {
         $self->set_object('dmarc', $dmarc,1 );
     };
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( 'DMARC IP Error ' . $error );
-        die $error if $error =~ /Timeout/;
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
         $self->add_auth_header( $header );
         $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
@@ -520,16 +519,15 @@ sub eom_callback {
                 $self->_process_dmarc_for( $env_domain_from, $header_domain );
             };
             if ( my $error = $@ ) {
+                $self->handle_exception( $error );
                 if ( $error =~ /invalid header_from at / ) {
                     $self->log_error( 'DMARC Error invalid header_from <' . $self->{'from_header'} . '>' );
-                    die $error if $error =~ /Timeout/; # should never happen
                     my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
                     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
                     $self->_add_dmarc_header( $header );
                 }
                 else {
                     $self->log_error( 'DMARC Error ' . $error );
-                    die $error if $error =~ /Timeout/;
                     my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'temperror' );
                     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
                     $self->_add_dmarc_header( $header );
