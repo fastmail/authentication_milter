@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Handler::ARC;
 use strict;
 use warnings;
-use Mail::Milter::Authentication 2;
+use Mail::Milter::Authentication 2.20180510;
 use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 # ABSTRACT: Authentication Milter Module for validation of ARC signatures
@@ -124,8 +124,8 @@ sub eoh_callback {
         $self->set_object('arc', $arc, 1);
     };
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( 'ARC Setup Error ' . $error );
-        die $error if $error =~ /Timeout/;
         $self->_check_error( $error );
         $self->metric_count( 'arc_total', { 'result' => 'error' } );
         $self->{'failmode'} = 1;
@@ -141,8 +141,8 @@ sub eoh_callback {
         );
     };
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( 'ARC Headers Error ' . $error );
-        die $error if $error =~ /Timeout/;
         $self->_check_error( $error );
         $self->metric_count( 'arc_total', { 'result' => 'error' } );
         $self->{'failmode'} = 1;
@@ -179,8 +179,8 @@ sub body_callback {
             $arc->PRINT( $arc_chunk );
         };
         if ( my $error = $@ ) {
+            $self->handle_exception( $error );
             $self->log_error( 'ARC Body Error ' . $error );
-            die $error if $error =~ /Timeout/;
             $self->_check_error( $error );
             $self->metric_count( 'arc_total', { 'result' => 'error' } );
             $self->{'failmode'} = 1;
@@ -236,7 +236,7 @@ sub eom_callback {
             # set using safe_set_value
             eval { $header_comment->set_value( $header_comment_text ); };
             if ( my $error = $@ ) {
-                die $error if $error =~ /Timeout/;
+                $self->handle_exception( $error );
                 $header_comment->safe_set_value( $header_comment_text );
             }
             $header->add_child( $header_comment );
@@ -247,8 +247,8 @@ sub eom_callback {
         $self->{arc_result} = $arc_result;
     };
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( 'ARC EOM Error ' . $error );
-        die $error if $error =~ /Timeout/;
         $self->_check_error( $error );
         $self->metric_count( 'arc_total', { 'result' => 'error' } );
         $self->{'failmode'} = 1;
@@ -414,8 +414,8 @@ sub addheader_callback {
     };
 
     if ( my $error = $@ ) {
+        $self->handle_exception( $error );
         $self->log_error( 'ARCSeal Error ' . $error );
-        die $error if $error =~ /Timeout/;
         $self->metric_count( 'arcseal_total', { 'result' => 'error' } );
         return;
     }
