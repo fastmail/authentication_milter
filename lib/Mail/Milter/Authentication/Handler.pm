@@ -120,7 +120,7 @@ sub is_exception_type {
     return if ! $exception;
     return if ref $exception ne 'Mail::Milter::Authentication::Exception';
     my $Type = $exception->{ 'Type' } || 'Unknown';
-    return 1;
+    return $Type;
 }
 
 sub handle_exception {
