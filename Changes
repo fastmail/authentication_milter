@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Return exception type correctly to caller
 
 2.20180510 2018-05-10 14:58:08+10:00 Australia/Melbourne
         - Improve handling of timeouts
