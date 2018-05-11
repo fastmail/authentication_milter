@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20180511 2018-05-11 11:50:22+10:00 Australia/Melbourne
         - Return exception type correctly to caller
 
 2.20180510 2018-05-10 14:58:08+10:00 Australia/Melbourne
