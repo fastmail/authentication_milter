@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20180510 2018-05-10 14:58:08+10:00 Australia/Melbourne
         - Improve handling of timeouts
 
 2.20180509 2018-05-09 15:19:12+10:00 Australia/Melbourne
