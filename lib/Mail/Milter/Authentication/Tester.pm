@@ -136,6 +136,9 @@ sub test_metrics {
                 elsif ( $key =~ /microseconds_sum/ ) {
                     is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $key" );
                 }
+                elsif ( $key =~ /authmilter_forked_children_total/ ) {
+                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $key" );
+                }
                 else {
                     is( $metrics->{ $key }, $data->{ $key }, "Metrics $key" );
                 }
@@ -152,6 +155,9 @@ sub test_metrics {
                     $metrics->{ $key } = 123456 if $metrics->{ $key } > 0;
                 }
                 elsif ( $key =~ /microseconds_sum/ ) {
+                    $metrics->{ $key } = 123456 if $metrics->{ $key } > 0;
+                }
+                elsif ( $key =~ /authmilter_forked_children_total/ ) {
                     $metrics->{ $key } = 123456 if $metrics->{ $key } > 0;
                 }
             }
