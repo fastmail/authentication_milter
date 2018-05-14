@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Handler::ARC;
 use strict;
 use warnings;
-use Mail::Milter::Authentication 2.20180510;
+use Mail::Milter::Authentication 2.20180514;
 use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 # ABSTRACT: Authentication Milter Module for validation of ARC signatures
@@ -196,6 +196,7 @@ sub eom_callback {
     eval {
         $arc->PRINT( $self->{'carry'} );
         $arc->CLOSE();
+        $self->check_timeout();
 
         my $arc_result        = $arc->result;
         my $arc_result_detail = $arc->result_detail;
@@ -349,6 +350,7 @@ sub addheader_callback {
         # post-headers from handler (these are in order)
         foreach my $header (@{$handler->{add_headers} || []}) {
             $arcseal->PRINT(_fmtheader($header));
+            $self->check_timeout();
         }
 
         # finish header block with a blank line
@@ -361,6 +363,7 @@ sub addheader_callback {
 
         # and we're done
         $arcseal->CLOSE;
+        $self->check_timeout();
 
         my $arcseal_result = $arcseal->result();
         my $arcseal_result_detail = $arcseal->result_detail();
