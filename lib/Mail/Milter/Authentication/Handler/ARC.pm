@@ -49,6 +49,225 @@ sub register_metrics {
     };
 }
 
+sub is_domain_trusted {
+    my ( $self, $domain ) = @_;
+    return 0 if ! defined $domain;
+    ## TODO Test against configured list here
+    return 1 if lc $domain eq 'messagingengine.com';
+    return 1 if lc $domain eq 'topicbox.com';
+    return 1 if lc $domain eq 'staging.authmilter.org';
+    #return 1 if lc $domain eq 'mx6.twofiftyeight.ltd.uk';
+    return 0;
+}
+
+sub inherit_trusted_spf_results {
+    my ( $self ) = @_;
+
+    return if ( ! $self->is_handler_loaded( 'SPF' ) );
+
+    my $aar = $self->get_trusted_arc_authentication_results();
+    return if ! $aar;
+
+    foreach my $instance ( sort keys %$aar ) {
+        # Find all ARC SPF results which passed
+        my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'spf', 'value' => 'pass' })->children();
+        RESULT:
+        foreach my $result ( @$results ) {
+
+            # Does the entry have an x-arc-domain entry? if do then leave it alone.
+            next RESULT if ( scalar @{ $result->search({ 'isa' => 'subentry', 'key' => 'x-arc-domain' })->children() }> 0 );
+
+            # Does the entry have a smtp.mailfrom entry we can match on?
+            my $smtp_mailfrom = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom' })->children()->[0]->value() };
+            $self->handle_exception( $@ );
+            next RESULT if ! $smtp_mailfrom;
+            $smtp_mailfrom = lc $smtp_mailfrom;
+
+            # Do we have an existing entry for this spf record with the same smtp.mailfrom?
+            my $top_handler = $self->get_top_handler();
+            my $existing_auth_headers = $top_handler->{'auth_headers'};
+            my $found_passing = 0;
+
+            HEADER:
+            foreach my $header ( @$existing_auth_headers ) {
+                next if $header->key() ne 'spf';
+
+                ## TODO Make this match /i
+                my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $smtp_mailfrom })->children()->[0]->value() };
+                $self->handle_exception( $@ );
+                next HEADER if ! $this_mailfrom;
+
+                # We already have a pass, leave it alone
+                $found_passing = 1 if $header->value() eq 'pass';
+
+            }
+
+            # We found a passing result for this mailfrom, leave it alone
+            next RESULT if $found_passing;
+
+            # We didn't find a passing result, so rename the existing ones.....
+            HEADER:
+            foreach my $header ( @$existing_auth_headers ) {
+                next if $header->key() ne 'spf';
+
+                ## TODO Make this match /i
+                my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $smtp_mailfrom })->children()->[0]->value() };
+                $self->handle_exception( $@ );
+                next HEADER if ! $this_mailfrom;
+
+                # Rename the existing header
+                $header->set_key( 'x-local-spf' );
+            }
+
+            # And add the new one
+            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
+            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
+            $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
+            $result->orphan();
+            $self->add_auth_header( $result );
+
+        }
+    }
+    return;
+}
+
+sub inherit_trusted_dkim_results {
+    my ( $self ) = @_;
+
+    return if ( ! $self->is_handler_loaded( 'DKIM' ) );
+
+    my $aar = $self->get_trusted_arc_authentication_results();
+    return if ! $aar;
+
+    foreach my $instance ( sort keys %$aar ) {
+        # Find all ARC DKIM results which passed
+        my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dkim', 'value' => 'pass' })->children();
+        RESULT:
+        foreach my $result ( @$results ) {
+
+            # Does the entry have an x-arc-domain entry? if do then leave it alone.
+            next RESULT if ( scalar @{ $result->search({ 'isa' => 'subentry', 'key' => 'x-arc-domain' })->children() }> 0 );
+
+            # Does the entry have a domain identifier we can match on?
+            my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.d' })->children()->[0]->value() };
+            $self->handle_exception( $@ );
+            if ( ! $entry_domain ) {
+                # No domain, check for an identifier instead
+                my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
+                $self->handle_exception( $@ );
+                if ( $entry_domain ) {
+                    $entry_domain =~ s/^\@//;
+                }
+            }
+            next RESULT if ! $entry_domain;
+            $entry_domain = lc $entry_domain;
+
+            # Do we have an existing entry for this spf record with the same domain?
+            my $top_handler = $self->get_top_handler();
+            my $existing_auth_headers = $top_handler->{'auth_headers'};
+            my $found_passing = 0;
+
+            HEADER:
+            foreach my $header ( @$existing_auth_headers ) {
+                next if $header->key() ne 'dkim';
+
+                ## TODO Make this match /i
+                my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $entry_domain })->children()->[0]->value() };
+                $self->handle_exception( $@ );
+                next HEADER if ! $this_domain;
+
+                # We already have a pass, leave it alone
+                $found_passing = 1 if $header->value() eq 'pass';
+
+            }
+
+            # We found a passing result for this mailfrom, leave it alone
+            next RESULT if $found_passing;
+
+            # We didn't find a passing result, so rename the existing ones.....
+            HEADER:
+            foreach my $header ( @$existing_auth_headers ) {
+                next if $header->key() ne 'dkim';
+
+                ## TODO Make this match /i
+                my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $entry_domain })->children()->[0]->value() };
+                $self->handle_exception( $@ );
+                next HEADER if ! $this_domain;
+
+                # Rename the existing header
+                $header->set_key( 'x-local-dkim' );
+            }
+
+            # And add the new one
+            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
+            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
+            $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
+            $result->orphan();
+            $self->add_auth_header( $result );
+
+        }
+    }
+    return;
+}
+
+sub get_trusted_arc_authentication_results {
+    my ( $self ) = @_;
+
+    # First, we need an arc pass or we trust nothing!
+    return if $self->{ 'arc_result' } ne 'pass';
+
+    my $trusted_aar = {};
+    INSTANCE:
+    foreach my $instance ( reverse sort keys %{$self->{ 'arc_auth_results' } } ) {
+        my $signature_domain = $self->{'arc_domain'}->{ $instance } // q{};
+        if ( $self->is_domain_trusted( $signature_domain ) ) {
+            $trusted_aar->{ $instance } = $self->{ 'arc_auth_results' }->{ $instance };
+        }
+        else {
+            # We don't trust this host, we can't trust anything before it!
+            last INSTANCE;
+        }
+    }
+    return $trusted_aar;
+}
+
+# Do we trust the entire chain
+sub is_chain_trusted {
+    my ( $self ) = @_;
+    return 0 if $self->{ 'arc_result' } ne 'pass';
+    foreach my $instance ( reverse sort keys %{$self->{ 'arc_auth_results' } } ) {
+        my $signature_domain = $self->{'arc_domain'}->{ $instance } // q{};
+        return 0 if ! $self->is_domain_trusted( $signature_domain );
+    }
+    return 1;
+}
+
+# Get the trusted ingress IP
+sub get_arc_trusted_ingress_ip {
+    my ( $self ) = @_;
+    my $aar = $self->get_trusted_arc_authentication_results();
+    return if ! $aar;
+    my ( $first_instance ) = sort keys %$aar;
+    return if ! $first_instance;
+    my $ip = eval{ $aar->{$first_instance}->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'policy.iprev'})->children()->[0]->value(); };
+    $self->handle_exception( $@ );
+    return $ip;
+}
+
+# Find the earliest instance in the trusted chain
+sub search_trusted_aar {
+    my ( $self, $search ) = @_;
+    my $trusted_aar = $self->get_trusted_arc_authentication_results();
+    return if ! $trusted_aar;
+    foreach my $instance ( sort keys %{$trusted_aar} ) {
+        my $found = $trusted_aar->{ $instance }->search( $search );
+        if ( scalar @{ $found->children() } ) {
+            return $found;
+        }
+    }
+    return;
+}
+
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     $self->{'failmode'}         = 0;
@@ -58,6 +277,7 @@ sub envfrom_callback {
     $self->{'valid_domains'}    = {};
     $self->{'carry'}            = q{};
     $self->{'arc_auth_results'} = {};
+    $self->{'arc_domain'}       = {};
     $self->destroy_object('arc');
     return;
 }
@@ -72,7 +292,7 @@ sub header_callback {
     if ( lc($header) eq 'arc-authentication-results' ) {
         $self->{'has_arc'} = 1;
         my ( $instance, $aar ) = split( ';', $value, 2 );
-        $instance =~ s/.*i=(\d+).*$/\1/;
+        $instance =~ s/.*i=(\d+).*$/$1/;
         ## TODO eval this
         my $parsed = Mail::AuthenticationResults->parser()->parse( $aar );
         $self->{'arc_auth_results'}->{ $instance } = $parsed;
@@ -190,6 +410,17 @@ sub body_callback {
     }
 }
 
+sub eom_requires {
+    my ( $self ) = @_;
+    my @requires;
+
+    if ( $self->is_handler_loaded( 'DKIM' ) ) {
+        push @requires, 'DKIM';
+    }
+
+    return \@requires;
+}
+
 sub eom_callback {
     my ($self) = @_;
 
@@ -227,6 +458,7 @@ sub eom_callback {
               . ( $signature->instance()      || '' )       . '.'
               . ( $signature->domain()        || '(none)' ) . '='
               . ( $signature->result_detail() || '?' );
+            $self->{ 'arc_domain' }->{ $signature->instance() } = $signature->domain();
         }
 
         if ( @items ) {
@@ -254,6 +486,11 @@ sub eom_callback {
         $self->{'failmode'} = 1;
         $self->{arc_result} = 'fail';
     }
+
+    $self->inherit_trusted_spf_results();
+    $self->inherit_trusted_dkim_results();
+    return;
+
 }
 
 sub close_callback {
@@ -264,6 +501,8 @@ sub close_callback {
     delete $self->{'carry'};
     delete $self->{'has_arc'};
     delete $self->{'valid_domains'};
+    delete $self->{'arc_domain'};
+    delete $self->{'arc_auth_results'};
     $self->destroy_object('arc');
     return;
 }
