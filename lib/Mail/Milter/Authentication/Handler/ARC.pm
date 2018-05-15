@@ -7,6 +7,7 @@ use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 # ABSTRACT: Authentication Milter Module for validation of ARC signatures
 use Data::Dumper;
+use Clone qw{ clone };
 use English qw{ -no_match_vars };
 use Sys::Syslog qw{:standard :macros};
 
@@ -32,6 +33,7 @@ sub default_config {
         'arcseal_key'       => undef,
         'arcseal_keyfile'   => undef,
         'arcseal_headers'   => undef,
+        'trusted_domains'   => [],
     };
 }
 
@@ -53,11 +55,13 @@ sub register_metrics {
 sub is_domain_trusted {
     my ( $self, $domain ) = @_;
     return 0 if ! defined $domain;
-    ## TODO Test against configured list here
-    return 1 if lc $domain eq 'messagingengine.com';
-    return 1 if lc $domain eq 'topicbox.com';
-    return 1 if lc $domain eq 'staging.authmilter.org';
-    #return 1 if lc $domain eq 'mx6.twofiftyeight.ltd.uk';
+    $domain = lc $domain;
+    my $config = $self->handler_config();
+    my $trusted_domains = $config->{ 'trusted_domains' };
+    return 0 if ! $trusted_domains;
+    foreach my $trusted_domain ( @$trusted_domains ) {
+        return 1 if $domain eq lc $trusted_domain;
+    }
     return 0;
 }
 
@@ -114,8 +118,9 @@ sub get_trusted_dkim_results {
 
             my $entry_selector = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'x-selector' })->children()->[0]->value() };
             $self->handle_exception( $@ );
-            ## TODO We don't have this in TX yet, so let's just fake it for testing
-            $entry_selector = 'from_arc';
+            # If we don't have a selector then we fake it.
+            $entry_selector = 'x-arc-chain' if ! $entry_selector;
+            ## TODO try finding this someplace else!
             next RESULT if ! $entry_selector;
 
             #my $result_domain = $self->get_domain_from( $smtp_mailfrom );
@@ -315,12 +320,17 @@ sub get_trusted_arc_authentication_results {
     foreach my $instance ( reverse sort keys %{$self->{ 'arc_auth_results' } } ) {
         my $signature_domain = $self->{'arc_domain'}->{ $instance } // q{};
         if ( $self->is_domain_trusted( $signature_domain ) ) {
-            $trusted_aar->{ $instance } = $self->{ 'arc_auth_results' }->{ $instance };
+            # Clone this, so we can safely modify entries later
+            $trusted_aar->{ $instance } = clone $self->{ 'arc_auth_results' }->{ $instance };
         }
         else {
             # We don't trust this host, we can't trust anything before it!
             last INSTANCE;
         }
+    }
+
+    if ( scalar keys %$trusted_aar == 0 ) {
+        return;
     }
     return $trusted_aar;
 }
@@ -387,8 +397,8 @@ sub header_callback {
         $self->{'has_arc'} = 1;
         my ( $instance, $aar ) = split( ';', $value, 2 );
         $instance =~ s/.*i=(\d+).*$/$1/;
-        ## TODO eval this
-        my $parsed = Mail::AuthenticationResults->parser()->parse( $aar );
+        my $parsed = eval{ Mail::AuthenticationResults->parser()->parse( $aar ) };
+        $self->handle_exception( $@ );
         $self->{'arc_auth_results'}->{ $instance } = $parsed;
     }
 
@@ -774,5 +784,6 @@ Module for validation of ARC signatures
             "arcseal_key"       => undef,               | Key (base64) string to sign ARC Seal with; or
             "arcseal_keyfile"   => undef,               | File containing ARC Seal key
             "arcseal_headers"   => undef,               | Additional headers to cover in ARC-Message-Signature
+            "trusted_domains"   => [],                  | Trust these domains when traversing ARC chains
         },
 
