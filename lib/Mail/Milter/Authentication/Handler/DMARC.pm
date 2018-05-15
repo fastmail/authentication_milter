@@ -189,7 +189,7 @@ sub _process_dmarc_for {
         $have_arc = 0 unless $self->get_handler('ARC')->can( 'get_trusted_arc_authentication_results' );
     }
     my $used_arc = 0;
-    $have_arc = 0 if ! exists $config->{ 'use_arc' };
+    $have_arc = 0 if ! $config->{ 'use_arc' };
 
     # Add the SPF Results Object
     eval {
