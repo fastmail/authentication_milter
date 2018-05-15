@@ -182,15 +182,52 @@ sub _process_dmarc_for {
         return;
     }
 
+
+    my $have_arc = ( $self->is_handler_loaded( 'ARC' ) );
+    my $used_arc = 0;
+
     # Add the SPF Results Object
     eval {
         my $spf = $self->get_handler('SPF');
         if ( $spf ) {
-            $dmarc->spf(
-                'domain' => $spf->{'dmarc_domain'},
-                'scope'  => $spf->{'dmarc_scope'},
-                'result' => $spf->{'dmarc_result'},
-            );
+
+            if ( ! $have_arc ) {
+                $dmarc->spf(
+                    'domain' => $spf->{'dmarc_domain'},
+                    'scope'  => $spf->{'dmarc_scope'},
+                    'result' => $spf->{'dmarc_result'},
+                );
+            }
+            else {
+                if ( $spf->{'dmarc_result'} eq 'pass' && lc $spf->{'dmarc_domain'} eq lc $header_domain ) {
+                    # Have a matching local entry, use it.
+                    ## TODO take org domains into consideration here
+                    $dmarc->spf(
+                        'domain' => $spf->{'dmarc_domain'},
+                        'scope'  => $spf->{'dmarc_scope'},
+                        'result' => $spf->{'dmarc_result'},
+                    );
+                }
+                elsif ( my $arc_spf = $self->get_handler('ARC')->get_trusted_spf_results() ) {
+                   # Pull from ARC if we can
+                    $used_arc = 1;
+                    push @$arc_spf, {
+                        'domain' => $spf->{'dmarc_domain'},
+                        'scope'  => $spf->{'dmarc_scope'},
+                        'result' => $spf->{'dmarc_result'},
+                    };
+                    $dmarc->spf( $arc_spf );
+                }
+                else {
+                    # Nothing else matched, use the local entry anyway
+                    $dmarc->spf(
+                        'domain' => $spf->{'dmarc_domain'},
+                        'scope'  => $spf->{'dmarc_scope'},
+                        'result' => $spf->{'dmarc_result'},
+                    );
+                }
+            }
+
         }
         else {
             $dmarc->{'spf'} = [];
@@ -201,6 +238,8 @@ sub _process_dmarc_for {
         $self->log_error( 'DMARC SPF Error: ' . $error );
         $dmarc->{'spf'} = [];
     }
+
+    ## TODO Pull from ARC if we can
 
     # Add the DKIM Results
     my $dkim_handler = $self->get_handler('DKIM');
@@ -245,6 +284,11 @@ sub _process_dmarc_for {
     # If we didn't get a result, set to none.
     $dmarc_policy = 'none' if ! $dmarc_policy;
     $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
+
+    ## TODO decide if this is the right thing to do
+    if ( $used_arc ) {
+        $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Trusted ARC chain considered' );
+    }
 
     my $policy_override;
 
@@ -296,14 +340,20 @@ sub _process_dmarc_for {
         #if ( $policy_override ) {
         #    push @comments, $self->format_header_entry( 'override', $policy_override );
         #}
+        if ( $used_arc ) {
+            push @comments, 'Trusted ARC chain considered';
+        }
 
         if ( @comments ) {
             $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( join( ',', @comments ) ) );
         }
 
+
         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
         $self->_add_dmarc_header( $header );
     }
+
+    ## TODO Add used_arc to metrics
 
     # Write Metrics
     my $metric_data = {
@@ -483,6 +533,11 @@ sub header_callback {
 sub eom_requires {
     my ($self) = @_;
     my @requires = qw{ DKIM };
+
+    if ( $self->is_handler_loaded( 'ARC' ) ) {
+        push @requires, 'ARC';
+    }
+
     return \@requires;
 }
 
