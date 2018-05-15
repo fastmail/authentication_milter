@@ -20,6 +20,7 @@ my $PSL_CHECKED_TIME;
 sub default_config {
     return {
         'hide_none'      => 0,
+        'use_arc'        => 1,
         'hard_reject'    => 0,
         'no_list_reject' => 1,
         'whitelisted'    => [],
@@ -184,10 +185,11 @@ sub _process_dmarc_for {
 
     my $have_arc = ( $self->is_handler_loaded( 'ARC' ) );
     if ( $have_arc ) {
-        ## TODO THIS
-        #$have_arc = 0 if Mail::Milter::Authentication::Handler::ARC::VERSION < REQUIRED_VERSION_GOES_HERE
+        # Does our ARC handler have the necessary methods?
+        $have_arc = 0 unless $self->get_handler('ARC')->can( 'get_trusted_arc_authentication_results' );
     }
     my $used_arc = 0;
+    $have_arc = 0 if ! exists $config->{ 'use_arc' };
 
     # Add the SPF Results Object
     eval {
@@ -212,7 +214,7 @@ sub _process_dmarc_for {
                     );
                 }
                 elsif ( my $arc_spf = $self->get_handler('ARC')->get_trusted_spf_results() ) {
-                   # Pull from ARC if we can
+                    # Pull from ARC if we can
                     $used_arc = 1;
                     push @$arc_spf, {
                         'domain' => $spf->{'dmarc_domain'},
@@ -241,12 +243,6 @@ sub _process_dmarc_for {
         $self->log_error( 'DMARC SPF Error: ' . $error );
         $dmarc->{'spf'} = [];
     }
-
-    ## TODO Pull from ARC if we can
-    #'domain'       => $entry_domain,
-    #            'selector'     => $entry_selector,,
-    #            'result'       => $result->value(),
-    #            'human_result' => 'Trusted ARC entry',
 
     # Add the DKIM Results
     my $dkim_handler = $self->get_handler('DKIM');
@@ -379,7 +375,7 @@ sub _process_dmarc_for {
         $self->_add_dmarc_header( $header );
     }
 
-    ## TODO Add used_arc to metrics
+    ## TODO Add used_arc to generated grafana
     ## TODO check dmarc reports are sane
 
     # Write Metrics
@@ -389,6 +385,7 @@ sub _process_dmarc_for {
         'policy'         => $dmarc_policy,
         'is_list'        => ( $self->{'is_list'}      ? '1' : '0' ),
         'is_whitelisted' => ( $self->is_whitelisted() ? '1' : '0'),
+        'used_arc'       => ( $used_arc ? '1' : '0' ),
     };
     $self->metric_count( 'dmarc_total', $metric_data );
 
@@ -727,6 +724,7 @@ This handler requires the SPF and DKIM handlers to be installed and active.
                 "dkim:bad.forwarder.com",                | (valid) DKIM signing domains can also be whitelisted by
                 "20.30.40.0/24"                          | having an entry such as "dkim:domain.com"
             ],
+            "use_arc"             : 1,                   | Use trusted ARC results if available
             "hide_none"           : 0,                   | Hide auth line if the result is 'none'
             "detect_list_id"      : "1",                 | Detect a list ID and modify the DMARC authentication header
                                                          | to note this, useful when making rules for junking email
