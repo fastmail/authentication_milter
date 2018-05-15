@@ -185,6 +185,7 @@ sub eom_callback {
     eval {
         $dkim->PRINT( $self->{'carry'} );
         $dkim->CLOSE();
+        $self->check_timeout();
 
         my $dkim_result        = $dkim->result;
         my $dkim_result_detail = $dkim->result_detail;
@@ -294,6 +295,7 @@ sub eom_callback {
                     $self->add_auth_header($header);
                 }
             }
+            $self->check_timeout();
         }
 
         # the alleged author of the email may specify how to handle email
@@ -343,6 +345,7 @@ sub eom_callback {
                         $self->add_auth_header( $header );
                     }
                 }
+                $self->check_timeout();
             }
         }
     };
