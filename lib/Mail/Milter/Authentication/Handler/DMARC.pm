@@ -533,6 +533,7 @@ sub eom_callback {
                     $self->_add_dmarc_header( $header );
                 }
             }
+            $self->check_timeout();
         }
     }
 
