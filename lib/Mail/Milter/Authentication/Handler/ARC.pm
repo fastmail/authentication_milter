@@ -1,7 +1,8 @@
 package Mail::Milter::Authentication::Handler::ARC;
 use strict;
 use warnings;
-use Mail::Milter::Authentication 2.20180510;
+use Mail::Milter::Authentication;
+#use Mail::Milter::Authentication 2.20180510;  ## TODO Version removed for testing, put it back for production
 use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 # ABSTRACT: Authentication Milter Module for validation of ARC signatures
@@ -58,6 +59,75 @@ sub is_domain_trusted {
     return 1 if lc $domain eq 'staging.authmilter.org';
     #return 1 if lc $domain eq 'mx6.twofiftyeight.ltd.uk';
     return 0;
+}
+
+sub get_trusted_spf_results {
+    my ( $self ) = @_;
+
+    my $aar = $self->get_trusted_arc_authentication_results();
+    return if ! $aar;
+
+    my @trusted_results;
+
+    foreach my $instance ( sort keys %$aar ) {
+        my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'spf' })->children();
+        RESULT:
+        foreach my $result ( @$results ) {
+            my $smtp_mailfrom = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom' })->children()->[0]->value() };
+            $self->handle_exception( $@ );
+            next RESULT if ! $smtp_mailfrom;
+            my $result_domain = $self->get_domain_from( $smtp_mailfrom );
+            push @trusted_results, {
+                'domain' => $result_domain,
+                'scope'  => 'mfrom',
+                'result' => $result->value(),
+            };
+        }
+    }
+    return \@trusted_results;
+}
+
+sub get_trusted_dkim_results {
+    my ( $self ) = @_;
+
+    my $aar = $self->get_trusted_arc_authentication_results();
+    return if ! $aar;
+
+    my @trusted_results;
+
+    foreach my $instance ( sort keys %$aar ) {
+        my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dkim' })->children();
+        RESULT:
+        foreach my $result ( @$results ) {
+            my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.d' })->children()->[0]->value() };
+            $self->handle_exception( $@ );
+            if ( ! $entry_domain ) {
+                # No domain, check for an identifier instead
+                my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
+                $self->handle_exception( $@ );
+                if ( $entry_domain ) {
+                    $entry_domain =~ s/^\@//;
+                }
+            }
+            next RESULT if ! $entry_domain;
+            $entry_domain = lc $entry_domain;
+
+            my $entry_selector = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'x-selector' })->children()->[0]->value() };
+            $self->handle_exception( $@ );
+            ## TODO We don't have this in TX yet, so let's just fake it for testing
+            $entry_selector = 'from_arc';
+            next RESULT if ! $entry_selector;
+
+            #my $result_domain = $self->get_domain_from( $smtp_mailfrom );
+            push @trusted_results, {
+                'domain'       => $entry_domain,
+                'selector'     => $entry_selector,,
+                'result'       => $result->value(),
+                'human_result' => 'Trusted ARC entry',
+            };
+        }
+    }
+    return \@trusted_results;
 }
 
 sub inherit_trusted_spf_results {
@@ -207,6 +277,30 @@ sub inherit_trusted_dkim_results {
 
         }
     }
+    return;
+}
+
+sub inherit_trusted_ip_results {
+    my ( $self ) = @_;
+
+    my $aar = $self->get_trusted_arc_authentication_results();
+    return if ! $aar;
+
+    # Add result from first trusted ingress hop
+    my ( $instance ) = sort keys %$aar;
+    foreach my $thing ( sort qw { iprev x-ptr } ) {
+        my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => $thing })->children();
+        RESULT:
+        foreach my $result ( @$results ) {
+            next RESULT if ( scalar @{ $result->search({ 'isa' => 'subentry', 'key' => 'x-arc-domain' })->children() }> 0 );
+            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
+            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
+            $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
+            $result->orphan();
+            $self->add_auth_header( $result );
+        }
+    }
+
     return;
 }
 
@@ -489,6 +583,8 @@ sub eom_callback {
 
     $self->inherit_trusted_spf_results();
     $self->inherit_trusted_dkim_results();
+    $self->inherit_trusted_ip_results();
+
     return;
 
 }
