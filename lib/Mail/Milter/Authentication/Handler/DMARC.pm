@@ -182,8 +182,11 @@ sub _process_dmarc_for {
         return;
     }
 
-
     my $have_arc = ( $self->is_handler_loaded( 'ARC' ) );
+    if ( $have_arc ) {
+        ## TODO THIS
+        #$have_arc = 0 if Mail::Milter::Authentication::Handler::ARC::VERSION < REQUIRED_VERSION_GOES_HERE
+    }
     my $used_arc = 0;
 
     # Add the SPF Results Object
@@ -240,23 +243,46 @@ sub _process_dmarc_for {
     }
 
     ## TODO Pull from ARC if we can
+    #'domain'       => $entry_domain,
+    #            'selector'     => $entry_selector,,
+    #            'result'       => $result->value(),
+    #            'human_result' => 'Trusted ARC entry',
 
     # Add the DKIM Results
     my $dkim_handler = $self->get_handler('DKIM');
-    if ( $dkim_handler->{'failmode'} ) {
-        $dmarc->{'dkim'} = [];
+    if ( $have_arc ) {
+        my @dkim_values;
+        my $arc_values = $self->get_handler('ARC')->get_trusted_dkim_results();
+        if ( $arc_values ) {
+            foreach my $arc_value ( @$arc_values ) {
+                push @dkim_values, $arc_value;
+            }
+        }
+        $dmarc->{'dkim'} = \@dkim_values;
+        # Add the local DKIM object is it exists
+        if ( $dkim_handler->{'has_dkim'} ) {
+            my $dkim_object = $self->get_object('dkim');
+            if ( $dkim_object ) {
+                $dmarc->dkim( $dkim_object );
+            }
+        }
     }
-    elsif ( $dkim_handler->{'has_dkim'} ) {
-        my $dkim_object = $self->get_object('dkim');
-        if ( $dkim_object ) {
-            $dmarc->dkim( $dkim_object );
+    else {
+        if ( $dkim_handler->{'failmode'} ) {
+            $dmarc->{'dkim'} = [];
+        }
+        elsif ( $dkim_handler->{'has_dkim'} ) {
+            my $dkim_object = $self->get_object('dkim');
+            if ( $dkim_object ) {
+                $dmarc->dkim( $dkim_object );
+            }
+            else {
+                $dmarc->{'dkim'} = [];
+            }
         }
         else {
             $dmarc->{'dkim'} = [];
         }
-    }
-    else {
-        $dmarc->{'dkim'} = [];
     }
 
     # Run the Validator
@@ -354,6 +380,7 @@ sub _process_dmarc_for {
     }
 
     ## TODO Add used_arc to metrics
+    ## TODO check dmarc reports are sane
 
     # Write Metrics
     my $metric_data = {
