@@ -118,6 +118,11 @@ sub get_trusted_dkim_results {
 
             my $entry_selector = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'x-selector' })->children()->[0]->value() };
             $self->handle_exception( $@ );
+            if ( ! $entry_selector ) {
+                # Google are using header.s
+                $entry_selector = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.s' })->children()->[0]->value() };
+                $self->handle_exception( $@ );
+            }
             # If we don't have a selector then we fake it.
             $entry_selector = 'x-arc-chain' if ! $entry_selector;
             ## TODO try finding this someplace else!
