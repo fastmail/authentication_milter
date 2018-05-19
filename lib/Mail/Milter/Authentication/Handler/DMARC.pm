@@ -375,9 +375,6 @@ sub _process_dmarc_for {
         $self->_add_dmarc_header( $header );
     }
 
-    ## TODO Add used_arc to generated grafana
-    ## TODO check dmarc reports are sane
-
     # Write Metrics
     my $metric_data = {
         'result'         => $dmarc_code,
