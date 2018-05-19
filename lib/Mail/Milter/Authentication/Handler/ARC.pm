@@ -16,13 +16,10 @@ use Mail::DKIM::DNS;
 use Mail::DKIM::TextWrap;
 use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::ARC::Verifier;
-use Mail::AuthenticationResults;
+use Mail::AuthenticationResults 1.20180518;
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;
 use Mail::AuthenticationResults::Header::Comment;
-
-## todo add trusted domains
-##      add method to get the earliest trusted values for aar entries of given type
 
 sub default_config {
     return {
@@ -125,7 +122,9 @@ sub get_trusted_dkim_results {
             }
             # If we don't have a selector then we fake it.
             $entry_selector = 'x-arc-chain' if ! $entry_selector;
-            ## TODO try finding this someplace else!
+            ## TODO If we can't find this in the ar header then we could
+            ## try looking for the Signature and pull it from there.
+            ## But let's not do that right now.
             next RESULT if ! $entry_selector;
 
             #my $result_domain = $self->get_domain_from( $smtp_mailfrom );
@@ -172,8 +171,9 @@ sub inherit_trusted_spf_results {
             foreach my $header ( @$existing_auth_headers ) {
                 next if $header->key() ne 'spf';
 
-                ## TODO Make this match /i
-                my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $smtp_mailfrom })->children()->[0]->value() };
+                my $quoted = quotemeta($smtp_mailfrom);
+                my $regex = qr{$quoted}i;
+                my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $regex })->children()->[0]->value() };
                 $self->handle_exception( $@ );
                 next HEADER if ! $this_mailfrom;
 
@@ -190,8 +190,9 @@ sub inherit_trusted_spf_results {
             foreach my $header ( @$existing_auth_headers ) {
                 next if $header->key() ne 'spf';
 
-                ## TODO Make this match /i
-                my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $smtp_mailfrom })->children()->[0]->value() };
+                my $quoted = quotemeta($smtp_mailfrom);
+                my $regex = qr{$quoted}i;
+                my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $regex })->children()->[0]->value() };
                 $self->handle_exception( $@ );
                 next HEADER if ! $this_mailfrom;
 
@@ -251,8 +252,9 @@ sub inherit_trusted_dkim_results {
             foreach my $header ( @$existing_auth_headers ) {
                 next if $header->key() ne 'dkim';
 
-                ## TODO Make this match /i
-                my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $entry_domain })->children()->[0]->value() };
+                my $quoted = quotemeta($entry_domain);
+                my $regex = qr{$quoted}i;
+                my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $regex })->children()->[0]->value() };
                 $self->handle_exception( $@ );
                 next HEADER if ! $this_domain;
 
@@ -269,8 +271,9 @@ sub inherit_trusted_dkim_results {
             foreach my $header ( @$existing_auth_headers ) {
                 next if $header->key() ne 'dkim';
 
-                ## TODO Make this match /i
-                my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $entry_domain })->children()->[0]->value() };
+                my $quoted = quotemeta($entry_domain);
+                my $regex = qr{$quoted}i;
+                my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $regex })->children()->[0]->value() };
                 $self->handle_exception( $@ );
                 next HEADER if ! $this_domain;
 
