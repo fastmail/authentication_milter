@@ -11,7 +11,7 @@
    "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",stage=\"rcptto\",type=\"timeout\"}" : "1",
    "authmilter_callback_error_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_connect_total{ident=\"test_authentication_milter_test\"}" : "1",
-   "authmilter_forked_children_total{ident=\"test_authentication_milter_test\"}" : "3",
+   "authmilter_forked_children_total{ident=\"test_authentication_milter_test\"}" : 123456,
    "authmilter_mail_processed_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_processes_processing{ident=\"test_authentication_milter_test\"}" : "1",
    "authmilter_processes_waiting{ident=\"test_authentication_milter_test\"}" : "1",
