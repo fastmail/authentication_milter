@@ -1,27 +1,46 @@
 {
+   "__inputs" : [
+      {
+         "description" : "",
+         "label" : "Prometheus",
+         "name" : "DS_PROMETHEUS",
+         "pluginId" : "prometheus",
+         "pluginName" : "Prometheus",
+         "type" : "datasource"
+      }
+   ],
+   "__requires" : [
+      {
+         "id" : "grafana",
+         "name" : "Grafana",
+         "type" : "grafana",
+         "version" : "4.5.0"
+      },
+      {
+         "id" : "graph",
+         "name" : "Graph",
+         "type" : "panel",
+         "version" : ""
+      },
+      {
+         "id" : "prometheus",
+         "name" : "Prometheus",
+         "type" : "datasource",
+         "version" : "1.0.0"
+      }
+   ],
    "annotations" : {
-      "list" : [
-         {
-            "$$hashKey" : "object:779",
-            "builtIn" : 1,
-            "datasource" : "-- Grafana --",
-            "enable" : true,
-            "hide" : true,
-            "iconColor" : "rgba(0, 211, 255, 1)",
-            "name" : "Annotations & Alerts",
-            "type" : "dashboard"
-         }
-      ]
+      "list" : []
    },
    "editable" : true,
    "gnetId" : null,
    "graphTooltip" : 0,
-   "id" : 16,
-   "iteration" : 1526871730642,
+   "hideControls" : false,
+   "id" : null,
    "links" : [],
-   "panels" : [],
    "refresh" : false,
-   "schemaVersion" : 16,
+   "rows" : [],
+   "schemaVersion" : 14,
    "style" : "dark",
    "tags" : [
       "AuthenticationMilter"
@@ -30,11 +49,8 @@
       "list" : [
          {
             "allValue" : null,
-            "current" : {
-               "text" : "All",
-               "value" : "$__all"
-            },
-            "datasource" : "Prometheus",
+            "current" : {},
+            "datasource" : "${DS_PROMETHEUS}",
             "hide" : 0,
             "includeAll" : true,
             "label" : null,
@@ -154,6 +170,5 @@
    },
    "timezone" : "browser",
    "title" : "Authentication Milter",
-   "uid" : "000000016",
-   "version" : 26
+   "version" : 11
 }

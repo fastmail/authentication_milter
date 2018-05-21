@@ -1,27 +1,15 @@
 {
-   "collapsed" : true,
-   "gridPos" : {
-      "h" : 1,
-      "w" : 24,
-      "x" : 0,
-      "y" : 13
-   },
-   "id" : 65,
+   "collapse" : true,
+   "height" : 250,
    "panels" : [
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 133
-         },
          "id" : 43,
          "legend" : {
             "avg" : false,
@@ -43,6 +31,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -94,6 +83,9 @@
       }
    ],
    "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
    "title" : "PTR Handler",
-   "type" : "row"
+   "titleSize" : "h6"
 }

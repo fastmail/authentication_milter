@@ -54,7 +54,7 @@ sub get_dashboard {
     my $Base = $self->get_json( 'Base' );
     my $BaseData = $J->decode( $Base );
     my $RowsData = $J->decode( '[' . join( ',', @Rows ) . ']' );
-    $BaseData->{ 'panels' } = $RowsData;
+    $BaseData->{ 'rows' } = $RowsData;
     return $J->encode( $BaseData ) . "\n";
 }
 

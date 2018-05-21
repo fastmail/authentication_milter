@@ -1,29 +1,15 @@
 {
-   "collapsed" : true,
-   "gridPos" : {
-      "h" : 1,
-      "w" : 24,
-      "x" : 0,
-      "y" : 10
-   },
-   "id" : 62,
+   "collapse" : true,
+   "height" : "250px",
    "panels" : [
       {
          "aliasColors" : {},
          "bars" : false,
-         "dashLength" : 10,
-         "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 11
-         },
          "id" : 2,
          "legend" : {
             "avg" : false,
@@ -44,7 +30,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
-         "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -70,7 +56,6 @@
          },
          "type" : "graph",
          "xaxis" : {
-            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
@@ -98,19 +83,11 @@
       {
          "aliasColors" : {},
          "bars" : false,
-         "dashLength" : 10,
-         "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 18
-         },
          "id" : 13,
          "legend" : {
             "avg" : false,
@@ -132,7 +109,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
-         "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -158,7 +135,6 @@
          },
          "type" : "graph",
          "xaxis" : {
-            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
@@ -186,19 +162,11 @@
       {
          "aliasColors" : {},
          "bars" : false,
-         "dashLength" : 10,
-         "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 25
-         },
          "id" : 15,
          "legend" : {
             "avg" : false,
@@ -218,7 +186,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
-         "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -249,7 +217,6 @@
          },
          "type" : "graph",
          "xaxis" : {
-            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
@@ -277,19 +244,11 @@
       {
          "aliasColors" : {},
          "bars" : false,
-         "dashLength" : 10,
-         "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 32
-         },
          "id" : 16,
          "legend" : {
             "avg" : false,
@@ -309,23 +268,19 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
-         "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
             {
-               "$$hashKey" : "object:1031",
                "expr" : "sum(rate(authmilter_dmarc_total{node=~\"$node\",result=\"fail\",is_whitelisted=\"1\"}[$ratetime]))",
-               "format" : "time_series",
                "intervalFactor" : 2,
                "legendFormat" : "Whitelisted",
                "refId" : "A",
                "step" : 4
             },
             {
-               "$$hashKey" : "object:1032",
                "expr" : "sum(rate(authmilter_dmarc_total{node=~\"$node\",result=\"fail\",is_whitelisted=\"0\"}[$ratetime]))",
-               "format" : "time_series",
                "intervalFactor" : 2,
                "legendFormat" : "Not whitelisted",
                "refId" : "B",
@@ -379,12 +334,6 @@
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 39
-         },
          "id" : 51,
          "legend" : {
             "avg" : false,
@@ -405,11 +354,11 @@
          "renderer" : "flot",
          "seriesOverrides" : [],
          "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
             {
-               "$$hashKey" : "object:1110",
                "expr" : "sum(rate(authmilter_dmarc_total{node=~\"$node\",used_arc=\"1\"}[$ratetime])) by( result )",
                "format" : "time_series",
                "intervalFactor" : 2,
@@ -418,7 +367,6 @@
                "step" : 120
             },
             {
-               "$$hashKey" : "object:1111",
                "expr" : "sum(rate(authmilter_dmarc_total{node=~\"$node\",used_arc=\"0\"}[$ratetime])) by ( result )",
                "format" : "time_series",
                "intervalFactor" : 2,
@@ -447,7 +395,6 @@
          },
          "yaxes" : [
             {
-               "$$hashKey" : "object:952",
                "format" : "short",
                "label" : null,
                "logBase" : 1,
@@ -456,7 +403,6 @@
                "show" : true
             },
             {
-               "$$hashKey" : "object:953",
                "format" : "short",
                "label" : null,
                "logBase" : 1,
@@ -468,6 +414,9 @@
       }
    ],
    "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
    "title" : "DMARC Handler",
-   "type" : "row"
+   "titleSize" : "h6"
 }

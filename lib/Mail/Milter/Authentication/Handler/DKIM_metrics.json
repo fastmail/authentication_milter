@@ -1,27 +1,15 @@
 {
-   "collapsed" : true,
-   "gridPos" : {
-      "h" : 1,
-      "w" : 24,
-      "x" : 0,
-      "y" : 9
-   },
-   "id" : 61,
+   "collapse" : true,
+   "height" : "250px",
    "panels" : [
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 73
-         },
          "id" : 1,
          "legend" : {
             "avg" : false,
@@ -43,6 +31,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -95,17 +84,11 @@
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 80
-         },
          "id" : 22,
          "legend" : {
             "avg" : false,
@@ -127,6 +110,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -179,17 +163,11 @@
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 87
-         },
          "id" : 23,
          "legend" : {
             "avg" : false,
@@ -211,6 +189,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -265,17 +244,11 @@
          "bars" : false,
          "dashLength" : 10,
          "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 94
-         },
          "id" : 24,
          "legend" : {
             "avg" : false,
@@ -298,6 +271,7 @@
          "renderer" : "flot",
          "seriesOverrides" : [],
          "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -354,17 +328,11 @@
          "bars" : false,
          "dashLength" : 10,
          "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 101
-         },
          "id" : 25,
          "legend" : {
             "avg" : false,
@@ -387,6 +355,7 @@
          "renderer" : "flot",
          "seriesOverrides" : [],
          "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -440,6 +409,9 @@
       }
    ],
    "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
    "title" : "DKIM Handler",
-   "type" : "row"
+   "titleSize" : "h6"
 }

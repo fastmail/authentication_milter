@@ -1,29 +1,17 @@
 {
-   "collapsed" : true,
-   "gridPos" : {
-      "h" : 1,
-      "w" : 24,
-      "x" : 0,
-      "y" : 15
-   },
-   "id" : 67,
+   "collapse" : true,
+   "height" : 250,
    "panels" : [
       {
          "aliasColors" : {},
          "bars" : false,
          "dashLength" : 10,
          "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 135
-         },
          "id" : 42,
          "legend" : {
             "avg" : false,
@@ -46,6 +34,7 @@
          "renderer" : "flot",
          "seriesOverrides" : [],
          "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -101,17 +90,11 @@
          "bars" : false,
          "dashLength" : 10,
          "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 142
-         },
          "id" : 44,
          "legend" : {
             "avg" : false,
@@ -134,6 +117,7 @@
          "renderer" : "flot",
          "seriesOverrides" : [],
          "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -199,17 +183,11 @@
          "bars" : false,
          "dashLength" : 10,
          "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 149
-         },
          "id" : 45,
          "legend" : {
             "avg" : false,
@@ -232,6 +210,7 @@
          "renderer" : "flot",
          "seriesOverrides" : [],
          "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -288,17 +267,11 @@
          "bars" : false,
          "dashLength" : 10,
          "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 156
-         },
          "id" : 46,
          "legend" : {
             "avg" : false,
@@ -321,6 +294,7 @@
          "renderer" : "flot",
          "seriesOverrides" : [],
          "spaceLength" : 10,
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -374,6 +348,9 @@
       }
    ],
    "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
    "title" : "ReturnOK Handler",
-   "type" : "row"
+   "titleSize" : "h6"
 }

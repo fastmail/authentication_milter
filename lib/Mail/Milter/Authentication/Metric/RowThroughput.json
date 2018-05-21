@@ -1,27 +1,15 @@
 {
-   "collapsed" : true,
-   "gridPos" : {
-      "h" : 1,
-      "w" : 24,
-      "x" : 0,
-      "y" : 0
-   },
-   "id" : 52,
+   "collapse" : true,
+   "height" : "250px",
    "panels" : [
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 1
-         },
          "id" : 9,
          "legend" : {
             "avg" : false,
@@ -42,6 +30,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -94,17 +83,11 @@
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 8
-         },
          "id" : 37,
          "legend" : {
             "avg" : false,
@@ -124,6 +107,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -175,17 +159,11 @@
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 0,
          "grid" : {},
-         "gridPos" : {
-            "h" : 7,
-            "w" : 24,
-            "x" : 0,
-            "y" : 15
-         },
          "id" : 17,
          "legend" : {
             "avg" : false,
@@ -206,6 +184,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -257,6 +236,9 @@
       }
    ],
    "repeat" : null,
+   "repeatIteration" : null,
+   "repeatRowId" : null,
+   "showTitle" : true,
    "title" : "Throughput",
-   "type" : "row"
+   "titleSize" : "h6"
 }
