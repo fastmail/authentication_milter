@@ -1,8 +1,7 @@
 package Mail::Milter::Authentication::Handler::ARC;
 use strict;
 use warnings;
-use Mail::Milter::Authentication;
-#use Mail::Milter::Authentication 2.20180510;  ## TODO Version removed for testing, put it back for production
+use Mail::Milter::Authentication 2.20180510;
 use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 # ABSTRACT: Authentication Milter Module for validation of ARC signatures
