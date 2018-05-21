@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication-ARC
 
 {{$NEXT}}
+
+2.20180521 2018-05-21 14:41:56+10:00 Australia/Melbourne
         - Option to pull values from a trusted ARC chain for use elsewhere
         - Manually check timeout status in key stages
 
