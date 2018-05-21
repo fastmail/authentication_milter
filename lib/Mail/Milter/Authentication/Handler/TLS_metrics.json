@@ -1,12 +1,24 @@
 {
-   "collapse" : true,
-   "height" : 250,
+   "collapsed" : true,
+   "gridPos" : {
+      "h" : 1,
+      "w" : 24,
+      "x" : 0,
+      "y" : 22
+   },
+   "id" : 74,
    "panels" : [
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "${DS_PROMETHEUS}",
+         "datasource" : "Prometheus",
          "fill" : 1,
+         "gridPos" : {
+            "h" : 7,
+            "w" : 24,
+            "x" : 0,
+            "y" : 163
+         },
          "id" : 26,
          "legend" : {
             "avg" : false,
@@ -26,7 +38,6 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
-         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -87,8 +98,14 @@
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "${DS_PROMETHEUS}",
+         "datasource" : "Prometheus",
          "fill" : 1,
+         "gridPos" : {
+            "h" : 7,
+            "w" : 24,
+            "x" : 0,
+            "y" : 170
+         },
          "id" : 27,
          "legend" : {
             "avg" : false,
@@ -108,7 +125,6 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
-         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -159,8 +175,14 @@
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "${DS_PROMETHEUS}",
+         "datasource" : "Prometheus",
          "fill" : 1,
+         "gridPos" : {
+            "h" : 7,
+            "w" : 24,
+            "x" : 0,
+            "y" : 177
+         },
          "id" : 28,
          "legend" : {
             "avg" : false,
@@ -180,7 +202,6 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
-         "span" : 12,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
@@ -230,9 +251,6 @@
       }
    ],
    "repeat" : null,
-   "repeatIteration" : null,
-   "repeatRowId" : null,
-   "showTitle" : true,
    "title" : "TLS Handler",
-   "titleSize" : "h6"
+   "type" : "row"
 }

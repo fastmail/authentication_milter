@@ -1,15 +1,29 @@
 {
-   "collapse" : true,
-   "height" : "250px",
+   "collapsed" : true,
+   "gridPos" : {
+      "h" : 1,
+      "w" : 24,
+      "x" : 0,
+      "y" : 3
+   },
+   "id" : 55,
    "panels" : [
       {
          "aliasColors" : {},
          "bars" : false,
-         "datasource" : "${DS_PROMETHEUS}",
+         "dashLength" : 10,
+         "dashes" : false,
+         "datasource" : "Prometheus",
          "editable" : true,
          "error" : false,
          "fill" : 1,
          "grid" : {},
+         "gridPos" : {
+            "h" : 7,
+            "w" : 24,
+            "x" : 0,
+            "y" : 4
+         },
          "id" : 10,
          "legend" : {
             "avg" : false,
@@ -30,12 +44,14 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
-         "span" : 12,
+         "spaceLength" : 10,
          "stack" : false,
          "steppedLine" : false,
          "targets" : [
             {
+               "$$hashKey" : "object:825",
                "expr" : "sum(authmilter_callback_error_total{node=~\"$node\"}) by(stage,node,handler,type)",
+               "format" : "time_series",
                "interval" : "",
                "intervalFactor" : 2,
                "legendFormat" : "{{ node }} {{ handler }} {{ stage }} {{ type }}",
@@ -56,6 +72,7 @@
          },
          "type" : "graph",
          "xaxis" : {
+            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
@@ -82,9 +99,6 @@
       }
    ],
    "repeat" : null,
-   "repeatIteration" : null,
-   "repeatRowId" : null,
-   "showTitle" : true,
    "title" : "Errors",
-   "titleSize" : "h6"
+   "type" : "row"
 }
