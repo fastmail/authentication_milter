@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20180521 2018-05-21 14:33:46+10:00 Australia/Melbourne
         - Add method to manually check timeout status in Handlers
         - Switch to useconds internally for Handler timeouts
         - Fix test data on some BSD systems
