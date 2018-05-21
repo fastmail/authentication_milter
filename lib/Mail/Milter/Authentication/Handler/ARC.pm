@@ -70,18 +70,24 @@ sub get_trusted_spf_results {
     my @trusted_results;
 
     foreach my $instance ( sort keys %$aar ) {
-        my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'spf' })->children();
-        RESULT:
-        foreach my $result ( @$results ) {
-            my $smtp_mailfrom = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom' })->children()->[0]->value() };
-            $self->handle_exception( $@ );
-            next RESULT if ! $smtp_mailfrom;
-            my $result_domain = $self->get_domain_from( $smtp_mailfrom );
-            push @trusted_results, {
-                'domain' => $result_domain,
-                'scope'  => 'mfrom',
-                'result' => $result->value(),
-            };
+        eval {
+            my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'spf' })->children();
+            RESULT:
+            foreach my $result ( @$results ) {
+                my $smtp_mailfrom = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom' })->children()->[0]->value() };
+                $self->handle_exception( $@ );
+                next RESULT if ! $smtp_mailfrom;
+                my $result_domain = $self->get_domain_from( $smtp_mailfrom );
+                push @trusted_results, {
+                    'domain' => $result_domain,
+                    'scope'  => 'mfrom',
+                    'result' => $result->value(),
+                };
+            }
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'ARC Inherit Error ' . $error );
         }
     }
     return \@trusted_results;
@@ -96,43 +102,49 @@ sub get_trusted_dkim_results {
     my @trusted_results;
 
     foreach my $instance ( sort keys %$aar ) {
-        my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dkim' })->children();
-        RESULT:
-        foreach my $result ( @$results ) {
-            my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.d' })->children()->[0]->value() };
-            $self->handle_exception( $@ );
-            if ( ! $entry_domain ) {
-                # No domain, check for an identifier instead
-                my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
+        eval {
+            my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dkim' })->children();
+            RESULT:
+            foreach my $result ( @$results ) {
+                my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.d' })->children()->[0]->value() };
                 $self->handle_exception( $@ );
-                if ( $entry_domain ) {
-                    $entry_domain =~ s/^\@//;
+                if ( ! $entry_domain ) {
+                    # No domain, check for an identifier instead
+                    my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
+                    $self->handle_exception( $@ );
+                    if ( $entry_domain ) {
+                        $entry_domain =~ s/^\@//;
+                    }
                 }
-            }
-            next RESULT if ! $entry_domain;
-            $entry_domain = lc $entry_domain;
+                next RESULT if ! $entry_domain;
+                $entry_domain = lc $entry_domain;
 
-            my $entry_selector = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'x-selector' })->children()->[0]->value() };
-            $self->handle_exception( $@ );
-            if ( ! $entry_selector ) {
-                # Google are using header.s
-                $entry_selector = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.s' })->children()->[0]->value() };
+                my $entry_selector = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'x-selector' })->children()->[0]->value() };
                 $self->handle_exception( $@ );
-            }
-            # If we don't have a selector then we fake it.
-            $entry_selector = 'x-arc-chain' if ! $entry_selector;
-            ## TODO If we can't find this in the ar header then we could
-            ## try looking for the Signature and pull it from there.
-            ## But let's not do that right now.
-            next RESULT if ! $entry_selector;
+                if ( ! $entry_selector ) {
+                    # Google are using header.s
+                    $entry_selector = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.s' })->children()->[0]->value() };
+                    $self->handle_exception( $@ );
+                }
+                # If we don't have a selector then we fake it.
+                $entry_selector = 'x-arc-chain' if ! $entry_selector;
+                ## TODO If we can't find this in the ar header then we could
+                ## try looking for the Signature and pull it from there.
+                ## But let's not do that right now.
+                next RESULT if ! $entry_selector;
 
-            #my $result_domain = $self->get_domain_from( $smtp_mailfrom );
-            push @trusted_results, {
-                'domain'       => $entry_domain,
-                'selector'     => $entry_selector,,
-                'result'       => $result->value(),
-                'human_result' => 'Trusted ARC entry',
-            };
+                #my $result_domain = $self->get_domain_from( $smtp_mailfrom );
+                push @trusted_results, {
+                    'domain'       => $entry_domain,
+                    'selector'     => $entry_selector,,
+                    'result'       => $result->value(),
+                    'human_result' => 'Trusted ARC entry',
+                };
+            }
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'ARC Inherit Error ' . $error );
         }
     }
     return \@trusted_results;
@@ -147,65 +159,71 @@ sub inherit_trusted_spf_results {
     return if ! $aar;
 
     foreach my $instance ( sort keys %$aar ) {
-        # Find all ARC SPF results which passed
-        my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'spf', 'value' => 'pass' })->children();
-        RESULT:
-        foreach my $result ( @$results ) {
+        eval {
+            # Find all ARC SPF results which passed
+            my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'spf', 'value' => 'pass' })->children();
+            RESULT:
+            foreach my $result ( @$results ) {
 
-            # Does the entry have an x-arc-domain entry? if do then leave it alone.
-            next RESULT if ( scalar @{ $result->search({ 'isa' => 'subentry', 'key' => 'x-arc-domain' })->children() }> 0 );
+                # Does the entry have an x-arc-domain entry? if do then leave it alone.
+                next RESULT if ( scalar @{ $result->search({ 'isa' => 'subentry', 'key' => 'x-arc-domain' })->children() }> 0 );
 
-            # Does the entry have a smtp.mailfrom entry we can match on?
-            my $smtp_mailfrom = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom' })->children()->[0]->value() };
-            $self->handle_exception( $@ );
-            next RESULT if ! $smtp_mailfrom;
-            $smtp_mailfrom = lc $smtp_mailfrom;
-
-            # Do we have an existing entry for this spf record with the same smtp.mailfrom?
-            my $top_handler = $self->get_top_handler();
-            my $existing_auth_headers = $top_handler->{'auth_headers'};
-            my $found_passing = 0;
-
-            HEADER:
-            foreach my $header ( @$existing_auth_headers ) {
-                next if $header->key() ne 'spf';
-
-                my $quoted = quotemeta($smtp_mailfrom);
-                my $regex = qr{$quoted}i;
-                my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $regex })->children()->[0]->value() };
+                # Does the entry have a smtp.mailfrom entry we can match on?
+                my $smtp_mailfrom = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom' })->children()->[0]->value() };
                 $self->handle_exception( $@ );
-                next HEADER if ! $this_mailfrom;
+                next RESULT if ! $smtp_mailfrom;
+                $smtp_mailfrom = lc $smtp_mailfrom;
 
-                # We already have a pass, leave it alone
-                $found_passing = 1 if $header->value() eq 'pass';
+                # Do we have an existing entry for this spf record with the same smtp.mailfrom?
+                my $top_handler = $self->get_top_handler();
+                my $existing_auth_headers = $top_handler->{'auth_headers'};
+                my $found_passing = 0;
+
+                HEADER:
+                foreach my $header ( @$existing_auth_headers ) {
+                    next if $header->key() ne 'spf';
+
+                    my $quoted = quotemeta($smtp_mailfrom);
+                    my $regex = qr{$quoted}i;
+                    my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $regex })->children()->[0]->value() };
+                    $self->handle_exception( $@ );
+                    next HEADER if ! $this_mailfrom;
+
+                    # We already have a pass, leave it alone
+                    $found_passing = 1 if $header->value() eq 'pass';
+
+                }
+
+                # We found a passing result for this mailfrom, leave it alone
+                next RESULT if $found_passing;
+
+                # We didn't find a passing result, so rename the existing ones.....
+                HEADER:
+                foreach my $header ( @$existing_auth_headers ) {
+                    next if $header->key() ne 'spf';
+
+                    my $quoted = quotemeta($smtp_mailfrom);
+                    my $regex = qr{$quoted}i;
+                    my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $regex })->children()->[0]->value() };
+                    $self->handle_exception( $@ );
+                    next HEADER if ! $this_mailfrom;
+
+                    # Rename the existing header
+                    $header->set_key( 'x-local-spf' );
+                }
+
+                # And add the new one
+                $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
+                $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
+                $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
+                $result->orphan();
+                $self->add_auth_header( $result );
 
             }
-
-            # We found a passing result for this mailfrom, leave it alone
-            next RESULT if $found_passing;
-
-            # We didn't find a passing result, so rename the existing ones.....
-            HEADER:
-            foreach my $header ( @$existing_auth_headers ) {
-                next if $header->key() ne 'spf';
-
-                my $quoted = quotemeta($smtp_mailfrom);
-                my $regex = qr{$quoted}i;
-                my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $regex })->children()->[0]->value() };
-                $self->handle_exception( $@ );
-                next HEADER if ! $this_mailfrom;
-
-                # Rename the existing header
-                $header->set_key( 'x-local-spf' );
-            }
-
-            # And add the new one
-            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
-            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
-            $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
-            $result->orphan();
-            $self->add_auth_header( $result );
-
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'ARC Inherit Error ' . $error );
         }
     }
     return;
@@ -220,73 +238,79 @@ sub inherit_trusted_dkim_results {
     return if ! $aar;
 
     foreach my $instance ( sort keys %$aar ) {
-        # Find all ARC DKIM results which passed
-        my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dkim', 'value' => 'pass' })->children();
-        RESULT:
-        foreach my $result ( @$results ) {
+        eval {
+            # Find all ARC DKIM results which passed
+            my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dkim', 'value' => 'pass' })->children();
+            RESULT:
+            foreach my $result ( @$results ) {
 
-            # Does the entry have an x-arc-domain entry? if do then leave it alone.
-            next RESULT if ( scalar @{ $result->search({ 'isa' => 'subentry', 'key' => 'x-arc-domain' })->children() }> 0 );
+                # Does the entry have an x-arc-domain entry? if do then leave it alone.
+                next RESULT if ( scalar @{ $result->search({ 'isa' => 'subentry', 'key' => 'x-arc-domain' })->children() }> 0 );
 
-            # Does the entry have a domain identifier we can match on?
-            my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.d' })->children()->[0]->value() };
-            $self->handle_exception( $@ );
-            if ( ! $entry_domain ) {
-                # No domain, check for an identifier instead
-                my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
+                # Does the entry have a domain identifier we can match on?
+                my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.d' })->children()->[0]->value() };
                 $self->handle_exception( $@ );
-                if ( $entry_domain ) {
-                    $entry_domain =~ s/^\@//;
+                if ( ! $entry_domain ) {
+                    # No domain, check for an identifier instead
+                    my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
+                    $self->handle_exception( $@ );
+                    if ( $entry_domain ) {
+                        $entry_domain =~ s/^\@//;
+                    }
                 }
+                next RESULT if ! $entry_domain;
+                $entry_domain = lc $entry_domain;
+
+                # Do we have an existing entry for this spf record with the same domain?
+                my $top_handler = $self->get_top_handler();
+                my $existing_auth_headers = $top_handler->{'auth_headers'};
+                my $found_passing = 0;
+
+                HEADER:
+                foreach my $header ( @$existing_auth_headers ) {
+                    next if $header->key() ne 'dkim';
+
+                    my $quoted = quotemeta($entry_domain);
+                    my $regex = qr{$quoted}i;
+                    my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $regex })->children()->[0]->value() };
+                    $self->handle_exception( $@ );
+                    next HEADER if ! $this_domain;
+
+                    # We already have a pass, leave it alone
+                    $found_passing = 1 if $header->value() eq 'pass';
+
+                }
+
+                # We found a passing result for this mailfrom, leave it alone
+                next RESULT if $found_passing;
+
+                # We didn't find a passing result, so rename the existing ones.....
+                HEADER:
+                foreach my $header ( @$existing_auth_headers ) {
+                    next if $header->key() ne 'dkim';
+
+                    my $quoted = quotemeta($entry_domain);
+                    my $regex = qr{$quoted}i;
+                    my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $regex })->children()->[0]->value() };
+                    $self->handle_exception( $@ );
+                    next HEADER if ! $this_domain;
+
+                    # Rename the existing header
+                    $header->set_key( 'x-local-dkim' );
+                }
+
+                # And add the new one
+                $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
+                $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
+                $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
+                $result->orphan();
+                $self->add_auth_header( $result );
+
             }
-            next RESULT if ! $entry_domain;
-            $entry_domain = lc $entry_domain;
-
-            # Do we have an existing entry for this spf record with the same domain?
-            my $top_handler = $self->get_top_handler();
-            my $existing_auth_headers = $top_handler->{'auth_headers'};
-            my $found_passing = 0;
-
-            HEADER:
-            foreach my $header ( @$existing_auth_headers ) {
-                next if $header->key() ne 'dkim';
-
-                my $quoted = quotemeta($entry_domain);
-                my $regex = qr{$quoted}i;
-                my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $regex })->children()->[0]->value() };
-                $self->handle_exception( $@ );
-                next HEADER if ! $this_domain;
-
-                # We already have a pass, leave it alone
-                $found_passing = 1 if $header->value() eq 'pass';
-
-            }
-
-            # We found a passing result for this mailfrom, leave it alone
-            next RESULT if $found_passing;
-
-            # We didn't find a passing result, so rename the existing ones.....
-            HEADER:
-            foreach my $header ( @$existing_auth_headers ) {
-                next if $header->key() ne 'dkim';
-
-                my $quoted = quotemeta($entry_domain);
-                my $regex = qr{$quoted}i;
-                my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $regex })->children()->[0]->value() };
-                $self->handle_exception( $@ );
-                next HEADER if ! $this_domain;
-
-                # Rename the existing header
-                $header->set_key( 'x-local-dkim' );
-            }
-
-            # And add the new one
-            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
-            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
-            $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
-            $result->orphan();
-            $self->add_auth_header( $result );
-
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'ARC Inherit Error ' . $error );
         }
     }
     return;
@@ -301,15 +325,21 @@ sub inherit_trusted_ip_results {
     # Add result from first trusted ingress hop
     my ( $instance ) = sort keys %$aar;
     foreach my $thing ( sort qw { iprev x-ptr } ) {
-        my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => $thing })->children();
-        RESULT:
-        foreach my $result ( @$results ) {
-            next RESULT if ( scalar @{ $result->search({ 'isa' => 'subentry', 'key' => 'x-arc-domain' })->children() }> 0 );
-            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
-            $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
-            $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
-            $result->orphan();
-            $self->add_auth_header( $result );
+        eval {
+            my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => $thing })->children();
+            RESULT:
+            foreach my $result ( @$results ) {
+                next RESULT if ( scalar @{ $result->search({ 'isa' => 'subentry', 'key' => 'x-arc-domain' })->children() }> 0 );
+                $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
+                $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
+                $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
+                $result->orphan();
+                $self->add_auth_header( $result );
+            }
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'ARC Inherit Error ' . $error );
         }
     }
 
@@ -361,7 +391,10 @@ sub get_arc_trusted_ingress_ip {
     my ( $first_instance ) = sort keys %$aar;
     return if ! $first_instance;
     my $ip = eval{ $aar->{$first_instance}->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'policy.iprev'})->children()->[0]->value(); };
-    $self->handle_exception( $@ );
+    if ( my $error = $@ ) {
+        $self->handle_exception( $error );
+        $self->log_error( 'ARC Inherit Error ' . $error );
+    }
     return $ip;
 }
 
