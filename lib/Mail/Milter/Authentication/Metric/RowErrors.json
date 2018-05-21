@@ -35,10 +35,10 @@
          "steppedLine" : false,
          "targets" : [
             {
-               "expr" : "sum(authmilter_callback_error_total{node=~\"$node\"}) by(stage,node,handler)",
+               "expr" : "sum(authmilter_callback_error_total{node=~\"$node\"}) by(stage,node,handler,type)",
                "interval" : "",
                "intervalFactor" : 2,
-               "legendFormat" : "{{ node }} {{ handler }} {{ stage }}",
+               "legendFormat" : "{{ node }} {{ handler }} {{ stage }} {{ type }}",
                "metric" : "authmilter_call",
                "refId" : "A",
                "step" : 4
