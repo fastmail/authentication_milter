@@ -127,7 +127,7 @@ sub handle_exception {
     my ( $self, $exception ) = @_;
     my $Type = $self->is_exception_type( $exception );
     return if ! $Type;
-    die if $Type eq 'Timeout';
+    die $exception if $Type eq 'Timeout';
     #my $Text = $exception->{ 'Text' } || 'Unknown';
     return;
 }
