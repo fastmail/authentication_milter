@@ -5,6 +5,7 @@ use warnings;
 
 use Digest::MD5 qw{ md5_hex };
 use English qw{ -no_match_vars };
+use Clone qw{ clone };
 use Mail::SPF;
 use MIME::Base64;
 use Net::DNS::Resolver;
@@ -28,6 +29,14 @@ sub new {
         'thischild' => $thischild,
     };
     bless $self, $class;
+
+    my $config = $self->config();
+    if ( exists( $config->{ '_external_callback_processor' } ) ) {
+        if ( $config->{ '_external_callback_processor' }->can( 'set_handler' ) ) {
+            $config->{ '_external_callback_processor' }->set_handler( $self );
+        }
+    }
+
     return $self;
 }
 
@@ -103,6 +112,14 @@ sub top_setup_callback {
     $self->status('setup');
     $self->dbgout( 'CALLBACK', 'Setup', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
+
+    my $config = $self->config();
+    if ( exists( $config->{ '_external_callback_processor' } ) ) {
+        if ( $config->{ '_external_callback_processor' }->can( 'setup_callback' ) ) {
+            $config->{ '_external_callback_processor' }->setup_callback();
+        }
+    }
+
     my $callbacks = $self->get_callbacks( 'setup' );
     foreach my $handler ( @$callbacks ) {
         $self->dbgout( 'CALLBACK', 'Setup ' . $handler, LOG_DEBUG );
@@ -195,6 +212,12 @@ sub top_connect_callback {
 
         $self->{'ip_object'} = $ip;
 
+        if ( exists( $config->{ '_external_callback_processor' } ) ) {
+            if ( $config->{ '_external_callback_processor' }->can( 'connect_callback' ) ) {
+                $config->{ '_external_callback_processor' }->connect_callback( $hostname, $ip );
+            }
+        }
+
         my $callbacks = $self->get_callbacks( 'connect' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Connect ' . $handler, LOG_DEBUG );
@@ -270,6 +293,13 @@ sub top_helo_callback {
             }
 
             $self->{'helo_name'} = $helo_host;
+
+            if ( exists( $config->{ '_external_callback_processor' } ) ) {
+                if ( $config->{ '_external_callback_processor' }->can( 'helo_callback' ) ) {
+                    $config->{ '_external_callback_processor' }->helo_callback( $helo_host );
+                }
+            }
+
             my $callbacks = $self->get_callbacks( 'helo' );
             foreach my $handler ( @$callbacks ) {
                 $self->dbgout( 'CALLBACK', 'Helo ' . $handler, LOG_DEBUG );
@@ -329,6 +359,12 @@ sub top_envfrom_callback {
         delete $self->{'pre_headers'};
         delete $self->{'add_headers'};
 
+        if ( exists( $config->{ '_external_callback_processor' } ) ) {
+            if ( $config->{ '_external_callback_processor' }->can( 'envfrom_callback' ) ) {
+                $config->{ '_external_callback_processor' }->envfrom_callback( $env_from );
+            }
+        }
+
         my $callbacks = $self->get_callbacks( 'envfrom' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'EnvFrom ' . $handler, LOG_DEBUG );
@@ -377,6 +413,13 @@ sub top_envrcpt_callback {
         if ( $config->{'command_timeout'} ) {
             $self->set_alarm( $config->{'command_timeout'} );
         }
+
+        if ( exists( $config->{ '_external_callback_processor' } ) ) {
+            if ( $config->{ '_external_callback_processor' }->can( 'envrcpt_callback' ) ) {
+                $config->{ '_external_callback_processor' }->envrcpt_callback( $env_to );
+            }
+        }
+
         my $callbacks = $self->get_callbacks( 'envrcpt' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'EnvRcpt ' . $handler, LOG_DEBUG );
@@ -429,6 +472,12 @@ sub top_header_callback {
             $self->dbgout( 'inline error $error', '', LOG_DEBUG );
         }
 
+        if ( exists( $config->{ '_external_callback_processor' } ) ) {
+            if ( $config->{ '_external_callback_processor' }->can( 'header_callback' ) ) {
+                $config->{ '_external_callback_processor' }->header_callback( $header, $value );
+            }
+        }
+
         my $callbacks = $self->get_callbacks( 'header' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Header ' . $handler, LOG_DEBUG );
@@ -475,6 +524,13 @@ sub top_eoh_callback {
         if ( $config->{'content_timeout'} ) {
             $self->set_alarm( $config->{'content_timeout'} );
         }
+
+        if ( exists( $config->{ '_external_callback_processor' } ) ) {
+            if ( $config->{ '_external_callback_processor' }->can( 'eoh_callback' ) ) {
+                $config->{ '_external_callback_processor' }->eoh_callback();
+            }
+        }
+
         my $callbacks = $self->get_callbacks( 'eoh' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'EOH ' . $handler, LOG_DEBUG );
@@ -522,6 +578,13 @@ sub top_body_callback {
         if ( $config->{'content_timeout'} ) {
             $self->set_alarm( $config->{'content_timeout'} );
         }
+
+        if ( exists( $config->{ '_external_callback_processor' } ) ) {
+            if ( $config->{ '_external_callback_processor' }->can( 'body_callback' ) ) {
+                $config->{ '_external_callback_processor' }->body_callback( $body_chunk );
+            }
+        }
+
         my $callbacks = $self->get_callbacks( 'body' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Body ' . $handler, LOG_DEBUG );
@@ -569,6 +632,13 @@ sub top_eom_callback {
         if ( $config->{'content_timeout'} ) {
             $self->set_alarm( $config->{'content_timeout'} );
         }
+
+        if ( exists( $config->{ '_external_callback_processor' } ) ) {
+            if ( $config->{ '_external_callback_processor' }->can( 'eom_callback' ) ) {
+                $config->{ '_external_callback_processor' }->eom_callback();
+            }
+        }
+
         my $callbacks = $self->get_callbacks( 'eom' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'EOM ' . $handler, LOG_DEBUG );
@@ -638,6 +708,13 @@ sub top_abort_callback {
         if ( $config->{'command_timeout'} ) {
             $self->set_alarm( $config->{'command_timeout'} );
         }
+
+        if ( exists( $config->{ '_external_callback_processor' } ) ) {
+            if ( $config->{ '_external_callback_processor' }->can( 'abort_callback' ) ) {
+                $config->{ '_external_callback_processor' }->abort_callback();
+            }
+        }
+
         my $callbacks = $self->get_callbacks( 'abort' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Abort ' . $handler, LOG_DEBUG );
@@ -684,6 +761,13 @@ sub top_close_callback {
         if ( $config->{'content_timeout'} ) {
             $self->set_alarm( $config->{'content_timeout'} );
         }
+
+        if ( exists( $config->{ '_external_callback_processor' } ) ) {
+            if ( $config->{ '_external_callback_processor' }->can( 'close_callback' ) ) {
+                $config->{ '_external_callback_processor' }->close_callback();
+            }
+        }
+
         my $callbacks = $self->get_callbacks( 'close' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Close ' . $handler, LOG_DEBUG );
@@ -792,7 +876,16 @@ sub handler_config {
     return if ! $type;
     if ( $self->is_handler_loaded( $type ) ) {
         my $config = $self->config();
-        return $config->{'handlers'}->{$type};
+        my $handler_config = $config->{'handlers'}->{$type};
+
+        if ( exists( $config->{ '_external_callback_processor' } ) ) {
+            if ( $config->{ '_external_callback_processor' }->can( 'handler_config' ) ) {
+                $handler_config = clone $handler_config;
+                $config->{ '_external_callback_processor' }->handler_config( $type, $handler_config );
+            }
+        }
+
+        return $handler_config;
     }
     return;
 }

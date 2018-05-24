@@ -1,6 +1,9 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Add external callback hooks for stage callbacks
+        - Add external callback hook for handler config
+        - More timeout improvements
 
 2.20180521 2018-05-21 14:33:46+10:00 Australia/Melbourne
         - Add method to manually check timeout status in Handlers
