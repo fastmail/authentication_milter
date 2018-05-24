@@ -15,7 +15,7 @@ Authentication-Results: server.example.com;
     iprev=fail policy.iprev=1.2.3.4 (NOT FOUND);
     spf=fail smtp.mailfrom=test@example.com smtp.helo=test.example.com;
     x-google-dkim=none (no signatures found);
-    x-ptr=fail x-ptr-helo=test.example.com x-ptr-lookup=""
+    x-ptr=fail smtp.helo=test.example.com policy.ptr=""
 Received-SPF: fail
     (example.com: Sender is not authorized by default to use 'test@example.com' in 'mfrom' identity (mechanism '-all' matched))
     receiver=server.example.com;
@@ -55,7 +55,7 @@ Authentication-Results: server.example.com;
     dkim=pass (1024-bit rsa key sha256) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3 header.a=rsa-sha256 header.s=google;
     x-google-dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
     x-local-ip=pass;
-    x-tls=pass version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128
+    x-tls=pass smtp.version=TLSv1.2 smtp.cipher=ECDHE-RSA-AES128-GCM-SHA256 smtp.bits=128/128
 Return-Path: <marc@marcbradshaw.net>
 Received: from mail-ua0-f173.google.com (mail-ua0-f173.google.com [209.85.217.173])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
@@ -134,7 +134,7 @@ Authentication-Results: server.example.com;
     iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
     spf=softfail smtp.mailfrom=marc@marcbradshaw.net smtp.helo=bad.name.google.com;
     x-google-dkim=fail (bad RSA signature, 2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
-    x-ptr=fail x-ptr-helo=bad.name.google.com x-ptr-lookup=""
+    x-ptr=fail smtp.helo=bad.name.google.com policy.ptr=""
 Received-SPF: softfail
     (marcbradshaw.net: Sender is not authorized by default to use 'marc@marcbradshaw.net' in 'mfrom' identity, however domain is not currently prepared for false failures (mechanism '~all' matched))
     receiver=server.example.com;
@@ -214,7 +214,7 @@ Authentication-Results: server.example.com;
     iprev=fail policy.iprev=1.2.3.4 (NOT FOUND);
     spf=fail smtp.mailfrom=test@example.com smtp.helo=test.example.com;
     x-google-dkim=none (no signatures found);
-    x-ptr=fail x-ptr-helo=test.example.com x-ptr-lookup=""
+    x-ptr=fail smtp.helo=test.example.com policy.ptr=""
 Received-SPF: fail
     (example.com: Sender is not authorized by default to use 'test@example.com' in 'mfrom' identity (mechanism '-all' matched))
     receiver=server.example.com;

@@ -16,7 +16,7 @@ Authentication-Results: server.example.com;
     iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
     spf=softfail smtp.mailfrom=marc@marcbradshaw.net smtp.helo=bad.name.google.com;
     x-google-dkim=fail (bad RSA signature, 2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
-    x-ptr=fail x-ptr-helo=bad.name.google.com x-ptr-lookup=""
+    x-ptr=fail smtp.helo=bad.name.google.com policy.ptr=""
 Received-SPF: softfail
     (marcbradshaw.net: Sender is not authorized by default to use 'marc@marcbradshaw.net' in 'mfrom' identity, however domain is not currently prepared for false failures (mechanism '~all' matched))
     receiver=server.example.com;

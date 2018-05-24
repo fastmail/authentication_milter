@@ -13,7 +13,7 @@ Authentication-Results: server.example.com;
     dkim=pass (1024-bit rsa key sha256) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3 header.a=rsa-sha256 header.s=google;
     x-google-dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
     x-local-ip=pass;
-    x-tls=pass version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128
+    x-tls=pass smtp.version=TLSv1.2 smtp.cipher=ECDHE-RSA-AES128-GCM-SHA256 smtp.bits=128/128
 Return-Path: <marc@marcbradshaw.net>
 Received: from mail-ua0-f173.google.com (mail-ua0-f173.google.com [209.85.217.173])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
