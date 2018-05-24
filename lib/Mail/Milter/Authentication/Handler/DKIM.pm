@@ -286,11 +286,10 @@ sub eom_callback {
                     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.d' )->safe_set_value( $signature->domain() ) );
                     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.i' )->safe_set_value( $signature->identity() ) );
                     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.b' )->safe_set_value( substr( $signature->data(), 0, 8 ) ) );
+                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.a' )->safe_set_value( $key_type . '-' . $hash_algorithm ) );
+                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.s' )->safe_set_value( $selector ) );
                     if ( $config->{'extra_properties'} ) {
                         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-bits' )->safe_set_value( $key_size ) );
-                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-keytype' )->safe_set_value( $key_type ) );
-                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-algorithm' )->safe_set_value( $hash_algorithm ) );
-                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-selector' )->safe_set_value( $selector ) );
                     }
                     $self->add_auth_header($header);
                 }
