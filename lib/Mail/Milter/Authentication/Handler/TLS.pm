@@ -54,14 +54,15 @@ sub envfrom_callback {
 
         my $metric_data = {};
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-tls' )->safe_set_value( 'pass' );
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'version' )->safe_set_value( $version ) );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.version' )->safe_set_value( $version ) );
+        $metric_data->{ 'version' } = $version;
 
         if ( $cipher ) {
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'cipher' )->safe_set_value( $cipher ) );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.cipher' )->safe_set_value( $cipher ) );
             $metric_data->{ 'cipher' } = $cipher;
         }
         if ( $bits ) {
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'bits' )->safe_set_value( $bits ) );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.bits' )->safe_set_value( $bits ) );
             $metric_data->{ 'bits' } = $bits;
         }
         $metric_data->{ 'trusted' } = $trusted ? 1 : 0;
@@ -103,14 +104,15 @@ sub header_callback {
 
         my $metric_data = {};
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-tls' )->safe_set_value( 'pass' );
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'version' )->safe_set_value( $version ) );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.version' )->safe_set_value( $version ) );
+        $metric_data->{ 'version' } = $version;
 
         if ( $cipher ) {
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'cipher' )->safe_set_value( $cipher ) );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.cipher' )->safe_set_value( $cipher ) );
             $metric_data->{ 'cipher' } = $cipher;
         }
         if ( $bits ) {
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'bits' )->safe_set_value( $bits ) );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.bits' )->safe_set_value( $bits ) );
             $metric_data->{ 'bits' } = $bits;
         }
 

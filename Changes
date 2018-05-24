@@ -6,6 +6,7 @@ Revision history for Mail-Milter-Authentication
         - More timeout improvements
         - DKIM: switch extra properties to more standard properties
         - Minimum perl verion 5.10 required (Dependencies demand it)
+        - Make ptype of TLS/PTR/SPF entries more correct
 
 2.20180521 2018-05-21 14:33:46+10:00 Australia/Melbourne
         - Add method to manually check timeout status in Handlers
