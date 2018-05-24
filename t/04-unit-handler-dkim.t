@@ -123,17 +123,13 @@ foreach my $tester_key ( sort keys %$testers ) {
             is( scalar @{ $header->children() }, 1, 'One Entry' );
             my $result = eval{ $header->children()->[0]->value(); } // q{};
             is( $result, 'pass', 'DKIM Pass on ' . $Key );
+            is ( $header->search({ 'key' => 'header.a' })->children()->[0]->value(), $KeyData->{ $Key }->{ 'algorithm'} , 'header.a property' );
+            is ( $header->search({ 'key' => 'header.s' })->children()->[0]->value(), $KeyData->{ $Key }->{ 'selector' }, 'Selector property' );
             if ( $tester_key eq 'extra_properties' ) {
                 is ( $header->search({ 'key' => 'x-bits' })->children()->[0]->value(), $KeyData->{ $Key }->{ 'size' }, 'Size property' );
-                is ( $header->search({ 'key' => 'x-keytype' })->children()->[0]->value(), 'rsa', 'Key Type property' );
-                is ( 'rsa-' . $header->search({ 'key' => 'x-algorithm' })->children()->[0]->value(), $KeyData->{ $Key }->{ 'algorithm' }, 'Algorithm property' );
-                is ( $header->search({ 'key' => 'x-selector' })->children()->[0]->value(), $KeyData->{ $Key }->{ 'selector' }, 'Selector property' );
             }
             else {
                 is ( scalar @{ $header->search({ 'key' => 'x-bits' })->children() }, 0, 'No x-bits entry' );
-                is ( scalar @{ $header->search({ 'key' => 'x-keytype' })->children() }, 0, 'No x-keytype entry' );
-                is ( scalar @{ $header->search({ 'key' => 'x-algoeithm' })->children() }, 0, 'No x-algorithm entry' );
-                is ( scalar @{ $header->search({ 'key' => 'x-selector' })->children() }, 0, 'No x-selector entry' );
             }
         }
     };
