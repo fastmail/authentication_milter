@@ -64,7 +64,7 @@
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\",callback=\"setup\",handler=\"senderid\"}" : 123456,
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\",callback=\"setup\",handler=\"spf\"}" : 123456,
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\"}" : "0",
-   "authmilter_tls_connect_total{ident=\"test_authentication_milter_test\",bits=\"128_128\",cipher=\"ecdhe_rsa_aes128_gcm_sha256\"}" : "1",
+   "authmilter_tls_connect_total{ident=\"test_authentication_milter_test\",bits=\"128_128\",cipher=\"ecdhe_rsa_aes128_gcm_sha256\",version=\"tlsv1_2\"}" : "1",
    "authmilter_tls_connect_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_trustedip_connect_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_uptime_seconds_total{ident=\"test_authentication_milter_test\"}" : 123456
