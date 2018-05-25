@@ -14,7 +14,7 @@
          "id" : "grafana",
          "name" : "Grafana",
          "type" : "grafana",
-         "version" : "4.5.0"
+         "version" : "4.5.2"
       },
       {
          "id" : "graph",
@@ -140,8 +140,8 @@
       ]
    },
    "time" : {
-      "from" : "now-1h",
-      "to" : "now"
+      "from" : "2018-05-25T03:33:09.463Z",
+      "to" : "2018-05-25T05:33:09.463Z"
    },
    "timepicker" : {
       "refresh_intervals" : [
@@ -170,5 +170,5 @@
    },
    "timezone" : "browser",
    "title" : "Authentication Milter",
-   "version" : 11
+   "version" : 4
 }

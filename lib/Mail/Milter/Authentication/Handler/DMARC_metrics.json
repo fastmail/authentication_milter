@@ -5,6 +5,8 @@
       {
          "aliasColors" : {},
          "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
          "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
@@ -30,6 +32,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "spaceLength" : 10,
          "span" : 12,
          "stack" : false,
          "steppedLine" : false,
@@ -56,6 +59,7 @@
          },
          "type" : "graph",
          "xaxis" : {
+            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
@@ -83,6 +87,8 @@
       {
          "aliasColors" : {},
          "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
          "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
@@ -109,6 +115,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "spaceLength" : 10,
          "span" : 12,
          "stack" : false,
          "steppedLine" : false,
@@ -135,6 +142,7 @@
          },
          "type" : "graph",
          "xaxis" : {
+            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
@@ -162,6 +170,8 @@
       {
          "aliasColors" : {},
          "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
          "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
@@ -186,6 +196,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "spaceLength" : 10,
          "span" : 12,
          "stack" : false,
          "steppedLine" : false,
@@ -217,6 +228,7 @@
          },
          "type" : "graph",
          "xaxis" : {
+            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
@@ -244,6 +256,8 @@
       {
          "aliasColors" : {},
          "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
          "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
@@ -268,6 +282,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "spaceLength" : 10,
          "span" : 12,
          "stack" : false,
          "steppedLine" : false,
@@ -329,7 +344,7 @@
          "bars" : false,
          "dashLength" : 10,
          "dashes" : false,
-         "datasource" : "Prometheus",
+         "datasource" : "${DS_PROMETHEUS}",
          "editable" : true,
          "error" : false,
          "fill" : 1,
@@ -364,7 +379,7 @@
                "intervalFactor" : 2,
                "legendFormat" : "Used Arc {{ result }}",
                "refId" : "A",
-               "step" : 120
+               "step" : 4
             },
             {
                "expr" : "sum(rate(authmilter_dmarc_total{node=~\"$node\",used_arc=\"0\"}[$ratetime])) by ( result )",
@@ -372,7 +387,7 @@
                "intervalFactor" : 2,
                "legendFormat" : "No Arc {{ result }}",
                "refId" : "B",
-               "step" : 120
+               "step" : 4
             }
          ],
          "thresholds" : [],
