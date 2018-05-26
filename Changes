@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20180525 2018-05-25 13:01:51+10:00 Australia/Melbourne
         - Add external callback hooks for stage callbacks
         - Add external callback hook for handler config
         - More timeout improvements
