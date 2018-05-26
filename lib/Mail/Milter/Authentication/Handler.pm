@@ -29,14 +29,6 @@ sub new {
         'thischild' => $thischild,
     };
     bless $self, $class;
-
-    my $config = $self->config();
-    if ( exists( $config->{ '_external_callback_processor' } ) ) {
-        if ( $config->{ '_external_callback_processor' }->can( 'set_handler' ) ) {
-            $config->{ '_external_callback_processor' }->set_handler( $self );
-        }
-    }
-
     return $self;
 }
 
@@ -112,13 +104,6 @@ sub top_setup_callback {
     $self->status('setup');
     $self->dbgout( 'CALLBACK', 'Setup', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
-
-    my $config = $self->config();
-    if ( exists( $config->{ '_external_callback_processor' } ) ) {
-        if ( $config->{ '_external_callback_processor' }->can( 'setup_callback' ) ) {
-            $config->{ '_external_callback_processor' }->setup_callback();
-        }
-    }
 
     my $callbacks = $self->get_callbacks( 'setup' );
     foreach my $handler ( @$callbacks ) {
@@ -212,12 +197,6 @@ sub top_connect_callback {
 
         $self->{'ip_object'} = $ip;
 
-        if ( exists( $config->{ '_external_callback_processor' } ) ) {
-            if ( $config->{ '_external_callback_processor' }->can( 'connect_callback' ) ) {
-                $config->{ '_external_callback_processor' }->connect_callback( $hostname, $ip );
-            }
-        }
-
         my $callbacks = $self->get_callbacks( 'connect' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Connect ' . $handler, LOG_DEBUG );
@@ -294,12 +273,6 @@ sub top_helo_callback {
 
             $self->{'helo_name'} = $helo_host;
 
-            if ( exists( $config->{ '_external_callback_processor' } ) ) {
-                if ( $config->{ '_external_callback_processor' }->can( 'helo_callback' ) ) {
-                    $config->{ '_external_callback_processor' }->helo_callback( $helo_host );
-                }
-            }
-
             my $callbacks = $self->get_callbacks( 'helo' );
             foreach my $handler ( @$callbacks ) {
                 $self->dbgout( 'CALLBACK', 'Helo ' . $handler, LOG_DEBUG );
@@ -359,12 +332,6 @@ sub top_envfrom_callback {
         delete $self->{'pre_headers'};
         delete $self->{'add_headers'};
 
-        if ( exists( $config->{ '_external_callback_processor' } ) ) {
-            if ( $config->{ '_external_callback_processor' }->can( 'envfrom_callback' ) ) {
-                $config->{ '_external_callback_processor' }->envfrom_callback( $env_from );
-            }
-        }
-
         my $callbacks = $self->get_callbacks( 'envfrom' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'EnvFrom ' . $handler, LOG_DEBUG );
@@ -412,12 +379,6 @@ sub top_envrcpt_callback {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EnvRcpt callback timeout' }) };
         if ( $config->{'command_timeout'} ) {
             $self->set_alarm( $config->{'command_timeout'} );
-        }
-
-        if ( exists( $config->{ '_external_callback_processor' } ) ) {
-            if ( $config->{ '_external_callback_processor' }->can( 'envrcpt_callback' ) ) {
-                $config->{ '_external_callback_processor' }->envrcpt_callback( $env_to );
-            }
         }
 
         my $callbacks = $self->get_callbacks( 'envrcpt' );
@@ -472,12 +433,6 @@ sub top_header_callback {
             $self->dbgout( 'inline error $error', '', LOG_DEBUG );
         }
 
-        if ( exists( $config->{ '_external_callback_processor' } ) ) {
-            if ( $config->{ '_external_callback_processor' }->can( 'header_callback' ) ) {
-                $config->{ '_external_callback_processor' }->header_callback( $header, $value );
-            }
-        }
-
         my $callbacks = $self->get_callbacks( 'header' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Header ' . $handler, LOG_DEBUG );
@@ -523,12 +478,6 @@ sub top_eoh_callback {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EOH callback timeout' }) };
         if ( $config->{'content_timeout'} ) {
             $self->set_alarm( $config->{'content_timeout'} );
-        }
-
-        if ( exists( $config->{ '_external_callback_processor' } ) ) {
-            if ( $config->{ '_external_callback_processor' }->can( 'eoh_callback' ) ) {
-                $config->{ '_external_callback_processor' }->eoh_callback();
-            }
         }
 
         my $callbacks = $self->get_callbacks( 'eoh' );
@@ -579,12 +528,6 @@ sub top_body_callback {
             $self->set_alarm( $config->{'content_timeout'} );
         }
 
-        if ( exists( $config->{ '_external_callback_processor' } ) ) {
-            if ( $config->{ '_external_callback_processor' }->can( 'body_callback' ) ) {
-                $config->{ '_external_callback_processor' }->body_callback( $body_chunk );
-            }
-        }
-
         my $callbacks = $self->get_callbacks( 'body' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Body ' . $handler, LOG_DEBUG );
@@ -631,12 +574,6 @@ sub top_eom_callback {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EOM callback timeout' }) };
         if ( $config->{'content_timeout'} ) {
             $self->set_alarm( $config->{'content_timeout'} );
-        }
-
-        if ( exists( $config->{ '_external_callback_processor' } ) ) {
-            if ( $config->{ '_external_callback_processor' }->can( 'eom_callback' ) ) {
-                $config->{ '_external_callback_processor' }->eom_callback();
-            }
         }
 
         my $callbacks = $self->get_callbacks( 'eom' );
@@ -709,12 +646,6 @@ sub top_abort_callback {
             $self->set_alarm( $config->{'command_timeout'} );
         }
 
-        if ( exists( $config->{ '_external_callback_processor' } ) ) {
-            if ( $config->{ '_external_callback_processor' }->can( 'abort_callback' ) ) {
-                $config->{ '_external_callback_processor' }->abort_callback();
-            }
-        }
-
         my $callbacks = $self->get_callbacks( 'abort' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Abort ' . $handler, LOG_DEBUG );
@@ -760,12 +691,6 @@ sub top_close_callback {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Close callback timeout' }) };
         if ( $config->{'content_timeout'} ) {
             $self->set_alarm( $config->{'content_timeout'} );
-        }
-
-        if ( exists( $config->{ '_external_callback_processor' } ) ) {
-            if ( $config->{ '_external_callback_processor' }->can( 'close_callback' ) ) {
-                $config->{ '_external_callback_processor' }->close_callback();
-            }
         }
 
         my $callbacks = $self->get_callbacks( 'close' );

@@ -1055,30 +1055,47 @@ sub sort_callbacks {
 
     my @todo = sort @{$callbacks_ref};
     my $todo_count = scalar @todo;
+
+    # Process requirements
+    my $requirements = {};
+    foreach my $item ( @todo ) {
+        $requirements->{ $item } = [];
+        my $handler = $self->{'handler'}->{ $item };
+        my $requires_method = $callback . '_requires';
+        if ( $handler->can( $requires_method ) ) {
+            my $requires = $handler->$requires_method;
+            foreach my $require ( @{ $requires } ) {
+                push @{ $requirements->{ $item } }, $require;
+            }
+        }
+    }
+    foreach my $item ( @todo ) {
+        my $handler = $self->{'handler'}->{ $item };
+        my $requires_method = $callback . '_required_before';
+        if ( $handler->can( $requires_method ) ) {
+            my $requires = $handler->$requires_method;
+            foreach my $require ( @{ $requires } ) {
+                push @{ $requirements->{ $require } }, $item;
+            }
+        }
+    }
+
     while ( $todo_count ) {
         my @defer;
         foreach my $item ( @todo ) {
-            my $handler = $self->{'handler'}->{ $item };
-            my $requires_method = $callback . '_requires';
-            if ( $handler->can( $requires_method ) ) {
-                my $requires_met = 1;
-                my $requires = $handler->$requires_method;
-                foreach my $require ( @{ $requires } ) {
-                    if ( ! exists $added->{$require} ) {
-                        $requires_met = 0;
-                    }
-                }
-                if ( $requires_met == 1 ) {
-                    push @order, $item;
-                    $added->{$item} = 1;
-                }
-                else {
-                    push @defer, $item;
+            my $requires_met = 1;
+            my $requires = $requirements->{ $item };
+            foreach my $require ( @{ $requires } ) {
+                if ( ! exists $added->{$require} ) {
+                    $requires_met = 0;
                 }
             }
-            else {
+            if ( $requires_met == 1 ) {
                 push @order, $item;
                 $added->{$item} = 1;
+            }
+            else {
+                push @defer, $item;
             }
         }
 

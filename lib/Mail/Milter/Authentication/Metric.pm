@@ -308,6 +308,16 @@ sub child_handler {
             print $socket qq{
             </ul>
         </li>
+        <li>Registered Callbacks
+            <ul>};
+
+            foreach my $stage ( qw{ setup connect helo envfrom envrcpt header eoh body eom abort close addheader } ) {
+                my $callbacks = $server->{ 'handler' }->{ '_Handler' }->get_callbacks( $stage );
+                print $socket "<li>$stage: " . join( ', ', @$callbacks ) . "</li>";
+            }
+
+            print $socket qq{</ul>
+        </lu>
         <li>Connection Details
             <ul>};
             print $socket '<li>Protocol: ' . $config->{'protocol'} . '</li>';

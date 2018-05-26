@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Removed experimental externl callback stage hooks
+        - Allow handlers to specify required BEFORE other handlers
 
 2.20180525 2018-05-25 13:01:51+10:00 Australia/Melbourne
         - Add external callback hooks for stage callbacks
