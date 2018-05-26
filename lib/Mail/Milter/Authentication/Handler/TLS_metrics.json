@@ -5,6 +5,85 @@
       {
          "aliasColors" : {},
          "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "fill" : 1,
+         "id" : 52,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 1,
+         "links" : [],
+         "nullPointMode" : "null",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "spaceLength" : 10,
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_tls_connect_total{node=~\"$node\"}[$ratetime])) by(version)",
+               "format" : "time_series",
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "{{ version }}",
+               "refId" : "A",
+               "step" : 4
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "TLS Version",
+         "tooltip" : {
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "individual"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "buckets" : null,
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      },
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
          "datasource" : "${DS_PROMETHEUS}",
          "fill" : 1,
          "id" : 26,
@@ -26,6 +105,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "spaceLength" : 10,
          "span" : 12,
          "stack" : false,
          "steppedLine" : false,
@@ -60,6 +140,7 @@
          },
          "type" : "graph",
          "xaxis" : {
+            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
@@ -87,6 +168,8 @@
       {
          "aliasColors" : {},
          "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
          "datasource" : "${DS_PROMETHEUS}",
          "fill" : 1,
          "id" : 27,
@@ -108,6 +191,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "spaceLength" : 10,
          "span" : 12,
          "stack" : false,
          "steppedLine" : false,
@@ -132,6 +216,7 @@
          },
          "type" : "graph",
          "xaxis" : {
+            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
@@ -159,6 +244,8 @@
       {
          "aliasColors" : {},
          "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
          "datasource" : "${DS_PROMETHEUS}",
          "fill" : 1,
          "id" : 28,
@@ -180,6 +267,7 @@
          "points" : false,
          "renderer" : "flot",
          "seriesOverrides" : [],
+         "spaceLength" : 10,
          "span" : 12,
          "stack" : false,
          "steppedLine" : false,
@@ -204,6 +292,7 @@
          },
          "type" : "graph",
          "xaxis" : {
+            "buckets" : null,
             "mode" : "time",
             "name" : null,
             "show" : true,
