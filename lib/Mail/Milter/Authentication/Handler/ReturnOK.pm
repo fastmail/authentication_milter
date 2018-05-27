@@ -235,7 +235,7 @@ sub _check_domain {
     }
 
     # We got here, we fail!
-    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-return-mx' )->safe_set_value( 'warn' );
+    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-return-mx' )->safe_set_value( 'fail' );
     $metrics->{ $type . '_result' } = 'fail';
     $self->dbgout( 'ReturnOKCheck', 'fail', LOG_DEBUG );
     foreach my $detail ( @details ) {
