@@ -407,21 +407,21 @@
          "steppedLine" : false,
          "targets" : [
             {
-               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",smtp_org_has_mx=~\".+\"}[$ratetime])) by(smtp_org_has_mx)",
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",smtp_has_org_mx=~\".+\"}[$ratetime])) by(smtp_has_org_mx)",
                "format" : "time_series",
                "instant" : false,
                "interval" : "",
                "intervalFactor" : 2,
-               "legendFormat" : "SMX:{{ smtp_org_has_mx }}",
+               "legendFormat" : "SMX:{{ smtp_has_org_mx }}",
                "metric" : "authmilter_dkim_error_total",
                "refId" : "A",
                "step" : 4
             },
             {
-               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",header_org_has_mx=~\".+\"}[$ratetime])) by(header_org_has_mx)",
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",header_has_org_mx=~\".+\"}[$ratetime])) by(header_has_org_mx)",
                "format" : "time_series",
                "intervalFactor" : 2,
-               "legendFormat" : "HMX:{{ header_org_has_mx }}",
+               "legendFormat" : "HMX:{{ header_has_org_mx }}",
                "refId" : "B"
             }
          ],
@@ -499,21 +499,21 @@
          "steppedLine" : false,
          "targets" : [
             {
-               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",smtp_org_has_a=~\".+\"}[$ratetime])) by(smtp_org_has_a,smtp_org_has_aaaa)",
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",smtp_has_org_a=~\".+\"}[$ratetime])) by(smtp_has_org_a,smtp_has_org_aaaa)",
                "format" : "time_series",
                "instant" : false,
                "interval" : "",
                "intervalFactor" : 2,
-               "legendFormat" : "SA:{{ smtp_org_has_a }} SA6:{{ smtp_org_has_aaaa }}",
+               "legendFormat" : "SA:{{ smtp_has_org_a }} SA6:{{ smtp_has_org_aaaa }}",
                "metric" : "authmilter_dkim_error_total",
                "refId" : "A",
                "step" : 4
             },
             {
-               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",header_org_has_a=~\".+\"}[$ratetime])) by(header_org_has_a,header_org_has_aaaa)",
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",header_has_org_a=~\".+\"}[$ratetime])) by(header_has_org_a,header_has_org_aaaa)",
                "format" : "time_series",
                "intervalFactor" : 2,
-               "legendFormat" : "SA:{{ header_org_has_a }} SA6:{{ header_org_has_aaaa }}",
+               "legendFormat" : "SA:{{ header_has_org_a }} SA6:{{ header_has_org_aaaa }}",
                "refId" : "B"
             }
          ],
