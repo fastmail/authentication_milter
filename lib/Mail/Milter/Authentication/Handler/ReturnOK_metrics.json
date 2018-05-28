@@ -39,13 +39,21 @@
          "steppedLine" : false,
          "targets" : [
             {
-               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(result)",
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",smtp_result=~\".+\"}[$ratetime])) by(smtp_result)",
+               "format" : "time_series",
                "interval" : "",
                "intervalFactor" : 2,
-               "legendFormat" : "{{ result }}",
+               "legendFormat" : "S:{{ smtp_result }}",
                "metric" : "authmilter_dkim_error_total",
                "refId" : "A",
                "step" : 4
+            },
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",header_result=~\".+\"}[$ratetime])) by(header_result)",
+               "format" : "time_series",
+               "intervalFactor" : 2,
+               "legendFormat" : "H:{{ header_result }}",
+               "refId" : "B"
             }
          ],
          "thresholds" : [],
@@ -122,21 +130,21 @@
          "steppedLine" : false,
          "targets" : [
             {
-               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(smtp_is_org_domain)",
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",smtp_is_org_domain=~\".+\"}[$ratetime])) by(smtp_is_org_domain)",
                "format" : "time_series",
                "interval" : "",
                "intervalFactor" : 2,
-               "legendFormat" : "SMTP {{ smtp_is_org_domain }}",
+               "legendFormat" : "SMTP:{{ smtp_is_org_domain }}",
                "metric" : "authmilter_dkim_error_total",
                "refId" : "A",
                "step" : 4
             },
             {
-               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(header_is_org_domain)",
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",header_is_org_domain=~\".+\"}[$ratetime])) by(header_is_org_domain)",
                "format" : "time_series",
                "interval" : "",
                "intervalFactor" : 2,
-               "legendFormat" : "Header {{ header_is_org_domain }}",
+               "legendFormat" : "Header:{{ header_is_org_domain }}",
                "refId" : "B",
                "step" : 4
             }
@@ -215,20 +223,28 @@
          "steppedLine" : false,
          "targets" : [
             {
-               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(header,smtp)",
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",smtp_result=~\".+\"}[$ratetime])) by(smtp_has_mx)",
                "format" : "time_series",
+               "instant" : false,
                "interval" : "",
                "intervalFactor" : 2,
-               "legendFormat" : "Header {{ header }} SMTP {{ smtp }}",
+               "legendFormat" : "SMX:{{ smtp_has_mx }}",
                "metric" : "authmilter_dkim_error_total",
                "refId" : "A",
                "step" : 4
+            },
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",header_result=~\".+\"}[$ratetime])) by(header_has_mx)",
+               "format" : "time_series",
+               "intervalFactor" : 2,
+               "legendFormat" : "HMX:{{ header_has_mx }}",
+               "refId" : "B"
             }
          ],
          "thresholds" : [],
          "timeFrom" : null,
          "timeShift" : null,
-         "title" : "Presented domain",
+         "title" : "MX Results",
          "tooltip" : {
             "msResolution" : false,
             "shared" : true,
@@ -272,7 +288,7 @@
          "error" : false,
          "fill" : 1,
          "grid" : {},
-         "id" : 46,
+         "id" : 53,
          "legend" : {
             "avg" : false,
             "current" : false,
@@ -299,20 +315,212 @@
          "steppedLine" : false,
          "targets" : [
             {
-               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\"}[$ratetime])) by(org_header,org_smtp)",
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",smtp_has_a=~\".+\"}[$ratetime])) by(smtp_has_a,smtp_has_aaaa)",
                "format" : "time_series",
+               "instant" : false,
                "interval" : "",
                "intervalFactor" : 2,
-               "legendFormat" : "Header {{ org_header }} SMTP {{ org_smtp }}",
+               "legendFormat" : "SA:{{ smtp_has_a }} SA6:{{ smtp_has_aaaa }}",
                "metric" : "authmilter_dkim_error_total",
                "refId" : "A",
                "step" : 4
+            },
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",header_has_a=~\".+\"}[$ratetime])) by(header_has_a,header_has_aaaa)",
+               "format" : "time_series",
+               "intervalFactor" : 2,
+               "legendFormat" : "SA:{{ header_has_a }} SA6:{{ header_has_aaaa }}",
+               "refId" : "B"
             }
          ],
          "thresholds" : [],
          "timeFrom" : null,
          "timeShift" : null,
-         "title" : "Org domain was used",
+         "title" : "A Results",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "buckets" : null,
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      },
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 54,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "hideEmpty" : false,
+            "hideZero" : true,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "spaceLength" : 10,
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",smtp_org_has_mx=~\".+\"}[$ratetime])) by(smtp_org_has_mx)",
+               "format" : "time_series",
+               "instant" : false,
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "SMX:{{ smtp_org_has_mx }}",
+               "metric" : "authmilter_dkim_error_total",
+               "refId" : "A",
+               "step" : 4
+            },
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",header_org_has_mx=~\".+\"}[$ratetime])) by(header_org_has_mx)",
+               "format" : "time_series",
+               "intervalFactor" : 2,
+               "legendFormat" : "HMX:{{ header_org_has_mx }}",
+               "refId" : "B"
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Org MX Results",
+         "tooltip" : {
+            "msResolution" : false,
+            "shared" : true,
+            "sort" : 2,
+            "value_type" : "cumulative"
+         },
+         "type" : "graph",
+         "xaxis" : {
+            "buckets" : null,
+            "mode" : "time",
+            "name" : null,
+            "show" : true,
+            "values" : []
+         },
+         "yaxes" : [
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            },
+            {
+               "format" : "short",
+               "label" : null,
+               "logBase" : 1,
+               "max" : null,
+               "min" : null,
+               "show" : true
+            }
+         ]
+      },
+      {
+         "aliasColors" : {},
+         "bars" : false,
+         "dashLength" : 10,
+         "dashes" : false,
+         "datasource" : "${DS_PROMETHEUS}",
+         "editable" : true,
+         "error" : false,
+         "fill" : 1,
+         "grid" : {},
+         "id" : 55,
+         "legend" : {
+            "avg" : false,
+            "current" : false,
+            "hideEmpty" : false,
+            "hideZero" : true,
+            "max" : false,
+            "min" : false,
+            "show" : true,
+            "total" : false,
+            "values" : false
+         },
+         "lines" : true,
+         "linewidth" : 2,
+         "links" : [],
+         "nullPointMode" : "connected",
+         "percentage" : false,
+         "pointradius" : 5,
+         "points" : false,
+         "renderer" : "flot",
+         "seriesOverrides" : [],
+         "spaceLength" : 10,
+         "span" : 12,
+         "stack" : false,
+         "steppedLine" : false,
+         "targets" : [
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",smtp_org_has_a=~\".+\"}[$ratetime])) by(smtp_org_has_a,smtp_org_has_aaaa)",
+               "format" : "time_series",
+               "instant" : false,
+               "interval" : "",
+               "intervalFactor" : 2,
+               "legendFormat" : "SA:{{ smtp_org_has_a }} SA6:{{ smtp_org_has_aaaa }}",
+               "metric" : "authmilter_dkim_error_total",
+               "refId" : "A",
+               "step" : 4
+            },
+            {
+               "expr" : "sum(rate(authmilter_returnok_total{node=~\"$node\",header_org_has_a=~\".+\"}[$ratetime])) by(header_org_has_a,header_org_has_aaaa)",
+               "format" : "time_series",
+               "intervalFactor" : 2,
+               "legendFormat" : "SA:{{ header_org_has_a }} SA6:{{ header_org_has_aaaa }}",
+               "refId" : "B"
+            }
+         ],
+         "thresholds" : [],
+         "timeFrom" : null,
+         "timeShift" : null,
+         "title" : "Org A Results",
          "tooltip" : {
             "msResolution" : false,
             "shared" : true,

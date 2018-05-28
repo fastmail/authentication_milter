@@ -14,7 +14,7 @@
          "id" : "grafana",
          "name" : "Grafana",
          "type" : "grafana",
-         "version" : "4.5.2"
+         "version" : "4.6.3"
       },
       {
          "id" : "graph",
@@ -30,7 +30,17 @@
       }
    ],
    "annotations" : {
-      "list" : []
+      "list" : [
+         {
+            "builtIn" : 1,
+            "datasource" : "-- Grafana --",
+            "enable" : true,
+            "hide" : true,
+            "iconColor" : "rgba(0, 211, 255, 1)",
+            "name" : "Annotations & Alerts",
+            "type" : "dashboard"
+         }
+      ]
    },
    "editable" : true,
    "gnetId" : null,
@@ -140,8 +150,8 @@
       ]
    },
    "time" : {
-      "from" : "2018-05-25T03:33:09.463Z",
-      "to" : "2018-05-25T05:33:09.463Z"
+      "from" : "now-1h",
+      "to" : "now"
    },
    "timepicker" : {
       "refresh_intervals" : [
