@@ -171,6 +171,8 @@ sub _check_domain {
         push @{ $self->{ 'metrics' } }, $metrics;
         return;
     }
+    $metrics->{ $type . '_has_a' } = 'no';
+    $metrics->{ $type . '_has_aaaa' } = 'no';
 
     if ( $is_org == 0 ) {
         # We have DMARC to look this up, have done so, and found that we are NOT the org domain, so recheck at the org domain
@@ -231,6 +233,8 @@ sub _check_domain {
             push @{ $self->{ 'metrics' } }, $metrics;
             return;
         }
+        $metrics->{ $type . '_has_org_a' } = 'no';
+        $metrics->{ $type . '_has_org_aaaa' } = 'no';
 
     }
 
