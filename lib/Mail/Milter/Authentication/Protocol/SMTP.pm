@@ -77,9 +77,9 @@ sub protocol_process_request {
     my $handler = $self->{'handler'}->{'_Handler'};
     $handler->top_setup_callback();
 
-    my $config = $self->config();
+    my $config = $self->{ 'config' };
     my $seconds = $config->{'content_timeout'} // 300;
-    $handler->get_overall_timeout( $seconds * 1000000 );
+    $handler->set_overall_timeout( $seconds * 1000000 );
 
     $self->{'smtp'} = {
         'fwd_helo_host'    => undef,
@@ -185,7 +185,7 @@ sub protocol_process_request {
             $self->smtp_command_rset( $command );
         }
         elsif ( $uccommand =~ /^DATA/ ) {
-            $handler->get_overall_timeout( $seconds * 1000000 );
+            $handler->set_overall_timeout( $seconds * 1000000 );
             $self->smtp_command_data( $command );
         }
         elsif ( $uccommand =~ /^QUIT/ ){

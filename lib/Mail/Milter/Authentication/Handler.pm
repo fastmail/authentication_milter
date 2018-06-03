@@ -157,6 +157,7 @@ sub set_alarm {
 
 sub clear_overall_timeout {
     my ( $self ) = @_;
+    $self->dbgout( 'Overall timeout', 'Clear', LOG_DEBUG );
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{ 'overall_timeout' };
     return;
@@ -165,35 +166,53 @@ sub clear_overall_timeout {
 sub set_overall_timeout {
     my ( $self, $microseconds ) = @_;
     my $top_handler = $self->get_top_handler();
+    $self->dbgout( 'Overall timeout', $microseconds, LOG_DEBUG );
     $top_handler->{ 'overall_timeout' } = $self->get_microseconds() + $microseconds;
     return;
 }
 
 sub get_type_timeout {
     my ( $self, $type ) = @_;
-    my $timeout;
+    my @log;
 
+    push @log, "Type: $type";
+
+    my $timeout;
+    my $config = $self->config();
+    if ( $config->{ $type . '_timeout' } ) {
+        $timeout = $config->{ $type . '_timeout' } * 1000000;
+        push @log, "Section: $timeout";
+    }
+
+    my $remaining;
     my $top_handler = $self->get_top_handler();
     if ( my $overall_timeout = $top_handler->{ 'overall_timeout' } ) {
         my $now = $self->get_microseconds();
-        my $remaining = $overall_timeout - $now;
+        $remaining = $overall_timeout - $now;
+        push @log, "Overall: $remaining";
         if ( $remaining < 1 ) {
+            push @log, "Overall Timedout";
             $remaining = 10; # arb low value;
         }
-        $timeout = $remaining;
     }
 
-    my $config = $self->config();
-    if ( $config->{ $type . '_timeout' } ) {
-        if ( ! $timeout ) {
-            $timeout = $config->{ $type . '_timeout' };
+    my $effective = $timeout if $timeout;
+    if ( $remaining ) {
+        if ( $timeout ) {
+            if ( $remaining < $timeout ) {
+                $effective = $remaining;
+            }
         }
-        elsif ( $config->{ $type . '_timeout' } < $timeout ) {
-            $timeout = $config->{ $type . '_timeout' };
+        else {
+            $effective = $remaining;
         }
     }
 
-    return $timeout;
+    push @log, "Effective: $effective";
+
+    $self->dbgout( 'Timeout set', join( ', ', @log ), LOG_DEBUG );
+
+    return $effective;
 }
 
 sub check_timeout {
@@ -218,7 +237,6 @@ sub top_connect_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Connect callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'connect' ) ) {
-            $self->dbgout( 'Connect Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
 
@@ -292,7 +310,6 @@ sub top_helo_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'HELO callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'command' ) ) {
-            $self->dbgout( 'Command Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
 
@@ -375,7 +392,6 @@ sub top_envfrom_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EnvFrom callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'command' ) ) {
-            $self->dbgout( 'Command Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
 
@@ -430,7 +446,6 @@ sub top_envrcpt_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EnvRcpt callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'command' ) ) {
-            $self->dbgout( 'Command Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
 
@@ -479,7 +494,6 @@ sub top_header_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Header callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'content' ) ) {
-            $self->dbgout( 'Content Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
         if ( my $error = $@ ) {
@@ -530,7 +544,6 @@ sub top_eoh_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EOH callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'content' ) ) {
-            $self->dbgout( 'Content Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
 
@@ -579,7 +592,6 @@ sub top_body_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Body callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'content' ) ) {
-            $self->dbgout( 'Content Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
 
@@ -628,7 +640,6 @@ sub top_eom_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'EOM callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'content' ) ) {
-            $self->dbgout( 'Content Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
 
@@ -699,7 +710,6 @@ sub top_abort_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Abord callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'command' ) ) {
-            $self->dbgout( 'Command Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
 
@@ -747,7 +757,6 @@ sub top_close_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Close callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'command' ) ) {
-            $self->dbgout( 'Command Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
 
@@ -801,7 +810,6 @@ sub top_addheader_callback {
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'AddHeader callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'addheader' ) ) {
-            $self->dbgout( 'AddHeader Timeout set', $timeout, LOG_DEBUG );
             $self->set_alarm( $timeout );
         }
 
