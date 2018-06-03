@@ -173,14 +173,17 @@ sub set_overall_timeout {
 
 sub get_type_timeout {
     my ( $self, $type ) = @_;
-    my @log;
 
+    my @log;
     push @log, "Type: $type";
+
+    my $effective;
 
     my $timeout;
     my $config = $self->config();
     if ( $config->{ $type . '_timeout' } ) {
         $timeout = $config->{ $type . '_timeout' } * 1000000;
+        $effective = $timeout;
         push @log, "Section: $timeout";
     }
 
@@ -196,7 +199,6 @@ sub get_type_timeout {
         }
     }
 
-    my $effective = $timeout if $timeout;
     if ( $remaining ) {
         if ( $timeout ) {
             if ( $remaining < $timeout ) {
