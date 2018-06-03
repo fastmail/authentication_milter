@@ -2,6 +2,7 @@ Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
         - Rewrite the ReturnOK Handler to handle multiple addresses properly
+        - Fix per-protocol-section timeouts
 
 2.20180526 2018-05-27 09:11:02+10:00 Australia/Melbourne
         - Removed experimental externl callback stage hooks
