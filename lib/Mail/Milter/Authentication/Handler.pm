@@ -142,16 +142,57 @@ sub handle_exception {
     return;
 }
 
-sub set_alarm {
-    my ( $self, $alarm ) = @_;
+sub get_time_remaining {
+    my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
-    ualarm( $alarm );
-    if ( $alarm == 0 ) {
+    return if ! exists $top_handler->{ 'timeout_at' };
+    my $now = $self->get_microseconds();
+    my $remaining = $top_handler->{ 'timeout_at' } - $now;
+    # can be zero or -ve
+    return $remaining;
+}
+
+sub set_alarm {
+    my ( $self, $microseconds ) = @_;
+    my $top_handler = $self->get_top_handler();
+    $self->dbgout( 'Timeout set', $microseconds, LOG_DEBUG );
+    ualarm( $microseconds );
+    if ( $microseconds == 0 ) {
         delete $top_handler->{ 'timeout_at' };
     }
     else {
-        $top_handler->{ 'timeout_at' } = $self->get_microseconds() + ( $alarm );
+        $top_handler->{ 'timeout_at' } = $self->get_microseconds() + ( $microseconds );
     }
+    return;
+}
+
+sub set_handler_alarm {
+    # Call this in a handler to set a local alarm, will take the lower value
+    # of the microseconds passed in, or what is left of a higher level timeout.
+    my ( $self, $microseconds ) = @_;
+    my $remaining = $self->get_time_remaining();
+    if ( $remaining < $microseconds ) {
+        # This should already be set of course, but for clarity...
+        $self->dbgout( 'Handler tmeout set (remaining used)', $remaining, LOG_DEBUG );
+        ualarm( $remaining );
+    }
+    else {
+        $self->dbgout( 'Handler tmeout set', $microseconds, LOG_DEBUG );
+        ualarm( $microseconds );
+    }
+    return;
+}
+
+sub reset_alarm {
+    # Call this after any local handler timeouts to reset to the overall value remaining
+    my ( $self ) = @_;
+    my $remaining = $self->get_time_remaining();
+    $self->dbgout( 'Timeout reset', $remaining, LOG_DEBUG );
+    if ( $remaining < 1 ) {
+        # We have already timed out!
+        die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Reset check timeout' });
+    }
+    ualarm( $remaining );
     return;
 }
 
@@ -210,7 +251,7 @@ sub get_type_timeout {
         }
     }
 
-    push @log, "Effective: $effective";
+    push @log, "Effective: $effective" if $effective;
 
     $self->dbgout( 'Timeout set', join( ', ', @log ), LOG_DEBUG );
 
