@@ -29,7 +29,7 @@ use Mail::AuthenticationResults::Header::AuthServID;
 
 our $TestResolver; # For Testing
 
-=method I<new( $thischild )>
+=constructor I<new( $thischild )>
 
 my $object = Mail::Milter::Authentication::Handler->new( $thischild );
 
@@ -62,7 +62,7 @@ sub get_version {
     return;
 }
 
-=method I<get_json( $file )>
+=metric_method I<get_json( $file )>
 
 Return json data from external file
 
@@ -82,7 +82,7 @@ sub get_json {
     return join( q{}, @Content );
 }
 
-=method I<metric_register( $id, $help )>
+=metric_method I<metric_register( $id, $help )>
 
 Register a metric type
 
@@ -94,7 +94,7 @@ sub metric_register {
     return;
 }
 
-=method I<metric_count( $id, $labels, $count )>
+=metric_method I<metric_count( $id, $labels, $count )>
 
 Increment a metrics counter by $count (defaults to 1 if undef)
 
@@ -115,7 +115,7 @@ sub metric_count {
     return;
 }
 
-=method I<metric_send()>
+=metric_method I<metric_send()>
 
 Send metrics to the parent
 
@@ -127,7 +127,7 @@ sub metric_send {
     return;
 }
 
-=method I<get_microseconds()>
+=timeout_method I<get_microseconds()>
 
 Return the current time in microseconds
 
@@ -139,7 +139,7 @@ sub get_microseconds {
     return ( ( $seconds * 1000000 ) + $microseconds );
 }
 
-=method I<get_microseconds_singe( $time )>
+=timeout_method I<get_microseconds_since( $time )>
 
 Return the number of microseconds since the given time (in microseconds)
 
@@ -155,7 +155,7 @@ sub get_microseconds_since {
 
 # Top Level Callbacks
 
-=method I<register_metrics()>
+=metric_method I<register_metrics()>
 
 Return details of the metrics this module exports.
 
@@ -169,7 +169,7 @@ sub register_metrics {
     };
 }
 
-=method I<top_setup_callback()>
+=callback_method I<top_setup_callback()>
 
 Top level handler for handler setup.
 
@@ -193,7 +193,7 @@ sub top_setup_callback {
     return;
 }
 
-=method I<is_exception_type( $exception )>
+=timeout_method I<is_exception_type( $exception )>
 
 Given a Mail::Milter::Authentication::Exception object, this return
 the exception object type.
@@ -210,7 +210,7 @@ sub is_exception_type {
     return $Type;
 }
 
-=method I<handle_exception( $exception )>
+=timeout_method I<handle_exception( $exception )>
 
 Handle exceptions thrown, this method currently handles the
 timeout type, by re-throwing the exception.
@@ -229,7 +229,7 @@ sub handle_exception {
     return;
 }
 
-=method I<get_time_remaining()>
+=timeout_method I<get_time_remaining()>
 
 Return the time remaining (in microseconds) for the current Handler section level
 callback timeout.
@@ -246,7 +246,7 @@ sub get_time_remaining {
     return $remaining;
 }
 
-=method I<set_alarm( $microseconds )>
+=timeout_method I<set_alarm( $microseconds )>
 
 Set a timeout alarm for $microseconds, and set the time remaining
 in the top level handler object.
@@ -267,7 +267,7 @@ sub set_alarm {
     return;
 }
 
-=method I<set_handler_alarm( $microseconds )>
+=timeout_method I<set_handler_alarm( $microseconds )>
 
 Set an alarm for $microseconds, or the current time remaining for the section callback, whichever
 is the lower. This should be used in Handler timeouts to ensure that a local timeout never goes for
@@ -292,7 +292,7 @@ sub set_handler_alarm {
     return;
 }
 
-=method I<reset_alarm()>
+=timeout_method I<reset_alarm()>
 
 Reset the alarm to the current time remaining in the section or protocol level timeouts.
 
@@ -314,7 +314,7 @@ sub reset_alarm {
     return;
 }
 
-=method I<clear_overall_timeout()>
+=timeout_method I<clear_overall_timeout()>
 
 Clear the current Handler level timeout, should be called from the Protocol layer, never from the Handler layer.
 
@@ -328,7 +328,7 @@ sub clear_overall_timeout {
     return;
 }
 
-=method I<set_overall_timeout( $microseconds )>
+=timeout_method I<set_overall_timeout( $microseconds )>
 
 Set the time in microseconds after which the Handler layer should timeout, called from the Protocol later, never from the Handler layer.
 
@@ -342,7 +342,7 @@ sub set_overall_timeout {
     return;
 }
 
-=method I<get_type_timeout( $type )>
+=timeout_method I<get_type_timeout( $type )>
 
 For a given timeout type, return the configured timeout value, or the current handler level timeout, whichever is lower.
 
@@ -394,7 +394,7 @@ sub get_type_timeout {
     return $effective;
 }
 
-=method I<check_timeout()>
+=timeout_method I<check_timeout()>
 
 Manually check the current timeout, and throw if it has passed.
 
@@ -410,7 +410,7 @@ sub check_timeout {
     die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Manual check timeout' });
 }
 
-=method I<top_connect_callback( $hostname, $ip )>
+=callback_method I<top_connect_callback( $hostname, $ip )>
 
 Top level handler for the connect event.
 
@@ -489,7 +489,7 @@ sub top_connect_callback {
     return $self->get_return();
 }
 
-=method I<top_helo_callback( $helo_host )>
+=callback_method I<top_helo_callback( $helo_host )>
 
 Top level handler for the HELO event.
 
@@ -576,7 +576,7 @@ sub top_helo_callback {
     return $self->get_return();
 }
 
-=method I<top_envfrom_callback( $env_from )>
+=callback_method I<top_envfrom_callback( $env_from )>
 
 Top level handler for the MAIL FROM event.
 
@@ -636,7 +636,7 @@ sub top_envfrom_callback {
     return $self->get_return();
 }
 
-=method I<top_envrcpt_callback( $env_to )>
+=callback_method I<top_envrcpt_callback( $env_to )>
 
 Top level handler for the RCPT TO event.
 
@@ -691,7 +691,7 @@ sub top_envrcpt_callback {
     return $self->get_return();
 }
 
-=method  I<top_header_callback( $header, $value )>
+=callback_method  I<top_header_callback( $header, $value )>
 
 Top level handler for the BODY header event.
 
@@ -748,7 +748,7 @@ sub top_header_callback {
     return $self->get_return();
 }
 
-=method I<top_eoh_callback()>
+=callback_method I<top_eoh_callback()>
 
 Top level handler for the BODY end of headers event.
 
@@ -802,7 +802,7 @@ sub top_eoh_callback {
     return $self->get_return();
 }
 
-=method I<top_body_callback( $body_chunk )>
+=callback_method I<top_body_callback( $body_chunk )>
 
 Top level handler for the BODY body chunk event.
 
@@ -856,7 +856,7 @@ sub top_body_callback {
     return $self->get_return();
 }
 
-=method I<top_eom_callback()>
+=callback_method I<top_eom_callback()>
 
 Top level handler for the BODY end of message event.
 
@@ -912,7 +912,7 @@ sub top_eom_callback {
     return $self->get_return();
 }
 
-=method I<apply_policy()>
+=callback_method I<apply_policy()>
 
 Apply policy to the message, currently a nop.
 
@@ -938,7 +938,7 @@ sub apply_policy {
     return;
 }
 
-=method I<top_abort_callback()>
+=callback_method I<top_abort_callback()>
 
 Top level handler for the abort event.
 
@@ -991,7 +991,7 @@ sub top_abort_callback {
     return $self->get_return();
 }
 
-=method I<top_close_callback()>
+=callback_method I<top_close_callback()>
 
 Top level handler for the close event.
 
@@ -1054,7 +1054,7 @@ sub top_close_callback {
     return $self->get_return();
 }
 
-=method I<top_addheader_callback()>
+=callback_method I<top_addheader_callback()>
 
 Top level handler for the add header event.
 
@@ -1564,7 +1564,7 @@ sub tempfail_on_error {
 
 # Common calls into other Handlers
 
-=method I<is_local_ip_address()>
+=helper_method I<is_local_ip_address()>
 
 Is the current connection from a local ip address?
 
@@ -1578,7 +1578,7 @@ sub is_local_ip_address {
     return $self->get_handler('LocalIP')->{'is_local_ip_address'};
 }
 
-=method I<is_trusted_ip_address()>
+=helper_method I<is_trusted_ip_address()>
 
 Is the current connection from a trusted ip address?
 
@@ -1592,7 +1592,7 @@ sub is_trusted_ip_address {
     return $self->get_handler('TrustedIP')->{'is_trusted_ip_address'};
 }
 
-=method I<is_authenticated()>
+=helper_method I<is_authenticated()>
 
 Is the current connection authenticated?
 
@@ -1606,7 +1606,7 @@ sub is_authenticated {
     return $self->get_handler('Auth')->{'is_authenticated'};
 }
 
-=method I<ip_address()>
+=helper_method I<ip_address()>
 
 Return the ip address of the current connection.
 
@@ -1622,7 +1622,7 @@ sub ip_address {
 
 # Header formatting and data methods
 
-=method I<format_ctext( $text )>
+=helper_method I<format_ctext( $text )>
 
 Format text as ctext for use in headers.
 
@@ -1644,7 +1644,7 @@ sub format_ctext {
     return $text;
 }
 
-=method I<format_ctext_no_space( $text )>
+=helper_method I<format_ctext_no_space( $text )>
 
 Format text as ctext with no spaces for use in headers.
 
@@ -1660,7 +1660,7 @@ sub format_ctext_no_space {
     return $text;
 }
 
-=method I<format_header_comment( $comment )>
+=helper_method I<format_header_comment( $comment )>
 
 Format text as a comment for use in headers.
 
@@ -1674,7 +1674,7 @@ sub format_header_comment {
     return $comment;
 }
 
-=method I<format_header_entry( $key, $value )>
+=helper_method I<format_header_entry( $key, $value )>
 
 Format text as a key value pair for use in authentication header.
 
@@ -1690,7 +1690,7 @@ sub format_header_entry {
     return $string;
 }
 
-=method I<get_domain_from( $address )>
+=helper_method I<get_domain_from( $address )>
 
 Extract a single domain from an email address.
 
@@ -1710,7 +1710,7 @@ sub get_domain_from {
     return lc $domain;
 }
 
-=method I<get_domains_from( $address )>
+=helper_method I<get_domains_from( $address )>
 
 Extract the domains from an email address as an arrayref.
 
@@ -1740,7 +1740,7 @@ use constant IsPhrase => 1;
 use constant IsEmail => 2;
 use constant IsComment => 3;
 
-=method I<get_address_from( $text )>
+=helper_method I<get_address_from( $text )>
 
 Extract a single email address from a string.
 
@@ -1752,7 +1752,7 @@ sub get_address_from {
     return $addresses->[0];
 }
 
-=method I<get_addresses_from( $text )>
+=helper_method I<get_addresses_from( $text )>
 
 Extract all email address from a string as an arrayref.
 
@@ -1914,7 +1914,7 @@ sub get_addresses_from {
 
 }
 
-=method I<get_my_hostname()>
+=helper_method I<get_my_hostname()>
 
 Return the effective hostname of the MTA.
 
@@ -1936,7 +1936,7 @@ sub get_my_hostname {
 
 # Logging
 
-=method I<dbgout( $key, $value, $priority )>
+=log_method I<dbgout( $key, $value, $priority )>
 
 Send output to debug and/or Mail Log.
 
@@ -1982,7 +1982,7 @@ sub dbgout {
     return;
 }
 
-=method I<log_error( $error )>
+=log_method I<log_error( $error )>
 
 Log an error.
 
@@ -1994,7 +1994,7 @@ sub log_error {
     return;
 }
 
-=method I<dbgoutwrite()>
+=log_method I<dbgoutwrite()>
 
 Write out logs to disc.
 
@@ -2277,7 +2277,7 @@ sub append_header {
 
 # Lower level methods
 
-=method I<smfis_continue()>
+=low_method I<smfis_continue()>
 
 Return Continue code.
 
@@ -2287,7 +2287,7 @@ sub smfis_continue {
     return SMFIS_CONTINUE;
 }
 
-=method I<smfis_tempfail()>
+=low_method I<smfis_tempfail()>
 
 Return TempFail code.
 
@@ -2297,7 +2297,7 @@ sub smfis_tempfail {
     return SMFIS_TEMPFAIL;
 }
 
-=method I<smfis_reject()>
+=low_method I<smfis_reject()>
 
 Return Reject code.
 
@@ -2307,7 +2307,7 @@ sub smfis_reject {
     return SMFIS_REJECT;
 }
 
-=method I<smfis_discard()>
+=low_method I<smfis_discard()>
 
 Return Discard code.
 
@@ -2317,7 +2317,7 @@ sub smfis_discard {
     return SMFIS_DISCARD;
 }
 
-=method I<smfis_accept()>
+=low_method I<smfis_accept()>
 
 Return Accept code.
 
@@ -2329,7 +2329,7 @@ sub smfis_accept {
 
 
 
-=method I<write_packet( $type, $data )>
+=low_method I<write_packet( $type, $data )>
 
 Write a packet to the MTA (calls Protocol object)
 
@@ -2342,7 +2342,7 @@ sub write_packet {
     return;
 }
 
-=method I<add_header( $key, $value )>
+=low_method I<add_header( $key, $value )>
 
 Write an Add Header packet to the MTA (calls Protocol object)
 
@@ -2357,7 +2357,7 @@ sub add_header {
     return;
 }
 
-=method I<insert_header( $index, $key, $value )>
+=low_method I<insert_header( $index, $key, $value )>
 
 Write an Insert Header packet to the MTA (calls Protocol object)
 
@@ -2372,7 +2372,7 @@ sub insert_header {
     return;
 }
 
-=method I<change_header( $key, $index, $value )>
+=low_method I<change_header( $key, $index, $value )>
 
 Write a Change Header packet to the MTA (calls Protocol object)
 
