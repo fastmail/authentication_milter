@@ -3,6 +3,12 @@ use strict;
 use warnings;
 # VERSION
 
+=head1 DESCRIPTION
+
+Handle the milter requests and pass off to individual handlers
+
+=cut
+
 use Digest::MD5 qw{ md5_hex };
 use English qw{ -no_match_vars };
 use Clone qw{ clone };
@@ -23,6 +29,15 @@ use Mail::AuthenticationResults::Header::AuthServID;
 
 our $TestResolver; # For Testing
 
+=method I<new( $thischild )>
+
+my $object = Mail::Milter::Authentication::Handler->new( $thischild );
+
+Takes the argument of the current Mail::Milter::Authentication object
+and creates a new handler object.
+
+=cut
+
 sub new {
     my ( $class, $thischild ) = @_;
     my $self = {
@@ -32,6 +47,12 @@ sub new {
     return $self;
 }
 
+=method I<get_version()>
+
+Return the version of this handler
+
+=cut
+
 sub get_version {
     my ( $self ) = @_;
     {
@@ -40,6 +61,12 @@ sub get_version {
     }
     return;
 }
+
+=method I<get_json( $file )>
+
+Return json data from external file
+
+=cut
 
 sub get_json {
     my ( $self, $file ) = @_;
@@ -55,11 +82,23 @@ sub get_json {
     return join( q{}, @Content );
 }
 
+=method I<metric_register( $id, $help )>
+
+Register a metric type
+
+=cut
+
 sub metric_register {
     my ( $self, $id, $help ) = @_;
     $self->{'thischild'}->{'metric'}->register( $id, $help, $self->{'thischild'} );
     return;
 }
+
+=method I<metric_count( $id, $labels, $count )>
+
+Increment a metrics counter by $count (defaults to 1 if undef)
+
+=cut
 
 sub metric_count {
     my ( $self, $count_id, $labels, $count ) = @_;
@@ -76,17 +115,35 @@ sub metric_count {
     return;
 }
 
+=method I<metric_send()>
+
+Send metrics to the parent
+
+=cut
+
 sub metric_send {
     my ( $self ) = @_;
     $self->{'thischild'}->{'metric'}->send( $self->{ 'thischild' });
     return;
 }
 
+=method I<get_microseconds()>
+
+Return the current time in microseconds
+
+=cut
+
 sub get_microseconds {
     my ( $self ) = @_;
     my ($seconds, $microseconds) = gettimeofday;
     return ( ( $seconds * 1000000 ) + $microseconds );
 }
+
+=method I<get_microseconds_singe( $time )>
+
+Return the number of microseconds since the given time (in microseconds)
+
+=cut
 
 sub get_microseconds_since {
     my ( $self, $since ) = @_;
@@ -98,6 +155,12 @@ sub get_microseconds_since {
 
 # Top Level Callbacks
 
+=method I<register_metrics()>
+
+Return details of the metrics this module exports.
+
+=cut
+
 sub register_metrics {
     return {
         'connect_total'           => 'The number of connections made to authentication milter',
@@ -105,6 +168,12 @@ sub register_metrics {
         'time_microseconds_total' => 'The time in microseconds spent in various handlers',
     };
 }
+
+=method I<top_setup_callback()>
+
+Top level handler for handler setup.
+
+=cut
 
 sub top_setup_callback {
 
@@ -124,6 +193,14 @@ sub top_setup_callback {
     return;
 }
 
+=method I<is_exception_type( $exception )>
+
+Given a Mail::Milter::Authentication::Exception object, this return
+the exception object type.
+Otherwise returns undef.
+
+=cut
+
 sub is_exception_type {
     my ( $self, $exception ) = @_;
     return if ! defined $exception;
@@ -132,6 +209,16 @@ sub is_exception_type {
     my $Type = $exception->{ 'Type' } || 'Unknown';
     return $Type;
 }
+
+=method I<handle_exception( $exception )>
+
+Handle exceptions thrown, this method currently handles the
+timeout type, by re-throwing the exception.
+
+Should be called in Handlers when handling local exceptions, such that the
+higher level timeout exceptions are properly handled.
+
+=cut
 
 sub handle_exception {
     my ( $self, $exception ) = @_;
@@ -142,6 +229,13 @@ sub handle_exception {
     return;
 }
 
+=method I<get_time_remaining()>
+
+Return the time remaining (in microseconds) for the current Handler section level
+callback timeout.
+
+=cut
+
 sub get_time_remaining {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
@@ -151,6 +245,13 @@ sub get_time_remaining {
     # can be zero or -ve
     return $remaining;
 }
+
+=method I<set_alarm( $microseconds )>
+
+Set a timeout alarm for $microseconds, and set the time remaining
+in the top level handler object.
+
+=cut
 
 sub set_alarm {
     my ( $self, $microseconds ) = @_;
@@ -165,6 +266,14 @@ sub set_alarm {
     }
     return;
 }
+
+=method I<set_handler_alarm( $microseconds )>
+
+Set an alarm for $microseconds, or the current time remaining for the section callback, whichever
+is the lower. This should be used in Handler timeouts to ensure that a local timeout never goes for
+longer than the current handler section, or protocol section level timeout.
+
+=cut
 
 sub set_handler_alarm {
     # Call this in a handler to set a local alarm, will take the lower value
@@ -183,6 +292,15 @@ sub set_handler_alarm {
     return;
 }
 
+=method I<reset_alarm()>
+
+Reset the alarm to the current time remaining in the section or protocol level timeouts.
+
+This should be called in Handlers after local timeouts have completed, to reset the higher level
+timeout alarm value.
+
+=cut
+
 sub reset_alarm {
     # Call this after any local handler timeouts to reset to the overall value remaining
     my ( $self ) = @_;
@@ -196,6 +314,12 @@ sub reset_alarm {
     return;
 }
 
+=method I<clear_overall_timeout()>
+
+Clear the current Handler level timeout, should be called from the Protocol layer, never from the Handler layer.
+
+=cut
+
 sub clear_overall_timeout {
     my ( $self ) = @_;
     $self->dbgout( 'Overall timeout', 'Clear', LOG_DEBUG );
@@ -204,6 +328,12 @@ sub clear_overall_timeout {
     return;
 }
 
+=method I<set_overall_timeout( $microseconds )>
+
+Set the time in microseconds after which the Handler layer should timeout, called from the Protocol later, never from the Handler layer.
+
+=cut
+
 sub set_overall_timeout {
     my ( $self, $microseconds ) = @_;
     my $top_handler = $self->get_top_handler();
@@ -211,6 +341,12 @@ sub set_overall_timeout {
     $top_handler->{ 'overall_timeout' } = $self->get_microseconds() + $microseconds;
     return;
 }
+
+=method I<get_type_timeout( $type )>
+
+For a given timeout type, return the configured timeout value, or the current handler level timeout, whichever is lower.
+
+=cut
 
 sub get_type_timeout {
     my ( $self, $type ) = @_;
@@ -258,6 +394,12 @@ sub get_type_timeout {
     return $effective;
 }
 
+=method I<check_timeout()>
+
+Manually check the current timeout, and throw if it has passed.
+
+=cut
+
 sub check_timeout {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
@@ -267,6 +409,12 @@ sub check_timeout {
     ualarm( 0 );
     die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Manual check timeout' });
 }
+
+=method I<top_connect_callback( $hostname, $ip )>
+
+Top level handler for the connect event.
+
+=cut
 
 sub top_connect_callback {
 
@@ -340,6 +488,12 @@ sub top_connect_callback {
     $self->status('postconnect');
     return $self->get_return();
 }
+
+=method I<top_helo_callback( $helo_host )>
+
+Top level handler for the HELO event.
+
+=cut
 
 sub top_helo_callback {
 
@@ -422,6 +576,12 @@ sub top_helo_callback {
     return $self->get_return();
 }
 
+=method I<top_envfrom_callback( $env_from )>
+
+Top level handler for the MAIL FROM event.
+
+=cut
+
 sub top_envfrom_callback {
 
     # On MAILFROM
@@ -476,6 +636,12 @@ sub top_envfrom_callback {
     return $self->get_return();
 }
 
+=method I<top_envrcpt_callback( $env_to )>
+
+Top level handler for the RCPT TO event.
+
+=cut
+
 sub top_envrcpt_callback {
 
     # On RCPTTO
@@ -524,6 +690,12 @@ sub top_envrcpt_callback {
     $self->status('postenvrcpt');
     return $self->get_return();
 }
+
+=method  I<top_header_callback( $header, $value )>
+
+Top level handler for the BODY header event.
+
+=cut
 
 sub top_header_callback {
 
@@ -576,6 +748,12 @@ sub top_header_callback {
     return $self->get_return();
 }
 
+=method I<top_eoh_callback()>
+
+Top level handler for the BODY end of headers event.
+
+=cut
+
 sub top_eoh_callback {
 
     # On End of headers
@@ -624,6 +802,12 @@ sub top_eoh_callback {
     return $self->get_return();
 }
 
+=method I<top_body_callback( $body_chunk )>
+
+Top level handler for the BODY body chunk event.
+
+=cut
+
 sub top_body_callback {
 
     # On each body chunk
@@ -671,6 +855,12 @@ sub top_body_callback {
     $self->status('postbody');
     return $self->get_return();
 }
+
+=method I<top_eom_callback()>
+
+Top level handler for the BODY end of message event.
+
+=cut
 
 sub top_eom_callback {
 
@@ -722,6 +912,12 @@ sub top_eom_callback {
     return $self->get_return();
 }
 
+=method I<apply_policy()>
+
+Apply policy to the message, currently a nop.
+
+=cut
+
 sub apply_policy {
     my ($self) = @_;
 
@@ -741,6 +937,12 @@ sub apply_policy {
 
     return;
 }
+
+=method I<top_abort_callback()>
+
+Top level handler for the abort event.
+
+=cut
 
 sub top_abort_callback {
 
@@ -788,6 +990,12 @@ sub top_abort_callback {
     $self->status('postabort');
     return $self->get_return();
 }
+
+=method I<top_close_callback()>
+
+Top level handler for the close event.
+
+=cut
 
 sub top_close_callback {
 
@@ -846,6 +1054,14 @@ sub top_close_callback {
     return $self->get_return();
 }
 
+=method I<top_addheader_callback()>
+
+Top level handler for the add header event.
+
+Called after the Authentication-Results header has been added, but before any other headers.
+
+=cut
+
 sub top_addheader_callback {
     my ( $self ) = @_;
     my $config = $self->config();
@@ -884,6 +1100,12 @@ sub top_addheader_callback {
 
 # Other methods
 
+=method I<status( $status )>
+
+Set the status of the current child as visible by ps.
+
+=cut
+
 sub status {
     my ($self, $status) = @_;
     my $count = $self->{'thischild'}->{'count'};
@@ -901,10 +1123,22 @@ sub status {
     return;
 }
 
+=method I<config()>
+
+Return the configuration hashref.
+
+=cut
+
 sub config {
     my ($self) = @_;
     return $self->{'thischild'}->{'config'};
 }
+
+=method I<handler_config( $type )>
+
+Return the configuration for the current handler.
+
+=cut
 
 sub handler_config {
     my ($self) = @_;
@@ -926,6 +1160,12 @@ sub handler_config {
     return;
 }
 
+=method I<handler_type()>
+
+Return the current handler type.
+
+=cut
+
 sub handler_type {
     my ($self) = @_;
     my $type = ref $self;
@@ -941,12 +1181,24 @@ sub handler_type {
     }
 }
 
+=method I<set_return( $code )>
+
+Set the return code to be passed back to the MTA.
+
+=cut
+
 sub set_return {
     my ( $self, $return ) = @_;
     my $top_handler = $self->get_top_handler();
     $top_handler->{'return_code'} = $return;
     return;
 }
+
+=method I<get_return()>
+
+Get the current return code.
+
+=cut
 
 sub get_return {
     my ( $self ) = @_;
@@ -957,11 +1209,23 @@ sub get_return {
     return $top_handler->{'return_code'};
 }
 
+=method I<get_reject_mail()>
+
+Get the reject mail reason (or undef)
+
+=cut
+
 sub get_reject_mail {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     return $top_handler->{'reject_mail'};
 }
+
+=method I<clear_reject_mail()>
+
+Clear the reject mail reason
+
+=cut
 
 sub clear_reject_mail {
     my ( $self ) = @_;
@@ -970,12 +1234,24 @@ sub clear_reject_mail {
     return;
 }
 
+=method I<get_top_handler()>
+
+Return the current top Handler object.
+
+=cut
+
 sub get_top_handler {
     my ($self) = @_;
     my $thischild = $self->{'thischild'};
     my $object = $thischild->{'handler'}->{'_Handler'};
     return $object;
 }
+
+=method I<is_handler_loaded( $name )>
+
+Check if the named handler is loaded.
+
+=cut
 
 sub is_handler_loaded {
     my ( $self, $name ) = @_;
@@ -986,6 +1262,12 @@ sub is_handler_loaded {
     return 0;
 }
 
+=method I<get_handler( $name )>
+
+Return the named handler object.
+
+=cut
+
 sub get_handler {
     my ( $self, $name ) = @_;
     my $thischild = $self->{'thischild'};
@@ -993,12 +1275,23 @@ sub get_handler {
     return $object;
 }
 
+=method I<get_callbacks( $callback )>
+
+Return the list of handlers which have callbacks for the given event in the order they must be called in.
+
+=cut
 
 sub get_callbacks {
     my ( $self, $callback ) = @_;
     my $thischild = $self->{'thischild'};
     return $thischild->{'callbacks_list'}->{$callback};
 }
+
+=method I<set_object_maker( $name, $ref )>
+
+Register an object maker for type 'name'
+
+=cut
 
 sub set_object_maker {
     my ( $self, $name, $ref ) = @_;
@@ -1007,6 +1300,18 @@ sub set_object_maker {
     $thischild->{'object_maker'}->{$name} = $ref;
     return;
 }
+
+=method I<get_object( $name )>
+
+Return the named object from the object store.
+
+Object 'resolver' will be created if it does not already exist.
+
+Object 'spf_server' will be created by the SPF handler if it does not already exist.
+
+Handlers may register makers for other types as required.
+
+=cut
 
 sub get_object {
     my ( $self, $name ) = @_;
@@ -1051,6 +1356,14 @@ sub get_object {
     return $thischild->{'object'}->{$name}->{'object'};
 }
 
+=method I<set_object( $name, $object, $destroy )>
+
+Store the given object in the object store with the given name.
+
+If $destroy then the object will be destroyed when the connection to the child closes
+
+=cut
+
 sub set_object {
     my ( $self, $name, $object, $destroy ) = @_;
     my $thischild = $self->{'thischild'};
@@ -1061,6 +1374,12 @@ sub set_object {
     };
     return;
 }
+
+=method I<destroy_object( $name )>
+
+Remove the reference to the named object from the object store.
+
+=cut
 
 sub destroy_object {
     my ( $self, $name ) = @_;
@@ -1076,6 +1395,14 @@ sub destroy_object {
     return;
 }
 
+=method I<destroy_all_objects()>
+
+Remove the references to all objects currently stored in the object store.
+
+Certain objects (resolver and spf_server) are not destroyed for performance reasons.
+
+=cut
+
 sub destroy_all_objects {
     # Unused!
     my ( $self ) = @_;
@@ -1087,12 +1414,24 @@ sub destroy_all_objects {
     return;
 }
 
+=method I<exit_on_close()>
+
+Exit this child once it has completed, do not process further requests with this child.
+
+=cut
+
 sub exit_on_close {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     $top_handler->{'exit_on_close'} = 1;
     return;
 }
+
+=method I<reject_mail( $reason )>
+
+Reject mail with the given reason
+
+=cut
 
 sub reject_mail {
     my ( $self, $reason ) = @_;
@@ -1101,12 +1440,24 @@ sub reject_mail {
     return;
 }
 
+=method I<clear_all_symbols()>
+
+Clear the symbol store.
+
+=cut
+
 sub clear_all_symbols {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'symbols'};
     return;
 }
+
+=method I<clear_symbols()>
+
+Clear the symbol store but do not remove the Connect symbols.
+
+=cut
 
 sub clear_symbols {
     my ( $self ) = @_;
@@ -1130,6 +1481,12 @@ sub clear_symbols {
     return;
 }
 
+=method I<set_symbol( $code, $key, $value )>
+
+Store the key value pair in the symbol store with the given code (event stage).
+
+=cut
+
 sub set_symbol {
     my ( $self, $code, $key, $value ) = @_;
     $self->dbgout( 'SetSymbol', "$code: $key: $value", LOG_DEBUG );
@@ -1143,6 +1500,12 @@ sub set_symbol {
     $top_handler->{'symbols'}->{$code}->{$key} = $value;;
     return;
 }
+
+=method I<get_symbol( $searchkey )>
+
+Return a value from the symbol store, searches all codes for the given key.
+
+=cut
 
 sub get_symbol {
     my ( $self, $searchkey ) = @_;
@@ -1158,6 +1521,14 @@ sub get_symbol {
     }
     return;
 }
+
+=method I<tempfail_on_error()>
+
+Returns a TEMP FAIL to the calling MTA if the configuration is set to do so.
+
+Config can be set for all, authenticated, local, and trusted connections.
+
+=cut
 
 sub tempfail_on_error {
     my ( $self ) = @_;
@@ -1193,11 +1564,27 @@ sub tempfail_on_error {
 
 # Common calls into other Handlers
 
+=method I<is_local_ip_address()>
+
+Is the current connection from a local ip address?
+
+Requires the LocalIP Handler to be loaded.
+
+=cut
+
 sub is_local_ip_address {
     my ($self) = @_;
     return 0 if ! $self->is_handler_loaded('LocalIP');
     return $self->get_handler('LocalIP')->{'is_local_ip_address'};
 }
+
+=method I<is_trusted_ip_address()>
+
+Is the current connection from a trusted ip address?
+
+Requires the TrustedIP Handler to be loaded.
+
+=cut
 
 sub is_trusted_ip_address {
     my ($self) = @_;
@@ -1205,11 +1592,25 @@ sub is_trusted_ip_address {
     return $self->get_handler('TrustedIP')->{'is_trusted_ip_address'};
 }
 
+=method I<is_authenticated()>
+
+Is the current connection authenticated?
+
+Requires the Auth Handler to be loaded.
+
+=cut
+
 sub is_authenticated {
     my ($self) = @_;
     return 0 if ! $self->is_handler_loaded('Auth');
     return $self->get_handler('Auth')->{'is_authenticated'};
 }
+
+=method I<ip_address()>
+
+Return the ip address of the current connection.
+
+=cut
 
 sub ip_address {
     my ($self) = @_;
@@ -1220,6 +1621,14 @@ sub ip_address {
 
 
 # Header formatting and data methods
+
+=method I<format_ctext( $text )>
+
+Format text as ctext for use in headers.
+
+Deprecated.
+
+=cut
 
 sub format_ctext {
 
@@ -1235,6 +1644,14 @@ sub format_ctext {
     return $text;
 }
 
+=method I<format_ctext_no_space( $text )>
+
+Format text as ctext with no spaces for use in headers.
+
+Deprecated.
+
+=cut
+
 sub format_ctext_no_space {
     my ( $self, $text ) = @_;
     $text = $self->format_ctext($text);
@@ -1243,11 +1660,27 @@ sub format_ctext_no_space {
     return $text;
 }
 
+=method I<format_header_comment( $comment )>
+
+Format text as a comment for use in headers.
+
+Deprecated.
+
+=cut
+
 sub format_header_comment {
     my ( $self, $comment ) = @_;
     $comment = $self->format_ctext($comment);
     return $comment;
 }
+
+=method I<format_header_entry( $key, $value )>
+
+Format text as a key value pair for use in authentication header.
+
+Deprecated.
+
+=cut
 
 sub format_header_entry {
     my ( $self, $key, $value ) = @_;
@@ -1256,6 +1689,12 @@ sub format_header_entry {
     my $string = "$key=$value";
     return $string;
 }
+
+=method I<get_domain_from( $address )>
+
+Extract a single domain from an email address.
+
+=cut
 
 sub get_domain_from {
     my ( $self, $address ) = @_;
@@ -1270,6 +1709,12 @@ sub get_domain_from {
     $domain =~ s/\s//g;
     return lc $domain;
 }
+
+=method I<get_domains_from( $address )>
+
+Extract the domains from an email address as an arrayref.
+
+=cut
 
 sub get_domains_from {
     my ( $self, $addresstxt ) = @_;
@@ -1295,11 +1740,23 @@ use constant IsPhrase => 1;
 use constant IsEmail => 2;
 use constant IsComment => 3;
 
+=method I<get_address_from( $text )>
+
+Extract a single email address from a string.
+
+=cut
+
 sub get_address_from {
     my ( $self, $Str ) = @_;
     my $addresses = $self->get_addresses_from( $Str );
     return $addresses->[0];
 }
+
+=method I<get_addresses_from( $text )>
+
+Extract all email address from a string as an arrayref.
+
+=cut
 
 sub get_addresses_from {
     my ( $self, $Str ) = @_;
@@ -1457,6 +1914,12 @@ sub get_addresses_from {
 
 }
 
+=method I<get_my_hostname()>
+
+Return the effective hostname of the MTA.
+
+=cut
+
 sub get_my_hostname {
     my ($self) = @_;
     my $hostname = $self->get_symbol('j');
@@ -1472,6 +1935,14 @@ sub get_my_hostname {
 
 
 # Logging
+
+=method I<dbgout( $key, $value, $priority )>
+
+Send output to debug and/or Mail Log.
+
+priority is a standard Syslog priority.
+
+=cut
 
 sub dbgout {
     my ( $self, $key, $value, $priority ) = @_;
@@ -1511,11 +1982,26 @@ sub dbgout {
     return;
 }
 
+=method I<log_error( $error )>
+
+Log an error.
+
+=cut
+
 sub log_error {
     my ( $self, $error ) = @_;
     $self->dbgout( 'ERROR', $error, LOG_ERR );
     return;
 }
+
+=method I<dbgoutwrite()>
+
+Write out logs to disc.
+
+Logs are not written immediately, they are written at the end of a connection so we can
+include a queue id. This is not available at the start of the process.
+
+=cut
 
 sub dbgoutwrite {
     my ($self) = @_;
@@ -1553,10 +2039,25 @@ sub dbgoutwrite {
 
 # Header handling
 
+=method I<can_sort_header( $header )>
+
+Returns 1 is this handler has a header_sort method capable or sorting entries for $header
+Returns 0 otherwise
+
+=cut
+
 sub can_sort_header {
     my ( $self, $header ) = @_;
     return 0;
 }
+
+=method I<header_sort()>
+
+Sorting function for sorting the Authentication-Results headers
+Calls out to __HANDLER__->header_sort() to sort headers of a particular type if available,
+otherwise sorts alphabetically.
+
+=cut
 
 sub header_sort {
     my ( $self, $sa, $sb ) = @_;
@@ -1607,6 +2108,12 @@ sub _stringify_header {
     }
     return $header;
 }
+
+=method I<add_headers()>
+
+Send the header changes to the MTA.
+
+=cut
 
 sub add_headers {
     my ($self) = @_;
@@ -1692,6 +2199,12 @@ sub add_headers {
     return;
 }
 
+=method I<prepend_header( $field, $value )>
+
+Add a trace header to the email.
+
+=cut
+
 sub prepend_header {
     my ( $self, $field, $value ) = @_;
     my $top_handler = $self->get_top_handler();
@@ -1706,6 +2219,12 @@ sub prepend_header {
     return;
 }
 
+=method I<add_auth_header( $value )>
+
+Add a section to the authentication header for this email.
+
+=cut
+
 sub add_auth_header {
     my ( $self, $value ) = @_;
     my $top_handler = $self->get_top_handler();
@@ -1715,6 +2234,12 @@ sub add_auth_header {
     push @{ $top_handler->{'auth_headers'} }, $value;
     return;
 }
+
+=method I<add_c_auth_header( $value )>
+
+Add a section to the authentication header for this email, and to any subsequent emails for this connection.
+
+=cut
 
 sub add_c_auth_header {
 
@@ -1727,6 +2252,12 @@ sub add_c_auth_header {
     push @{ $top_handler->{'c_auth_headers'} }, $value;
     return;
 }
+
+=method I<append_header( $field, $value )>
+
+Add a normal header to the email.
+
+=cut
 
 sub append_header {
     my ( $self, $field, $value ) = @_;
@@ -1746,21 +2277,51 @@ sub append_header {
 
 # Lower level methods
 
+=method I<smfis_continue()>
+
+Return Continue code.
+
+=cut
+
 sub smfis_continue {
     return SMFIS_CONTINUE;
 }
+
+=method I<smfis_tempfail()>
+
+Return TempFail code.
+
+=cut
 
 sub smfis_tempfail {
     return SMFIS_TEMPFAIL;
 }
 
+=method I<smfis_reject()>
+
+Return Reject code.
+
+=cut
+
 sub smfis_reject {
     return SMFIS_REJECT;
 }
 
+=method I<smfis_discard()>
+
+Return Discard code.
+
+=cut
+
 sub smfis_discard {
     return SMFIS_DISCARD;
 }
+
+=method I<smfis_accept()>
+
+Return Accept code.
+
+=cut
 
 sub smfis_accept {
     return SMFIS_ACCEPT;
@@ -1768,12 +2329,24 @@ sub smfis_accept {
 
 
 
+=method I<write_packet( $type, $data )>
+
+Write a packet to the MTA (calls Protocol object)
+
+=cut
+
 sub write_packet {
     my ( $self, $type, $data ) = @_;
     my $thischild = $self->{'thischild'};
     $thischild->write_packet( $type, $data );
     return;
 }
+
+=method I<add_header( $key, $value )>
+
+Write an Add Header packet to the MTA (calls Protocol object)
+
+=cut
 
 sub add_header {
     my ( $self, $key, $value ) = @_;
@@ -1784,6 +2357,12 @@ sub add_header {
     return;
 }
 
+=method I<insert_header( $index, $key, $value )>
+
+Write an Insert Header packet to the MTA (calls Protocol object)
+
+=cut
+
 sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
     my $thischild = $self->{'thischild'};
@@ -1792,6 +2371,12 @@ sub insert_header {
     $thischild->insert_header( $index, $key, $value );
     return;
 }
+
+=method I<change_header( $key, $index, $value )>
+
+Write a Change Header packet to the MTA (calls Protocol object)
+
+=cut
 
 sub change_header {
     my ( $self, $key, $index, $value ) = @_;
@@ -1805,361 +2390,6 @@ sub change_header {
 1;
 
 __END__
-
-=head1 DESCRIPTION
-
-Handle the milter requests and pass off to individual handlers
-
-=head1 CONSTRUCTOR
-
-=over
-
-=item new( $thischild )
-
-my $object = Mail::Milter::Authentication::Handler->new( $thischild );
-
-Takes the argument of the current Mail::Milter::Authentication object
-and creates a new handler object.
-
-=back
-
-=head1 METHODS
-
-=over
-
-=item get_version()
-
-Return the version of this handler
-
-=item get_json ( $file )
-
-Retrieve json data from external file
-
-=item metric_register( $id, $help )
-
-Register a metric type
-
-=item metric_count( $id, $labels, $count )
-
-Increment a metrics counter by $count (defaults to 1 if undef)
-
-=item metric_send()
-
-Send metrics to the parent
-
-=item register_metrics
-
-Return details of the metrics this module exports.
-
-=item get_microseconds()
-
-Return current time in microseconds
-
-=item top_setup_callback()
-
-Top level handler for handler setup.
-
-=item top_connect_callback( $hostname, $ip )
-
-Top level handler for the connect event.
-
-=item top_helo_callback( $helo_host )
-
-Top level handler for the HELO event.
-
-=item top_envfrom_callback( $env_from )
-
-Top level handler for the MAIL FROM event.
-
-=item top_envrcpt_callback( $env_to )
-
-Top level handler for the RCPT TO event.
-
-=item top_header_callback( $header, $value )
-
-Top level handler for a Mail Header event.
-
-=item top_eoh_callback()
-
-Top level handler for the end of headers event.
-
-=item top_body_callback( $body_chunk )
-
-Top level handler for a Body Chunk event.
-
-=item top_eom_callback()
-
-Top level handler for the End of Message event.
-
-=item apply_policy()
-
-Apply a policy to the generated authentication results
-
-=item top_abort_callback()
-
-Top level handler for the Abort event.
-
-=item top_addheader_callback()
-
-Top level handler for the addheader event.
-
-Called after the Authentication-Results header has been added, but before any other headers.
-
-=item top_close_callback()
-
-Top level handler for the Close event.
-
-=item status( $status )
-
-Set the status of the current child as visible by ps.
-
-=item config()
-
-Return the configuration hashref.
-
-=item handler_config( $type )
-
-Return the configuration for the current handler.
-
-=item handler_type()
-
-Return the current handler type.
-
-=item set_return( $code )
-
-Set the return code to be passed back to the MTA.
-
-=item get_return()
-
-Get the current return code.
-
-=item get_reject_mail()
-
-Get the reject mail reason (or undef)
-
-=item clear_reject_mail()
-
-Clear the reject mail reason
-
-=item get_top_handler()
-
-Return the current top Handler object.
-
-=item is_handler_loaded( $name )
-
-Check if the named handler is loaded.
-
-=item get_handler( $name )
-
-Return the named handler object.
-
-=item get_callbacks( $callback )
-
-Return the list of handlers which have callbacks for the given event in the order they must be called in.
-
-=item set_object_maker( $name, $ref )
-
-Register an object maker for type 'name'
-
-=item get_object( $name )
-
-Return the named object from the object store.
-
-Object 'resolver' will be created if it does not already exist.
-
-Object 'spf_server' will be created by the SPF handler if it does not already exist.
-
-Handlers may register makers for other types as required.
-
-=item set_object( $name, $object, $destroy )
-
-Store the given object in the object store with the given name.
-
-If $destroy then the object will be destroyed when the connection to the child closes
-
-=item destroy_object( $name )
-
-Remove the reference to the named object from the object store.
-
-=item destroy_all_objects()
-
-Remove the references to all objects currently stored in the object store.
-
-Certain objects (resolver and spf_server) are not destroyed for performance reasons.
-
-=item exit_on_close()
-
-Exit this child once it has completed, do not process further requests with this child.
-
-=item reject_mail( $reason )
-
-Reject mail with the given reason
-
-=item clear_all_symbols()
-
-Clear the symbol store.
-
-=item clear_symbols()
-
-Clear the symbol store but do not remove the Connect symbols.
-
-=item set_symbol( $code, $key, $value )
-
-Store the key value pair in the symbol store with the given code (event stage).
-
-=item get_symbol( $searchkey )
-
-Return a value from the symbol store, searches all codes for the given key.
-
-=item tempfail_on_error()
-
-Returns a TEMP FAIL to the calling MTA if the configuration is set to do so.
-
-Config can be set for all, authenticated, local, and trusted connections.
-
-=item is_local_ip_address()
-
-Is the current connection from a local ip address?
-
-Requires the LocalIP Handler to be loaded.
-
-=item is_trusted_ip_address()
-
-Is the current connection from a trusted ip address?
-
-Requires the TrustedIP Handler to be loaded.
-
-=item is_authenticated()
-
-Is the current connection authenticated?
-
-Requires the Auth Handler to be loaded.
-
-=item ip_address()
-
-Return the ip address of the current connection.
-
-=item format_ctext( $text )
-
-Format text as ctext for use in headers.
-
-=item format_ctext_no_space( $text )
-
-Format text as ctext with no spaces for use in headers.
-
-=item format_header_comment( $comment )
-
-Format text as a comment for use in headers.
-
-=item format_header_entry( $key, $value )
-
-Format text as a key value pair for use in authentication header.
-
-=item get_domain_from( $address )
-
-Extract the domain from an email address.
-
-=item get_domains_from( $address )
-
-Extract the domains from an email address as an arrayref.
-
-=item get_address_from( $text )
-
-Extract an email address from a string.
-
-=item get_addresses_from( $text )
-
-Extract all email address from a string as an arrayref.
-
-=item get_my_hostname()
-
-Return the effective hostname of the MTA.
-
-=item dbgout( $key, $value, $priority )
-
-Send output to debug and/or Mail Log.
-
-priority is a standard Syslog priority.
-
-=item log_error( $error )
-
-Log an error.
-
-=item dbgoutwrite()
-
-Write out logs to disc.
-
-Logs are not written immediately, they are written at the end of a connection so we can
-include a queue id. This is not available at the start of the process.
-
-=item can_sort_header( $header )
-
-Returns 1 is this handler has a header_sort method capable or sorting entries for $header
-Returns 0 otherwise
-
-=item header_sort()
-
-Sorting function for sorting the Authentication-Results headers
-Calls out to __HANDLER__->header_sort() to sort headers of a particular type if available,
-otherwise sorts alphabetically.
-
-=item add_headers()
-
-Send the header changes to the MTA.
-
-=item prepend_header( $field, $value )
-
-Add a trace header to the email.
-
-=item add_auth_header( $value )
-
-Add a section to the authentication header for this email.
-
-=item add_c_auth_header( $value )
-
-Add a section to the authentication header for this email, and to any subsequent emails for this connection.
-
-=item append_header( $field, $value )
-
-Add a normal header to the email.
-
-=item smfis_continue()
-
-Return Continue code.
-
-=item smfis_tempfail()
-
-Return TempFail code.
-
-=item smfis_reject()
-
-Return Reject code.
-
-=item smfis_discard()
-
-Return Discard code.
-
-=item smfis_accept()
-
-Return Accept code.
-
-=item write_packet( $type, $data )
-
-Write a packet to the MTA (calls Protocol object)
-
-=item add_header( $key, $value )
-
-Write an Add Header packet to the MTA (calls Protocol object)
-
-=item insert_header( $index, $key, $value )
-
-Write an Insert Header packet to the MTA (calls Protocol object)
-
-=item change_header( $key, $index, $value )
-
-Write a Change Header packet to the MTA (calls Protocol object)
-
-=back
 
 =head1 WRITING HANDLERS
 
