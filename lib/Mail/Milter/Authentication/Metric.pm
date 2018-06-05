@@ -2,10 +2,26 @@ package Mail::Milter::Authentication::Metric;
 use strict;
 use warnings;
 # VERSION
+
+=head1 DESCRIPTION
+
+Handle metrics collection and production for prometheus
+
+=cut
+
 use English qw{ -no_match_vars };
 use JSON;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Metric::Grafana;
+
+=constructor I<new()>
+
+my $object = Mail::Milter::Authentication::Metric->new();
+
+Create a new Mail::Milter::Authentication::Metric object
+This object is used to store, modify, and report metrics.
+
+=cut
 
 sub new {
     my ( $class ) = @_;
@@ -25,11 +41,23 @@ sub new {
     return $self;
 }
 
+=method I<get_timeout()>
+
+Returns the current value of timeout for metrics operations.
+
+=cut
+
 sub get_timeout {
     my ( $self ) = @_;
     my $config = get_config();
     return $config->{ 'metric_timeout' } || 5;
 }
+
+=method I<clean_label($text)>
+
+Given a string, return a version of that string which is safe to use as a metrics label.
+
+=cut
 
 sub clean_label {
     my ( $self, $text ) = @_;
@@ -40,6 +68,22 @@ sub clean_label {
     }
     return $text;
 }
+
+=method I<count($args)>
+
+Increment the metric for the given counter
+Called from the base handler, do not call directly.
+$server is the current handler object
+
+ count_id - the name of the metric to act on
+
+ labels - hashref of labels to apply
+
+ server - the current server object
+
+ count - number to increment by (defaults to 1)
+
+=cut
 
 sub count {
     my ( $self, $args ) = @_;
@@ -95,6 +139,12 @@ sub count {
     return;
 }
 
+=method I<send( $server )>
+
+Send metrics to the parent server process.
+
+=cut
+
 sub send { ## no critic
     my ( $self, $server ) = @_;
 
@@ -134,6 +184,15 @@ sub send { ## no critic
     return;
 }
 
+=method I<register_metrics( $hash )>
+
+Register a new set of metric types and help texts.
+Called from the master process in the setup phase.
+
+Expects a hashref of metric description, keyed on metric name.
+
+=cut
+
 sub register_metrics {
     my ( $self, $hash ) = @_;
     return if ( ! $self->{ 'enabled' } );
@@ -147,6 +206,12 @@ sub register_metrics {
     }
     return;
 }
+
+=method I<master_metric_get( $request, $socket, $server )>
+
+Called in the master process to return metrics to the requestor
+
+=cut
 
 sub master_metric_get {
     my ( $self, $request, $socket, $server ) = @_;
@@ -183,6 +248,12 @@ sub master_metric_get {
     return;
 }
 
+=method I<master_metric_count( $request, $socket, $server )>
+
+Called in the master process to update metrics values
+
+=cut
+
 sub master_metric_count {
     my ( $self, $request, $socket, $server ) = @_;
     my $data = $request->{ 'data' };
@@ -203,6 +274,12 @@ sub master_metric_count {
     return;
 }
 
+=method I<master_handler( $request, $socket, $server)>
+
+Handle a metrics request in the master process.
+
+=cut
+
 sub master_handler {
     my ( $self, $request, $socket, $server ) = @_;
     my $config = get_config();
@@ -221,6 +298,12 @@ sub master_handler {
 
     return;
 }
+
+=method I<child_handler( $server)>
+
+Handle a metrics or http request in the child process.
+
+=cut
 
 sub child_handler {
     my ( $self, $server ) = @_;
@@ -355,47 +438,4 @@ sub child_handler {
 }
 
 1;
-
-__END__
-
-=head1 DESCRIPTION
-
-Handle metrics collection and production for prometheus
-
-=head1 CONSTRUCTOR
-
-=over
-
-=item new()
-
-my $object = Mail::Milter::Authentication::Metric->new();
-
-Creates a new metric object.
-
-=back
-
-=head1 METHODS
-
-=over
-
-=item count( $id, $labels, $server )
-
-Increment the metric for the given counter
-Called from the base handler, do not call directly.
-$server is the current handler object
-
-=item register_metrics( $hash )
-
-Register a new set of metric types and help texts.
-Called from the master process in the setup phase.
-
-=item master_handler( $request, $socket, $server )
-
-Handle a request for metrics from a child in the master process.
-
-=item child_handler( $server )
-
-Handle a request for metrics in a child process.
-
-=back
 
