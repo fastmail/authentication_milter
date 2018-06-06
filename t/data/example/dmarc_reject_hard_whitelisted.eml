@@ -1,6 +1,6 @@
 Authentication-Results: test.module;
     dkim=none (no signatures found);
-    dmarc=fail (p=reject,d=reject) header.from=goestheweasel.com;
+    dmarc=fail (p=reject,sp=none,d=none,override=trusted_forwarder) header.from=goestheweasel.com;
     iprev=fail policy.iprev=99.123.123.123 (NOT FOUND);
     spf=fail smtp.mailfrom=test@goestheweasel.com smtp.helo=bad.name.google.com;
     x-ptr=fail smtp.helo=bad.name.google.com policy.ptr=""

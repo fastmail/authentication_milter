@@ -1,8 +1,8 @@
 Authentication-Results: test.module;
     dkim=none (no signatures found);
-    dmarc=fail (p=reject,d=reject) header.from=goestheweasel.com;
-    dmarc=fail (p=none,d=none) header.from=marcbradshaw.net;
-    dmarc=none (p=none,d=none) header.from=example.com;
+    dmarc=fail (p=reject,sp=none,d=quarantine,override=local_policy) header.from=goestheweasel.com;
+    dmarc=fail (p=none,sp=none,d=none) header.from=marcbradshaw.net;
+    dmarc=none (p=none,sp=none,d=none) header.from=example.com;
     iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
     spf=fail smtp.mailfrom=test@goestheweasel.com smtp.helo=bad.name.google.com;
     x-google-dkim=none (no signatures found);

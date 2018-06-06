@@ -28,6 +28,7 @@ sub default_config {
         'report_skip_to' => [ 'my_report_from_address@example.com' ],
         'no_report'      => 0,
         'config_file'    => '/etc/mail-dmarc.ini',
+        'no_reject_disposition' => 'quarantine',
     };
 }
 
@@ -125,6 +126,104 @@ sub register_metrics {
     };
 }
 
+sub _process_arc_dmarc_for {
+    my ( $self, $env_domain_from, $header_domain ) = @_;
+
+    my $config = $self->handler_config();
+    my $dmarc = $self->new_dmarc_object();
+    $dmarc->source_ip( $self->ip_address() );
+
+    # Set the DMARC Envelope From Domain
+    if ( $env_domain_from ne q{} ) {
+        eval {
+            $dmarc->envelope_from( $env_domain_from );
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            return;
+        }
+    }
+
+    # Add the Envelope To
+    eval {
+        $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
+    };
+    if ( my $error = $@ ) {
+        $self->handle_exception( $error );
+    }
+
+    # Add the From Header
+    eval { $dmarc->header_from( $header_domain ) };
+    if ( my $error = $@ ) {
+        $self->handle_exception( $error );
+        return;
+    }
+
+    # Add the SPF Results Object
+    eval {
+        my $spf = $self->get_handler('SPF');
+        if ( $spf ) {
+
+            if ( $spf->{'dmarc_result'} eq 'pass' && lc $spf->{'dmarc_domain'} eq lc $header_domain ) {
+                # Have a matching local entry, use it.
+                ## TODO take org domains into consideration here
+                $dmarc->spf(
+                    'domain' => $spf->{'dmarc_domain'},
+                    'scope'  => $spf->{'dmarc_scope'},
+                    'result' => $spf->{'dmarc_result'},
+                );
+            }
+            elsif ( my $arc_spf = $self->get_handler('ARC')->get_trusted_spf_results() ) {
+                # Pull from ARC if we can
+                push @$arc_spf, {
+                    'domain' => $spf->{'dmarc_domain'},
+                    'scope'  => $spf->{'dmarc_scope'},
+                    'result' => $spf->{'dmarc_result'},
+                };
+                $dmarc->spf( $arc_spf );
+            }
+            else {
+                # Nothing else matched, use the local entry anyway
+                $dmarc->spf(
+                    'domain' => $spf->{'dmarc_domain'},
+                    'scope'  => $spf->{'dmarc_scope'},
+                    'result' => $spf->{'dmarc_result'},
+                );
+            }
+
+        }
+        else {
+            $dmarc->{'spf'} = [];
+        }
+    };
+    if ( my $error = $@ ) {
+        $self->handle_exception( $error );
+        $dmarc->{'spf'} = [];
+    }
+
+    # Add the DKIM Results
+    my $dkim_handler = $self->get_handler('DKIM');
+    my @dkim_values;
+    my $arc_values = $self->get_handler('ARC')->get_trusted_dkim_results();
+    if ( $arc_values ) {
+        foreach my $arc_value ( @$arc_values ) {
+            push @dkim_values, $arc_value;
+        }
+    }
+    $dmarc->{'dkim'} = \@dkim_values;
+    # Add the local DKIM object is it exists
+    if ( $dkim_handler->{'has_dkim'} ) {
+        my $dkim_object = $self->get_object('dkim');
+        if ( $dkim_object ) {
+            $dmarc->dkim( $dkim_object );
+        }
+    }
+
+    # Run the Validator
+    my $dmarc_result = $dmarc->validate();
+    return $dmarc_result;
+}
+
 sub _process_dmarc_for {
     my ( $self, $env_domain_from, $header_domain ) = @_;
 
@@ -133,6 +232,7 @@ sub _process_dmarc_for {
     # Get a fresh DMARC object each time.
     $self->destroy_object('dmarc');
     my $dmarc = $self->get_dmarc_object();
+    $dmarc->source_ip( $self->ip_address() );
 
     # Set the DMARC Envelope From Domain
     if ( $env_domain_from ne q{} ) {
@@ -188,51 +288,17 @@ sub _process_dmarc_for {
         # Does our ARC handler have the necessary methods?
         $have_arc = 0 unless $self->get_handler('ARC')->can( 'get_trusted_arc_authentication_results' );
     }
-    my $used_arc = 0;
     $have_arc = 0 if ! $config->{ 'use_arc' };
 
     # Add the SPF Results Object
     eval {
         my $spf = $self->get_handler('SPF');
         if ( $spf ) {
-
-            if ( ! $have_arc ) {
-                $dmarc->spf(
-                    'domain' => $spf->{'dmarc_domain'},
-                    'scope'  => $spf->{'dmarc_scope'},
-                    'result' => $spf->{'dmarc_result'},
-                );
-            }
-            else {
-                if ( $spf->{'dmarc_result'} eq 'pass' && lc $spf->{'dmarc_domain'} eq lc $header_domain ) {
-                    # Have a matching local entry, use it.
-                    ## TODO take org domains into consideration here
-                    $dmarc->spf(
-                        'domain' => $spf->{'dmarc_domain'},
-                        'scope'  => $spf->{'dmarc_scope'},
-                        'result' => $spf->{'dmarc_result'},
-                    );
-                }
-                elsif ( my $arc_spf = $self->get_handler('ARC')->get_trusted_spf_results() ) {
-                    # Pull from ARC if we can
-                    $used_arc = 1;
-                    push @$arc_spf, {
-                        'domain' => $spf->{'dmarc_domain'},
-                        'scope'  => $spf->{'dmarc_scope'},
-                        'result' => $spf->{'dmarc_result'},
-                    };
-                    $dmarc->spf( $arc_spf );
-                }
-                else {
-                    # Nothing else matched, use the local entry anyway
-                    $dmarc->spf(
-                        'domain' => $spf->{'dmarc_domain'},
-                        'scope'  => $spf->{'dmarc_scope'},
-                        'result' => $spf->{'dmarc_result'},
-                    );
-                }
-            }
-
+            $dmarc->spf(
+                'domain' => $spf->{'dmarc_domain'},
+                'scope'  => $spf->{'dmarc_scope'},
+                'result' => $spf->{'dmarc_result'},
+            );
         }
         else {
             $dmarc->{'spf'} = [];
@@ -246,39 +312,20 @@ sub _process_dmarc_for {
 
     # Add the DKIM Results
     my $dkim_handler = $self->get_handler('DKIM');
-    if ( $have_arc ) {
-        my @dkim_values;
-        my $arc_values = $self->get_handler('ARC')->get_trusted_dkim_results();
-        if ( $arc_values ) {
-            foreach my $arc_value ( @$arc_values ) {
-                push @dkim_values, $arc_value;
-            }
-        }
-        $dmarc->{'dkim'} = \@dkim_values;
-        # Add the local DKIM object is it exists
-        if ( $dkim_handler->{'has_dkim'} ) {
-            my $dkim_object = $self->get_object('dkim');
-            if ( $dkim_object ) {
-                $dmarc->dkim( $dkim_object );
-            }
-        }
+    if ( $dkim_handler->{'failmode'} ) {
+        $dmarc->{'dkim'} = [];
     }
-    else {
-        if ( $dkim_handler->{'failmode'} ) {
-            $dmarc->{'dkim'} = [];
-        }
-        elsif ( $dkim_handler->{'has_dkim'} ) {
-            my $dkim_object = $self->get_object('dkim');
-            if ( $dkim_object ) {
-                $dmarc->dkim( $dkim_object );
-            }
-            else {
-                $dmarc->{'dkim'} = [];
-            }
+    elsif ( $dkim_handler->{'has_dkim'} ) {
+        my $dkim_object = $self->get_object('dkim');
+        if ( $dkim_object ) {
+            $dmarc->dkim( $dkim_object );
         }
         else {
             $dmarc->{'dkim'} = [];
         }
+    }
+    else {
+        $dmarc->{'dkim'} = [];
     }
 
     # Run the Validator
@@ -305,42 +352,63 @@ sub _process_dmarc_for {
     $self->handle_exception( $@ );
     # If we didn't get a result, set to none.
     $dmarc_policy = 'none' if ! $dmarc_policy;
-    $self->dbgout( 'DMARCPolicy', $dmarc_policy, LOG_INFO );
-
-    ## TODO decide if this is the right thing to do
-    if ( $used_arc ) {
-        $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Trusted ARC chain considered' );
-    }
+    my $dmarc_sub_policy = eval{ $dmarc_result->published()->sp(); };
+    $self->handle_exception( $@ );
+    # If we didn't get a result, set to none.
+    $dmarc_sub_policy = 'none' if ! $dmarc_sub_policy;
+    $self->dbgout( 'DMARCPolicy', "$dmarc_policy $dmarc_sub_policy", LOG_INFO );
 
     my $policy_override;
+    my @comments;
+
+    my $arc_pass_override = 0;
+    # Re-evaluate non passes taking ARC into account if possible.
+    if ( $have_arc && $dmarc_code eq 'fail' ) {
+        my $arc_result = $self->_process_arc_dmarc_for( $env_domain_from, $header_domain );
+        my $arc_code = $arc_result->result;
+        if ( $arc_code eq 'pass' ) {
+            ## TODO WTF DO WE DO HERE
+            #Report correctly and also header usefully
+            $arc_pass_override = 1;
+        }
+    }
 
     # Reject mail and/or set policy override reasons
-    if ( $dmarc_code eq 'fail' && $dmarc_policy eq 'reject' ) {
-        if ( $config->{'hard_reject'} ) {
-            if ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
-                $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
-                $policy_override = 'mailing_list';
-                $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local mailing list policy' );
-                #$dmarc_result->disposition('none');
-                #$dmarc_disposition = 'none';
-            }
-            elsif ( $self->is_whitelisted() ) {
-                $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
-                $policy_override = 'trusted_forwarder';
-                $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local white list' );
-                #$dmarc_result->disposition('none');
-                #$dmarc_disposition = 'none';
-            }
-            else {
+    if ( $dmarc_code eq 'fail' ) {
+        # Policy override decisions.
+        if ( $arc_pass_override ) {
+            $self->dbgout( 'DMARCReject', "Policy reject overridden for ARC Chain", LOG_INFO );
+            $dmarc_result->disposition('none');
+            $dmarc_disposition = 'none';
+            $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Trusted ARC chain considered' );
+        }
+        elsif ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
+            $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
+            $policy_override = 'mailing_list';
+            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local mailing list policy' );
+            $dmarc_result->disposition('none');
+            $dmarc_disposition = 'none';
+        }
+        elsif ( $self->is_whitelisted() ) {
+            $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
+            $policy_override = 'trusted_forwarder';
+            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local white list' );
+            $dmarc_result->disposition('none');
+            $dmarc_disposition = 'none';
+        }
+
+        if ( $dmarc_disposition eq 'reject' ) {
+            if ( $config->{'hard_reject'} ) {
                 $self->reject_mail( '550 5.7.0 DMARC policy violation' );
                 $self->dbgout( 'DMARCReject', "Policy reject", LOG_INFO );
             }
-        }
-        else {
-            $policy_override = 'local_policy';
-            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local policy' );
-            #$dmarc_result->disposition('none');
-            #$dmarc_disposition = 'none';
+            else {
+                $policy_override = 'local_policy';
+                $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local policy' );
+                my $no_reject_disposition = $config->{ 'no_reject_disposition' } // 'quarantine';
+                $dmarc_result->disposition( $no_reject_disposition );
+                $dmarc_disposition = $no_reject_disposition;
+            }
         }
     }
 
@@ -349,9 +417,11 @@ sub _process_dmarc_for {
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( $dmarc_code );
 
         # What comments can we add?
-        my @comments;
         if ( $dmarc_policy ) {
             push @comments, $self->format_header_entry( 'p', $dmarc_policy );
+        }
+        if ( $dmarc_sub_policy ) {
+            push @comments, $self->format_header_entry( 'sp', $dmarc_sub_policy );
         }
         if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
             push @comments, 'has-list-id=yes';
@@ -359,10 +429,10 @@ sub _process_dmarc_for {
         if ( $dmarc_disposition ) {
             push @comments, $self->format_header_entry( 'd', $dmarc_disposition );
         }
-        #if ( $policy_override ) {
-        #    push @comments, $self->format_header_entry( 'override', $policy_override );
-        #}
-        if ( $used_arc ) {
+        if ( $policy_override ) {
+            push @comments, $self->format_header_entry( 'override', $policy_override );
+        }
+        if ( $arc_pass_override ) {
             push @comments, 'Trusted ARC chain considered';
         }
 
@@ -382,7 +452,7 @@ sub _process_dmarc_for {
         'policy'         => $dmarc_policy,
         'is_list'        => ( $self->{'is_list'}      ? '1' : '0' ),
         'is_whitelisted' => ( $self->is_whitelisted() ? '1' : '0'),
-        'used_arc'       => ( $used_arc ? '1' : '0' ),
+        'used_arc'       => ( $arc_pass_override ? '1' : '0' ),
     };
     $self->metric_count( 'dmarc_total', $metric_data );
 
@@ -420,7 +490,16 @@ sub get_dmarc_object {
         return $dmarc;
     }
 
+    $dmarc = $self->new_dmarc_object();
+    $self->set_object('dmarc', $dmarc,1 );
+    return $dmarc;
+}
+
+sub new_dmarc_object {
+    my ( $self ) = @_;
+
     my $config = $self->{'config'};
+    my $dmarc;
 
     eval {
         $dmarc = Mail::DMARC::PurePerl->new();
@@ -435,7 +514,6 @@ sub get_dmarc_object {
         if ( $config->{'debug'} && $config->{'logtoerr'} ) {
             $dmarc->verbose(1);
         }
-        $dmarc->source_ip( $self->ip_address() );
         $self->set_object('dmarc', $dmarc,1 );
     };
     if ( my $error = $@ ) {
@@ -712,25 +790,26 @@ This handler requires the SPF and DKIM handlers to be installed and active.
 
 =head1 CONFIGURATION
 
-        "DMARC" : {                                      | Config for the DMARC Module
-                                                         | Requires DKIM and SPF
-            "hard_reject"         : 0,                   | Reject mail which fails with a reject policy
-            "no_list_reject"      : 0,                   | Do not reject mail detected as mailing list
-            "whitelisted"         : [                    | A list of ip addresses or CIDR ranges, or dkim domains
-                "10.20.30.40",                           | for which we do not want to hard reject mail on fail p=reject
-                "dkim:bad.forwarder.com",                | (valid) DKIM signing domains can also be whitelisted by
-                "20.30.40.0/24"                          | having an entry such as "dkim:domain.com"
+        "DMARC" : {                                        | Config for the DMARC Module
+                                                           | Requires DKIM and SPF
+            "hard_reject"           : 0,                   | Reject mail which fails with a reject policy
+            "no_reject_disposition" : "quarantine",        | What to report when hard_reject is 0
+            "no_list_reject"        : 0,                   | Do not reject mail detected as mailing list
+            "whitelisted"           : [                    | A list of ip addresses or CIDR ranges, or dkim domains
+                "10.20.30.40",                             | for which we do not want to hard reject mail on fail p=reject
+                "dkim:bad.forwarder.com",                  | (valid) DKIM signing domains can also be whitelisted by
+                "20.30.40.0/24"                            | having an entry such as "dkim:domain.com"
             ],
-            "use_arc"             : 1,                   | Use trusted ARC results if available
-            "hide_none"           : 0,                   | Hide auth line if the result is 'none'
-            "detect_list_id"      : "1",                 | Detect a list ID and modify the DMARC authentication header
-                                                         | to note this, useful when making rules for junking email
-                                                         | as mailing lists frequently cause false DMARC failures.
-            "report_skip_to"     : [                     | Do not send DMARC reports for emails to these addresses.
-                "dmarc@yourdomain.com",                  | This can be used to avoid report loops for email sent to
-                "dmarc@example.com"                      | your report from addresses.
+            "use_arc"             : 1,                     | Use trusted ARC results if available
+            "hide_none"           : 0,                     | Hide auth line if the result is 'none'
+            "detect_list_id"      : "1",                   | Detect a list ID and modify the DMARC authentication header
+                                                           | to note this, useful when making rules for junking email
+                                                           | as mailing lists frequently cause false DMARC failures.
+            "report_skip_to"     : [                       | Do not send DMARC reports for emails to these addresses.
+                "dmarc@yourdomain.com",                    | This can be used to avoid report loops for email sent to
+                "dmarc@example.com"                        | your report from addresses.
             ],
-            "no_report"          : "1",                  | If set then we will not attempt to store DMARC reports.
-            "config_file"        : "/etc/mail-dmarc.ini" | Optional path to dmarc config file
+            "no_report"          : "1",                    | If set then we will not attempt to store DMARC reports.
+            "config_file"        : "/etc/mail-dmarc.ini"   | Optional path to dmarc config file
         },
 
