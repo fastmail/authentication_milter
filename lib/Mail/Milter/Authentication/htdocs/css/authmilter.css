@@ -1,9 +1,15 @@
 HTTP/1.0 200 OK
 Content-Type: text/css
 
+body {
+    background: #ddeeff;
+    color: #003366;
+}
+
 h1 {
     font-size: 4rem;
     border-bottom: 1px solid grey;
+    color: black;
 }
 
 li {
