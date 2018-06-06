@@ -82,7 +82,7 @@ my $testers = {
 subtest 'config' => sub {
     my $tester = $testers->{ 'basic' };
     my $config = $tester->{ 'authmilter' }->{ 'handler' }->{ 'DKIM' }->default_config();
-    is_deeply( $config, { 'hide_none' => 0, 'hide_domainkeys' => 0, 'check_adsp' => 1, 'show default_adsp' => 0, 'adsp_hide_none' => 0, 'extra_properties' => 0, }, 'Returns correct config' );
+    is_deeply( $config, { 'hide_none' => 0, 'hide_domainkeys' => 0, 'check_adsp' => 1, 'show_default_adsp' => 0, 'adsp_hide_none' => 0, 'extra_properties' => 0, 'no_strict' => 0 }, 'Returns correct config' );
 };
 
 subtest 'metrics' => sub {
@@ -122,7 +122,12 @@ foreach my $tester_key ( sort keys %$testers ) {
             my $header = $tester->get_authresults_header()->search({ 'key' => 'dkim' });
             is( scalar @{ $header->children() }, 1, 'One Entry' );
             my $result = eval{ $header->children()->[0]->value(); } // q{};
-            is( $result, 'pass', 'DKIM Pass on ' . $Key );
+            use Data::Dumper;warn Dumper $KeyData;
+            my $expected =
+                $KeyData->{ $Key }->{ 'algorithm' } eq 'rsa-sha1' ? 'invalid'
+              : $KeyData->{ $Key }->{ 'size' } < 1024 ? 'fail'
+              : 'pass';
+            is( $result, $expected, 'DKIM Pass on ' . $Key );
             is ( $header->search({ 'key' => 'header.a' })->children()->[0]->value(), $KeyData->{ $Key }->{ 'algorithm'} , 'header.a property' );
             is ( $header->search({ 'key' => 'header.s' })->children()->[0]->value(), $KeyData->{ $Key }->{ 'selector' }, 'Selector property' );
             if ( $tester_key eq 'extra_properties' ) {
@@ -148,14 +153,22 @@ subtest 'Single signing fail' => sub {
         my $header = $tester->get_authresults_header()->search({ 'key' => 'dkim' });
         is( scalar @{ $header->children() }, 1, 'One Entry' );
         my $result = eval{ $header->children()->[0]->value(); } // q{};
-        is( $result, 'fail', 'DKIM Fail on ' . $Key );
+        my $expected =
+            $KeyData->{ $Key }->{ 'algorithm' } eq 'rsa-sha1' ? 'invalid'
+          : $KeyData->{ $Key }->{ 'size' } < 1024 ? 'fail'
+          : 'fail';
+        is( $result, $expected, 'DKIM Fail on ' . $Key );
     }
 };
 
 subtest 'Double signing pass' => sub {
     # Double Key Testing
     foreach my $Key ( sort keys %$KeyData ) {
+        next if ( $KeyData->{ $Key }->{ 'algorithm' } eq 'rsa-sha1' );
+        next if ( $KeyData->{ $Key }->{ 'size' } < 1024 );
         foreach my $Key2 ( sort keys %$KeyData ) {
+            next if ( $KeyData->{ $Key2 }->{ 'algorithm' } eq 'rsa-sha1' );
+            next if ( $KeyData->{ $Key2 }->{ 'size' } < 1024 );
             my $SignedMail = sign_mail({ 'mail' => $TestMail, 'key' => $Key });
             my $SignedMail2 = sign_mail({ 'mail' => $SignedMail, 'key' => $Key2 });
             $TestWith->{ 'body' } = $SignedMail2;
@@ -173,7 +186,11 @@ subtest 'Double signing pass' => sub {
 subtest 'Double signing single pass' => sub {
     # Double Key Testing
     foreach my $Key ( sort keys %$KeyData ) {
+        next if ( $KeyData->{ $Key }->{ 'algorithm' } eq 'rsa-sha1' );
+        next if ( $KeyData->{ $Key }->{ 'size' } < 1024 );
         foreach my $Key2 ( sort keys %$KeyData ) {
+            next if ( $KeyData->{ $Key2 }->{ 'algorithm' } eq 'rsa-sha1' );
+            next if ( $KeyData->{ $Key2 }->{ 'size' } < 1024 );
             my $SignedMail = sign_mail({ 'mail' => $TestMail, 'key' => $Key });
             $SignedMail .= "\nWith added text for a fail result\n";
             my $SignedMail2 = sign_mail({ 'mail' => $SignedMail, 'key' => $Key2 });

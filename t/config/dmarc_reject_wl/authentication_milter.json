@@ -40,7 +40,8 @@
             "hide_none" : 0,
             "show_default_adsp" : 0,
             "check_adsp" : 1,
-            "adsp_hide_none" : 0
+            "adsp_hide_none" : 0,
+            "no_strict" : 1
         },
         "PTR" : {},
         "SenderID" : {
