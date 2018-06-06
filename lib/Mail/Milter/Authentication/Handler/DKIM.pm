@@ -23,6 +23,7 @@ sub default_config {
         'show default_adsp' => 0,
         'adsp_hide_none'    => 0,
         'extra_properties'  => 0,
+        'no_strict'         => 0,
     };
 }
 
@@ -96,7 +97,11 @@ sub eoh_callback {
 
         my $dkim;
         eval {
-            $dkim = Mail::DKIM::Verifier->new();
+            my $UseStrict = 1;
+            if ( $config->{ 'no_strict' } ) {
+                $UseStrict = 0;
+            }
+            $dkim = Mail::DKIM::Verifier->new( 'Strict' => $UseStrict );
             # The following requires Mail::DKIM > 0.4
             if ( $Mail::DKIM::VERSION >= 0.4 ) {
                 my $resolver = $self->get_object('resolver');
@@ -427,5 +432,6 @@ Module for validation of DKIM and DomainKeys signatures, and application of ADSP
             "show_default_adsp" : 0,                    | Show the default ADSP result
             "adsp_hide_none"    : 0,                    | Hide auth ADSP if the result is 'none'
             "extra_properties"  : 0                     | Add extra properties (not to rfc) relating to key and selector
+            "no_strict"         : 0,                    | Ignore rfc 8301 security considerations (not recommended
         },
 
