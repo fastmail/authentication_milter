@@ -382,9 +382,13 @@ sub child_handler {
 <h1>Authentication Milter</h1>
 
     <ul>
-        <li>Version: } . $Mail::Milter::Authentication::VERSION . qq{</li>
-        <li>Ident: } . $Mail::Milter::Authentication::Config::IDENT . qq{</li>
-        <li>Installed Handlers
+        <li><b>Running server</b>
+            <ul>
+                <li>Version: } . $Mail::Milter::Authentication::VERSION . qq{</li>
+                <li>Ident: } . $Mail::Milter::Authentication::Config::IDENT . qq{</li>
+            </ul>
+        </li>
+        <li><b>Installed Handlers</b>
             <ul>};
 
             foreach my $Handler ( sort keys %{ $server->{ 'handler' } } ) {
@@ -395,7 +399,7 @@ sub child_handler {
             print $socket qq{
             </ul>
         </li>
-        <li>Registered Callbacks
+        <li><b>Registered Callbacks</b>
             <ul>};
 
             foreach my $stage ( qw{ setup connect helo envfrom envrcpt header eoh body eom abort close addheader } ) {
@@ -405,7 +409,7 @@ sub child_handler {
 
             print $socket qq{</ul>
         </li>
-        <li>Connection Details
+        <li><b>Connection Details</b>
             <ul>};
             print $socket '<li>Protocol: ' . $config->{'protocol'} . '</li>';
             my $connections = $config->{'connections'};
@@ -416,10 +420,10 @@ sub child_handler {
             print $socket qq{
             </ul>
         </li>
-        <li>Metrics
+        <li><b>Metrics</b>
             <ul>
                 <li><a href="/metrics">Prometheus metrics endpoint</a></li>
-                <li><a href="/grafana">Grafana Dashboard</a></li>
+                <li>Example <a href="/grafana">Grafana dashboard</a> for this setup</li>
             </ul>
         </li>
     </ul>
