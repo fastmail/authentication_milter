@@ -30,6 +30,7 @@ sub default_config {
         'arcseal_keyfile'   => undef,
         'arcseal_headers'   => undef,
         'trusted_domains'   => [],
+        'no_strict'         => 0,
     };
 }
 
@@ -481,7 +482,11 @@ sub eoh_callback {
 
     my $arc;
     eval {
-        $arc = Mail::DKIM::ARC::Verifier->new();
+        my $UseStrict = 1;
+        if ( $config->{ 'no_strict' } ) {
+            $UseStrict = 0;
+        }
+        $arc = Mail::DKIM::ARC::Verifier->new( 'Strict' => $UseStrict );
         # The following requires Mail::DKIM > 0.4
         my $resolver = $self->get_object('resolver');
         Mail::DKIM::DNS::resolver($resolver);
@@ -819,14 +824,15 @@ Module for validation of ARC signatures
 
 =head1 CONFIGURATION
 
-        "ARC" : {                                       | Config for the ARC Module
-            "hide_none"         : 0,                    | Hide auth line if the result is 'none'
-            "arcseal_domain"    : "example.com",        | Domain to sign ARC Seal with (not sealed if blank)
-            "arcseal_selector"  => undef,               | Selector to use for ARC Seal (not sealed if blank)
-            "arcseal_algorithm" => 'rsa-sha256',        | Algorithm to use on ARC Seal (default rsa-sha256)
-            "arcseal_key"       => undef,               | Key (base64) string to sign ARC Seal with; or
-            "arcseal_keyfile"   => undef,               | File containing ARC Seal key
-            "arcseal_headers"   => undef,               | Additional headers to cover in ARC-Message-Signature
-            "trusted_domains"   => [],                  | Trust these domains when traversing ARC chains
+        "ARC" : {                                      | Config for the ARC Module
+            "hide_none"         : 0,                   | Hide auth line if the result is 'none'
+            "arcseal_domain"    : "example.com",       | Domain to sign ARC Seal with (not sealed if blank)
+            "arcseal_selector"  : undef,               | Selector to use for ARC Seal (not sealed if blank)
+            "arcseal_algorithm" : 'rsa-sha256',        | Algorithm to use on ARC Seal (default rsa-sha256)
+            "arcseal_key"       : undef,               | Key (base64) string to sign ARC Seal with; or
+            "arcseal_keyfile"   : undef,               | File containing ARC Seal key
+            "arcseal_headers"   : undef,               | Additional headers to cover in ARC-Message-Signature
+            "trusted_domains"   : [],                  | Trust these domains when traversing ARC chains
+            "no_strict"         : 0,                   | Ignore rfc 8301 security considerations (not recommended)
         },
 
