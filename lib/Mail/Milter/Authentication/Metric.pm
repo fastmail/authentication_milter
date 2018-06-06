@@ -13,6 +13,7 @@ use English qw{ -no_match_vars };
 use JSON;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Metric::Grafana;
+use Mail::Milter::Authentication::HTDocs;
 
 =constructor I<new()>
 
@@ -370,16 +371,19 @@ sub child_handler {
 <html>
 <head>
 <title>Authentication Milter</title>
+<link rel="stylesheet" href="/css/normalize.css" />
+<link rel="stylesheet" href="/css/skeleton.css" />
+<link rel="stylesheet" href="/css/authmilter.css" />
 </head>
 <body>
+
+<div class="container">
 
 <h1>Authentication Milter</h1>
 
     <ul>
         <li>Version: } . $Mail::Milter::Authentication::VERSION . qq{</li>
         <li>Ident: } . $Mail::Milter::Authentication::Config::IDENT . qq{</li>
-        <li><a href="/metrics">Prometheus metrics endpoint</a></li>
-        <li><a href="/grafana">Grafana Dashboard</a></li>
         <li>Installed Handlers
             <ul>};
 
@@ -400,7 +404,7 @@ sub child_handler {
             }
 
             print $socket qq{</ul>
-        </lu>
+        </li>
         <li>Connection Details
             <ul>};
             print $socket '<li>Protocol: ' . $config->{'protocol'} . '</li>';
@@ -411,8 +415,16 @@ sub child_handler {
             }
             print $socket qq{
             </ul>
-        </lu>
+        </li>
+        <li>Metrics
+            <ul>
+                <li><a href="/metrics">Prometheus metrics endpoint</a></li>
+                <li><a href="/grafana">Grafana Dashboard</a></li>
+            </ul>
+        </li>
     </ul>
+
+ </div>
 </body>
 };
         }
@@ -425,10 +437,17 @@ sub child_handler {
             print $socket $Grafana->get_dashboard( $server );
         }
         else {
-            print $socket "HTTP/1.0 404 Not Found\n";
-            print $socket "Content-Type: text/plain\n";
-            print $socket "\n";
-            print $socket "Not Found\n";
+            my $htdocs = Mail::Milter::Authentication::HTDocs->new();
+            my $result = $htdocs->get_file( $request_uri );
+            if ( $result ) {
+                print $socket $result;
+            }
+            else {
+                print $socket "HTTP/1.0 404 Not Found\n";
+                print $socket "Content-Type: text/plain\n";
+                print $socket "\n";
+                print $socket "Not Found\n";
+            }
         }
 
         alarm( 0 );

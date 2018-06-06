@@ -1,0 +1,16 @@
+HTTP/1.0 200 OK
+Content-Type: text/css
+
+h1 {
+    font-size: 4rem;
+    border-bottom: 1px solid grey;
+}
+
+li {
+    margin-bottom: 0;
+}
+
+ul ul {
+    margin-top: 0;
+}
+
