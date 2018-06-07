@@ -8,6 +8,7 @@ Revision history for Mail-Milter-Authentication
         - DMARC: Correctly report DMARC policy when using ARC override
         - DMARC: Set the disposition more reliably
         - Core: methods to set defer/quarantine reasons
+        - Core: set a header for quarantined mail
 
 2.20180526 2018-05-27 09:11:02+10:00 Australia/Melbourne
         - Removed experimental externl callback stage hooks
