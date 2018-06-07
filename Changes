@@ -1,10 +1,12 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
-        - Rewrite the ReturnOK Handler to handle multiple addresses properly
-        - Fix per-protocol-section timeouts
+        - ReturnOK: Rewrite Handler to handle multiple addresses properly
+        - Core: Fix per-protocol-section timeouts
         - DKIM: Follow RFC 8301 security recommendations by default
-        - Improved the HTTP status page
+        - Core: Improved the HTTP status page
+        - DMARC: Correctly report DMARC policy when using ARC override
+        - DMARC: Set the disposition more reliably
 
 2.20180526 2018-05-27 09:11:02+10:00 Australia/Melbourne
         - Removed experimental externl callback stage hooks
