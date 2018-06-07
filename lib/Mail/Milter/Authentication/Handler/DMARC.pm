@@ -406,6 +406,10 @@ sub _process_dmarc_for {
         }
     }
 
+    if ( $dmarc_disposition eq 'quarantine' ) {
+        $self->quarantine_mail( 'Quarantined due to DMARC policy' );
+    }
+
     # Add the AR Header
     my @comments;
     if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {

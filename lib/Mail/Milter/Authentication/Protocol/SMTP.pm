@@ -431,6 +431,11 @@ sub smtp_command_mailfrom {
                 $self->loginfo ( "SMTPReject: $reject_reason" );
                 print $socket $reject_reason . "\r\n";
             }
+            elsif ( my $defer_reason = $handler->get_defer_mail() ) {
+                $handler->clear_defer_mail();
+                $self->loginfo ( "SMTPDefer: $defer_reason" );
+                print $socket $defer_reason . "\r\n";
+            }
             else {
                 print $socket "451 4.0.0 MAIL - That's not right\r\n";
             }
@@ -440,6 +445,11 @@ sub smtp_command_mailfrom {
             $self->loginfo ( "SMTPReject: $reject_reason" );
             print $socket $reject_reason . "\r\n";
         }
+        elsif ( my $defer_reason = $handler->get_defer_mail() ) {
+            $handler->clear_defer_mail();
+            $self->loginfo ( "SMTPDefer: $defer_reason" );
+            print $socket $defer_reason . "\r\n";
+        }
         else {
             print $socket "451 4.0.1 HELO - That's not right\r\n";
         }
@@ -448,6 +458,11 @@ sub smtp_command_mailfrom {
         $handler->clear_reject_mail();
         $self->loginfo ( "SMTPReject: $reject_reason" );
         print $socket $reject_reason . "\r\n";
+    }
+    elsif ( my $defer_reason = $handler->get_defer_mail() ) {
+        $handler->clear_defer_mail();
+        $self->loginfo ( "SMTPDefer: $defer_reason" );
+        print $socket $defer_reason . "\r\n";
     }
     else {
         print $socket "451 4.0.2 Connection - That's not right\r\n";
@@ -479,6 +494,11 @@ sub smtp_command_rcptto {
         $handler->clear_reject_mail();
         $self->loginfo ( "SMTPReject: $reject_reason" );
         print $socket $reject_reason . "\r\n";
+    }
+    elsif ( my $defer_reason = $handler->get_defer_mail() ) {
+        $handler->clear_defer_mail();
+        $self->loginfo ( "SMTPDefer: $defer_reason" );
+        print $socket $defer_reason . "\r\n";
     }
     else {
         print $socket "451 4.0.3 That's not right\r\n";
@@ -673,6 +693,20 @@ sub smtp_command_data {
         else {
             $self->loginfo ( "SMTPReject: $reject_reason" );
             print $socket $reject_reason . "\r\n";
+        }
+    }
+    elsif ( my $defer_reason = $handler->get_defer_mail() ) {
+        $handler->metric_count( 'mail_processed_total', { 'result' => 'defered' } );
+        $handler->clear_defer_mail();
+        if ( $smtp->{'using_lmtp'} ) {
+            foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
+                $self->loginfo ( "SMTPDefer: $defer_reason" );
+                print $socket $defer_reason . "\r\n";
+            }
+        }
+        else {
+            $self->loginfo ( "SMTPDefer: $defer_reason" );
+            print $socket $defer_reason . "\r\n";
         }
     }
     else {

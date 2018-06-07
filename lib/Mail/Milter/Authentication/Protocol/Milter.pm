@@ -122,9 +122,14 @@ sub milter_process_command {
     }
 
     my $reject_reason;
+    my $defer_reason;
     if ( $reject_reason = $handler->get_reject_mail() ) {
         $handler->clear_reject_mail();
         $returncode = SMFIS_REJECT;
+    }
+    elsif ( $defer_reason = $handler->get_defer_mail() ) {
+        $handler->clear_defer_mail();
+        $returncode = SMFIS_TEMPFAIL;
     }
 
     if (defined $returncode) {
@@ -156,7 +161,7 @@ sub milter_process_command {
         if ( $command ne SMFIC_ABORT ) {
             if ( $reject_reason ) {
                 my ( $rcode, $xcode, $message ) = split( ' ', $reject_reason, 3 );
-                if ($rcode !~ /^[45]\d\d$/ || $xcode !~ /^[45]\.\d\.\d$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
+                if ($rcode !~ /^[5]\d\d$/ || $xcode !~ /^[5]\.\d\.\d$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
                     $handler->metric_count( 'mail_processed_total', { 'result' => 'deferred_error' } );
                     $self->loginfo ( "Invalid reject message $reject_reason - setting to TempFail" );
                     $self->write_packet(SMFIR_TEMPFAIL );
@@ -166,6 +171,22 @@ sub milter_process_command {
                     $self->loginfo ( "SMTPReject: $reject_reason" );
                     $self->write_packet( SMFIR_REPLYCODE,
                         $reject_reason
+                        . "\0"
+                    );
+                }
+            }
+            elsif ( $defer_reason ) {
+                my ( $rcode, $xcode, $message ) = split( ' ', $defer_reason, 3 );
+                if ($rcode !~ /^[4]\d\d$/ || $xcode !~ /^[4]\.\d\.\d$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
+                    $handler->metric_count( 'mail_processed_total', { 'result' => 'deferred_error' } );
+                    $self->loginfo ( "Invalid defer message $defer_reason - setting to TempFail" );
+                    $self->write_packet(SMFIR_TEMPFAIL );
+                }
+                else {
+                    $handler->metric_count( 'mail_processed_total', { 'result' => 'deferred' } );
+                    $self->loginfo ( "SMTPDefer: $reject_reason" );
+                    $self->write_packet( SMFIR_REPLYCODE,
+                        $defer_reason
                         . "\0"
                     );
                 }

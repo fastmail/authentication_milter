@@ -1206,6 +1206,12 @@ sub get_return {
     if ( defined $self->get_reject_mail() ) {
         return $self->smfis_reject();
     }
+    elsif ( defined $self->get_defer_mail() ) {
+        return $self->smfis_tempfail();
+    }
+    elsif ( defined $self->get_quarantine_mail() ) {
+        ## TODO Implement this.
+    }
     return $top_handler->{'return_code'};
 }
 
@@ -1231,6 +1237,57 @@ sub clear_reject_mail {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'reject_mail'};
+    return;
+}
+
+=method I<get_defer_mail()>
+
+Get the defer mail reason (or undef)
+
+=cut
+
+sub get_defer_mail {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    return $top_handler->{'defer_mail'};
+}
+
+=method I<clear_defer_mail()>
+
+Clear the defer mail reason
+
+=cut
+
+sub clear_defer_mail {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    delete $top_handler->{'defer_mail'};
+    return;
+}
+
+
+=method I<get_quarantime_mail()>
+
+Get the quarantine mail reason (or undef)
+
+=cut
+
+sub get_quarantine_mail {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    return $top_handler->{'quarantine_mail'};
+}
+
+=method I<clear_quarantine_mail()>
+
+Clear the quarantine mail reason
+
+=cut
+
+sub clear_quarantine_mail {
+    my ( $self ) = @_;
+    my $top_handler = $self->get_top_handler();
+    delete $top_handler->{'quarantine_mail'};
     return;
 }
 
@@ -1435,8 +1492,44 @@ Reject mail with the given reason
 
 sub reject_mail {
     my ( $self, $reason ) = @_;
+    my ( $rcode, $xcode, $message ) = split( ' ', $reason, 3 );
+    if ($rcode !~ /^[5]\d\d$/ || $xcode !~ /^[5]\.\d\.\d$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
+        $self->loginfo ( "Invalid reject message $reason - setting to default" );
+        $reason = '550 5.0.0 Message rejected';
+    }
     my $top_handler = $self->get_top_handler();
     $top_handler->{'reject_mail'} = $reason;
+    return;
+}
+
+=method I<quarantine_mail( $reason )>
+
+Request quarantine mail with the given reason
+
+=cut
+
+sub quarantine_mail {
+    my ( $self, $reason ) = @_;
+    my $top_handler = $self->get_top_handler();
+    $top_handler->{'quarantine_mail'} = $reason;
+    return;
+}
+
+=method I<defer_mail( $reason )>
+
+Defer mail with the given reason
+
+=cut
+
+sub defer_mail {
+    my ( $self, $reason ) = @_;
+    my ( $rcode, $xcode, $message ) = split( ' ', $reason, 3 );
+    if ($rcode !~ /^[4]\d\d$/ || $xcode !~ /^[4]\.\d\.\d$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
+        $self->loginfo ( "Invalid defer message $reason - setting to default" );
+        $reason = '450 4.0.0 Message deferred';
+    }
+    my $top_handler = $self->get_top_handler();
+    $top_handler->{'defer_mail'} = $reason;
     return;
 }
 
