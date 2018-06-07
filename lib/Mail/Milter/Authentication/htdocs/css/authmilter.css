@@ -4,12 +4,23 @@ Content-Type: text/css
 body {
     background: #ddeeff;
     color: #003366;
+    border-top: 4px solid #003366;
 }
 
 h1 {
     font-size: 4rem;
     border-bottom: 1px solid grey;
     color: black;
+}
+
+h2 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.25em;
+}
+
+hr {
+    border-top: 1px solid grey;
 }
 
 li {

@@ -381,52 +381,51 @@ sub child_handler {
 
 <h1>Authentication Milter</h1>
 
+    <h2>Running server</h2>
     <ul>
-        <li><b>Running server</b>
-            <ul>
-                <li>Version: } . $Mail::Milter::Authentication::VERSION . qq{</li>
-                <li>Ident: } . $Mail::Milter::Authentication::Config::IDENT . qq{</li>
-            </ul>
-        </li>
-        <li><b>Installed Handlers</b>
-            <ul>};
-
-            foreach my $Handler ( sort keys %{ $server->{ 'handler' } } ) {
-                next if $Handler eq '_Handler';
-                print $socket '<li>' . $Handler . ' (' . $server->{ 'handler' }->{ $Handler }->get_version(). ')</li>';
-            }
-
-            print $socket qq{
-            </ul>
-        </li>
-        <li><b>Registered Callbacks</b>
-            <ul>};
-
-            foreach my $stage ( qw{ setup connect helo envfrom envrcpt header eoh body eom abort close addheader } ) {
-                my $callbacks = $server->{ 'handler' }->{ '_Handler' }->get_callbacks( $stage );
-                print $socket "<li>$stage: " . join( ', ', @$callbacks ) . "</li>";
-            }
-
-            print $socket qq{</ul>
-        </li>
-        <li><b>Connection Details</b>
-            <ul>};
-            print $socket '<li>Protocol: ' . $config->{'protocol'} . '</li>';
-            my $connections = $config->{'connections'};
-            $connections->{'default'} = { 'connection' => $config->{'connection'} };
-            foreach my $connection ( sort keys %$connections ) {
-                print $socket '<li>' . $connection . ': ' . $connections->{ $connection }->{ 'connection' } . '</li>'
-            }
-            print $socket qq{
-            </ul>
-        </li>
-        <li><b>Metrics</b>
-            <ul>
-                <li><a href="/metrics">Prometheus metrics endpoint</a></li>
-                <li>Example <a href="/grafana">Grafana dashboard</a> for this setup</li>
-            </ul>
-        </li>
+        <li>Version: } . $Mail::Milter::Authentication::VERSION . qq{</li>
+        <li>Ident: } . $Mail::Milter::Authentication::Config::IDENT . qq{</li>
     </ul>
+
+    <h2>Installed Handlers</h2>
+    <ul>};
+
+    foreach my $Handler ( sort keys %{ $server->{ 'handler' } } ) {
+        next if $Handler eq '_Handler';
+        print $socket '<li>' . $Handler . ' (' . $server->{ 'handler' }->{ $Handler }->get_version(). ')</li>';
+    }
+
+    print $socket qq{
+    </ul>
+
+    <h2>Registered Callbacks</h2>
+    <ul>};
+
+    foreach my $stage ( qw{ setup connect helo envfrom envrcpt header eoh body eom abort close addheader } ) {
+        my $callbacks = $server->{ 'handler' }->{ '_Handler' }->get_callbacks( $stage );
+        print $socket "<li>$stage: " . join( ', ', @$callbacks ) . "</li>";
+    }
+
+    print $socket qq{</ul>
+
+    <h2>Connection Details</h2>
+    <ul>};
+    print $socket '<li>Protocol: ' . $config->{'protocol'} . '</li>';
+    my $connections = $config->{'connections'};
+    $connections->{'default'} = { 'connection' => $config->{'connection'} };
+    foreach my $connection ( sort keys %$connections ) {
+        print $socket '<li>' . $connection . ': ' . $connections->{ $connection }->{ 'connection' } . '</li>'
+    }
+    print $socket qq{
+    </ul>
+
+    <h2>Metrics</h2>
+    <ul>
+        <li><a href="/metrics">Prometheus metrics endpoint</a></li>
+        <li>Example <a href="/grafana">Grafana dashboard</a> for this setup</li>
+    </ul>
+
+    <hr />
 
  </div>
 </body>
