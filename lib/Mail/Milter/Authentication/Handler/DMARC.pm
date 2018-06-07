@@ -361,38 +361,33 @@ sub _process_dmarc_for {
     my $policy_override;
     my @comments;
 
-    my $arc_pass_override = 0;
+    my $arc_override = '';
     # Re-evaluate non passes taking ARC into account if possible.
     if ( $have_arc && $dmarc_code eq 'fail' ) {
         my $arc_result = $self->_process_arc_dmarc_for( $env_domain_from, $header_domain );
-        my $arc_code = $arc_result->result;
-        if ( $arc_code eq 'pass' ) {
-            ## TODO WTF DO WE DO HERE
-            #Report correctly and also header usefully
-            $arc_pass_override = 1;
-        }
+        $arc_override = $arc_result->result;
     }
 
     # Reject mail and/or set policy override reasons
     if ( $dmarc_code eq 'fail' ) {
         # Policy override decisions.
-        if ( $arc_pass_override ) {
-            $self->dbgout( 'DMARCReject', "Policy reject overridden for ARC Chain", LOG_INFO );
+        if ( $arc_override eq 'pass' ) {
+            $self->dbgout( 'DMARCReject', "Policy overridden using ARC Chain", LOG_INFO );
             $dmarc_result->disposition('none');
             $dmarc_disposition = 'none';
-            $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Trusted ARC chain considered' );
+            $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Policy overriden using trusted ARC chain' );
         }
         elsif ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
             $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
             $policy_override = 'mailing_list';
-            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local mailing list policy' );
+            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local mailing list policy' );
             $dmarc_result->disposition('none');
             $dmarc_disposition = 'none';
         }
         elsif ( $self->is_whitelisted() ) {
             $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
             $policy_override = 'trusted_forwarder';
-            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Reject ignored due to local white list' );
+            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local white list' );
             $dmarc_result->disposition('none');
             $dmarc_disposition = 'none';
         }
@@ -432,8 +427,8 @@ sub _process_dmarc_for {
         if ( $policy_override ) {
             push @comments, $self->format_header_entry( 'override', $policy_override );
         }
-        if ( $arc_pass_override ) {
-            push @comments, 'Trusted ARC chain considered';
+        if ( $arc_override ) {
+            push @comments, $self->format_header_entry( 'arc_aware_result', $arc_override );
         }
 
         if ( @comments ) {
@@ -447,12 +442,13 @@ sub _process_dmarc_for {
 
     # Write Metrics
     my $metric_data = {
-        'result'         => $dmarc_code,
-        'disposition'    => $dmarc_disposition,
-        'policy'         => $dmarc_policy,
-        'is_list'        => ( $self->{'is_list'}      ? '1' : '0' ),
-        'is_whitelisted' => ( $self->is_whitelisted() ? '1' : '0'),
-        'used_arc'       => ( $arc_pass_override ? '1' : '0' ),
+        'result'           => $dmarc_code,
+        'disposition'      => $dmarc_disposition,
+        'policy'           => $dmarc_policy,
+        'is_list'          => ( $self->{'is_list'}      ? '1' : '0' ),
+        'is_whitelisted'   => ( $self->is_whitelisted() ? '1' : '0'),
+        'arc_aware_result' => $arc_override,
+        'used_arc'         => ( $arc_override ? '1' : '0' ),
     };
     $self->metric_count( 'dmarc_total', $metric_data );
 
