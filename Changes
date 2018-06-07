@@ -9,6 +9,7 @@ Revision history for Mail-Milter-Authentication
         - DMARC: Set the disposition more reliably
         - Core: methods to set defer/quarantine reasons
         - Core: set a header for quarantined mail
+        - Sanitize: Add code to remove arbitrary headers
 
 2.20180526 2018-05-27 09:11:02+10:00 Australia/Melbourne
         - Removed experimental externl callback stage hooks

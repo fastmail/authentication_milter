@@ -57,7 +57,7 @@ sub is_hostname_mine {
 
 sub remove_auth_header {
     my ( $self, $index ) = @_;
-    $self->metric_count( 'sanitize_remove_total' );
+    $self->metric_count( 'sanitize_remove_total', {'header'=>'authentication-results'} );
     if ( !exists( $self->{'remove_auth_headers'} ) ) {
         $self->{'remove_auth_headers'} = [];
     }
@@ -65,18 +65,37 @@ sub remove_auth_header {
     return;
 }
 
+sub get_headers_to_remove {
+    my ( $self ) = @_;
+    my @headers = qw{ X-Disposition-Quarantine };
+    return \@headers;
+}
+
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     delete $self->{'auth_result_header_index'};
     delete $self->{'remove_auth_headers'};
+
+    my $headers = {};
+    foreach my $header ( sort @{ $self->get_headers_to_remove() } ) {
+        $headers->{ lc $header } = {
+            'index'  => 0,
+            'silent' => 1,
+        };
+    }
+    $self->{'header_hash'} = $headers;
+
     return;
 }
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
     my $config = $self->handler_config();
+
     return if ( $self->is_trusted_ip_address() );
     return if ( lc $config->{'remove_headers'} eq 'no' );
+
+    # Sanitize Authentication-Results headers
     if ( lc $header eq 'authentication-results' ) {
         if ( !exists $self->{'auth_result_header_index'} ) {
             $self->{'auth_result_header_index'} = 0;
@@ -99,6 +118,25 @@ sub header_callback {
             }
         }
     }
+
+    # Sanitize other headers
+    foreach my $remove_header ( sort @{ $self->get_headers_to_remove() } ) {
+        next if ( lc $remove_header ne lc $header );
+        $self->{'header_hash'}->{ lc $header }->{'index'} = $self->{'header_hash'}->{ lc $header }->{'index'} + 1;
+        $self->metric_count( 'sanitize_remove_total', {'header'=> lc $header} );
+
+        if ( ! $self->{'header_hash'}->{ lc $header }->{'silent'} ) {
+            my $forged_header =
+              '(Received ' . $remove_header . ' header removed by '
+              . $self->get_my_hostname()
+              . ')' . "\n"
+              . '    '
+              . $value;
+            $self->append_header( 'X-Received-' . $remove_header,
+                $forged_header );
+        }
+    }
+
     return;
 }
 
@@ -106,12 +144,24 @@ sub eom_callback {
     my ($self) = @_;
     my $config = $self->handler_config();
     return if ( lc $config->{'remove_headers'} eq 'no' );
+
     if ( exists( $self->{'remove_auth_headers'} ) ) {
         foreach my $index ( reverse @{ $self->{'remove_auth_headers'} } ) {
             $self->dbgout( 'RemoveAuthHeader', $index, LOG_DEBUG );
             $self->change_header( 'Authentication-Results', $index, q{} );
         }
     }
+
+    foreach my $remove_header ( sort @{ $self->get_headers_to_remove() } ) {
+        my $max_index = $self->{'header_hash'}->{ lc $remove_header }->{'index'};
+        if ( $max_index ) {
+            for ( my $index = $max_index; $index > 0; $index-- ) {
+                $self->dbgout( 'RemoveHeader', "$remove_header $index", LOG_DEBUG );
+                $self->change_header( $remove_header, $index, q{} );
+            }
+        }
+    }
+
     return;
 }
 
@@ -119,6 +169,7 @@ sub close_callback {
     my ( $self ) = @_;
     delete $self->{'remove_auth_headers'};
     delete $self->{'auth_result_header_index'};
+    delete $self->{'header_hash'};
     return;
 }
 

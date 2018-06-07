@@ -56,9 +56,11 @@ MIME-Version: 1.0
 X-Received: by 10.194.175.39 with SMTP id bx7mr30495438wjc.22.1422156919049;
  Sat, 24 Jan 2015 19:35:19 -0800 (PST)
 Received: by 10.217.143.139 with HTTP; Sat, 24 Jan 2015 19:35:19 -0800 (PST)
+X-Disposition-Quarantine: Testing foo bar
 Date: Sun, 25 Jan 2015 14:35:19 +1100
 Message-ID: <CAF298RVOajnkzvO0j_DjBwWbCQBwi1a1Z4FAx_tHLFWfA9CJ8w@mail.gmail.com>
 Subject: Authentication Milter Test
+X-disposition-quarAntine: Testing 1 2 3
 From: Marc Bradshaw <marc@marcbradshaw.net>
 To: marc@fastmail.com
 Content-Type: multipart/alternative; boundary=089e01493adaf9a7a9050d71b56f
