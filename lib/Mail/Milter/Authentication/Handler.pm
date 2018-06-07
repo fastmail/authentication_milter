@@ -1266,7 +1266,7 @@ sub clear_defer_mail {
 }
 
 
-=method I<get_quarantime_mail()>
+=method I<get_quarantine_mail()>
 
 Get the quarantine mail reason (or undef)
 
@@ -2270,6 +2270,10 @@ sub add_headers {
     }
 
     $self->prepend_header( 'Authentication-Results', $header );
+
+    if ( my $reason = $self->get_quarantine_mail() ) {
+        $self->prepend_header( 'X-Disposition-Quarantine', $reason );
+    }
 
     $top_handler->top_addheader_callback();
 

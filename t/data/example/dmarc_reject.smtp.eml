@@ -9,6 +9,7 @@ Received: from test.module (localhost [127.0.0.1])
     by server.example.com (Authentication Milter) with ESMTP
 ############
 ############
+X-Disposition-Quarantine: Quarantined due to DMARC policy
 Authentication-Results: server.example.com;
     dkim=none (no signatures found);
     dmarc=fail (p=reject,sp=none,d=quarantine,override=local_policy) header.from=goestheweasel.com;
