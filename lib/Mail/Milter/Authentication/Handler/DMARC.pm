@@ -359,19 +359,18 @@ sub _process_dmarc_for {
     $self->dbgout( 'DMARCPolicy', "$dmarc_policy $dmarc_sub_policy", LOG_INFO );
 
     my $policy_override;
-    my @comments;
 
-    my $arc_override = '';
+    my $arc_aware_result = '';
     # Re-evaluate non passes taking ARC into account if possible.
     if ( $have_arc && $dmarc_code eq 'fail' ) {
         my $arc_result = $self->_process_arc_dmarc_for( $env_domain_from, $header_domain );
-        $arc_override = $arc_result->result;
+        $arc_aware_result = $arc_result->result;
     }
 
     # Reject mail and/or set policy override reasons
     if ( $dmarc_code eq 'fail' ) {
         # Policy override decisions.
-        if ( $arc_override eq 'pass' ) {
+        if ( $arc_aware_result eq 'pass' ) {
             $self->dbgout( 'DMARCReject', "Policy overridden using ARC Chain", LOG_INFO );
             $dmarc_result->disposition('none');
             $dmarc_disposition = 'none';
@@ -408,6 +407,7 @@ sub _process_dmarc_for {
     }
 
     # Add the AR Header
+    my @comments;
     if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( $dmarc_code );
 
@@ -427,8 +427,8 @@ sub _process_dmarc_for {
         if ( $policy_override ) {
             push @comments, $self->format_header_entry( 'override', $policy_override );
         }
-        if ( $arc_override ) {
-            push @comments, $self->format_header_entry( 'arc_aware_result', $arc_override );
+        if ( $arc_aware_result ) {
+            push @comments, $self->format_header_entry( 'arc_aware_result', $arc_aware_result );
         }
 
         if ( @comments ) {
@@ -447,8 +447,8 @@ sub _process_dmarc_for {
         'policy'           => $dmarc_policy,
         'is_list'          => ( $self->{'is_list'}      ? '1' : '0' ),
         'is_whitelisted'   => ( $self->is_whitelisted() ? '1' : '0'),
-        'arc_aware_result' => $arc_override,
-        'used_arc'         => ( $arc_override ? '1' : '0' ),
+        'arc_aware_result' => $arc_aware_result,
+        'used_arc'         => ( $arc_aware_result ? '1' : '0' ),
     };
     $self->metric_count( 'dmarc_total', $metric_data );
 
