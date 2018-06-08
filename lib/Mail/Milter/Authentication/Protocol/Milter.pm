@@ -121,6 +121,8 @@ sub milter_process_command {
         $self->fatal("Unknown milter command $command");
     }
 
+    my $config = $self->{'config'};
+
     my $reject_reason;
     my $defer_reason;
     my $quarantine_reason;
@@ -133,8 +135,13 @@ sub milter_process_command {
         $returncode = SMFIS_TEMPFAIL;
     }
     elsif ( $quarantine_reason = $handler->get_quarantine_mail() ) {
-        $handler->clear_quarantine_mail();
-        $returncode = SMFIR_QUARANTINE;
+        if ( $config->{'milter_quarantine'} ) {
+            $handler->clear_quarantine_mail();
+            $returncode = SMFIR_QUARANTINE;
+        }
+        else {
+            undef $quarantine_reason;
+        }
     }
 
     if (defined $returncode) {
@@ -155,7 +162,6 @@ sub milter_process_command {
             $handler->metric_count( 'mail_processed_total', { 'result' => 'accepted' } );
         }
 
-        my $config = $self->{'config'};
         if ( $config->{'dryrun'} ) {
             if ( $returncode ne SMFIR_CONTINUE ) {
                 $self->loginfo ( "dryrun returncode changed from $returncode to continue" );

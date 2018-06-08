@@ -259,6 +259,9 @@ __END__
                                                         | can be either milter or smtp
 
 
+    "milter_quarantine" : "0",                          | Allow Milter protocol quarantine when running in milter mode
+                                                        | (experimental)
+
     "smtp" : {                                          | Parameters for use when protocol is smtp
         "server_name"    : "scan.example.com",          | The server name to use for the server
         "sock_type"      : "inet",                      | Socket type (inet or unix)
