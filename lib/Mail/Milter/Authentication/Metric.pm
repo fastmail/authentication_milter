@@ -388,25 +388,25 @@ sub child_handler {
     </ul>
 
     <h2>Installed Handlers</h2>
-    <ul>};
+    <div class="spaceAfter">};
 
     foreach my $Handler ( sort keys %{ $server->{ 'handler' } } ) {
         next if $Handler eq '_Handler';
-        print $socket '<li>' . $Handler . ' (' . $server->{ 'handler' }->{ $Handler }->get_version(). ')</li>';
+        print $socket ' <span class="handler">' . $Handler . ' (' . $server->{ 'handler' }->{ $Handler }->get_version(). ')</span> ';
     }
 
     print $socket qq{
-    </ul>
+    </div>
 
     <h2>Registered Callbacks</h2>
-    <ul>};
+    <table class="callbacksTable">};
 
     foreach my $stage ( qw{ setup connect helo envfrom envrcpt header eoh body eom abort close addheader } ) {
         my $callbacks = $server->{ 'handler' }->{ '_Handler' }->get_callbacks( $stage );
-        print $socket "<li>$stage: " . join( ', ', @$callbacks ) . "</li>";
+        print $socket "<tr><td>$stage</td><td>" . join( ' ', map{ "<span class=\"handler\">$_</span>" } @$callbacks ) . "</td></tr>";
     }
 
-    print $socket qq{</ul>
+    print $socket qq{</table>
 
     <h2>Connection Details</h2>
     <ul>};
