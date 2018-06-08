@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20180608 2018-06-08 21:14:19+02:00 Europe/Berlin
         - ReturnOK: Rewrite Handler to handle multiple addresses properly
         - Core: Fix per-protocol-section timeouts
         - DKIM: Follow RFC 8301 security recommendations by default
