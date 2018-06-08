@@ -123,6 +123,7 @@ sub milter_process_command {
 
     my $reject_reason;
     my $defer_reason;
+    my $quarantine_reason;
     if ( $reject_reason = $handler->get_reject_mail() ) {
         $handler->clear_reject_mail();
         $returncode = SMFIS_REJECT;
@@ -130,6 +131,10 @@ sub milter_process_command {
     elsif ( $defer_reason = $handler->get_defer_mail() ) {
         $handler->clear_defer_mail();
         $returncode = SMFIS_TEMPFAIL;
+    }
+    elsif ( $quarantine_reason = $handler->get_quarantine_mail() ) {
+        $handler->clear_quarantine_mail();
+        $returncode = SMFIR_QUARANTINE;
     }
 
     if (defined $returncode) {
@@ -190,6 +195,14 @@ sub milter_process_command {
                         . "\0"
                     );
                 }
+            }
+            elsif ( $quarantine_reason ) {
+                $handler->metric_count( 'mail_processed_total', { 'result' => 'quarantined' } );
+                $self->loginfo ( "SMTPQuarantine: $quarantine_reason" );
+                $self->write_packet( SMFIR_QUARANTINE,
+                    $quarantine_reason
+                    . "\0"
+                );
             }
             else {
                 $self->write_packet($returncode);
