@@ -49,3 +49,11 @@ ul ul {
     padding: 0.25rem 1rem;
     border: 0;
 }
+
+.versionBlock {
+    right: 0px;
+    position: absolute;
+    top: 0;
+    display: inline-block;
+    text-align: right;
+}

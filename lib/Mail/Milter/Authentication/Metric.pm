@@ -381,11 +381,7 @@ sub child_handler {
 
 <h1>Authentication Milter</h1>
 
-    <h2>Running server</h2>
-    <ul>
-        <li>Version: } . $Mail::Milter::Authentication::VERSION . qq{</li>
-        <li>Ident: } . $Mail::Milter::Authentication::Config::IDENT . qq{</li>
-    </ul>
+    <span class="versionBlock">Version: } . $Mail::Milter::Authentication::VERSION . qq{<br />Ident: } . $Mail::Milter::Authentication::Config::IDENT . qq{</span>
 
     <h2>Installed Handlers</h2>
     <div class="spaceAfter">};
