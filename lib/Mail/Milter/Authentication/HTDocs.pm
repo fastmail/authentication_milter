@@ -44,7 +44,7 @@ Return a full HTTP response for the given filename, or null if it does not exist
 sub get_file {
     my ( $self, $file ) = @_;
 
-    my $whitelisted = grep { $_ eq $file } ${ $self->get_whitelist() };
+    my $whitelisted = grep { $_ eq $file } @{ $self->get_whitelist() };
     return if ! $whitelisted;
 
     my $basefile = __FILE__;
