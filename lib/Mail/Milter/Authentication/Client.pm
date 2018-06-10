@@ -4,6 +4,16 @@ use strict;
 use warnings;
 # VERSION
 
+=head1 DESCRIPTION
+
+Client to the Authentication Milter
+
+=head1 SYNOPSIS
+
+Connect to the Authentication Milter and pass it email, returning the result.
+
+=cut
+
 use Data::Dumper;
 use Digest::MD5 qw{ md5_base64 };
 use Email::Simple;
@@ -11,6 +21,71 @@ use English qw{ -no_match_vars };
 
 use Mail::Milter::Authentication::Net::Milter;
 use Mail::Milter::Authentication::Config qw{ get_config };
+
+=constructor I<new( $args )>
+
+Instantiate a new Client object
+
+    my $client = Mail::Milter::Authentication::Client->new({
+        'mailer_name'   => 'test.mta.yoga.fastmail.com',
+        'connect_ip'    => '66.111.4.148',
+        'connect_name'  => 'test.fastmail.com',
+        'connect_port'  => '54321',
+        'connect_type'  => 'tcp4',
+        'helo_host'     => 'test.helo.fastmail.com',
+        'mail_from'     => 'test@marc.fastmail.com',
+        'rcpt_to'       => 'marc@yoga',
+        'mail_data'     => $email_content,
+        'mail_file'     => '/path/to/email.txt',
+    });
+
+=head2 Arguments
+
+=over
+
+=item mailer_name
+
+The name (fqdn) of the MTA
+
+=item connect_ip
+
+The IP address of the host connecting to the mailer.
+
+=item connect_name
+
+The name of the host connecting to the mailer.
+
+=item connect_port
+
+The port of the connection to the mailer.
+
+=item connect_type
+
+The type of connection to the mailer (eg tcp4).
+
+=item helo_host
+
+The string passed in the HELO stage of the SMTP transaction.
+
+=item mail_from
+
+The string passed in the MAIL FROM stage of the SMTP transaction.
+
+=item rcpt_to
+
+The string passed in the RCPT TO stage of the SMTP transaction.
+
+=item mail_data
+
+The EMail body as a string.
+
+=item mail_file
+
+The EMail body can also be passed as a filename.
+
+=back
+
+=cut
 
 sub new {
     my ( $class, $args ) = @_;
@@ -73,6 +148,12 @@ sub new {
     return $self;
 }
 
+=method I<r()>
+
+Private method, do not call this directly
+
+=cut
+
 sub r { ## no critic [Subroutines::RequireArgUnpacking]
     my $self = shift;
     my @results = @_;
@@ -120,6 +201,12 @@ sub r { ## no critic [Subroutines::RequireArgUnpacking]
     return;
 }
 
+=method I<insert_header()>
+
+Private method, do not call this directly
+
+=cut
+
 sub insert_header {
     my ( $self, $index, $header, $value ) = @_;
     my @process_header = @{ $self->{'header_pairs'} };
@@ -139,6 +226,12 @@ sub insert_header {
     $self->{'header_pairs'} = \@header_pairs;
     return;
 }
+
+=method I<replace_header()>
+
+Private method, do not call this directly
+
+=cut
 
 sub replace_header {
     my ( $self, $index, $header, $value ) = @_;
@@ -174,6 +267,12 @@ sub replace_header {
     return;
 }
 
+=method I<add_header()>
+
+Private method, do not call this directly
+
+=cut
+
 sub add_header {
     my ( $self, $header, $value ) = @_;
     my @header_pairs = @{ $self->{'header_pairs'} };
@@ -182,6 +281,12 @@ sub add_header {
     $self->{'header_pairs'} = \@header_pairs;
     return;
 }
+
+=method I<load_mail()>
+
+Private method, do not call this directly
+
+=cut
 
 sub load_mail {
     my ( $self ) = @_;
@@ -240,6 +345,12 @@ sub load_mail {
     $self->{'header_pairs'}   = \@header_pairs;
     return;
 }
+
+=method I<process()>
+
+Send the email to the milter and process the result.
+
+=cut
 
 sub process {
     my ( $self ) = @_;
@@ -330,6 +441,12 @@ sub process {
     return;
 }
 
+=method I<result()>
+
+Return the result of the milter run
+
+=cut
+
 sub result {
     my ( $self ) = @_;
     return $self->{'rejected'} if $self->{'rejected'} && $self->{'testing'};
@@ -339,113 +456,6 @@ sub result {
 1;
 
 =pod
-
-=head1 DESCRIPTION
-
-Client to the Authentication Milter
-
-=head1 SYNOPSIS
-
-Connect to the Authentication Milter and pass it email, returning the result.
-
-=head1 CONSTRUCTOR
-
-=over
-
-=item I<new($args)>
-
-Instantiate a new Client object
-
-    my $client = Mail::Milter::Authentication::Client->new({
-        'mailer_name'   => 'test.mta.yoga.fastmail.com',
-        'connect_ip'    => '66.111.4.148',
-        'connect_name'  => 'test.fastmail.com',
-        'connect_port'  => '54321',
-        'connect_type'  => 'tcp4',
-        'helo_host'     => 'test.helo.fastmail.com',
-        'mail_from'     => 'test@marc.fastmail.com',
-        'rcpt_to'       => 'marc@yoga',
-        'mail_data'     => $email_content,
-        'mail_file'     => '/path/to/email.txt',
-    });
-
-=back
-
-=head2 Arguments
-
-=over
-
-=item mailer_name
-
-The name (fqdn) of the MTA
-
-=item connect_ip
-
-The IP address of the host connecting to the mailer.
-
-=item connect_name
-
-The name of the host connecting to the mailer.
-
-=item connect_port
-
-The port of the connection to the mailer.
-
-=item connect_type
-
-The type of connection to the mailer (eg tcp4).
-
-=item helo_host
-
-The string passed in the HELO stage of the SMTP transaction.
-
-=item mail_from
-
-The string passed in the MAIL FROM stage of the SMTP transaction.
-
-=item rcpt_to
-
-The string passed in the RCPT TO stage of the SMTP transaction.
-
-=item mail_data
-
-The EMail body as a string.
-
-=item mail_file
-
-The EMail body can also be passed as a filename.
-
-=back
-
-=head1 PUBLIC METHODS
-
-=over
-
-=item I<process()>
-
-Send the email to the milter and process the result.
-
-=item I<result()>
-
-Return the result.
-
-=back
-
-=head1 PRIVATE METHODS
-
-=over
-
-=item I<r()>
-
-=item I<insert_header()>
-
-=item I<replace_header()>
-
-=item I<add_header()>
-
-=item I<load_mail()>
-
-=back
 
 =head1 Net::Milter
 
