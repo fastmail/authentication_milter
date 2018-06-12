@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Bugfix: clear quarantine reason after use
 
 2.20180608 2018-06-08 21:14:19+02:00 Europe/Berlin
         - ReturnOK: Rewrite Handler to handle multiple addresses properly
