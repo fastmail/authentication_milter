@@ -114,7 +114,7 @@ sub get_trusted_dkim_results {
                     my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
                     $self->handle_exception( $@ );
                     if ( $entry_domain ) {
-                        $entry_domain =~ s/^\@//;
+                        $entry_domain =~ s/^.*\@//;
                     }
                 }
                 next RESULT if ! $entry_domain;
@@ -256,7 +256,7 @@ sub inherit_trusted_dkim_results {
                     my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
                     $self->handle_exception( $@ );
                     if ( $entry_domain ) {
-                        $entry_domain =~ s/^\@//;
+                        $entry_domain =~ s/.*^\@//;
                     }
                 }
                 next RESULT if ! $entry_domain;
