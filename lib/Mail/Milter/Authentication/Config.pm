@@ -16,6 +16,7 @@ our @EXPORT_OK = qw{
 };
 
 use JSON;
+use TOML;
 
 =head1 DESCRIPTION
 
@@ -134,10 +135,18 @@ sub load_file {
         $text = join( q{}, @t );
     }
 
-    my $json = JSON->new();
-    $json->relaxed(1);
-    my $data = $json->decode($text)
-      || die "Error parsing config file $file";
+    my $data;
+
+    if ( $file =~ /\.toml$/ ) {
+        $data = TOML::from_toml($text)
+          || die "Error parsing config file $file";
+    }
+    else {
+        my $json = JSON->new();
+        $json->relaxed(1);
+        $data = $json->decode($text)
+          || die "Error parsing config file $file";
+    }
 
     return $data;
 }
@@ -187,9 +196,14 @@ sub get_config {
         return process_config();
     }
 
-    my $file = $PREFIX . '/authentication_milter.json';
-
-    my $config = load_file( $file );
+    my $file = $PREFIX . '/authentication_milter';
+    my $config;
+    if ( -e $file . '.toml' ) {
+        $config = load_file( $file . '.toml' );
+    }
+    else {
+        $config = load_file( $file . '.json' );
+    }
 
     my $folder = $PREFIX . '/authentication_milter.d';
     if ( -d $folder ) {
@@ -197,12 +211,12 @@ sub get_config {
         opendir $dh, $folder;
         my @config_files =
             sort
-            grep { $_ =~ /\.json$/ }
+            grep { $_ =~ /\.[json|toml]$/ }
             grep { not $_ =~ /^\./ }
             readdir($dh);
         closedir $dh;
         foreach my $file ( @config_files ) {
-            $file =~ /(^.*)\.json$/;
+            $file =~ /(^.*)\.[json|toml]$/;
             my $handler = $1;
             ## ToDo Consider what to do if config already exists in .json config
             $config->{'handlers'}->{$handler} = load_file( join( '/', $folder, $file ) );

@@ -11,6 +11,7 @@ Handle metrics collection and production for prometheus
 
 use English qw{ -no_match_vars };
 use JSON;
+use TOML;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Metric::Grafana;
 use Mail::Milter::Authentication::HTDocs;
@@ -404,7 +405,7 @@ sub child_handler {
 
     print $socket qq{</table>
 
-    <h2>Connection Details</h2>
+    <h2>Connection/Config Details</h2>
     <ul>};
     print $socket '<li>Protocol: ' . $config->{'protocol'} . '</li>';
     my $connections = $config->{'connections'};
@@ -413,6 +414,7 @@ sub child_handler {
         print $socket '<li>' . $connection . ': ' . $connections->{ $connection }->{ 'connection' } . '</li>'
     }
     print $socket qq{
+        <li><a href="/config">Effective config</a></li>
     </ul>
 
     <h2>Metrics</h2>
@@ -426,6 +428,12 @@ sub child_handler {
  </div>
 </body>
 };
+        }
+        elsif ( $request_uri eq '/config' ) {
+            print $socket "HTTP/1.0 200 OK\n";
+            print $socket "Content-Type: text/plain\n";
+            print $socket "\n";
+            print $socket TOML::to_toml( $config );
         }
         elsif ( $request_uri eq '/grafana' ) {
             print $socket "HTTP/1.0 200 OK\n";

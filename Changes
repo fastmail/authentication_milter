@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Allow config file to be written in TOML
 
 2.20180612 2018-06-12 13:32:26+10:00 Australia/Melbourne
         - Bugfix: clear quarantine reason after use
