@@ -728,8 +728,8 @@ sub handler_header_sort {
     my ( $self, $pa, $pb ) = @_;
 
     # ToDo, do this without stringify
-    my ( $result_a, $policy_a ) = $pa->as_string() =~ /^dmarc=([a-z]+) \(p=([a-z]+)/;
-    my ( $result_b, $policy_b ) = $pb->as_string() =~ /^dmarc=([a-z]+) \(p=([a-z]+)/;
+    my ( $result_a, $policy_a ) = $pa->as_string() =~ /^dmarc=([a-z]+) .*policy\.applied\-disposition=([a-z]+)/;
+    my ( $result_b, $policy_b ) = $pb->as_string() =~ /^dmarc=([a-z]+) .*policy\.applied\-disposition=([a-z]+)/;
 
     # Fail then None then Pass
     if ( $result_a ne $result_b ) {
