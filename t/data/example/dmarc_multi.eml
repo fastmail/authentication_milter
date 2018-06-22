@@ -1,9 +1,9 @@
 X-Disposition-Quarantine: Quarantined due to DMARC policy
 Authentication-Results: test.module;
     dkim=none (no signatures found);
-    dmarc=fail (p=reject,sp=none,d=quarantine,override=local_policy) header.from=goestheweasel.com;
-    dmarc=fail (p=none,sp=none,d=none) header.from=marcbradshaw.net;
-    dmarc=none (p=none,sp=none,d=none) header.from=example.com;
+    dmarc=none policy.published-domain-policy=none policy.published-subdomain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,sp=none,d=none,d.eval=none) header.from=example.com;
+    dmarc=fail policy.published-domain-policy=reject policy.published-subdomain-policy=none policy.applied-disposition=quarantine policy.evaluated-disposition=reject policy.override-reason=local_policy (p=reject,sp=none,d=quarantine,d.eval=reject,override=local_policy) header.from=goestheweasel.com;
+    dmarc=fail policy.published-domain-policy=none policy.published-subdomain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,sp=none,d=none,d.eval=none) header.from=marcbradshaw.net;
     iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
     spf=fail smtp.mailfrom=test@goestheweasel.com smtp.helo=bad.name.google.com;
     x-google-dkim=none (no signatures found);

@@ -12,7 +12,7 @@ Received: from test.module (localhost [127.0.0.1])
 X-Disposition-Quarantine: Quarantined due to DMARC policy
 Authentication-Results: server.example.com;
     dkim=none (no signatures found);
-    dmarc=fail (p=reject,sp=none,d=quarantine,override=local_policy) header.from=goestheweasel.com;
+    dmarc=fail policy.published-domain-policy=reject policy.published-subdomain-policy=none policy.applied-disposition=quarantine policy.evaluated-disposition=reject policy.override-reason=local_policy (p=reject,sp=none,d=quarantine,d.eval=reject,override=local_policy) header.from=goestheweasel.com;
     iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
     spf=fail smtp.mailfrom=test@goestheweasel.com smtp.helo=bad.name.google.com;
     x-google-dkim=none (no signatures found);

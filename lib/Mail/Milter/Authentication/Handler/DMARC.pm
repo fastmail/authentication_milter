@@ -347,6 +347,7 @@ sub _process_dmarc_for {
         }
     }
     $self->dbgout( 'DMARCDisposition', $dmarc_disposition, LOG_INFO );
+    my $dmarc_disposition_evaluated = $dmarc_disposition;
 
     my $dmarc_policy = eval{ $dmarc_result->published()->p(); };
     $self->handle_exception( $@ );
@@ -418,21 +419,30 @@ sub _process_dmarc_for {
         # What comments can we add?
         if ( $dmarc_policy ) {
             push @comments, $self->format_header_entry( 'p', $dmarc_policy );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-domain-policy' )->safe_set_value( $dmarc_policy ) );
         }
         if ( $dmarc_sub_policy ) {
             push @comments, $self->format_header_entry( 'sp', $dmarc_sub_policy );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-subdomain-policy' )->safe_set_value( $dmarc_sub_policy ) );
         }
         if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
             push @comments, 'has-list-id=yes';
         }
         if ( $dmarc_disposition ) {
             push @comments, $self->format_header_entry( 'd', $dmarc_disposition );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.applied-disposition' )->safe_set_value( $dmarc_disposition ) );
+        }
+        if ( $dmarc_disposition_evaluated ) {
+            push @comments, $self->format_header_entry( 'd.eval', $dmarc_disposition_evaluated );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.evaluated-disposition' )->safe_set_value( $dmarc_disposition_evaluated ) );
         }
         if ( $policy_override ) {
             push @comments, $self->format_header_entry( 'override', $policy_override );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.override-reason' )->safe_set_value( $policy_override ) );
         }
         if ( $arc_aware_result ) {
             push @comments, $self->format_header_entry( 'arc_aware_result', $arc_aware_result );
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.arc-aware-result' )->safe_set_value( $arc_aware_result ) );
         }
 
         if ( @comments ) {

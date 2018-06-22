@@ -1,6 +1,6 @@
 Authentication-Results: test.module;
     dkim=none (no signatures found);
-    dmarc=pass (p=none,sp=none,d=none) header.from=marcbradshaw.net;
+    dmarc=pass policy.published-domain-policy=none policy.published-subdomain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,sp=none,d=none,d.eval=none) header.from=marcbradshaw.net;
     iprev=pass policy.iprev=74.125.82.171 (mail-we0-f171.google.com);
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com;
     x-google-dkim=none (no signatures found);
