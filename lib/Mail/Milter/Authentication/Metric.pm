@@ -433,7 +433,9 @@ sub child_handler {
             print $socket "HTTP/1.0 200 OK\n";
             print $socket "Content-Type: text/plain\n";
             print $socket "\n";
-            print $socket TOML::to_toml( $config );
+            my $toml = TOML::to_toml( $config );
+            $toml =~ s/\n\[/\n\n\[/g;
+            print $socket $toml;
         }
         elsif ( $request_uri eq '/grafana' ) {
             print $socket "HTTP/1.0 200 OK\n";
