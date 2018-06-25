@@ -3,6 +3,9 @@ Revision history for Mail-Milter-Authentication
 {{$NEXT}}
         - Allow config file to be written in TOML
         - DMARC: Add policy decision factors in policy ptype entries
+        - SMTP: Don't hold entire message in memory unless necessary
+          Option to chunk message when passing to handlers
+          Option to use spool file rather than use memory
 
 2.20180612 2018-06-12 13:32:26+10:00 Australia/Melbourne
         - Bugfix: clear quarantine reason after use
