@@ -5,6 +5,7 @@ use warnings;
 
 use English qw{ -no_match_vars };
 use Email::Date::Format qw{ email_date };
+use File::Temp;
 use IO::Socket;
 use IO::Socket::INET;
 use IO::Socket::UNIX;
@@ -596,7 +597,14 @@ sub smtp_command_data {
         }
     }
 
+    ## TODO Make this a config item
+    my $chunk_limit = 1048576; # Process in chunks no larger than...
+
+    my $temp_file;
+    $temp_file = File::Temp->new();
+
     $self->smtp_status('smtp.i.body');
+    my $body_chunk;
     if ( ! $done ) {
         eval {
             alarm( $smtp->{'smtp_timeout_in'} );
@@ -609,14 +617,32 @@ sub smtp_command_data {
                 if ( $dataline =~ /^\./ ) {
                     $dataline = substr( $dataline, 1 );
                 }
-                $body .= $dataline;
+
+                if ( $temp_file ) {
+                    print $temp_file $dataline;
+                }
+                else {
+                   $body .= $dataline;
+                }
+
+                if ( length( $body_chunk ) + length( $dataline ) > $chunk_limit ) {
+                    $returncode = $handler->top_body_callback( $body_chunk );
+                    if ( $returncode != SMFIS_CONTINUE ) {
+                        $fail = 1;
+                    }
+                    $body_chunk = q{};
+                }
+
+                $body_chunk .= $dataline;
+
                 alarm( $smtp->{'smtp_timeout_in'} );
             }
             if ( ! $fail ) {
-                $returncode = $handler->top_body_callback( $body );
+                $returncode = $handler->top_body_callback( $body_chunk );
                 if ( $returncode != SMFIS_CONTINUE ) {
                     $fail = 1;
                 }
+                $body_chunk = q{};
             }
         };
         if ( my $error = $@ ) {
@@ -637,7 +663,13 @@ sub smtp_command_data {
     $self->smtp_status('smtp.i.data.received');
 
     if ( ! $fail ) {
-        $smtp->{'body'} = $body;
+
+        if ( $temp_file ) {
+            $smtp->{'spool'} = $temp_file;
+        }
+        else {
+            $smtp->{'body'} = $body;
+        }
 
         if ( $self->smtp_forward_to_destination() ) {
 
@@ -876,14 +908,32 @@ sub smtp_forward_to_destination {
     }
     $email .= "\r\n";
 
-    my $body = $smtp->{'body'};
-    $body =~ s/\015?\012/\015\012/g;
-    $email .= $body;
+    my $spool = $smtp->{'spool'};
+    if ( $spool ) {
 
-    # Handle transparency
-    $email =~ s/\015\012\./\015\012\.\./g;
+        # Handle transparency - should not be any in headers, but for completeness
+        $email =~ s/\015\012\./\015\012\.\./g;
 
-    print $sock $email;
+        print $sock $email;
+
+        seek( $spool, 0, 0 );
+        while ( my $line = <$spool> ) {
+            $line =~ s/\015?\012/\015\012/g;
+            $line =~ s/^\./\.\./g;
+            print $sock $line;
+        }
+
+    }
+    else {
+        my $body = $smtp->{'body'};
+        $body =~ s/\015?\012/\015\012/g;
+        $email .= $body;
+
+        # Handle transparency
+        $email =~ s/\015\012\./\015\012\.\./g;
+
+        print $sock $email;
+    }
 
     $self->logdebug( 'Sending end to destination' );
     $self->send_smtp_packet( $sock, '.',    '250' ) || return;
