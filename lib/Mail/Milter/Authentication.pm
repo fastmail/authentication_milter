@@ -184,7 +184,6 @@ sub child_init_hook {
     my $base;
     if ( $config->{'protocol'} eq 'milter' ) {
         $base = 'Mail::Milter::Authentication::Protocol::Milter';
-
     }
     elsif ( $config->{'protocol'} eq 'smtp' ) {
         $base = 'Mail::Milter::Authentication::Protocol::SMTP';

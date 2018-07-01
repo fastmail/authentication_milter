@@ -1007,6 +1007,9 @@ sub top_close_callback {
     $self->status('close');
     $self->dbgout( 'CALLBACK', 'Close', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
+    $self->clear_reject_mail();
+    $self->clear_defer_mail();
+    $self->clear_quarantine_mail();
     my $config = $self->config();
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Close callback timeout' }) };
@@ -2276,7 +2279,6 @@ sub add_headers {
 
     if ( my $reason = $self->get_quarantine_mail() ) {
         $self->prepend_header( 'X-Disposition-Quarantine', $reason );
-        $self->clear_quarantine_mail();
     }
 
     $top_handler->top_addheader_callback();
