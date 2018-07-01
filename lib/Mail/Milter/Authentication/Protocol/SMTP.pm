@@ -679,7 +679,13 @@ sub smtp_command_data {
 
         if ( $self->smtp_forward_to_destination() ) {
 
-            $handler->metric_count( 'mail_processed_total', { 'result' => 'accepted' } );
+            if ( my $reject_reason = $handler->get_quarantine_mail() ) {
+                $handler->metric_count( 'mail_processed_total', { 'result' => 'quarantined' } );
+            }
+            else {
+                $handler->metric_count( 'mail_processed_total', { 'result' => 'accepted' } );
+            }
+
             $handler->dbgout( 'Accept string', $smtp->{'string'}, LOG_INFO );
             $smtp->{'has_data'} = 1;
 

@@ -6,6 +6,7 @@ Revision history for Mail-Milter-Authentication
         - SMTP: Don't hold entire message in memory unless necessary
           Option to chunk message when passing to handlers
           Option to use spool file rather than use memory
+        - SMTP: Count quarantined mail properly in metrics
 
 2.20180612 2018-06-12 13:32:26+10:00 Australia/Melbourne
         - Bugfix: clear quarantine reason after use
