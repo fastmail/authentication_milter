@@ -163,6 +163,8 @@ Hook which runs after forking, sets up per process items.
 sub child_init_hook {
     my ( $self ) = @_;
 
+    srand();
+
     my $config = get_config();
     $self->{'config'} = $config;
 

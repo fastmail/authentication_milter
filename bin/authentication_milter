@@ -258,7 +258,6 @@ __END__
     "protocol"               : "milter",                | The protocol the milter is to use
                                                         | can be either milter or smtp
 
-
     "milter_quarantine" : "0",                          | Allow Milter protocol quarantine when running in milter mode
                                                         | (experimental)
 
@@ -273,6 +272,8 @@ __END__
         "pipeline_limit" : "50",                        | Limit the number of transactions accepted in an SMTP pipeline
         "queue_type"     : "before",                    | SMTP Queue type, either before or after. After queues have
                                                         | an upstream queue ID, before queues do not.
+        "temp_dir"       : "/tmp/",                     | Directory for temporary spool files, defaults to in memory
+        "chunk_limit"    : 1048576,                     | Process body in chunks of approx this many bytes
 
         "tcp:12346" : {                                 | Outbound SMTP details can be set per inbound port/socket
                                                         | This allows outbound SMTP to be routed differently for

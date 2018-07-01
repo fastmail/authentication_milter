@@ -597,11 +597,17 @@ sub smtp_command_data {
         }
     }
 
-    ## TODO Make this a config item
+    my $smtp_conf = $self->get_smtp_config();
+
     my $chunk_limit = 1048576; # Process in chunks no larger than...
+    if ( exists ( $smtp_conf->{ 'chunk_limit' } ) ) {
+        $chunk_limit = $smtp_conf->{ 'chunk_limit' };
+    }
 
     my $temp_file;
-    $temp_file = File::Temp->new();
+    if ( exists ( $smtp_conf->{ 'temp_dir' } ) ) {
+        $temp_file = File::Temp->new( DIR => $smtp_conf->{ 'temp_dir' } );
+    }
 
     $self->smtp_status('smtp.i.body');
     my $body_chunk;
