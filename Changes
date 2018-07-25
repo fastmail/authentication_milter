@@ -5,7 +5,7 @@ Revision history for Mail-Milter-Authentication
         - DMARC: Add policy decision factors in policy ptype entries
         - SMTP: Don't hold entire message in memory unless necessary
           Option to chunk message when passing to handlers
-          Option to use spool file rather than use memory
+          Option to use spool file rather than using memory
         - SMTP: Count quarantined mail properly in metrics
 
 2.20180612 2018-06-12 13:32:26+10:00 Australia/Melbourne
