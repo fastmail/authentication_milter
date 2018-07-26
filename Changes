@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20180726 2018-07-26 16:30:40+01:00 Europe/London
         - Allow config file to be written in TOML
         - DMARC: Add policy decision factors in policy ptype entries
         - SMTP: Don't hold entire message in memory unless necessary
