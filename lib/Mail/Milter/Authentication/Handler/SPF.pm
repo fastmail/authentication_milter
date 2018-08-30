@@ -138,6 +138,7 @@ sub envfrom_callback {
                     my $dmarc_object = $dmarc_handler->get_dmarc_object();
                     if ( $domain ) {
                         my $org_domain = eval{ $dmarc_object->get_organizational_domain( $domain ); };
+                        $self->handle_exception( $@ );
                         if ( $org_domain ne $domain ) {
                             $auth_domain = $org_domain;
                             $spf_request = Mail::SPF::Request->new(
