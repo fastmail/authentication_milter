@@ -47,6 +47,8 @@ sub is_whitelisted {
     my $ip_obj = $top_handler->{'ip_object'};
     my $whitelisted = 0;
     foreach my $entry ( @{ $config->{'whitelisted'} } ) {
+        # This does not consider dkim/spf results added by a passing arc chain
+        # we consider this out of scope at this point.
         if ( $entry =~ /^dkim:/ ) {
             my ( $dummy, $dkim_domain ) = split( /:/, $entry, 2 );
             my $dkim_handler = $self->get_handler('DKIM');
@@ -54,6 +56,22 @@ sub is_whitelisted {
                 $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
                 $whitelisted = 1;
             }
+        }
+        elsif ( $entry =~ /^spf:/ ) {
+            my ( $dummy, $spf_domain ) = split( /:/, $entry, 2 );
+            eval {
+                my $spf = $self->get_handler('SPF');
+                if ( $spf ) {
+                    my $got_spf_result = $spf->{'dmarc_result'};
+                    if ( $got_spf_result eq 'pass' ) {
+                        my $got_spf_domain = $spf->{'dmarc_domain'};
+                        if ( lc $got_spf_domain eq lc $spf_domain ) {
+                            $whitelisted = 1;
+                        }
+                    }
+                }
+            };
+            $self->handle_exception( $@ );
         }
         else {
             my $whitelisted_obj = Net::IP->new($entry);
