@@ -49,7 +49,41 @@ sub is_whitelisted {
     foreach my $entry ( @{ $config->{'whitelisted'} } ) {
         # This does not consider dkim/spf results added by a passing arc chain
         # we consider this out of scope at this point.
-        if ( $entry =~ /^dkim:/ ) {
+        if ( $entry =~ /^dnswl:/ ) {
+            my ( $dummy, $type, $rbl ) = split( /:/, $entry, 3 );
+            if ( $type eq 'spf' ) {
+                eval {
+                    my $spf = $self->get_handler('SPF');
+                    if ( $spf ) {
+                        my $got_spf_result = $spf->{'dmarc_result'};
+                        if ( $got_spf_result eq 'pass' ) {
+                            my $got_spf_domain = $spf->{'dmarc_domain'};
+                            if ( $self->rbl_check_domain( $got_spf_domain, $rbl ) ) {
+                                $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                                $whitelisted = 1;
+                            }
+                        }
+                    }
+                };
+                $self->handle_exception( $@ );
+            }
+            elsif ( $type eq 'dkim' ) {
+                my $dkim_handler = $self->get_handler('DKIM');
+                foreach my $dkim_domain( sort keys %{ $dkim_handler->{'valid_domains'}} ) {
+                    if ( $self->rbl_check_domain( $dkim_domain, $rbl ) ) {
+                        $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                        $whitelisted = 1;
+                    }
+                }
+            }
+            elsif ( $type eq 'ip' ) {
+                if ( $self->rbl_check_ip( $self->ip_address(), $rbl ) ) {
+                    $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                    $whitelisted = 1;
+                }
+            }
+        }
+        elsif ( $entry =~ /^dkim:/ ) {
             my ( $dummy, $dkim_domain ) = split( /:/, $entry, 2 );
             my $dkim_handler = $self->get_handler('DKIM');
             if ( exists( $dkim_handler->{'valid_domains'}->{ lc $dkim_domain } ) ) {
@@ -66,6 +100,7 @@ sub is_whitelisted {
                     if ( $got_spf_result eq 'pass' ) {
                         my $got_spf_domain = $spf->{'dmarc_domain'};
                         if ( lc $got_spf_domain eq lc $spf_domain ) {
+                            $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
                             $whitelisted = 1;
                         }
                     }
