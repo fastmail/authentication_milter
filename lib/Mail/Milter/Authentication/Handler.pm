@@ -127,6 +127,55 @@ sub metric_send {
     return;
 }
 
+=rbl_method I<rbl_check_ip( $ip, $list )>
+
+Check the given IP address against an rbl list.
+
+Returns true is listed.
+
+=cut
+
+sub rbl_check_ip {
+    my ( $self, $ip, $list ) = @_;
+
+    # Reverse the IP
+    if ( $ip =~ /\./ ) {
+        # Assume ipv4
+        $ip = join( '.', reverse( split( /\./, $ip ) ) );
+        warn $ip;
+    }
+    elsif ( $ip =~ /:/ ) {
+        # Assume ipv6
+        $ip = join( ':', reverse( split( /:/, $ip ) ) );
+    }
+    return $self->rbl_check_domain( $ip, $list );
+}
+
+=rbl_method I<rbl_check_domain( $domain, $list )>
+
+Check the given domain against an rbl list.
+
+Returns true is listed.
+
+=cut
+
+sub rbl_check_domain {
+    my ( $self, $domain, $list ) = @_;
+    my $resolver = $self->get_object( 'resolver' );
+    my $lookup = join( '.', $domain, $list );
+    warn $lookup;
+    my $packet = $resolver->query( $lookup, 'A' );
+
+    if ($packet) {
+        foreach my $rr ( $packet->answer ) {
+            if (  lc $rr->type eq 'a' ) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 =timeout_method I<get_microseconds()>
 
 Return the current time in microseconds
