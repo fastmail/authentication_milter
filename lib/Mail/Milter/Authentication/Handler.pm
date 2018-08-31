@@ -145,7 +145,8 @@ sub rbl_check_ip {
     }
     elsif ( $ip =~ /:/ ) {
         # Assume ipv6
-        $ip = join( ':', reverse( split( /:/, $ip ) ) );
+        # TODO THIS IS BROKEN
+        #$ip = join( ':', reverse( split( /:/, $ip ) ) );
     }
     return $self->rbl_check_domain( $ip, $list );
 }
