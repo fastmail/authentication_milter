@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Handler::ARC;
 use strict;
 use warnings;
-use Mail::Milter::Authentication 2.20180514;
+use Mail::Milter::Authentication 2.20180831;
 use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 # ABSTRACT: Authentication Milter Module for validation of ARC signatures
@@ -30,6 +30,7 @@ sub default_config {
         'arcseal_keyfile'   => undef,
         'arcseal_headers'   => undef,
         'trusted_domains'   => [],
+        'rbl_whitelist'     => '',
         'no_strict'         => 0,
     };
 }
@@ -54,11 +55,25 @@ sub is_domain_trusted {
     return 0 if ! defined $domain;
     $domain = lc $domain;
     my $config = $self->handler_config();
+
     my $trusted_domains = $config->{ 'trusted_domains' };
-    return 0 if ! $trusted_domains;
-    foreach my $trusted_domain ( @$trusted_domains ) {
-        return 1 if $domain eq lc $trusted_domain;
+    if ( $trusted_domains ) {
+        foreach my $trusted_domain ( @$trusted_domains ) {
+            if ( $domain eq lc $trusted_domain ) {
+                $self->dbgout( 'ARCResult', 'ARC domain trusted by static list', LOG_INFO );
+                return 1;
+            }
+        }
     }
+
+    my $rbl_whitelist = $config->{ 'rbl_whitelist' };
+    if ( $rbl_whitelist ) {
+        if ( $self->rbl_check_domain( $domain, $rbl_whitelist ) ) {
+            $self->dbgout( 'ARCResult', 'ARC domain trusted by dns list', LOG_INFO );
+            return 1;
+        }
+    }
+
     return 0;
 }
 
@@ -833,6 +848,7 @@ Module for validation of ARC signatures
             "arcseal_keyfile"   : undef,               | File containing ARC Seal key
             "arcseal_headers"   : undef,               | Additional headers to cover in ARC-Message-Signature
             "trusted_domains"   : [],                  | Trust these domains when traversing ARC chains
+            "rbl_whitelist"     : undef,               | rhs list for looking up trusted signing domains
             "no_strict"         : 0,                   | Ignore rfc 8301 security considerations (not recommended)
         },
 

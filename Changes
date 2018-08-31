@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication-ARC
 
 {{$NEXT}}
+        - Option to lookup trusted arc domains via DNS
 
 2.20180612 2018-06-12 13:47:27+10:00 Australia/Melbourne
         - Follow RFC 8301 security recommendations by default
