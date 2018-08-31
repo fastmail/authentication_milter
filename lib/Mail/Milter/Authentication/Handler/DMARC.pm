@@ -77,7 +77,7 @@ sub is_whitelisted {
                 }
             }
             elsif ( $type eq 'ip' ) {
-                if ( $self->rbl_check_ip( $self->ip_address(), $rbl ) ) {
+                if ( $self->rbl_check_ip( $ip_obj, $rbl ) ) {
                     $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
                     $whitelisted = 1;
                 }

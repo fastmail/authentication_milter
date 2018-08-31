@@ -138,17 +138,20 @@ Returns true is listed.
 sub rbl_check_ip {
     my ( $self, $ip, $list ) = @_;
 
+    my $lookup_ip;
+
     # Reverse the IP
-    if ( $ip =~ /\./ ) {
-        # Assume ipv4
-        $ip = join( '.', reverse( split( /\./, $ip ) ) );
+    if ( $ip->version() == 4 ) {
+        $lookup_ip = join( '.', reverse( split( /\./, $ip->ip() ) ) );
     }
-    elsif ( $ip =~ /:/ ) {
-        # Assume ipv6
-        # TODO THIS IS BROKEN
-        #$ip = join( ':', reverse( split( /:/, $ip ) ) );
+    elsif ( $ip->version() == 6 ) {
+        my $ip_string = $ip->ip();
+        $ip_string =~ s/://g;
+        $lookup_ip = join( '.', reverse( split( '', $ip_string ) ) );
     }
-    return $self->rbl_check_domain( $ip, $list );
+
+    return 0 if ! $lookup_ip;
+    return $self->rbl_check_domain( $lookup_ip, $list );
 }
 
 =rbl_method I<rbl_check_domain( $domain, $list )>
