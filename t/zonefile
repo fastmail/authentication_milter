@@ -1,3 +1,6 @@
+messagingengine.com.domainwl.authmilter.org. A 127.0.0.2
+25.4.111.66.ipwl.authmilter.org. A 127.0.0.2
+e.0.0.2.0.0.0.0.0.0.0.0.0.0.0.0.a.0.8.0.6.0.0.4.0.0.8.6.4.0.4.2.ipwl.authmilter.org. A 127.0.0.2
 171.82.125.74.in-addr.arpa.	62004	IN	PTR	mail-we0-f171.google.com.
 172.82.125.74.in-addr.arpa.	62004	IN	CNAME	cnameptr.example.com.
 cnameptr.example.com.  62004   IN      PTR mail-we0-f172.google.com.
