@@ -60,7 +60,7 @@ sub is_domain_trusted {
     if ( $trusted_domains ) {
         foreach my $trusted_domain ( @$trusted_domains ) {
             if ( $domain eq lc $trusted_domain ) {
-                $self->dbgout( 'ARCResult', 'ARC domain trusted by static list', LOG_INFO );
+                #$self->dbgout( 'ARCResult', 'ARC domain trusted by static list', LOG_INFO );
                 return 1;
             }
         }
@@ -69,7 +69,7 @@ sub is_domain_trusted {
     my $rbl_whitelist = $config->{ 'rbl_whitelist' };
     if ( $rbl_whitelist ) {
         if ( $self->rbl_check_domain( $domain, $rbl_whitelist ) ) {
-            $self->dbgout( 'ARCResult', 'ARC domain trusted by dns list', LOG_INFO );
+            #$self->dbgout( 'ARCResult', 'ARC domain trusted by dns list', LOG_INFO );
             return 1;
         }
     }
