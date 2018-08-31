@@ -610,7 +610,7 @@ sub smtp_command_data {
     }
 
     $self->smtp_status('smtp.i.body');
-    my $body_chunk;
+    my $body_chunk = q{};
     if ( ! $done ) {
         eval {
             alarm( $smtp->{'smtp_timeout_in'} );

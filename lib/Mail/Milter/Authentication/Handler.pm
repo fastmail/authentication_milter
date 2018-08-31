@@ -142,7 +142,6 @@ sub rbl_check_ip {
     if ( $ip =~ /\./ ) {
         # Assume ipv4
         $ip = join( '.', reverse( split( /\./, $ip ) ) );
-        warn $ip;
     }
     elsif ( $ip =~ /:/ ) {
         # Assume ipv6
@@ -163,7 +162,6 @@ sub rbl_check_domain {
     my ( $self, $domain, $list ) = @_;
     my $resolver = $self->get_object( 'resolver' );
     my $lookup = join( '.', $domain, $list );
-    warn $lookup;
     my $packet = $resolver->query( $lookup, 'A' );
 
     if ($packet) {
