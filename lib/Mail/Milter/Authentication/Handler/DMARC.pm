@@ -29,6 +29,7 @@ sub default_config {
         'no_report'      => 0,
         'config_file'    => '/etc/mail-dmarc.ini',
         'no_reject_disposition' => 'quarantine',
+        'no_list_reject_disposition' => 'none',
     };
 }
 
@@ -442,8 +443,9 @@ sub _process_dmarc_for {
             $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
             $policy_override = 'mailing_list';
             $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local mailing list policy' );
-            $dmarc_result->disposition('none');
-            $dmarc_disposition = 'none';
+            my $no_list_reject_disposition = $config->{ 'no_list_reject_disposition' } // 'none';
+            $dmarc_result->disposition( $no_list_reject_disposition );
+            $dmarc_disposition = $no_list_reject_disposition;
         }
 
         if ( $dmarc_disposition eq 'reject' ) {
@@ -859,6 +861,7 @@ This handler requires the SPF and DKIM handlers to be installed and active.
             "hard_reject"           : 0,                   | Reject mail which fails with a reject policy
             "no_reject_disposition" : "quarantine",        | What to report when hard_reject is 0
             "no_list_reject"        : 0,                   | Do not reject mail detected as mailing list
+            "no_list_reject_disposition" : "none",         | Disposition to use for mail detected as mailing list (defaults none)
             "whitelisted"           : [                    | A list of ip addresses or CIDR ranges, or dkim domains
                 "10.20.30.40",                             | for which we do not want to hard reject mail on fail p=reject
                 "dkim:bad.forwarder.com",                  | (valid) DKIM signing domains can also be whitelisted by
