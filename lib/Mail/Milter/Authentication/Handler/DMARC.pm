@@ -423,6 +423,8 @@ sub _process_dmarc_for {
         $arc_aware_result = $arc_result->result;
     }
 
+    my $is_whitelisted = $self->is_whitelisted();
+
     # Reject mail and/or set policy override reasons
     if ( $dmarc_code eq 'fail' ) {
         # Policy override decisions.
@@ -432,7 +434,7 @@ sub _process_dmarc_for {
             $dmarc_disposition = 'none';
             $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Policy overriden using trusted ARC chain' );
         }
-        elsif ( $self->is_whitelisted() ) {
+        elsif ( $is_whitelisted ) {
             $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
             $policy_override = 'trusted_forwarder';
             $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local white list' );
@@ -516,7 +518,7 @@ sub _process_dmarc_for {
         'disposition'      => $dmarc_disposition,
         'policy'           => $dmarc_policy,
         'is_list'          => ( $self->{'is_list'}      ? '1' : '0' ),
-        'is_whitelisted'   => ( $self->is_whitelisted() ? '1' : '0'),
+        'is_whitelisted'   => ( $is_whitelisted ? '1' : '0'),
         'arc_aware_result' => $arc_aware_result,
         'used_arc'         => ( $arc_aware_result ? '1' : '0' ),
     };
