@@ -1,8 +1,10 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
-        - Allow DMARC whitelist by passing SPF domain.
-        - Allow DMARC whitelist lookup via a dns whitelist.
+        - DMARC: Allow whitelist by passing SPF domain.
+        - DMARC: Allow whitelist lookup via a dns whitelist.
+        - DMARC: Allow configuration of disposition for failing mailing list messages
+        - DMARC: Check whitelist before list detection
 
 2.20180726 2018-07-26 16:30:40+01:00 Europe/London
         - Allow config file to be written in TOML
