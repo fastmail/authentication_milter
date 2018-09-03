@@ -431,17 +431,17 @@ sub _process_dmarc_for {
             $dmarc_disposition = 'none';
             $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Policy overriden using trusted ARC chain' );
         }
-        elsif ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
-            $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
-            $policy_override = 'mailing_list';
-            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local mailing list policy' );
-            $dmarc_result->disposition('none');
-            $dmarc_disposition = 'none';
-        }
         elsif ( $self->is_whitelisted() ) {
             $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
             $policy_override = 'trusted_forwarder';
             $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local white list' );
+            $dmarc_result->disposition('none');
+            $dmarc_disposition = 'none';
+        }
+        elsif ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
+            $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
+            $policy_override = 'mailing_list';
+            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local mailing list policy' );
             $dmarc_result->disposition('none');
             $dmarc_disposition = 'none';
         }
