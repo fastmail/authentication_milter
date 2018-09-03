@@ -122,6 +122,7 @@ sub is_whitelisted {
                 $whitelisted = 1;
             }
         }
+        return $whitelisted if $whitelisted;
     }
     return $whitelisted;
 }
