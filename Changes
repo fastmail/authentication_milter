@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication-ARC
 
 {{$NEXT}}
+
+2.20180903 2018-09-03 15:52:55+10:00 Australia/Melbourne
         - Option to lookup trusted arc domains via DNS
 
 2.20180612 2018-06-12 13:47:27+10:00 Australia/Melbourne
