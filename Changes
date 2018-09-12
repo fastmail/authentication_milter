@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Fix bug in loading of conf.d files
 
 2.20180903 2018-09-03 14:47:52+10:00 Australia/Melbourne
         - DMARC: Allow whitelist by passing SPF domain.
