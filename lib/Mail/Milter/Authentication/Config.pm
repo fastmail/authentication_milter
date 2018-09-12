@@ -211,12 +211,12 @@ sub get_config {
         opendir $dh, $folder;
         my @config_files =
             sort
-            grep { $_ =~ /\.[json|toml]$/ }
+            grep { $_ =~ /\.(json|toml)$/ }
             grep { not $_ =~ /^\./ }
             readdir($dh);
         closedir $dh;
         foreach my $file ( @config_files ) {
-            $file =~ /(^.*)\.[json|toml]$/;
+            $file =~ /(^.*)\.(json|toml)$/;
             my $handler = $1;
             ## ToDo Consider what to do if config already exists in .json config
             $config->{'handlers'}->{$handler} = load_file( join( '/', $folder, $file ) );
