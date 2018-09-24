@@ -44,7 +44,6 @@ install:
     - cpanm --quiet --notest Net::IP Net::Server
     - cpanm --quiet --notest Pod::Usage Proc::ProcessTable Socket Sys::Hostname Sys::Syslog
     - cpanm --quiet --notest git://github.com/fastmailops/mail-dmarc.git@fastmail
-    - cpanm --quiet --notest Mail::SpamAssassin
     - dzil authordeps --missing | cpanm --quiet --notest
     - dzil listdeps --missing | cpanm --quiet --notest
     - cpan-install --coverage
