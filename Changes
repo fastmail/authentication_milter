@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Added Mail::SpamAssassin plugin for parsing Authentication-Results headers.
 
 2.20180912 2018-09-12 22:03:15+10:00 Australia/Melbourne
         - Fix bug in loading of conf.d files
