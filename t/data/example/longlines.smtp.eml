@@ -11,7 +11,7 @@ Received: from test.module (localhost [127.0.0.1])
 ############
 Authentication-Results: server.example.com;
     dkim=none (no signatures found);
-    dmarc=none policy.published-domain-policy=none policy.published-subdomain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,sp=none,d=none,d.eval=none) header.from=example.com;
+    dmarc=none policy.published-domain-policy=none policy.published-subdomain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,sp=none,d=none,d.eval=none) policy.policy-from=p header.from=example.com;
     iprev=pass policy.iprev=74.125.82.171 (mail-we0-f171.google.com);
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com;
     x-google-dkim=none (no signatures found);

@@ -385,6 +385,7 @@ sub _process_dmarc_for {
 
     # Run the Validator
     my $dmarc_result = $dmarc->validate();
+    my $is_subdomain = $dmarc->is_subdomain();
 
     # ToDo Set multiple dmarc_result objects here
     # this will become relevant when the BIMI handler
@@ -403,6 +404,8 @@ sub _process_dmarc_for {
     }
     $self->dbgout( 'DMARCDisposition', $dmarc_disposition, LOG_INFO );
     my $dmarc_disposition_evaluated = $dmarc_disposition;
+
+    $self->dbgout( 'DMARCSubdomain', $is_subdomain ? 'yes' : 'no', LOG_INFO );
 
     my $dmarc_policy = eval{ $dmarc_result->published()->p(); };
     $self->handle_exception( $@ );
@@ -508,6 +511,7 @@ sub _process_dmarc_for {
         }
 
 
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.policy-from' )->safe_set_value( $is_subdomain ? 'sp' : 'p' ) );
         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
         $self->_add_dmarc_header( $header );
     }
@@ -521,6 +525,7 @@ sub _process_dmarc_for {
         'is_whitelisted'   => ( $is_whitelisted ? '1' : '0'),
         'arc_aware_result' => $arc_aware_result,
         'used_arc'         => ( $arc_aware_result ? '1' : '0' ),
+        'is_subdomain'     => ( $is_subdomain ? '1' : '0' ),
     };
     $self->metric_count( 'dmarc_total', $metric_data );
 

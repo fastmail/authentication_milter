@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - DMARC: Record policy used (p or sp) in header and metrics
 
 2.20180912 2018-09-12 22:03:15+10:00 Australia/Melbourne
         - Fix bug in loading of conf.d files
