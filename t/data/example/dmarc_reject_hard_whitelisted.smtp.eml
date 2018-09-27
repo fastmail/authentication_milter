@@ -11,7 +11,7 @@ Received: from test.module (localhost [127.0.0.1])
 ############
 Authentication-Results: server.example.com;
     dkim=none (no signatures found);
-    dmarc=fail policy.published-domain-policy=reject policy.published-subdomain-policy=none policy.applied-disposition=none policy.evaluated-disposition=reject policy.override-reason=trusted_forwarder (p=reject,sp=none,d=none,d.eval=reject,override=trusted_forwarder) policy.policy-from=p header.from=goestheweasel.com;
+    dmarc=fail policy.published-domain-policy=reject policy.applied-disposition=none policy.evaluated-disposition=reject policy.override-reason=trusted_forwarder (p=reject,d=none,d.eval=reject,override=trusted_forwarder) policy.policy-from=p header.from=goestheweasel.com;
     iprev=fail policy.iprev=99.123.123.123 (NOT FOUND);
     spf=fail smtp.mailfrom=test@goestheweasel.com smtp.helo=bad.name.google.com;
     x-ptr=fail smtp.helo=bad.name.google.com policy.ptr=""

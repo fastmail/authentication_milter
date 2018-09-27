@@ -414,7 +414,7 @@ sub _process_dmarc_for {
     my $dmarc_sub_policy = eval{ $dmarc_result->published()->sp(); };
     $self->handle_exception( $@ );
     # If we didn't get a result, set to none.
-    $dmarc_sub_policy = 'none' if ! $dmarc_sub_policy;
+    $dmarc_sub_policy = 'default' if ! $dmarc_sub_policy;
     $self->dbgout( 'DMARCPolicy', "$dmarc_policy $dmarc_sub_policy", LOG_INFO );
 
     my $policy_override;
@@ -482,7 +482,7 @@ sub _process_dmarc_for {
             push @comments, $self->format_header_entry( 'p', $dmarc_policy );
             $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-domain-policy' )->safe_set_value( $dmarc_policy ) );
         }
-        if ( $dmarc_sub_policy ) {
+        if ( $dmarc_sub_policy ne 'default' ) {
             push @comments, $self->format_header_entry( 'sp', $dmarc_sub_policy );
             $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-subdomain-policy' )->safe_set_value( $dmarc_sub_policy ) );
         }
@@ -510,8 +510,9 @@ sub _process_dmarc_for {
             $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( join( ',', @comments ) ) );
         }
 
+        my $policy_used = ( $is_subdomain && $dmarc_sub_policy ne 'default' ) ? 'sp' : 'p';
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.policy-from' )->safe_set_value( $policy_used ) );
 
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.policy-from' )->safe_set_value( $is_subdomain ? 'sp' : 'p' ) );
         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
         $self->_add_dmarc_header( $header );
     }
