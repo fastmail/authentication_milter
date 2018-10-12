@@ -2,7 +2,7 @@ Authentication-Results: test.module;
     dkim-adsp=unknown (ADSP policy from goestheweasel.com);
     dkim=pass (2048-bit rsa key sha1) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=S/mtomBF header.a=rsa-sha1 header.s=tfe2;
     dmarc=fail policy.published-domain-policy=reject policy.applied-disposition=none policy.evaluated-disposition=reject policy.override-reason=trusted_forwarder (p=reject,d=none,d.eval=reject,override=trusted_forwarder) policy.policy-from=p header.from=goestheweasel.com;
-    iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
+    iprev=fail smtp.remote-ip=123.123.123.123 (NOT FOUND);
     spf=softfail smtp.mailfrom=marc@marcbradshaw.net smtp.helo=bad.name.google.com;
     x-ptr=fail smtp.helo=bad.name.google.com policy.ptr=""
 Received-SPF: softfail

@@ -13,7 +13,7 @@ Authentication-Results: server.example.com;
     dkim-adsp=pass (ADSP policy from marcbradshaw.net);
     dkim=pass (1024-bit rsa key sha256) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3 header.a=rsa-sha256 header.s=google;
     dmarc=pass policy.published-domain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,d=none,d.eval=none) policy.policy-from=p header.from=marcbradshaw.net;
-    iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
+    iprev=fail smtp.remote-ip=123.123.123.123 (NOT FOUND);
     spf=softfail smtp.mailfrom=marc@marcbradshaw.net smtp.helo=bad.name.google.com;
     x-google-dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54;
     x-ptr=fail smtp.helo=bad.name.google.com policy.ptr="";

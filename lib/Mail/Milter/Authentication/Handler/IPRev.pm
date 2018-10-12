@@ -209,7 +209,7 @@ sub connect_callback {
         my $comment = join( ',', @error_list );
         $self->dbgout( 'IPRevCheck', "fail - $comment", LOG_DEBUG );
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'iprev' )->safe_set_value( 'fail' );
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.iprev' )->safe_set_value( $ip_address ) );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.remote-ip' )->safe_set_value( $ip_address ) );
         $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( $comment ) );
         $self->add_c_auth_header($header);
         $self->metric_count( 'iprev_total', { 'result' => 'fail'} );
@@ -220,7 +220,7 @@ sub connect_callback {
         $self->{'verified_ptr'} = $comment;
         $self->dbgout( 'IPRevCheck', "pass - $comment", LOG_DEBUG );
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'iprev' )->safe_set_value( 'pass' );
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.iprev' )->safe_set_value( $ip_address ) );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.remote-ip' )->safe_set_value( $ip_address ) );
         $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( $comment ) );
         $self->add_c_auth_header($header);
         $self->metric_count( 'iprev_total', { 'result' => 'pass'} );

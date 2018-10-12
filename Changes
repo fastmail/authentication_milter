@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - IPRev: rename policy.iprev to smtp.remote-ip for interop
 
 2.20180927 2018-09-27 14:00:13+10:00 Australia/Melbourne
         - DMARC: Record policy used (p or sp) in header and metrics

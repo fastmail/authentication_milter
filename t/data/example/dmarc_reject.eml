@@ -2,7 +2,7 @@ X-Disposition-Quarantine: Quarantined due to DMARC policy
 Authentication-Results: test.module;
     dkim=none (no signatures found);
     dmarc=fail policy.published-domain-policy=reject policy.applied-disposition=quarantine policy.evaluated-disposition=reject policy.override-reason=local_policy (p=reject,d=quarantine,d.eval=reject,override=local_policy) policy.policy-from=p header.from=goestheweasel.com;
-    iprev=fail policy.iprev=123.123.123.123 (NOT FOUND);
+    iprev=fail smtp.remote-ip=123.123.123.123 (NOT FOUND);
     spf=fail smtp.mailfrom=test@goestheweasel.com smtp.helo=bad.name.google.com;
     x-google-dkim=none (no signatures found);
     x-ptr=fail smtp.helo=bad.name.google.com policy.ptr=""
