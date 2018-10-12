@@ -406,7 +406,17 @@ sub get_arc_trusted_ingress_ip {
     return if ! $aar;
     my ( $first_instance ) = sort keys %$aar;
     return if ! $first_instance;
-    my $ip = eval{ $aar->{$first_instance}->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'policy.iprev'})->children()->[0]->value(); };
+
+    my $ip;
+
+    $ip = eval{ $aar->{$first_instance}->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'smtp.remote-ip'})->children()->[0]->value(); };
+    if ( my $error = $@ ) {
+        $self->handle_exception( $error );
+        $self->log_error( 'ARC Inherit Error ' . $error );
+    }
+    return $ip if $ip;
+
+    $ip = eval{ $aar->{$first_instance}->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'policy.iprev'})->children()->[0]->value(); };
     if ( my $error = $@ ) {
         $self->handle_exception( $error );
         $self->log_error( 'ARC Inherit Error ' . $error );
@@ -638,6 +648,9 @@ sub eom_callback {
             }
             $header->add_child( $header_comment );
         }
+
+        my $ip_address = $self->ip_address();
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.remote-ip' )->safe_set_value( $ip_address ) );
 
         $self->add_auth_header( $header );
 

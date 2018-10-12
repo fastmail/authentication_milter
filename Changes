@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication-ARC
 
 {{$NEXT}}
+        - Add smtp.remote-ip
 
 2.20180911 2018-09-11 13:03:03+10:00 Australia/Melbourne
         - Fix detection of domain in identity when inheriting DKIM results.
