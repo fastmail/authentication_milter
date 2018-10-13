@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20181013 2018-10-13 08:58:04-04:00 America/New_York
         - IPRev: rename policy.iprev to smtp.remote-ip for interop
 
 2.20180927 2018-09-27 14:00:13+10:00 Australia/Melbourne
