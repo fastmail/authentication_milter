@@ -536,14 +536,8 @@ sub _process_dmarc_for {
     if ($rua) {
         if ( ! $config->{'no_report'} ) {
             if ( ! $self->{'skip_report'} ) {
-                eval {
-                    $self->dbgout( 'DMARCReportTo', $rua, LOG_INFO );
-                    push @{ $self->{'report_queue'} }, $dmarc;
-                };
-                if ( my $error = $@ ) {
-                    $self->handle_exception( $error );
-                    $self->log_error( 'DMARC Report Error ' . $error );
-                }
+                $self->dbgout( 'DMARCReportTo', $rua, LOG_INFO );
+                push @{ $self->{'report_queue'} }, $dmarc;
             }
             else {
                 $self->dbgout( 'DMARCReportTo (skipped flag)', $rua, LOG_INFO );
@@ -847,12 +841,32 @@ sub addheader_callback {
 sub _save_aggregate_reports {
     my ( $self ) = @_;
     return if ! $self->{'report_queue'};
+    # Try as best we can to save a report, but don't stress if it fails.
     eval {
+        $self->set_handler_alarm( 2 * 1000000 ); # Allow no longer than 2 seconds for this!
         while ( my $report = shift @{ $self->{'report_queue'} } ) {
-             $report->save_aggregate();
+            $report->save_aggregate();
+            $self->dbgout( 'DMARC Report saved for', $report->result()->published()->rua(), LOG_INFO );
         }
+        $self->reset_alarm();
     };
-    $self->handle_exception( $@ );
+    if ( my $Error = $@ ) {
+        $self->reset_alarm();
+        my $Type = $self->is_exception_type( $Error );
+        if ( $Type ) {
+            if ( $Type eq 'Timeout' ) {
+                # We have a timeout, is it global or is it ours?
+                if ( $self->get_time_remaining() > 0 ) {
+                    # We have time left, but the aggregate save timed out
+                    # Log this and move on!
+                    $self->log_error( 'DMARC timeout saving reports' );
+                    return;
+                }
+            }
+        }
+        $self->handle_exception( $Error );
+        $self->log_error( 'DMARC Report Error ' . $Error );
+    }
     return;
 }
 
