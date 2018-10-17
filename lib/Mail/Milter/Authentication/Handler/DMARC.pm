@@ -538,7 +538,7 @@ sub _process_dmarc_for {
             if ( ! $self->{'skip_report'} ) {
                 eval {
                     $self->dbgout( 'DMARCReportTo', $rua, LOG_INFO );
-                    $dmarc->save_aggregate();
+                    push @{ $self->{'report_queue'} }, $dmarc;
                 };
                 if ( my $error = $@ ) {
                     $self->handle_exception( $error );
@@ -605,6 +605,7 @@ sub new_dmarc_object {
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'helo_name'} = $helo_host;
+    $self->{'report_queue'} = [] if ! $self->{'report_queue'};
     return;
 }
 
@@ -837,8 +838,27 @@ sub _add_dmarc_header {
     return;
 }
 
+sub addheader_callback {
+    my $self = shift;
+    my $handler = shift;
+    return;
+}
+
+sub _save_aggregate_reports {
+    my ( $self ) = @_;
+    return if ! $self->{'report_queue'};
+    eval {
+        while ( my $report = shift @{ $self->{'report_queue'} } ) {
+             $report->save_aggregate();
+        }
+    };
+    $self->handle_exception( $@ );
+    return;
+}
+
 sub close_callback {
     my ( $self ) = @_;
+    $self->_save_aggregate_reports();
     delete $self->{'helo_name'};
     delete $self->{'env_from'};
     delete $self->{'env_to'};
@@ -847,6 +867,7 @@ sub close_callback {
     delete $self->{'is_list'};
     delete $self->{'from_header'};
     delete $self->{'from_heades'};
+    delete $self->{'report_queue'};
     $self->destroy_object('dmarc');
     $self->destroy_object('dmarc_result');
     return;

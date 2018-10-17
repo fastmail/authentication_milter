@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - DMARC: Defer saving of aggregate reports until the close stage
 
 2.20181013 2018-10-13 08:58:04-04:00 America/New_York
         - IPRev: rename policy.iprev to smtp.remote-ip for interop
