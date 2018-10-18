@@ -42,7 +42,9 @@ sub new {
 
     if ( $self->{'enabled'} ) {
         $self->{'prom'} = Prometheus::Tiny::Shared->new( cache_args => { init_file => 1 } );
-        $self->{'prom'}->declare( name => 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
+        $self->{'prom'}->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
+        $self->{'prom'}->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
+        $self->{'prom'}->declare( 'authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
     }
 
     bless $self, $class;
@@ -144,9 +146,6 @@ Expects a hashref of metric description, keyed on metric name.
 sub register_metrics {
     my ( $self, $hash ) = @_;
     return if ( ! $self->{ 'enabled' } );
-
-    $self->{prom}->declare('authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
-    $self->{prom}->declare('authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
 
     foreach my $metric ( keys %$hash ) {
         my $help = $hash->{ $metric };
