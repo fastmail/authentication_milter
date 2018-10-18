@@ -75,6 +75,18 @@ sub get_installed_handlers {
     return \@installed_handlers;
 }
 
+=method I<idle_loop_hook()>
+
+Hook which runs in the master periodically.
+
+=cut
+
+sub idle_loop_hook {
+    my ( $self ) = @_;
+    $self->{'metric'}->master_metric_update( $self );
+    return;
+}
+
 =method I<pre_loop_hook()>
 
 Hook which runs in the master before looping.
@@ -162,7 +174,6 @@ Hook which runs after forking, sets up per process items.
 
 sub child_init_hook {
     my ( $self ) = @_;
-
     srand();
 
     my $config = get_config();
@@ -238,8 +249,9 @@ sub child_finish_hook {
     my ($self) = @_;
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':exiting';
     $self->loginfo( "Child process $PID shutting down" );
-    $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
-    $self->{'handler'}->{'_Handler'}->metric_send();
+    eval {
+        $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
+    };
     $self->destroy_objects();
     return;
 }
@@ -342,46 +354,6 @@ sub get_client_details {
     return;
 }
 
-=method I<child_is_talking_hook( $sock )>
-
-Hook which runs when a child wishes to communicate with the parent.
-
-=cut
-
-sub child_is_talking_hook {
-    my ( $self, $socket ) = @_;
-
-    my $request;
-    my $raw_request;
-
-    eval {
-        $raw_request = <$socket>;
-        $request = decode_json( $raw_request ) if defined $raw_request;
-    };
-    if ( my $error = $@ ) {
-        warn "Error $error reading from child";
-        return;
-    }
-    else {
-
-        return if ! defined $raw_request;
-
-        if ( ! $request ) {
-            warn "Ignoring Invalid child request: $raw_request;";
-            return;
-        }
-        $request =~ s/[\n\r]+$//;
-        if ( $request->{ 'method' } eq 'METRIC.GET' ) {
-            $self->{'metric'}->master_handler( $request, $socket, $self );
-        }
-        if ( $request->{ 'method' } eq 'METRIC.COUNT' ) {
-            $self->{'metric'}->master_handler( $request, $socket, $self );
-        }
-    }
-
-    return;
-}
-
 =method I<process_request()>
 
 Hook which runs for each request, passes control to metrics handler or process_main as appropriate.
@@ -452,11 +424,8 @@ sub process_main {
     # Call close callback
     $self->{'handler'}->{'_Handler'}->top_close_callback();
     if ( $self->{'handler'}->{'_Handler'}->{'exit_on_close'} ) {
-        $self->{'metric'}->send( $self );
         $self->fatal('exit_on_close requested');
     }
-
-    $self->{'metric'}->send( $self );
 
     if ( $config->{'debug'} ) {
         my $process_table = Proc::ProcessTable->new();
@@ -807,7 +776,7 @@ sub start {
                 'port'  => $path,
                 'proto' => 'unix',
             };
-            $srvargs{'child_communication'} = 1;
+            $srvargs{'child_communication'} = 0;
 
             if ($umask) {
                 umask ( oct( $umask ) );
@@ -925,7 +894,6 @@ sub setup_handlers {
     $self->{'handler'}->{'_Handler'} = $handler;
 
     $handler->metric_count( 'forked_children_total', {}, 1 );
-    $handler->metric_send();
 
     my $config = $self->{'config'};
     foreach my $name ( @{$config->{'load_handlers'}} ) {

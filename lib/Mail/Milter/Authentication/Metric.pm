@@ -12,6 +12,7 @@ Handle metrics collection and production for prometheus
 use English qw{ -no_match_vars };
 use JSON;
 use TOML;
+use Prometheus::Tiny::Shared;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Metric::Grafana;
 use Mail::Milter::Authentication::HTDocs;
@@ -32,6 +33,9 @@ sub new {
     $self->{'help'}       = {};
     $self->{'start_time'} = time;
     $self->{'queue'}      = [];
+    $self->{'prom'}       = Prometheus::Tiny::Shared->new( cache_args => { init_file => 1 } );
+
+    $self->{'prom'}->declare( name => 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
 
     my $config = get_config();
 
@@ -98,45 +102,19 @@ sub count {
     return if ( ! $self->{ 'enabled' } );
     $count = 1 if ! defined $count;
 
-    my $labels_txt = q{};
-    if ( $labels ) {
-        my @labels_list;
-        foreach my $l ( sort keys %$labels ) {
-            push @labels_list, $self->clean_label( $l ) .'="' . $self->clean_label( $labels->{$l} ) . '"';
-        }
-        if ( @labels_list ) {
-            $labels_txt = join( ',', @labels_list );
-        }
-    }
-
     $count_id =  $self->clean_label( $count_id );
 
-    # Parent can count it's own metrics.
-    my $ppid = $server->{ 'server' }->{ 'ppid' };
-    if ( $ppid == $PID ) {
-        warn "Parent counting metrics";
-        ## ToDo factor this out, the code has changed in the child
-        eval {
-            $labels = '' if ! $labels;
-            if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
-                $self->{'counter'}->{ $count_id } = { $labels => 0 };
-            }
-            if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
-                $self->{'counter'}->{ $count_id }->{ $labels } = 0;
-            }
-            $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
-        };
-        if ( my $error = $@ ) {
-            warn "Error counting metrics $error";
+    my $clean_labels = {};
+    if ( $labels ) {
+        foreach my $l ( sort keys %$labels ) {
+            $clean_labels->{ $self->clean_label( $l ) } = $self->clean_label( $labels->{$l} );
         }
-        return;
     }
 
-    push @{ $self->{ 'queue' } }, {
-        'count'    => $count,
-        'count_id' => $count_id,
-        'labels'   => $labels_txt,
-    };
+    $clean_labels->{ident} = $self->clean_label( $Mail::Milter::Authentication::Config::IDENT );
+
+    eval{ $self->{prom}->add( 'authmilter_' . $count_id, $count, $clean_labels ); };
+    ## TODO catch and re-throw timeouts
 
     return;
 }
@@ -149,40 +127,6 @@ Send metrics to the parent server process.
 
 sub send { ## no critic
     my ( $self, $server ) = @_;
-
-    return if ( ! $self->{ 'enabled' } );
-
-    my $ppid = $server->{ 'server' }->{ 'ppid' };
-    if ( $ppid == $PID ) {
-        warn "Parent tried to talk to itself to send metrics";
-        return;
-    }
-
-    eval {
-        local $SIG{'ALRM'} = sub{ die 'Timeout sending metrics' };
-        alarm( $self->get_timeout() );
-
-        my $psocket = $server->{'server'}->{'parent_sock'};
-        return if ! $psocket;
-
-        my $config = get_config();
-
-        print $psocket encode_json({
-            'method' => 'METRIC.COUNT',
-            'data'   => $self->{ 'queue' },
-        }) . "\n";
-
-        my $ping = <$psocket>;
-        alarm( 0 );
-        die 'Failure counting metrics, has master gone away?' if ! $ping;
-    };
-    if ( my $error = $@ ) {
-        warn $error;
-        return 0;
-    }
-
-    $self->{ 'queue' } = [];
-
     return;
 }
 
@@ -199,104 +143,32 @@ sub register_metrics {
     my ( $self, $hash ) = @_;
     return if ( ! $self->{ 'enabled' } );
 
+    $self->{prom}->declare('authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
+    $self->{prom}->declare('authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
+
     foreach my $metric ( keys %$hash ) {
         my $help = $hash->{ $metric };
-        if ( ! exists( $self->{'counter'}->{ $metric } ) ) {
-            $self->{'counter'}->{ $metric } = { '' => 0 };
-        }
-        $self->{'help'}->{ $self->clean_label( $metric ) } = $help;
+        $self->{prom}->declare( 'authmilter_' . $metric, help => $help, type => 'counter');
+        $self->{prom}->set( 'authmilter_' . $metric,0, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
     }
     return;
 }
 
-=method I<master_metric_get( $request, $socket, $server )>
+=method I<master_metric_update( $server )>
 
-Called in the master process to return metrics to the requestor
-
-=cut
-
-sub master_metric_get {
-    my ( $self, $request, $socket, $server ) = @_;
-    my $ident = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"}';
-    my $guage_help = {
-        'waiting'    => 'The number of authentication milter processes in a waiting state',
-        'processing' => 'The number of authentication milter processes currently processing data',
-    };
-    my $response = q{};
-    $response .= "# TYPE authmilter_uptime_seconds_total counter\n";
-    $response .= "# HELP authmilter_uptime_seconds_total Number of seconds since server startup\n";
-    $response .= 'authmilter_uptime_seconds_total' . $ident . ' ' . ( time - $self->{'start_time'} ) . "\n";
-    foreach my $type ( qw { waiting processing } ) {
-        $response .= '# TYPE authmilter_processes_' . $type . " gauge\n";
-        $response .= '# HELP authmilter_processes_' . $type . ' ' . $guage_help->{ $type } . "\n";
-        $response .= 'authmilter_processes_' . $type . $ident . ' ' . $server->{'server'}->{'tally'}->{ $type } . "\n";
-    }
-    foreach my $key ( sort keys %{ $self->{'counter'} } ) {
-        $response .= '# TYPE authmilter_' . $key . " counter\n";
-        my $help = $self->{'help'}->{ $key };
-        if ( $help ) {
-            $response .= '# HELP authmilter_' . $key . ' ' . $self->{'help'}->{ $key } . "\n";
-        }
-        foreach my $labels ( sort keys %{ $self->{'counter'}->{ $key } } ) {
-            my $labels_txt = '{ident="' . $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) . '"';
-            if ( $labels ne q{} ) {
-                $labels_txt .= ',' . $labels;
-            }
-            $labels_txt .= '}';
-            $response .= 'authmilter_' . $key . $labels_txt . ' ' . $self->{'counter'}->{ $key }->{ $labels } . "\n";
-        }
-    }
-    print $socket $response . "\0\n";
-    return;
-}
-
-=method I<master_metric_count( $request, $socket, $server )>
-
-Called in the master process to update metrics values
+Called in the master process to periodically update some metrics
 
 =cut
 
-sub master_metric_count {
-    my ( $self, $request, $socket, $server ) = @_;
-    my $data = $request->{ 'data' };
-    foreach my $datum ( @$data ) {
-        my $count    = $datum->{ 'count' };
-        my $count_id = $datum->{ 'count_id' };
-        my $labels   = $datum->{ 'labels' };
-        $labels = '' if ! $labels;
-        if ( ! exists( $self->{'counter'}->{ $count_id } ) ) {
-            $self->{'counter'}->{ $count_id } = { $labels => 0 };
-        }
-        if ( ! exists( $self->{'counter'}->{ $count_id }->{ $labels } ) ) {
-            $self->{'counter'}->{ $count_id }->{ $labels } = 0;
-        }
-        $self->{'counter'}->{ $count_id }->{ $labels } = $self->{'counter'}->{ $count_id }->{ $labels } + $count;
-    }
-    print $socket "1\n";
-    return;
-}
-
-=method I<master_handler( $request, $socket, $server)>
-
-Handle a metrics request in the master process.
-
-=cut
-
-sub master_handler {
-    my ( $self, $request, $socket, $server ) = @_;
-    my $config = get_config();
+sub master_metric_update {
+    my ( $self, $server ) = @_;
+    return if ( ! $self->{ 'enabled' } );
 
     eval {
-        if ( $request->{ 'method' } eq 'METRIC.GET' ) {
-            $self->master_metric_get( $request, $socket, $server );
-        }
-        elsif ( $request->{ 'method' } eq 'METRIC.COUNT' ) {
-            $self->master_metric_count( $request, $socket, $server );
+        foreach my $type ( qw { waiting processing } ) {
+            $self->{prom}->set('authmilter_processes_' . $type, $server->{'server'}->{'tally'}->{ $type }, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
         }
     };
-    if ( my $error = $@ ) {
-        warn "Metrics handler error $error";
-    }
 
     return;
 }
@@ -348,19 +220,12 @@ sub child_handler {
         }
 
         if ( $request_uri eq '/metrics' ) {
-
-            my $psocket = $server->{'server'}->{'parent_sock'};
-            my $request = encode_json({ 'method' => 'METRIC.GET' });
-            print $psocket "$request\n";
+            $self->{prom}->set( 'authmilter_uptime_seconds_total', time - $self->{'start_time'}, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
 
             print $socket "HTTP/1.0 200 OK\n";
             print $socket "Content-Type: text/plain\n";
             print $socket "\n";
-            while ( my $value = <$psocket> ) {
-                $value =~ s/[\n\r]+$//;
-                last if $value eq "\0";
-                print $socket "$value\n";
-            }
+            print $socket $self->{prom}->format();
 
         }
         elsif ( $request_uri eq '/' ){

@@ -123,7 +123,8 @@ Send metrics to the parent
 
 sub metric_send {
     my ( $self ) = @_;
-    $self->{'thischild'}->{'metric'}->send( $self->{ 'thischild' });
+    # NOOP
+    # TODO Deprecate and remove
     return;
 }
 

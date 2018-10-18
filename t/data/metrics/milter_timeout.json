@@ -13,8 +13,8 @@
    "authmilter_connect_total{ident=\"test_authentication_milter_test\"}" : "1",
    "authmilter_forked_children_total{ident=\"test_authentication_milter_test\"}" : 123456,
    "authmilter_mail_processed_total{ident=\"test_authentication_milter_test\"}" : "0",
-   "authmilter_processes_processing{ident=\"test_authentication_milter_test\"}" : "1",
-   "authmilter_processes_waiting{ident=\"test_authentication_milter_test\"}" : "1",
+   "authmilter_processes_processing{ident=\"test_authentication_milter_test\"}" : "0",
+   "authmilter_processes_waiting{ident=\"test_authentication_milter_test\"}" : "2",
    "authmilter_reaped_children_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_uptime_seconds_total{ident=\"test_authentication_milter_test\"}" : 123456
