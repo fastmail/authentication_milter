@@ -33,15 +33,17 @@ sub new {
     $self->{'help'}       = {};
     $self->{'start_time'} = time;
     $self->{'queue'}      = [];
-    $self->{'prom'}       = Prometheus::Tiny::Shared->new( cache_args => { init_file => 1 } );
-
-    $self->{'prom'}->declare( name => 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
 
     my $config = get_config();
 
     $self->{'enabled'} = defined( $config->{'metric_port'} ) ? 1
                        : defined( $config->{'metric_connection'} ) ? 1
                        : 0;
+
+    if ( $self->{'enabled'} ) {
+        $self->{'prom'} = Prometheus::Tiny::Shared->new( cache_args => { init_file => 1 } );
+        $self->{'prom'}->declare( name => 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
+    }
 
     bless $self, $class;
     return $self;
@@ -93,13 +95,13 @@ $server is the current handler object
 
 sub count {
     my ( $self, $args ) = @_;
+    return if ( ! $self->{ 'enabled' } );
 
     my $count_id = $args->{ 'count_id' };
     my $labels   = $args->{ 'labels' };
     my $server   = $args->{ 'server' };
     my $count    = $args->{ 'count' };
 
-    return if ( ! $self->{ 'enabled' } );
     $count = 1 if ! defined $count;
 
     $count_id =  $self->clean_label( $count_id );
@@ -181,6 +183,8 @@ Handle a metrics or http request in the child process.
 
 sub child_handler {
     my ( $self, $server ) = @_;
+    return if ( ! $self->{ 'enabled' } );
+
     my $config = get_config();
 
     eval {

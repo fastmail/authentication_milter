@@ -38,8 +38,8 @@ sub _build_config_smtp {
         'tempfail_on_error_local'         => 1,
         'tempfail_on_error_trusted'       => 1,
 
-        'metric_connection'               => 'unix:tmp/authentication_milter_test_metrics.sock',
-        'metric_umask'                    => '0000',
+        '#metric_connection'               => 'unix:tmp/authentication_milter_test_metrics.sock',
+        '#metric_umask'                    => '0000',
 
         'protocol' => 'smtp',
         'smtp' => {
@@ -75,8 +75,8 @@ sub _build_config_milter {
         'tempfail_on_error_local'         => 1,
         'tempfail_on_error_trusted'       => 1,
 
-        'metric_connection'               => 'unix:tmp/authentication_milter_test_metrics.sock',
-        'metric_umask'                    => '0000',
+        '#metric_connection'               => 'unix:tmp/authentication_milter_test_metrics.sock',
+        '#metric_umask'                    => '0000',
 
         'protocol' => 'milter',
 
