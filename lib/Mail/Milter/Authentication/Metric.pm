@@ -41,7 +41,12 @@ sub new {
                        : 0;
 
     if ( $self->{'enabled'} ) {
-        $self->{'prom'} = Prometheus::Tiny::Shared->new( cache_args => { init_file => 1 } );
+        my $cache_args = {};
+        $cache_args->{'init_file'} = 1;
+        if ( defined( $config->{'metric_tempfile'} ) ) {
+            $cache_args->{'share_file'} = $config->{'metric_tempfile'};
+        }
+        $self->{'prom'} = Prometheus::Tiny::Shared->new( cache_args => $cache_args );
         $self->{'prom'}->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
         $self->{'prom'}->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
         $self->{'prom'}->declare( 'authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );

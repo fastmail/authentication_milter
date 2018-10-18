@@ -249,6 +249,7 @@ __END__
 
     "metric_connection" : "inet:12346@localhost",       | Optional connection on which to expose metrics interface
     "metric_timeout" : 10,                              | Timeout for metrics IPC (default 5)
+    "metric_tempfile" : "/tmpfs/authmilter_metrics",    | Shared MMap file in which to store metrics, best on a ram disk
 
     # metric_port and metric_host are deprecated.
     # please use metric_connection instead
