@@ -172,7 +172,7 @@ sub rbl_check_domain {
     if ($packet) {
         foreach my $rr ( $packet->answer ) {
             if (  lc $rr->type eq 'a' ) {
-                return 1;
+                return $rr->address();
             }
         }
     }

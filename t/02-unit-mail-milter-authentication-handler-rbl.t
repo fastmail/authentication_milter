@@ -31,9 +31,9 @@ my $Authentication = Mail::Milter::Authentication->new();
 $Authentication->{'config'} = $Authentication->get_config();
 my $Handler = Mail::Milter::Authentication::Handler->new( $Authentication );
 
-is( $Handler->rbl_check_domain( 'messagingengine.com', 'domainwl.authmilter.org' ), 1, 'domain listed' );
-is( $Handler->rbl_check_ip( Net::IP->new('66.111.4.25'), 'ipwl.authmilter.org' ), 1, 'ip listed' );
-is( $Handler->rbl_check_ip( Net::IP->new('2404:6800:4006:80a::200e'), 'ipwl.authmilter.org' ), 1, 'ip6 listed' );
+is( $Handler->rbl_check_domain( 'messagingengine.com', 'domainwl.authmilter.org' ), '127.0.0.2', 'domain listed' );
+is( $Handler->rbl_check_ip( Net::IP->new('66.111.4.25'), 'ipwl.authmilter.org' ), '127.0.0.2', 'ip listed' );
+is( $Handler->rbl_check_ip( Net::IP->new('2404:6800:4006:80a::200e'), 'ipwl.authmilter.org' ), '127.0.0.2', 'ip6 listed' );
 
 is( $Handler->rbl_check_domain( 'fastmail.com', 'domainwl.authmilter.org' ), 0, 'domain not listed' );
 is( $Handler->rbl_check_ip( Net::IP->new('1.1.1.1'), 'ipwl.authmilter.org' ), 0, 'ip not listed' );
