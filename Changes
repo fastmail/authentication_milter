@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20181024 2018-10-24 12:02:46+11:00 Australia/Melbourne
         - DMARC: Defer saving of aggregate reports until the close stage
         - Metrics: Use shared memory for metrics processing rather than
           child<>parent socket calls.
