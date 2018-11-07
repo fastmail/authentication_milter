@@ -1551,7 +1551,7 @@ Reject mail with the given reason
 sub reject_mail {
     my ( $self, $reason ) = @_;
     my ( $rcode, $xcode, $message ) = split( ' ', $reason, 3 );
-    if ($rcode !~ /^[5]\d\d$/ || $xcode !~ /^[5]\.\d\.\d$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
+    if ($rcode !~ /^[5]\d\d$/ || $xcode !~ /^[5]\.\d+\.\d+$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
         $self->loginfo ( "Invalid reject message $reason - setting to default" );
         $reason = '550 5.0.0 Message rejected';
     }
@@ -1582,7 +1582,7 @@ Defer mail with the given reason
 sub defer_mail {
     my ( $self, $reason ) = @_;
     my ( $rcode, $xcode, $message ) = split( ' ', $reason, 3 );
-    if ($rcode !~ /^[4]\d\d$/ || $xcode !~ /^[4]\.\d\.\d$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
+    if ($rcode !~ /^[4]\d\d$/ || $xcode !~ /^[4]\.\d+\.\d+$/ || substr($rcode, 0, 1) ne substr($xcode, 0, 1)) {
         $self->loginfo ( "Invalid defer message $reason - setting to default" );
         $reason = '450 4.0.0 Message deferred';
     }
