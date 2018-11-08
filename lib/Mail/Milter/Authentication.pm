@@ -54,6 +54,39 @@ sub _warn {
     return;
 }
 
+=method preload_modules( $from, $matching )
+
+Preload (pre-fork) lazy loading modules.
+
+Takes a Package Name and a Base module, and loads all modules which match.
+
+=cut
+
+sub preload_modules {
+    my ( $self, $from, $matching ) = @_;
+    my $installed = ExtUtils::Installed->new( 'skip_cwd' => 1 );
+
+    my $path_matching = $matching;
+    $path_matching =~ s/::/\//g;
+    foreach my $module ( grep { /$from/ } $installed->modules() ) {
+        FILE:
+        foreach my $file ( grep { /$path_matching\/\w+\.pm$/ } $installed->files( $module ) ) {
+            next FILE if ! -e $file;
+            my ( $module ) = reverse split '/', $file;
+            $module =~ s/\.pm$//;
+            $module = join( '::', $matching, $module );
+            if ( ! is_loaded( $module ) ) {
+                $self->logdebug( "Preloading Module $module" );
+                load $module;
+            }
+            else {
+                $self->logdebug( "Preloading Module $module already loaded" );
+            }
+        }
+    }
+    return;
+}
+
 =func I<get_installed_handlers()>
 
 Return an array ref of installed handler modules.
@@ -98,6 +131,7 @@ sub pre_loop_hook {
 
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':master';
 
+    $self->preload_modules( 'Net::DNS', 'Net::DNS::RR' );
     $self->{'metric'} = Mail::Milter::Authentication::Metric->new();
 
     # Load handlers
