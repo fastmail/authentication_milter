@@ -287,7 +287,7 @@ sub child_handler {
         print $socket '<li>' . $connection . ': ' . $connections->{ $connection }->{ 'connection' } . '</li>'
     }
     print $socket qq{
-        <li><a href="/config">Effective config</a></li>
+        <li>Effective config (<a href="/config/toml">toml</a>/<a href="/config/json">json</a>)</li>
     </ul>
 
     <h2>Metrics</h2>
@@ -302,7 +302,16 @@ sub child_handler {
 </body>
 };
         }
-        elsif ( $request_uri eq '/config' ) {
+        elsif ( $request_uri eq '/config/json' || $request_uri eq '/config' ) {
+            print $socket "HTTP/1.0 200 OK\n";
+            print $socket "Content-Type: text/plain\n";
+            print $socket "\n";
+            my $json = JSON->new();
+            $json->canonical();
+            $json->pretty();
+            print $socket $json->encode( $config );;
+        }
+        elsif ( $request_uri eq '/config/toml' ) {
             print $socket "HTTP/1.0 200 OK\n";
             print $socket "Content-Type: text/plain\n";
             print $socket "\n";
