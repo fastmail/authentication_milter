@@ -462,6 +462,45 @@ sub check_timeout {
     die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Manual check timeout' });
 }
 
+sub _remap_ip_and_helo {
+    my ( $self ) = @_;
+
+    my $config = $self->config();
+    if ( exists ( $config->{ 'ip_map' } ) ) {
+        my $ip_object = $self->{ 'raw_ip_object' };
+        my $helo_host = $self->{'raw_helo_name'};
+        foreach my $ip_map ( sort keys %{ $config->{ 'ip_map' } } ) {
+            my $map_obj = Net::IP->new( $ip_map );
+            my $is_overlap = $ip_object->overlaps($map_obj) || 0;
+            if (
+                   $is_overlap == $IP_A_IN_B_OVERLAP
+                || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
+                || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
+                || $is_overlap == $IP_IDENTICAL
+              )
+            {
+                my $mapped_to = $config->{ 'ip_map' }->{ $ip_map };
+                if ( $helo_host && exists $mapped_to->{helo_map} && exists $mapped_to->{helo_map}->{ $helo_host } ) {
+                    # We have a specific HELO mapping for this!
+                    $mapped_to = $mapped_to->{helo_map}->{ $helo_host };
+                    return {
+                        ip => Net::IP->new( $mapped_to->{ip} ),
+                        helo => $mapped_to->{helo},
+                    };
+                }
+                else {
+                    # Remap based on IP Only
+                    return {
+                        ip => Net::IP->new( $mapped_to->{ip} ),
+                        helo => $mapped_to->{helo},
+                    };
+                }
+            }
+        }
+    }
+    return;
+}
+
 =callback_method I<top_connect_callback( $hostname, $ip )>
 
 Top level handler for the connect event.
@@ -489,24 +528,10 @@ sub top_connect_callback {
         $self->dbgout( 'ConnectFrom', $ip->ip(), LOG_DEBUG );
         $self->{'raw_ip_object'} = $ip;
 
-        if ( exists ( $config->{ 'ip_map' } ) ) {
-            foreach my $ip_map ( sort keys %{ $config->{ 'ip_map' } } ) {
-                my $map_obj = Net::IP->new( $ip_map );
-                my $is_overlap = $ip->overlaps($map_obj) || 0;
-                if (
-                       $is_overlap == $IP_A_IN_B_OVERLAP
-                    || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
-                    || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
-                    || $is_overlap == $IP_IDENTICAL
-                  )
-                {
-                    if ( exists ( $config->{ 'ip_map' }->{ $ip_map }->{ 'ip' } ) ) {
-                        $ip = Net::IP->new( $config->{ 'ip_map' }->{ $ip_map }->{ 'ip' } );
-                        $self->dbgout( 'ConnectFromRemapped', $self->{'raw_ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
-                        last;
-                    }
-                }
-            }
+        my $ip_remap = $self->_remap_ip_and_helo();
+        if ( $ip_remap ) {
+            $ip = $ip_remap->{ip};
+            $self->dbgout( 'ConnectFromRemapped', $self->{'raw_ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
         }
 
         $self->{'ip_object'} = $ip;
@@ -569,26 +594,16 @@ sub top_helo_callback {
         if ( !( $self->{'helo_name'} ) ) {
 
             $self->{'raw_helo_name'} = $helo_host;
-            if ( exists ( $config->{ 'ip_map' } ) ) {
-                my $ip_object = $self->{ 'raw_ip_object' };
-                foreach my $ip_map ( sort keys %{ $config->{ 'ip_map' } } ) {
-                    my $map_obj = Net::IP->new( $ip_map );
-                    my $is_overlap = $ip_object->overlaps($map_obj) || 0;
-                    if (
-                           $is_overlap == $IP_A_IN_B_OVERLAP
-                        || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
-                        || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
-                        || $is_overlap == $IP_IDENTICAL
-                      )
-                    {
-                        my $mapped_to = $config->{ 'ip_map' }->{ $ip_map };
-                        if ( exists ( $config->{ 'ip_map' }->{ $ip_map }->{ 'helo' } ) ) {
-                            $helo_host = $config->{ 'ip_map' }->{ $ip_map }->{ 'helo' };
-                            $self->dbgout( 'HELORemapped', $self->{'raw_helo_name'} . ' > ' . $helo_host, LOG_DEBUG );
-                            last;
-                        }
-                    }
+            my $ip_remap = $self->_remap_ip_and_helo();
+            if ( $ip_remap ) {
+                my $ip = $ip_remap->{ip};
+                if ( $self->{'ip_object'}->ip() ne $ip_remap->{ip}->ip() ) {
+                    # The mapped IP has been changed based on the HELO host received
+                    $self->{'ip_object'} = $ip;
+                    $self->dbgout( 'ConnectFromRemappedAtHELO', $self->{'ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
                 }
+                $helo_host = $ip_remap->{helo};
+                $self->dbgout( 'HELORemapped', $self->{'raw_helo_name'} . ' > ' . $helo_host, LOG_DEBUG );
             }
 
             $self->{'helo_name'} = $helo_host;
