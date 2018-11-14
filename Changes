@@ -1,6 +1,15 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Core: Return effective config in toml or json
+          NB The version of TOML used here is not sufficient to
+             express all possible configurations, in particular those
+             which would require a . in the key name (ip addresses etc) are
+             not possible to express in TOML.
+             As such, TOML should be considered as experimental.
+        - Core: Allow ip remapping based on received HELO host
+        - Core: Pre-load some Net::DNS::RR modules pre-fork
+        - Core: Allow multiple digit extended return codes
 
 2.20181024 2018-10-24 12:02:46+11:00 Australia/Melbourne
         - DMARC: Defer saving of aggregate reports until the close stage
