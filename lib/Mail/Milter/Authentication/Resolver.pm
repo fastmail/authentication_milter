@@ -68,7 +68,8 @@ sub search {
     my $self = shift;
     return $self->_do( 'search', @_ );
 }
-sub send {
+
+sub send { ## no critic
     my $self = shift;
     return $self->_do( 'send', @_ );
 }
