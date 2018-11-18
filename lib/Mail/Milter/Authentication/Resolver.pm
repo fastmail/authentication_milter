@@ -25,7 +25,7 @@ to Net::DNS::Resolver
     }
 }
 
-sub _do {
+sub _do { ## no critic
     my $self = shift;
     my $what = shift;
     my $handler = $self->{_handler};
@@ -59,12 +59,12 @@ sub _do {
     return $return;
 }
 
-sub query {
+sub query { ## no critic
     my $self = shift;
     return $self->_do( 'query', @_ );
 }
 
-sub search {
+sub search { ## no critic
     my $self = shift;
     return $self->_do( 'search', @_ );
 }
