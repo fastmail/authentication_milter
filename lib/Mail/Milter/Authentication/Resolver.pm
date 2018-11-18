@@ -15,7 +15,7 @@ to Net::DNS::Resolver
 =cut
 
 {
-    sub new {
+    sub new { ## no critic
         my $class = shift;
         my %args = @_;
         my $self = $class->SUPER::new( @_ );
