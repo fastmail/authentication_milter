@@ -35,6 +35,13 @@ sub pre_loop_setup {
     return;
 }
 
+sub connect_callback {
+    my ( $self ) = @_;
+    # Reset state on a connection
+    delete $self->{'is_encrypted'};
+    return;
+}
+
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
 
@@ -51,6 +58,7 @@ sub envfrom_callback {
 
     if ($version) {
         $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits$trusted", LOG_INFO );
+        $self->{'is_encrypted'} = 1;
 
         my $metric_data = {};
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-tls' )->safe_set_value( 'pass' );
@@ -70,6 +78,9 @@ sub envfrom_callback {
         $self->metric_count( 'tls_connect_total', $metric_data );
 
         $self->add_auth_header( $header );
+    }
+    else {
+        $self->{'is_encrypted'} = 0;
     }
     return;
 }
@@ -101,6 +112,7 @@ sub header_callback {
 
     if ($version) {
         $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits", LOG_INFO );
+        $self->{'is_encrypted'} = 1;
 
         my $metric_data = {};
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-tls' )->safe_set_value( 'pass' );
@@ -124,9 +136,19 @@ sub header_callback {
     return;
 }
 
+sub eoh_callback {
+    my ( $self ) = @_;
+    my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
+    return if $protocol ne 'smtp';
+    return if defined $self->{'is_encrypted'};
+    $self->{'is_encrypted'} = 0;
+    return;
+}
+
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'first_header_read'};
+    delete $self->{'is_encrypted'};
     return;
 }
 

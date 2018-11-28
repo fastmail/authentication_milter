@@ -1758,6 +1758,24 @@ sub is_trusted_ip_address {
     return $self->get_handler('TrustedIP')->{'is_trusted_ip_address'};
 }
 
+=helper_method I<is_encrypted()>
+
+Is the current connection encrypted?
+
+Requires the TLS Handler to be loaded.
+
+In SMTP mode this is only available AFTER the eoh call.
+
+Returns undef if the state is not yet known.
+
+=cut
+
+sub is_encrypted {
+    my ($self) = @_;
+    return undef if ! $self->is_handler_loaded('TLS'); ## no critic
+    return $self->get_handler('TLS')->{'is_encrypted'};
+}
+
 =helper_method I<is_authenticated()>
 
 Is the current connection authenticated?
