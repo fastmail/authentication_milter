@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Core/TLS: Expost the TLS state in a helper method.
 
 2.20181114 2018-11-14 15:20:39+11:00 Australia/Melbourne
         - Core: Return effective config in toml or json
