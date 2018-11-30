@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Handler::AbusixDataFeed;
 use strict;
 use warnings;
-use Mail::Milter::Authentication 2.20181128;
+use Mail::Milter::Authentication 2.201811;
 use base 'Mail::Milter::Authentication::Handler';
 # ABSTRACT: Send data to Abusix
 ## VERSION
@@ -16,17 +16,8 @@ sub default_config {
         'feed_dest' => 'server:port',
         'feed_key'  => 'this_is_a_secret',
         'listening_port' => '25',
-    }
+    };
 }
-
-      $abusix_feed->ip_address('1.2.3.4');
-      $abusix_feed->reverse_dns('test.example.org');
-      $abusix_feed->helo('server.example.org');
-      $abusix_feed->used_esmtp(1);
-      $abusix_feed->used_tls(1);
-      $abusix_feed->used_auth(0);
-      $abusix_feed->mail_from_domain('from.example.org');
-
 
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
@@ -37,15 +28,18 @@ sub helo_callback {
 sub envfrom_callback {
     my ($self, $from) = @_;
     my $config = $self->handler_config();
+
     $self->{ 'abusix_feed' } = Mail::DataFeed::Abusix->new(
         'feed_name' => $config->{ 'feed_name' },
         'feed_dest' => $config->{ 'feed_dest' },
         'feed_key'  => $config->{ 'feed_key' },
     );
     $self->{ 'abusix_feed' }->mail_from_domain( $self->get_domain_from( $from ) );
-    $self->{ 'abusix_feed' }->helo( $self->{ 'helo_name' };
+    $self->{ 'abusix_feed' }->helo( $self->{ 'helo_name' } );
     $self->{ 'abusix_feed' }->port( $config->{ 'listening_port' } );
     $self->{ 'abusix_feed' }->ip_address( $self->ip_address() );
+
+    delete $self->{ 'first_received' };
 
     my $resolver = $self->get_object('resolver');
     my @rdns;
@@ -63,8 +57,17 @@ sub envfrom_callback {
     }
     $self->{ 'abusix_feed' }->reverse_dns( join( ',', @rdns ) );
 
-    ## todo, can we set used_esmtp?
+    return;
+}
 
+sub header_callback {
+    my ( $self, $header, $value ) = @_;
+    return if defined $self->{ 'first_received' };
+    return if lc $header ne 'received';
+    my $protocol = Mail::Milter::Authentication::Config::get_config()->{'protocol'};
+    return if $protocol ne 'smtp';
+
+    $self->{ 'first_received' } = $value;
     return;
 }
 
@@ -72,6 +75,16 @@ sub eoh_callback {
     my ( $self ) = @_;
     $self->{ 'abusix_feed' }->used_tls( $self->is_encrypted() );
     $self->{ 'abusix_feed' }->used_auth( $self->is_authenticated() );
+    if ( defined $self->{ 'first_received' } ) {
+        my $used_smtp  = $self->{ 'first_received' } =~ / with SMTP/;
+        my $used_esmtp = $self->{ 'first_received' } =~ / with ESMTP/;
+        warn " VALUES SMTP $used_smtp ESMTP $used_esmtp";
+        if ( $used_smtp xor $used_esmtp ) {
+            # Filters line noise!
+            $self->{ 'abusix_feed' }->used_esmtp( 1 ) if $used_esmtp;
+            $self->{ 'abusix_feed' }->used_esmtp( 0 ) if $used_smtp;
+        }
+    }
     $self->{ 'abusix_feed' }->send();
     return;
 }
@@ -82,6 +95,7 @@ sub close_callback {
 
     delete $self->{'helo_name'};
     delete $self->{'abusix_feed'};
+    delete $self->{ 'first_received' };
     return;
 }
 
