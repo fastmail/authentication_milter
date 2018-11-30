@@ -23,6 +23,7 @@ use Time::HiRes qw{ ualarm gettimeofday };
 use Mail::Milter::Authentication::Constants qw { :all };
 use Mail::Milter::Authentication::Config;
 use Mail::Milter::Authentication::Exception;
+use Mail::Milter::Authentication::Resolver;
 use Mail::AuthenticationResults 1.20180328;
 use Mail::AuthenticationResults::Header;
 use Mail::AuthenticationResults::Header::AuthServID;
@@ -1467,7 +1468,8 @@ sub get_object {
                 # If it is you better know what you're doing!
             }
             else {
-                $object = Net::DNS::Resolver->new(
+                $object = Mail::Milter::Authentication::Resolver->new(
+                    '_handler'          => $self,
                     'udp_timeout'       => $timeout,
                     'tcp_timeout'       => $timeout,
                     'retry'             => $dns_retry,
