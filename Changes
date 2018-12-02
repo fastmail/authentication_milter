@@ -3,7 +3,7 @@ Revision history for Mail-Milter-Authentication
 {{$NEXT}}
 
 2.20181130 2018-11-30 15:12:34+11:00 Australia/Melbourne
-        - Core/TLS: Expost the TLS state in a helper method.
+        - Core/TLS: Expose the TLS state in a helper method.
         - Core: Enforce DNS timeouts
 
 2.20181114 2018-11-14 15:20:39+11:00 Australia/Melbourne
