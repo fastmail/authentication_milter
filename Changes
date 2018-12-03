@@ -1,4 +1,5 @@
 {{$NEXT}}
+        - Set TLS to 0 if not encrypted and TLS handler is loaded
 
 2.20181203 2018-12-03 Australia/Melbourne
         - First Release
