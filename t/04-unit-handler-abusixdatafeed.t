@@ -158,7 +158,7 @@ Subject: This is a test
 Testing',
     });
 
-    my $feed = $tester->{ 'authmilter' }->{ 'handler' }->{ 'AbusixDataFeed' }->{ 'abusix_feed' };
+    $feed = $tester->{ 'authmilter' }->{ 'handler' }->{ 'AbusixDataFeed' }->{ 'abusix_feed' };
     is( $feed->{used_esmtp}, 0, 'used esmtp is not set' );
 
 };
@@ -198,7 +198,7 @@ Subject: This is a test
 Testing',
     });
 
-    my $feed = $tester->{ 'authmilter' }->{ 'handler' }->{ 'AbusixDataFeed' }->{ 'abusix_feed' };
+    $feed = $tester->{ 'authmilter' }->{ 'handler' }->{ 'AbusixDataFeed' }->{ 'abusix_feed' };
     is( $feed->{used_tls}, 0, 'used tls is not set' );
 
 };
