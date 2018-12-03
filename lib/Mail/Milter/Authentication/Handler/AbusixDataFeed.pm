@@ -73,7 +73,9 @@ sub header_callback {
 
 sub eoh_callback {
     my ( $self ) = @_;
-    $self->{ 'abusix_feed' }->used_tls( $self->is_encrypted() );
+    if ( $self->is_handler_loaded('TLS') ) {
+        $self->{ 'abusix_feed' }->used_tls( $self->is_encrypted() || 0 ); # Explicit 0 over undef if TLS handler is loaded
+    }
     $self->{ 'abusix_feed' }->used_auth( $self->is_authenticated() );
     if ( defined $self->{ 'first_received' } ) {
         my $used_smtp  = $self->{ 'first_received' } =~ / with SMTP/;
