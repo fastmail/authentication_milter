@@ -340,10 +340,10 @@ __END__
             "ip" : "5.6.7.8", "helo" : "mx.test"        | want to run IP based checks (eg SPF) against its external
                                                         |
             "helo_map" : {                              | Additionally match and remap based on a received HELO host
-                "test.host" : {                         | from a matching IP address, this is done at the HELO stage, ie
-                    "ip" : "5.6.7.9",                   | after the connect stage, so handlers which run in the connect
-                    "helo" : "mx2.test"                 | stage will not see this remapped ip address.
-                }                                       |
+                "test.host" : {                         | from a matching IP address, for milter protocol this is done at the HELO stage, ie
+                    "ip" : "5.6.7.9",                   | after the connect stage, so handlers which run in the connect stage will not see
+                    "helo" : "mx2.test"                 | this remapped ip address. SMTP protocol runs both remaps before passing control to
+                }                                       | the connect handlers, so connect handlers see ip addresses remapped by HELO.
             }
         }                                               | IP address instead.
     },

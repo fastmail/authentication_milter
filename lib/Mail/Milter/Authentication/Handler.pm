@@ -502,6 +502,24 @@ sub _remap_ip_and_helo {
     return;
 }
 
+=callback_method I<remap_connect_callback( $hostname, $ip )>
+
+Top level handler for the connect event for remapping only.
+
+=cut
+
+sub remap_connect_callback {
+    my ( $self, $hostname, $ip ) = @_;
+    $self->{'raw_ip_object'} = $ip;
+    my $ip_remap = $self->_remap_ip_and_helo();
+    if ( $ip_remap ) {
+        $ip = $ip_remap->{ip};
+        $self->dbgout( 'RemappedConnect', $self->{'raw_ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
+    }
+    $self->{'ip_object'} = $ip;
+    return;
+}
+
 =callback_method I<top_connect_callback( $hostname, $ip )>
 
 Top level handler for the connect event.
@@ -527,15 +545,6 @@ sub top_connect_callback {
         }
 
         $self->dbgout( 'ConnectFrom', $ip->ip(), LOG_DEBUG );
-        $self->{'raw_ip_object'} = $ip;
-
-        my $ip_remap = $self->_remap_ip_and_helo();
-        if ( $ip_remap ) {
-            $ip = $ip_remap->{ip};
-            $self->dbgout( 'ConnectFromRemapped', $self->{'raw_ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
-        }
-
-        $self->{'ip_object'} = $ip;
 
         my $callbacks = $self->get_callbacks( 'connect' );
         foreach my $handler ( @$callbacks ) {
@@ -570,6 +579,34 @@ sub top_connect_callback {
     return $self->get_return();
 }
 
+=callback_method I<remap_helo_callback( $helo_host )>
+
+Top level handler for the HELO event for remapping only.
+
+=cut
+
+sub remap_helo_callback {
+    my ( $self, $helo_host ) = @_;
+    if ( !( $self->{'helo_name'} ) ) {
+
+        $self->{'raw_helo_name'} = $helo_host;
+        my $ip_remap = $self->_remap_ip_and_helo();
+        if ( $ip_remap ) {
+            my $ip = $ip_remap->{ip};
+            if ( $self->{'ip_object'}->ip() ne $ip_remap->{ip}->ip() ) {
+                # The mapped IP has been changed based on the HELO host received
+                $self->{'ip_object'} = $ip;
+                $self->dbgout( 'RemappedConnectHELO', $self->{'ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
+            }
+            $helo_host = $ip_remap->{helo};
+            $self->dbgout( 'RemappedHELO', $self->{'raw_helo_name'} . ' > ' . $helo_host, LOG_DEBUG );
+        }
+
+        $self->{'helo_name'} = $helo_host;
+    }
+    return;
+}
+
 =callback_method I<top_helo_callback( $helo_host )>
 
 Top level handler for the HELO event.
@@ -592,22 +629,8 @@ sub top_helo_callback {
         }
 
         # Take only the first HELO from a connection
-        if ( !( $self->{'helo_name'} ) ) {
-
-            $self->{'raw_helo_name'} = $helo_host;
-            my $ip_remap = $self->_remap_ip_and_helo();
-            if ( $ip_remap ) {
-                my $ip = $ip_remap->{ip};
-                if ( $self->{'ip_object'}->ip() ne $ip_remap->{ip}->ip() ) {
-                    # The mapped IP has been changed based on the HELO host received
-                    $self->{'ip_object'} = $ip;
-                    $self->dbgout( 'ConnectFromRemappedAtHELO', $self->{'ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
-                }
-                $helo_host = $ip_remap->{helo};
-                $self->dbgout( 'HELORemapped', $self->{'raw_helo_name'} . ' > ' . $helo_host, LOG_DEBUG );
-            }
-
-            $self->{'helo_name'} = $helo_host;
+        if ( !( $self->{'seen_helo_name'} ) ) {
+            $self->{'seen_helo_name'} = $helo_host;
 
             my $callbacks = $self->get_callbacks( 'helo' );
             foreach my $handler ( @$callbacks ) {
@@ -626,7 +649,7 @@ sub top_helo_callback {
             }
         }
         else {
-            $self->dbgout('Multiple HELO callbacks detected and ignored', $self->{'helo_name'} . ' / ' . $helo_host, LOG_DEBUG );
+            $self->dbgout('Multiple HELO callbacks detected and ignored', $self->{'seen_helo_name'} . ' / ' . $helo_host, LOG_DEBUG );
         }
 
         $self->set_alarm(0);
@@ -1115,6 +1138,7 @@ sub top_close_callback {
         $self->tempfail_on_error();
     }
     delete $self->{'helo_name'};
+    delete $self->{'seen_helo_name'};
     delete $self->{'raw_helo_name'};
     delete $self->{'c_auth_headers'};
     delete $self->{'auth_headers'};
