@@ -55,7 +55,8 @@ sub milter_process_command {
 
     if ( $command eq SMFIC_CONNECT ) {
         my ( $host, $ip ) = $self->milter_process_connect( $buffer );
-        $returncode = $handler->top_connect_callback( $host, $ip );
+        $handler->remap_connect_callback( $host, $ip );
+        $returncode = $handler->top_connect_callback( $host, $handler->{'ip_object'} );
     }
     elsif ( $command eq SMFIC_ABORT ) {
         $returncode = $handler->top_abort_callback();
@@ -82,7 +83,8 @@ sub milter_process_command {
     }
     elsif ( $command eq SMFIC_HELO ) {
         my $helo = $self->milter_split_buffer( $buffer );
-        $returncode = $handler->top_helo_callback( @$helo );
+        $handler->remap_helo_callback( @$helo );
+        $returncode = $handler->top_helo_callback( $handler->{'helo_name'} );
     }
     elsif ( $command eq SMFIC_HEADER ) {
         my $header = $self->milter_split_buffer( $buffer );

@@ -414,10 +414,14 @@ sub smtp_command_mailfrom {
         $ip = substr( $ip, 5 );
     }
 
-    $self->logdebug( "Inbound IP Address $ip" );
-    $returncode = $handler->top_connect_callback( $host, Net::IP->new( $ip ) );
+    # Do connection remapping first
+    $handler->remap_connect_callback( $host, Net::IP->new( $ip ) );
+    $handler->remap_helo_callback( $helo );
+
+    $self->logdebug( "Inbound IP Address " . $handler->{'ip_object'}->ip() );
+    $returncode = $handler->top_connect_callback( $host, $handler->{'ip_object'} );
     if ( $returncode == SMFIS_CONTINUE ) {
-        $returncode = $handler->top_helo_callback( $helo );
+        $returncode = $handler->top_helo_callback( $handler->{'helo_name'} );
         if ( $returncode == SMFIS_CONTINUE ) {
             my $envfrom = command_param( $command,10 );
             $smtp->{'mail_from'} = $envfrom;
