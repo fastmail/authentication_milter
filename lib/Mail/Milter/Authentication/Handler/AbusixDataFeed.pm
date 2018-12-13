@@ -80,7 +80,6 @@ sub eoh_callback {
     if ( defined $self->{ 'first_received' } ) {
         my $used_smtp  = $self->{ 'first_received' } =~ / with SMTP/;
         my $used_esmtp = $self->{ 'first_received' } =~ / with ESMTP/;
-        warn " VALUES SMTP $used_smtp ESMTP $used_esmtp";
         if ( $used_smtp xor $used_esmtp ) {
             # Filters line noise!
             $self->{ 'abusix_feed' }->used_esmtp( 1 ) if $used_esmtp;

@@ -1,4 +1,5 @@
 {{$NEXT}}
+        - Removed stray debugging output
 
 2.20181204 2018-12-03 Australia/Melbourne
         - Set TLS to 0 if not encrypted and TLS handler is loaded
