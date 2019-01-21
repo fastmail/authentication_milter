@@ -80,16 +80,16 @@ sub _test_blocker {
         my $value_regex = $item->{'value'};
         if ( $value =~ /$value_regex/ ) {
             if ( rand(100) > $item->{'percent'} ) {
-                $self->dbgout( 'Blocker:', 'sampled_out ' . $key, LOG_INFO );
+                $self->dbgout( 'Blocker', 'sampled_out ' . $key, LOG_INFO );
                 $self->metric_count( 'blocker_total', { 'result' => 'sampled_out', 'id' => $key } );
             }
             elsif ( $item->{'with'} =~ /^5/ ) {
-                $self->dbgout( 'Blocker:', 'reject' . $key, LOG_INFO );
+                $self->dbgout( 'Blocker', 'reject ' . $key, LOG_INFO );
                 $self->metric_count( 'blocker_total', { 'result' => 'reject', 'id' => $key } );
                 $self->reject_mail( $item->{'with'} );
             }
             elsif ( $item->{'with'} =~ /^4/ ) {
-                $self->dbgout( 'Blocker:', 'defer' . $key, LOG_INFO );
+                $self->dbgout( 'Blocker', 'defer ' . $key, LOG_INFO );
                 $self->metric_count( 'blocker_total', { 'result' => 'defer', 'id' => $key } );
                 $self->defer_mail( $item->{'with'} );
             }
