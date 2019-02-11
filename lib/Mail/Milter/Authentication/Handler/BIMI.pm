@@ -7,7 +7,7 @@ use base 'Mail::Milter::Authentication::Handler';
 # ABSTRACT: BIMI handler for authentication milter
 
 use English qw{ -no_match_vars };
-use Mail::BIMI;
+use Mail::BIMI 1.20190210;
 use Sys::Syslog qw{:standard :macros};
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;
@@ -127,7 +127,6 @@ sub eom_callback {
         my $Domain = $self->get_domain_from( $self->{'from_header'} );
         my $Selector = $self->{ 'selector' } || 'default';
         $Selector = lc $Selector;
-        my $BIMI = Mail::BIMI->new();
 
         # Rework this to allow for multiple dmarc_result objects as per new DMARC handler
         my $DMARCResult = $self->get_object( 'dmarc_result' );
@@ -143,18 +142,20 @@ sub eom_callback {
         }
         else {
 
-            $BIMI->set_resolver( $self->get_object( 'resolver' ) );
-            $BIMI->set_dmarc_object( $DMARCResult );
-            $BIMI->set_from_domain( $Domain );
-            $BIMI->set_selector( $Selector );
-            $BIMI->validate();
+            my $BIMI = Mail::BIMI->new(
+                resolver => $self->get_object( 'resolver' ),
+                dmarc_object => $DMARCResult,
+                domain => $Domain,
+                selector => $Selector,
+            );
+            $self->{'bimi_object'} = $BIMI;
 
             my $Result = $BIMI->result();
             my $AuthResults = $Result->get_authentication_results_object();
             $self->add_auth_header( $AuthResults );
             $self->{ 'header_added' } = 1;
             my $Record = $BIMI->record();
-            my $URLList = $Record->url_list();
+            my $URLList = $Record->locations->location;
             if ( $Result->result() eq 'pass' ) {
                 $self->prepend_header( 'BIMI-Location', join( "\n",
                     'v=BIMI1;',
@@ -183,6 +184,7 @@ sub close_callback {
     delete $self->{'selector'};
     delete $self->{'from_header'};
     delete $self->{'failmode'};
+    delete $self->{'bimi_object'};
     delete $self->{'remove_bimi_headers'};
     delete $self->{'bimi_header_index'};
     delete $self->{ 'header_added' };

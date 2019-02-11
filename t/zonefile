@@ -1,0 +1,4 @@
+example.com 10 IN A 1.2.3.4
+_dmarc.example.com 10 IN TXT  ( "v=DMARC1; p=reject; pct=100;" )
+example.com 10 IN TXT ( "v=spf1 ip4:1.2.3.4 -all" )
+default._bimi.example.com 10 IN TXT ( "v=bimi1; l=https://bimi.example.com/test.svg" )
