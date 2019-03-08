@@ -37,7 +37,7 @@ sub _load_blocker_config_file {
 # id for metrics and must be unique
 # callbacks are connect,helo,envfrom,envrcpt,header
 # value is applied as a regex
-# percent is a percentage of matches to apploy the block to
+# percent is a percentage of matches to apply the block to
 # with is the full SMTP reject string to send, 4xx or 5xx and MUST have an extended code 5.x.x or 4.x.x
 #
 # Example
