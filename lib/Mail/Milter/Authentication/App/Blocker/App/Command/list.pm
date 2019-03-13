@@ -12,51 +12,60 @@ sub description { 'Parse a toml file and list the current blocks' }
 
 sub opt_spec {
   return (
-    [ 'file=s', 'Config file to operate on' ],
+    [ 'file=s@', 'Config files to operate on' ],
   );
 }
 
 sub validate_args($self,$opt,$args) {
   # no args allowed but options!
   $self->usage_error('Must supply a filename') if ( !$opt->{file} );
-  $self->usage_error('Supplied filename does not exist') if ( ! -e $opt->{file} );
+  foreach my $file ( $opt->{file}->@* ) {
+    $self->usage_error('Supplied filename does not exist') if ( ! -e $file );
+  }
   $self->usage_error('No args allowed') if @$args;
 }
 
 sub execute($self,$opt,$args) {
 
-  open ( my $inf, '<', $opt->{file} );
-  my $body = do { local $/; <$inf> };
-  close $inf;
-  my ( $data, $error ) = from_toml( $body );
+  foreach my $file ( $opt->{file}->@* ) {
 
-  if ( $error ) {
-    say 'Error parsing file';
-    say $error;
-    exit 1;
-  }
+    say "In file $file";
+    say '';
 
-  my $tb = Text::Table->new(
-    'Id',
-    'Callback',
-    'Value',
-    'With',
-    'Percent',
-  );
+    open ( my $inf, '<', $file );
+    my $body = do { local $/; <$inf> };
+    close $inf;
+    my ( $data, $error ) = from_toml( $body );
 
-  foreach my $key ( sort keys $data->%* ) {
-    $tb->add(
-      $key,
-      $data->{$key}->{callback},
-      $data->{$key}->{value},
-      $data->{$key}->{with},
-      $data->{$key}->{percent},
+    if ( $error ) {
+      say 'Error parsing file';
+      say $error;
+      exit 1;
+    }
+
+    my $tb = Text::Table->new(
+      'Id',
+      'Callback',
+      'Value',
+      'With',
+      'Percent',
     );
-  }
 
-  print $tb->title;
-  print $tb->rule('-');
-  print $tb->body;
+    foreach my $key ( sort keys $data->%* ) {
+      $tb->add(
+        $key,
+        $data->{$key}->{callback},
+        $data->{$key}->{value},
+        $data->{$key}->{with},
+        $data->{$key}->{percent},
+      );
+    }
+
+    print $tb->title;
+    print $tb->rule('-');
+    print $tb->body;
+    say '';
+  }
 }
 
 1;
