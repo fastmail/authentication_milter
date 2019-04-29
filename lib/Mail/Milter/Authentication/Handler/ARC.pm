@@ -448,6 +448,7 @@ sub envfrom_callback {
     $self->{'carry'}            = q{};
     $self->{'arc_auth_results'} = {};
     $self->{'arc_domain'}       = {};
+    $self->{'arc_result'}       = '';
     $self->destroy_object('arc');
     return;
 }
@@ -682,6 +683,7 @@ sub close_callback {
     delete $self->{'has_arc'};
     delete $self->{'valid_domains'};
     delete $self->{'arc_domain'};
+    delete $self->{'arc_result'};
     delete $self->{'arc_auth_results'};
     $self->destroy_object('arc');
     return;
