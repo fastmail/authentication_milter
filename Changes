@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20181212 2018-12-12 15:17:16+11:00 Australia/Melbourne
         - Core: Remap IP addresses as early as possible.
 
 2.20181130 2018-11-30 15:12:34+11:00 Australia/Melbourne
