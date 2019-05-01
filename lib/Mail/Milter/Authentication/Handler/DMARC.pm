@@ -23,6 +23,7 @@ sub default_config {
         'use_arc'        => 1,
         'hard_reject'    => 0,
         'no_list_reject' => 1,
+        'arc_before_list' => 0,
         'whitelisted'    => [],
         'detect_list_id' => 1,
         'report_skip_to' => [ 'my_report_from_address@example.com' ],
@@ -445,12 +446,17 @@ sub _process_dmarc_for {
             $dmarc_disposition = 'none';
         }
         elsif ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
-            $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
-            $policy_override = 'mailing_list';
-            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local mailing list policy' );
-            my $no_list_reject_disposition = $config->{ 'no_list_reject_disposition' } // 'none';
-            $dmarc_result->disposition( $no_list_reject_disposition );
-            $dmarc_disposition = $no_list_reject_disposition;
+            if ( $config->{'arc_before_list'} && $have_arc ) {
+                $self->dbgout( 'DMARCReject', "Policy reject not overridden for list mail with trusted ARC chain", LOG_INFO );
+            }
+            else {
+                $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
+                $policy_override = 'mailing_list';
+                $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local mailing list policy' );
+                my $no_list_reject_disposition = $config->{ 'no_list_reject_disposition' } // 'none';
+                $dmarc_result->disposition( $no_list_reject_disposition );
+                $dmarc_disposition = $no_list_reject_disposition;
+            }
         }
 
         if ( $dmarc_disposition eq 'reject' ) {
@@ -904,6 +910,7 @@ This handler requires the SPF and DKIM handlers to be installed and active.
             "hard_reject"           : 0,                   | Reject mail which fails with a reject policy
             "no_reject_disposition" : "quarantine",        | What to report when hard_reject is 0
             "no_list_reject"        : 0,                   | Do not reject mail detected as mailing list
+            "arc_before_list"       : 0,                   | Don't apply above list detection if we have trusted arc
             "no_list_reject_disposition" : "none",         | Disposition to use for mail detected as mailing list (defaults none)
             "whitelisted"           : [                    | A list of ip addresses or CIDR ranges, or dkim domains
                 "10.20.30.40",                             | for which we do not want to hard reject mail on fail p=reject
