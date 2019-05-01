@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - DMARC: Option to override List-ID detection if we have ARC
 
 2.20181212 2018-12-12 15:17:16+11:00 Australia/Melbourne
         - Core: Remap IP addresses as early as possible.
