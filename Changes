@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20190502 2019-05-02 15:54:56+10:00 Australia/Melbourne
         - DMARC: Make sure we actually have a trusted ARC chain before
           applying arc_before_list
 
