@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - DMARC: Make sure we actually have a trusted ARC chain before
+          applying arc_before_list
 
 2.20190501 2019-05-01 11:52:35+10:00 Australia/Melbourne
         - DMARC: Option to override List-ID detection if we have ARC

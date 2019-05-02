@@ -446,7 +446,7 @@ sub _process_dmarc_for {
             $dmarc_disposition = 'none';
         }
         elsif ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
-            if ( $config->{'arc_before_list'} && $have_arc ) {
+            if ( $config->{'arc_before_list'} && $have_arc && $self->get_handler('ARC')->get_trusted_arc_authentication_results ) {
                 $self->dbgout( 'DMARCReject', "Policy reject not overridden for list mail with trusted ARC chain", LOG_INFO );
             }
             else {
