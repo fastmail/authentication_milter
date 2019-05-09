@@ -218,6 +218,7 @@ __END__
     "dryrun"    : 0,                                    | Dryrun (do not alter or reject mail)
     "logtoerr"  : 0,                                    | Also write logs to STDERR
     "error_log" : "/var/log/authentication_milter.err", | Capture STDERR to logfile
+    "log_dispatchouli" : {},                            | Optional args to pass directly into Log::Dispatchouli->new()
 
     "connection"             : "inet:12345@localhost",  | The connection to use
     "umask"                  : "0000",                  | Set umask (for unix socket)

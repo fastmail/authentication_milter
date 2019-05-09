@@ -2234,7 +2234,7 @@ sub dbgoutwrite {
                 ) {
                     next LOGENTRY;
                 }
-                syslog( $priority, $line );
+                Mail::Milter::Authentication::logger()->log( { 'level' => $priority }, $line );
             }
         }
         delete $top_handler->{'dbgout'};
