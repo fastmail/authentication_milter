@@ -141,6 +141,7 @@ Hook which runs to write logs
 sub write_to_log_hook {
     my ( $self, $priority, $line ) = @_;
     logger()->log( { 'level' => $priority }, $line );
+    return;
 }
 
 =method I<idle_loop_hook()>
