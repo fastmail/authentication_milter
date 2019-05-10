@@ -140,7 +140,13 @@ Hook which runs to write logs
 
 sub write_to_log_hook {
     my ( $self, $priority, $line ) = @_;
-    logger()->log( { 'level' => $priority }, $line );
+    my $log_priority = $priority == 0 ? 'debug'
+                     : $priority == 1 ? 'info'
+                     : $priority == 2 ? 'notice'
+                     : $priority == 3 ? 'warning'
+                     : $priority == 4 ? 'error'
+                     : 'debug';
+    logger()->log( { 'level' => $log_priority }, $line );
     return;
 }
 
@@ -659,7 +665,7 @@ sub start {
 
     local $SIG{__WARN__} = sub {
         foreach my $msg ( @_ ) {
-            logger()->log( "Warning: $msg" );
+            logger()->log( { level => 'warning' }, "Warning: $msg" );
             _warn( "Warning: $msg" );
         }
         return;
@@ -1239,7 +1245,7 @@ sub logerror {
         $line = $queue_id . ': ' . $line;
     }
     _warn( $line ) if $config->{'logtoerr'};
-    logger()->log( { 'level' => LOG_ERR }, $line );
+    logger()->log( { 'level' => 'error' }, $line );
     return;
 }
 
@@ -1256,7 +1262,7 @@ sub loginfo {
         $line = $queue_id . ': ' . $line;
     }
     _warn( $line ) if $config->{'logtoerr'};
-    logger()->log( { 'level' => LOG_INFO }, $line );
+    logger()->log( { 'level' => 'info' }, $line );
     return;
 }
 
@@ -1274,7 +1280,7 @@ sub logdebug {
     }
     if ( $config->{'debug'} ) {
         _warn( $line ) if $config->{'logtoerr'};
-        logger()->log( { 'level' => LOG_DEBUG }, $line );
+        logger()->log( { 'level' => 'debug' }, $line );
     }
     return;
 }
