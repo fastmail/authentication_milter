@@ -49,6 +49,7 @@ sub _check_domain_rr {
     my $return = {
         'result' => 0,
         'error'  => '',
+        'values' => [],
     };
     eval {
         my $packet = $resolver->query( $domain, $rrtype );
@@ -56,8 +57,10 @@ sub _check_domain_rr {
             foreach my $rr ( $packet->answer ) {
                 next unless $rr->type eq $rrtype;
                 $return->{ 'result' } = 1;
+                push @{$return->{'values'}}, $rr->exchange if $rrtype eq 'MX';
+                push @{$return->{'values'}}, $rr->address if $rrtype eq 'A';
+                push @{$return->{'values'}}, $rr->address if $rrtype eq 'AAAA';
                 ## TODO Check the returned record is in fact valid for its type
-                last;
             }
         }
         else {
@@ -77,6 +80,9 @@ sub _check_domain_rr {
 
 sub _check_domain {
     my ( $self, $domain, $type ) = @_;
+
+    return if exists $self->{ 'done' }->{ join(':',$domain,$type) };
+    $self->{ 'done' }->{ join(':',$domain,$type) } = 1;
 
     my $metrics = {};
     my @details;
@@ -123,7 +129,7 @@ sub _check_domain {
     # If MX passed then that's it, stop checking
     if ( $lookup_mx->{ 'result' } == 1 ) {
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-return-mx' )->safe_set_value( 'pass' );
-        push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'MX Record found' );
+        push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'MX Records found: '.join(',',@{$lookup_mx->{'values'}}) );
         $metrics->{ $type . '_result' } = 'pass';
         $metrics->{ $type . '_has_mx' } = 'yes';
         $self->dbgout( 'ReturnOKCheck', 'pass', LOG_DEBUG );
@@ -152,14 +158,14 @@ sub _check_domain {
         $self->dbgout( 'ReturnOKCheck', 'warn', LOG_DEBUG );
         if ( $lookup_a->{ 'result' } == 1 ) {
             $metrics->{ $type . '_has_a' } = 'yes';
-            push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'A Record found' );
+            push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'A Records found: '.join(',',@{$lookup_a->{'values'}}) );
         }
         else {
             $metrics->{ $type . '_has_a' } = 'no';
         }
         if ( $lookup_aaaa->{ 'result' } == 1 ) {
             $metrics->{ $type . '_has_aaaa' } = 'yes';
-            push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'AAAA Record found' );
+            push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'AAAA Records found: '.join(',',@{$lookup_aaaa->{'values'}}) );
         }
         else {
             $metrics->{ $type . '_has_aaaa' } = 'no';
@@ -186,7 +192,7 @@ sub _check_domain {
         if ( $lookup_mx->{ 'result' } == 1 ) {
             my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-return-mx' )->safe_set_value( 'warn' );
             $self->dbgout( 'ReturnOKCheck', 'warn', LOG_DEBUG );
-            push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Org Domain MX Record found' );
+            push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Org Domain MX Records found: '.join(',',@{$lookup_mx->{'values'}}) );
             foreach my $detail ( @details ) {
             $metrics->{ $type . '_result' } = 'warn';
             $metrics->{ $type . '_has_org_mx' } = 'yes';
@@ -214,14 +220,14 @@ sub _check_domain {
             $self->dbgout( 'ReturnOKCheck', 'warn', LOG_DEBUG );
             if ( $lookup_a->{ 'result' } == 1 ) {
                 $metrics->{ $type . '_has_org_a' } = 'yes';
-                push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Org Domain A Record found' );
+                push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Org Domain A Records found: '.join(',',@{$lookup_a->{'values'}}) );
             }
             else {
                 $metrics->{ $type . '_has_org_a' } = 'no';
             }
             if ( $lookup_aaaa->{ 'result' } == 1 ) {
                 $metrics->{ $type . '_has_org_aaaa' } = 'yes';
-                push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Org Domain AAAA Record found' );
+                push @details, Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Org Domain AAAA Records found: '.join(',',@{$lookup_aaaa->{'values'}}) );
             }
             else {
                 $metrics->{ $type . '_has_org_aaaa' } = 'no';
@@ -255,6 +261,7 @@ sub envfrom_callback {
     my ( $self, $env_from ) = @_;
 
     $self->{ 'metrics' } = [];
+    $self->{ 'done' } = {};
 
     $env_from = q{} if $env_from eq '<>';
     my $addresses = $self->get_addresses_from( $env_from );
@@ -280,6 +287,7 @@ sub header_callback {
 
 sub close_callback {
     my ( $self ) = @_;
+    delete $self->{ 'done' };
     delete $self->{ 'metrics' };
     return;
 }
