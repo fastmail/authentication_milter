@@ -1,6 +1,9 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - ReturnOK: Add detail in comments
+        - ReturnOK: Don't duplicate checks for repeated domains
+        - Core: Use Log::Dispatchouli for logging
 
 2.20190502 2019-05-02 15:54:56+10:00 Australia/Melbourne
         - DMARC: Make sure we actually have a trusted ARC chain before
