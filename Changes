@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20190523 2019-05-23 02:16:29+00:00 UTC
         - ReturnOK: Add detail in comments
         - ReturnOK: Don't duplicate checks for repeated domains
         - Core: Use Log::Dispatchouli for logging
