@@ -20,7 +20,7 @@ _netblocks2.google.com.	3025	IN	TXT	( "v=spf1 ip6:2001:4860:4000::/36 ip6:2404:6
 _netblocks3.google.com.	2898	IN	TXT	"v=spf1 ~all"
 _policy._domainkey.goestheweasel.com TXT
 _spf.google.com.	242	IN	TXT	( "v=spf1 include:_netblocks.google.com include:_netblocks2.google.com include:_netblocks3.google.com ~all" )
-example.com MX
+example.com. MX 10 mx.example.com.
 example.com.	33024	IN	NS	a.iana-servers.net.
 example.com.	33024	IN	NS	b.iana-servers.net.
 example.com.	55	IN	TXT	"v=spf1 -all"

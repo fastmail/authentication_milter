@@ -2169,6 +2169,17 @@ sub dbgout {
         return;
     }
 
+    # Sys::Syslog and Log::Dispatchouli have different priority models
+    my $log_priority = $priority == LOG_DEBUG   ? 'debug'
+                     : $priority == LOG_INFO    ? 'info'
+                     : $priority == LOG_NOTICE  ? 'notice'
+                     : $priority == LOG_WARNING ? 'warning'
+                     : $priority == LOG_ERR     ? 'error'
+                     : $priority == LOG_CRIT    ? 'critical'
+                     : $priority == LOG_ALERT   ? 'alert'
+                     : $priority == LOG_EMERG   ? 'emergency'
+                     : 'info';
+
     if ( $config->{'logtoerr'} ) {
         Mail::Milter::Authentication::_warn( "$queue_id: $key: $value" );
     }
@@ -2179,9 +2190,9 @@ sub dbgout {
     }
     push @{ $top_handler->{'dbgout'} },
       {
-        'priority' => $priority || LOG_INFO,
-        'key'      => $key      || q{},
-        'value'    => $value    || q{},
+        'priority' => $log_priority,
+        'key'      => $key          || q{},
+        'value'    => $value        || q{},
       };
 
     # Write now if we can.
@@ -2228,13 +2239,13 @@ sub dbgoutwrite {
                 my $priority = $entry->{'priority'};
                 my $line     = "$queue_id: $key: $value";
                 if (
-                    $priority == LOG_DEBUG
+                    $priority eq 'debug'
                     &&
                     ! $config->{'debug'}
                 ) {
                     next LOGENTRY;
                 }
-                syslog( $priority, $line );
+                Mail::Milter::Authentication::logger()->log( { 'level' => $priority }, $line );
             }
         }
         delete $top_handler->{'dbgout'};

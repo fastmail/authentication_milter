@@ -32,6 +32,7 @@ use JSON;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Handler;
+use Log::Dispatchouli;
 use Mail::Milter::Authentication::Metric;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
@@ -43,6 +44,29 @@ use Proc::ProcessTable;
 use Sys::Syslog qw{:standard :macros};
 
 use vars qw(@ISA);
+
+{
+    my $LOGGER;
+    sub logger {
+
+        return $LOGGER if $LOGGER;
+        my $config = get_config();
+
+        my $MYARGS = {
+            'ident' => $Mail::Milter::Authentication::Config::IDENT,
+            'to_stderr' => 0, # handled elsewhere
+            'log_pid' => 1,
+            'facility' => LOG_MAIL,
+        };
+        if ( exists $config->{ 'log_dispatchouli' } ) {
+            $MYARGS = $config->{ 'log_dispatchouli' };
+        }
+
+        $LOGGER = Log::Dispatchouli->new( $MYARGS );
+        $LOGGER->log('Logging instantiated');
+        return $LOGGER;
+    }
+}
 
 sub _warn {
     my ( $msg ) = @_;
@@ -106,6 +130,24 @@ sub get_installed_handlers {
         }
     }
     return \@installed_handlers;
+}
+
+=method I<write_to_log_hook()>
+
+Hook which runs to write logs
+
+=cut
+
+sub write_to_log_hook {
+    my ( $self, $priority, $line ) = @_;
+    my $log_priority = $priority == 0 ? 'debug'
+                     : $priority == 1 ? 'info'
+                     : $priority == 2 ? 'notice'
+                     : $priority == 3 ? 'warning'
+                     : $priority == 4 ? 'error'
+                     : 'debug';
+    logger()->log( { 'level' => $log_priority }, $line );
+    return;
 }
 
 =method I<idle_loop_hook()>
@@ -623,7 +665,7 @@ sub start {
 
     local $SIG{__WARN__} = sub {
         foreach my $msg ( @_ ) {
-            syslog( LOG_ERR, "Warning: $msg" );
+            logger()->log( { level => 'warning' }, "Warning: $msg" );
             _warn( "Warning: $msg" );
         }
         return;
@@ -675,12 +717,6 @@ sub start {
     $srvargs{'min_servers'}       = $min_children;
     $srvargs{'min_spare_servers'} = $min_spare_children;
     $srvargs{'max_spare_servers'} = $max_spare_children;
-
-    $srvargs{'log_file'}          = 'Sys::Syslog';
-    $srvargs{'syslog_facility'}   = LOG_MAIL;
-    $srvargs{'syslog_ident'}      = $Mail::Milter::Authentication::Config::IDENT;
-    $srvargs{'syslog_logopt'}     = 'pid';
-    $srvargs{'syslog_logsock'}    = 'native';
 
     if ( $EUID == 0 ) {
         my $user  = $config->{'runas'};
@@ -1209,7 +1245,7 @@ sub logerror {
         $line = $queue_id . ': ' . $line;
     }
     _warn( $line ) if $config->{'logtoerr'};
-    syslog( LOG_ERR, $line );
+    logger()->log( { 'level' => 'error' }, $line );
     return;
 }
 
@@ -1226,7 +1262,7 @@ sub loginfo {
         $line = $queue_id . ': ' . $line;
     }
     _warn( $line ) if $config->{'logtoerr'};
-    syslog( LOG_INFO, $line );
+    logger()->log( { 'level' => 'info' }, $line );
     return;
 }
 
@@ -1244,7 +1280,7 @@ sub logdebug {
     }
     if ( $config->{'debug'} ) {
         _warn( $line ) if $config->{'logtoerr'};
-        syslog( LOG_DEBUG, $line );
+        logger()->log( { 'level' => 'debug' }, $line );
     }
     return;
 }
