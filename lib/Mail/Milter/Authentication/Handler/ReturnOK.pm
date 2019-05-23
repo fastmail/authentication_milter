@@ -81,6 +81,9 @@ sub _check_domain_rr {
 sub _check_domain {
     my ( $self, $domain, $type ) = @_;
 
+    return if exists $self->{ 'done' }->{ join(':',$domain,$type) };
+    $self->{ 'done' }->{ join(':',$domain,$type) } = 1;
+
     my $metrics = {};
     my @details;
 
@@ -258,6 +261,7 @@ sub envfrom_callback {
     my ( $self, $env_from ) = @_;
 
     $self->{ 'metrics' } = [];
+    $self->{ 'done' } = {};
 
     $env_from = q{} if $env_from eq '<>';
     my $addresses = $self->get_addresses_from( $env_from );
@@ -283,6 +287,7 @@ sub header_callback {
 
 sub close_callback {
     my ( $self ) = @_;
+    delete $self->{ 'done' };
     delete $self->{ 'metrics' };
     return;
 }
