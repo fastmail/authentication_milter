@@ -1544,6 +1544,13 @@ sub destroy_object {
     # Objects may be set to not be destroyed,
     # eg. resolver and spf_server are not
     # destroyed for performance reasons
+    # Resolver, however, has it's error cache cleared, as this should only
+    # cache errors within a single transaction.
+    if ($name eq 'resolver' ) {
+        if ( $thischild->{'object'}->{'resolver'}->can( 'clear_error_cache' ) ) {
+            $thischild->{'object'}->{'resolver'}->clear_error_cache();
+        }
+    }
     return if ! $thischild->{'object'}->{$name}->{'destroy'};
     return if ! $thischild->{'object'}->{$name};
     $self->dbgout( 'Object destroyed', $name, LOG_DEBUG );
