@@ -77,6 +77,9 @@ sub header_callback {
             my $lookup = $selector.'._domainkey.'.$domain;
             $resolver->bgsend( $lookup, 'TXT' );
             $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
+            $lookup = '_adsp._domainkey.'.$domain;
+            $resolver->bgsend( $lookup, 'TXT' );
+            $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
         }
     }
     if ( lc($header) eq 'domainkey-signature' ) {
