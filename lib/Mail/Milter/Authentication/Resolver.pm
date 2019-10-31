@@ -51,7 +51,10 @@ sub _do { ## no critic
 
     # If we have a 'cached' timeout for this org domain then return
     if ( exists( $self->{ _timedout }->{ $org_domain } ) ) {
-        $self->errorstring('Timeout');
+        my $domain = $_[0];
+        my $query = $_[1];
+        $handler->log_error( "Lookup $query $domain aborted due to previous DNS Lookup timeout on $org_domain" );
+        $self->errorstring('query timed out');
         return;
     }
 
