@@ -76,7 +76,7 @@ sub _do { ## no critic
                 # Log this and move on!
                 $handler->log_error( 'DNS Lookup timeout not caught by Net::DNS::Resolver' );
                 $self->{ _timedout }->{ $org_domain } = 1;
-                $self->errorstring('Timeout');
+                $self->errorstring('query timed out');
                 return;
             }
         }
@@ -85,7 +85,7 @@ sub _do { ## no critic
 
     # Timeouts or SERVFAIL are unlikely to recover within the lifetime of this transaction,
     # when we encounter them, don't lookup this org domain again.
-    if ( ( $self->errorstring =~ /timeout/i ) || ( $self->errorstring eq 'SERVFAIL' ) ) {
+    if ( ( $self->errorstring =~ /timeout/i ) || ( $self->errorstring eq 'query timed out' ) || ( $self->errorstring eq 'SERVFAIL' ) ) {
         $self->{ _timedout }->{ $org_domain } = 1;
     }
 
