@@ -71,8 +71,8 @@ sub header_callback {
         my $resolver = $self->get_object('resolver');
         if ( $selector && $domain ) {
             my $lookup = $selector.'._domainkey.'.$domain;
-            $self->dbgout( 'DKIMLookup', "Anticipating $lookup", LOG_INFO );
             $resolver->bgsend( $lookup, 'TXT' );
+            $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
         }
     }
 
