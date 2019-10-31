@@ -70,8 +70,8 @@ sub header_callback {
 
     if ( lc($header) eq 'dkim-signature' ) {
         $self->{'has_dkim'} = 1;
-        my $domain = $value =~ / d=([^;]*);/;
-        my $selector = $value =~ / d=([^;]*);/;
+        my ($domain) = $value =~ / d=([^;]*);/;
+        my ($selector) = $value =~ / d=([^;]*);/;
         my $resolver = $self->get_object('resolver');
         if ( $selector && $domain ) {
             my $lookup = $selector.'._domainkey.'.$domain;

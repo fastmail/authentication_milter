@@ -66,8 +66,8 @@ sub header_callback {
         $x_dkim_chunk =~ s/\015?\012/$EOL/g;
         push @{$self->{'headers'}} , $x_dkim_chunk;
         $self->{'has_dkim'} = 1;
-        my $domain = $value =~ / d=([^;]*);/;
-        my $selector = $value =~ / d=([^;]*);/;
+        my ($domain) = $value =~ / d=([^;]*);/;
+        my ($selector) = $value =~ / d=([^;]*);/;
         my $resolver = $self->get_object('resolver');
         if ( $selector && $domain ) {
             my $lookup = $selector.'._domainkey.'.$domain;
