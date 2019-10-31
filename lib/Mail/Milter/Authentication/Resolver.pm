@@ -29,6 +29,7 @@ to Net::DNS::Resolver
 sub clear_error_cache {
     my $self = shift;
     $self->{ _timedout } = {};
+    return;
 }
 
 sub _do { ## no critic
