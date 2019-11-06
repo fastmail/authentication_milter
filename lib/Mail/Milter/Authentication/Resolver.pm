@@ -21,18 +21,42 @@ to Net::DNS::Resolver
         my $self = $class->SUPER::new( @_ );
         weaken($args{_handler});
         $self->{ _handler } = $args{_handler};
+        $self->{ _timedout } = {};
         return $self;
     }
+}
+
+sub clear_error_cache {
+    my $self = shift;
+    $self->{ _timedout } = {};
+    return;
 }
 
 sub _do { ## no critic
     my $self = shift;
     my $what = shift;
+
     my $handler = $self->{_handler};
     my $config = $handler->config();
     my $timeout = $config->{'dns_timeout'};
 
     my $return;
+
+    my $org_domain = $_[0];
+    if ( $handler->is_handler_loaded( 'DMARC' ) ) {
+        my $dmarc_object = $handler->get_handler('DMARC')->get_dmarc_object();
+        $org_domain = eval{ $dmarc_object->get_organizational_domain( $org_domain ) };
+        $handler->handle_exception( $@ );
+    }
+
+    # If we have a 'cached' timeout for this org domain then return
+    if ( $self->{ _timedout }->{ $org_domain } ) {
+        my $domain = $_[0];
+        my $query = $_[1];
+        $handler->log_error( "Lookup $query $domain aborted due to previous DNS Lookup timeout on $org_domain" );
+        $self->errorstring('query timed out');
+        return;
+    }
 
     eval {
         $handler->set_handler_alarm( ( $timeout + 0.1 ) * 1000000 ); # 0.1 seconds over that passed to Net::DNS::Resolver
@@ -48,14 +72,23 @@ sub _do { ## no critic
         if ( $type && $type eq 'Timeout' ) {
             # We have a timeout, is it global or is it ours?
             if ( $handler->get_time_remaining() > 0 ) {
-                # We have time left, but the aggregate save timed out
+                # We have time left, but the lookup timed out
                 # Log this and move on!
                 $handler->log_error( 'DNS Lookup timeout not caught by Net::DNS::Resolver' );
+                $self->{ _timedout }->{ $org_domain } = 1;
+                $self->errorstring('query timed out');
                 return;
             }
         }
         $handler->handle_exception( $error );
     }
+
+    # Timeouts or SERVFAIL are unlikely to recover within the lifetime of this transaction,
+    # when we encounter them, don't lookup this org domain again.
+    if ( ( $self->errorstring =~ /timeout/i ) || ( $self->errorstring eq 'query timed out' ) || ( $self->errorstring eq 'SERVFAIL' ) ) {
+        $self->{ _timedout }->{ $org_domain } = 1;
+    }
+
     return $return;
 }
 
