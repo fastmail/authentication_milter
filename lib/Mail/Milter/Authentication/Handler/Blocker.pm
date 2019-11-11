@@ -39,6 +39,7 @@ sub _load_blocker_config_file {
 # value is applied as a regex
 # percent is a percentage of matches to apply the block to
 # with is the full SMTP reject string to send, 4xx or 5xx and MUST have an extended code 5.x.x or 4.x.x
+# until (optional) is a unixtime after which the block will expire
 #
 # Example
 #
@@ -47,6 +48,7 @@ sub _load_blocker_config_file {
 # value = "192\.168\.0\.1"
 # with = "451 4.7.28 flood policy violation (HOTtest)"
 # percent = 100
+# until = 1573514783
 #
 # [rule2]
 # callback = "connect"
@@ -77,6 +79,7 @@ sub _test_blocker {
     foreach my $key ( sort keys %$blocker_config ) {
         my $item = $blocker_config->{$key};
         next if $item->{'callback'} ne $callback;
+        next if $item->{'until'} && $item->{'until'} < time;
         my $value_regex = $item->{'value'};
         if ( $value =~ /$value_regex/ ) {
             if ( rand(100) > $item->{'percent'} ) {

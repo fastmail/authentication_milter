@@ -6,6 +6,7 @@ use Mail::Milter::Authentication::App::Blocker::Pragmas;
 use Mail::Milter::Authentication::App::Blocker::App -command;
 use TOML;
 use Text::Table;
+use Date::Manip::Date;
 
 sub abstract { 'Add a block to a given file' }
 sub description { 'Add a block to a given toml file' };
@@ -18,6 +19,7 @@ sub opt_spec {
     [ 'value=s', 'value of the block to add' ],
     [ 'with=s', 'SMTP result of the block to add' ],
     [ 'percent=s', 'percent of the mail to block' ],
+    [ 'until=s', 'time of block expiry' ],
   );
 }
 
@@ -45,6 +47,19 @@ sub validate_args($self,$opt,$args) {
   $self->usage_error('Percent must be a number') if ( ! ($opt->{percent} =~ /^\d+$/) );
   $self->usage_error('Percent must be a number between 0 and 100') if ( ( $opt->{percent} < 0 ) || ( $opt->{percent} > 100 ) );
 
+  if ( $opt->{until} ) {
+    my $dmdate = Date::Manip::Date->new;
+    if ( !$dmdate->parse($opt->{until}) ) {
+      $opt->{until} = $dmdate->secs_since_1970_GMT();
+    }
+    else {
+      $self->usage_error('Could not parse until date');
+    }
+  }
+  else {
+    $opt->{until} = 0;
+  }
+
   $self->usage_error('No args allowed') if @$args;
 }
 
@@ -71,6 +86,7 @@ sub execute($self,$opt,$args) {
     value => $opt->{value},
     with => $opt->{with},
     percent => $opt->{percent},
+    until => $opt->{until},
   };
 
   open my $outf, '>', $opt->{file};

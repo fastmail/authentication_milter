@@ -6,6 +6,7 @@ use Mail::Milter::Authentication::App::Blocker::Pragmas;
 use Mail::Milter::Authentication::App::Blocker::App -command;
 use TOML;
 use Text::Table;
+use Date::Format;
 
 sub abstract { 'List current blocks in a given file' }
 sub description { 'Parse a toml file and list the current blocks' }
@@ -49,6 +50,7 @@ sub execute($self,$opt,$args) {
       'Value',
       'With',
       'Percent',
+      'Until',
     );
 
     foreach my $key ( sort keys $data->%* ) {
@@ -58,6 +60,7 @@ sub execute($self,$opt,$args) {
         $data->{$key}->{value},
         $data->{$key}->{with},
         $data->{$key}->{percent},
+        $data->{$key}->{until} ? time2str('%C',$data->{$key}->{until}) : '-',
       );
     }
 
