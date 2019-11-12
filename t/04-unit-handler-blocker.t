@@ -48,6 +48,16 @@ my $tester_two_conf = Mail::Milter::Authentication::Tester::HandlerTester->new({
 });
 $tester_two_conf->snapshot( 'new' );
 
+my $tester_until_conf = Mail::Milter::Authentication::Tester::HandlerTester->new({
+    'protocol' => 'smtp',
+    'prefix'   => $basedir . 't/config/handler/etc',
+    'zonedata' => '',
+    'handler_config' => {
+        'Blocker' => { 'blocker_configs' => [ 't/conf/blocker3.toml' ] },
+    },
+});
+$tester_until_conf->snapshot( 'new' );
+
 subtest 'config' => sub {
     my $config = $tester_no_conf->{ 'authmilter' }->{ 'handler' }->{ 'Blocker' }->default_config();
     is_deeply( $config, { 'blocker_configs' => [ '/tmpfs/authmilter-blocker.toml' ] }, 'Returns correct config' );
@@ -226,6 +236,66 @@ Testing',
     })},'connect match file 2 rejected');
     is( $tester_two_conf->{'authmilter'}->{'handler'}->{'_Handler'}->{'defer_mail'}, undef, 'Defer reason undef' );
     is( $tester_two_conf->{'authmilter'}->{'handler'}->{'_Handler'}->{'reject_mail'}, '500 5.0.0 Blocked', 'Reject reason correct' );
+
+};
+
+subtest 'until_config' => sub {
+
+    $tester_until_conf->switch( 'new' );
+    dies_ok( sub{ $tester_until_conf->run({
+        'connect_ip' => '192.168.0.1',
+        'connect_name' => 'mx.example.com',
+        'helo' => 'mx.example.com',
+        'mailfrom' => 'test@example.net',
+        'rcptto' => [ 'test@example.net' ],
+        'body' => 'From: test@example.net
+To: test@example.net
+Subject: This is a test
+
+Testing',
+    })},'no until blocked');
+
+    $tester_until_conf->switch( 'new' );
+    lives_ok( sub{ $tester_until_conf->run({
+        'connect_ip' => '192.168.0.2',
+        'connect_name' => 'mx.example.com',
+        'helo' => 'mx.example.com',
+        'mailfrom' => 'test@example.net',
+        'rcptto' => [ 'test@example.net' ],
+        'body' => 'From: test@example.net
+To: test@example.net
+Subject: This is a test
+
+Testing',
+    })},'past until accepted');
+
+    $tester_until_conf->switch( 'new' );
+    dies_ok( sub{ $tester_until_conf->run({
+        'connect_ip' => '192.168.0.3',
+        'connect_name' => 'mx.example.com',
+        'helo' => 'mx.example.com',
+        'mailfrom' => 'test@example.net',
+        'rcptto' => [ 'test@example.net' ],
+        'body' => 'From: test@example.net
+To: test@example.net
+Subject: This is a test
+
+Testing',
+    })},'future until blocked');
+
+    $tester_until_conf->switch( 'new' );
+    dies_ok( sub{ $tester_until_conf->run({
+        'connect_ip' => '192.168.0.4',
+        'connect_name' => 'mx.example.com',
+        'helo' => 'mx.example.com',
+        'mailfrom' => 'test@example.net',
+        'rcptto' => [ 'test@example.net' ],
+        'body' => 'From: test@example.net
+To: test@example.net
+Subject: This is a test
+
+Testing',
+    })},'zero until blocked');
 
 };
 
