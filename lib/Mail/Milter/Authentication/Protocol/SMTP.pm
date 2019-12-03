@@ -572,7 +572,9 @@ sub smtp_command_data {
             if ( $value ) {
                 push @{ $smtp->{'headers'} } , $value;
                 my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
-                $hvalue =~ s/^ //;
+                $hvalue =~ s/^\s+//;
+                $hkey =~ s/^\s+//;
+                $hkey =~ s/\s+$//;
                 if ( ! $fail ) {
                     my $returncode = $handler->top_header_callback( $hkey, $hvalue );
                     if ( $returncode != SMFIS_CONTINUE ) {
