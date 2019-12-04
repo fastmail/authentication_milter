@@ -89,6 +89,9 @@ sub milter_process_command {
     elsif ( $command eq SMFIC_HEADER ) {
         my $header = $self->milter_split_buffer( $buffer );
         if ( @$header == 1 ) { push @$header , q{}; };
+        $header->[1] =~ s/^\s+//;
+        $header->[0] =~ s/^\s+//;
+        $header->[0] =~ s/\s+$//;
         $returncode = $handler->top_header_callback( @$header );
     }
     elsif ( $command eq SMFIC_MAIL ) {
