@@ -1,7 +1,7 @@
 package Mail::Milter::Authentication::Handler::ARC;
 use strict;
 use warnings;
-use Mail::Milter::Authentication 2.20180903;
+use Mail::Milter::Authentication 2.20191204;
 use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 # ABSTRACT: Authentication Milter Module for validation of ARC signatures
@@ -453,9 +453,9 @@ sub envfrom_callback {
 }
 
 sub header_callback {
-    my ( $self, $header, $value ) = @_;
+    my ( $self, $header, $value, $original ) = @_;
     my $EOL        = "\015\012";
-    my $arc_chunk = $header . ': ' . $value . $EOL;
+    my $arc_chunk = $original . $EOL;
     $arc_chunk =~ s/\015?\012/$EOL/g;
     push @{$self->{'headers'}} , $arc_chunk;
 
