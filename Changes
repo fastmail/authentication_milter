@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Send DNS requests early
+        - Fix header parse bug
 
 2.20191106 2019-11-06 01:22:25+00:00 UTC
         - More aggressive handling of DNS timeoutsi
