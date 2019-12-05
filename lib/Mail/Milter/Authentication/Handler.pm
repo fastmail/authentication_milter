@@ -785,7 +785,7 @@ sub top_envrcpt_callback {
     return $self->get_return();
 }
 
-=callback_method  I<top_header_callback( $header, $value )>
+=callback_method  I<top_header_callback( $header, $value, $original )>
 
 Top level handler for the BODY header event.
 
@@ -794,7 +794,7 @@ Top level handler for the BODY header event.
 sub top_header_callback {
 
     # On Each Header
-    my ( $self, $header, $value ) = @_;
+    my ( $self, $header, $value, $original ) = @_;
     $self->status('header');
     $self->dbgout( 'CALLBACK', 'Header', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
@@ -813,7 +813,7 @@ sub top_header_callback {
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Header ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
-            eval{ $self->get_handler($handler)->header_callback( $header, $value ); };
+            eval{ $self->get_handler($handler)->header_callback( $header, $value, $original ); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
                 $self->log_error( 'Header callback error ' . $error );

@@ -89,6 +89,8 @@ sub milter_process_command {
     elsif ( $command eq SMFIC_HEADER ) {
         my $header = $self->milter_split_buffer( $buffer );
         if ( @$header == 1 ) { push @$header , q{}; };
+        my $original = join( ':', @$header );
+        push @$header, $original;
         $header->[1] =~ s/^\s+//;
         $header->[0] =~ s/^\s+//;
         $header->[0] =~ s/\s+$//;

@@ -576,7 +576,7 @@ sub smtp_command_data {
                 $hkey =~ s/^\s+//;
                 $hkey =~ s/\s+$//;
                 if ( ! $fail ) {
-                    my $returncode = $handler->top_header_callback( $hkey, $hvalue );
+                    my $returncode = $handler->top_header_callback( $hkey, $hvalue, $value );
                     if ( $returncode != SMFIS_CONTINUE ) {
                         $fail = 1;
                     }
@@ -590,7 +590,7 @@ sub smtp_command_data {
         my ( $hkey, $hvalue ) = split ( ':', $value, 2 );
         $hvalue =~ s/^ //;
         if ( ! $fail ) {
-            my $returncode = $handler->top_header_callback( $hkey, $hvalue );
+            my $returncode = $handler->top_header_callback( $hkey, $hvalue, $value );
             if ( $returncode != SMFIS_CONTINUE ) {
                 $fail = 1;
             }
