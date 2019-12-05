@@ -11,6 +11,7 @@ use Sys::Syslog qw{:standard :macros};
 use Mail::DKIM 0.39;
 use Mail::DKIM::Verifier 0.39;
 use Mail::DKIM::DNS;
+use Mail::DKIM::KeyValueList;
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;
 use Mail::AuthenticationResults::Header::Comment;
@@ -70,6 +71,22 @@ sub header_callback {
 
     if ( lc($header) eq 'dkim-signature' ) {
         $self->{'has_dkim'} = 1;
+
+        my $parsed = eval{ Mail::DKIM::KeyValueList->parse( $value ) };
+        $self->handle_exception( $@ );
+        if ( $parsed ) {
+            my $domain = $parsed->get_tag('d');
+            my $selector = $parsed->get_tag('s');
+            if ( $selector && $domain ) {
+                my $resolver = $self->get_object('resolver');
+                my $lookup = $selector.'._domainkey.'.$domain;
+                $resolver->bgsend( $lookup, 'TXT' );
+                $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
+                $lookup = '_adsp._domainkey.'.$domain;
+                $resolver->bgsend( $lookup, 'TXT' );
+                $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
+            }
+        }
     }
     if ( lc($header) eq 'domainkey-signature' ) {
         $self->{'has_dkim'} = 1 if $self->show_domainkeys();

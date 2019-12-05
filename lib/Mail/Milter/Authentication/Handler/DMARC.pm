@@ -700,6 +700,23 @@ sub header_callback {
         }
         $self->{'from_header'} = $value;
         push @{ $self->{ 'from_headers' } }, $value;
+        my $domain = lc $self->get_domain_from( $value );
+        if ( $domain ) {
+            my $lookup = '_dmarc.'.$domain;
+            my $resolver = $self->get_object('resolver');
+            $resolver->bgsend( $lookup, 'TXT' );
+            $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
+            my $dmarc = $self->new_dmarc_object();
+            my $org_domain = eval{ $dmarc->get_organizational_domain( $domain ) };
+            $self->handle_exception( $@ );
+            if ( $org_domain && ($org_domain ne $domain) ) {
+                my $lookup = '_dmarc.'.$org_domain;
+                my $resolver = $self->get_object('resolver');
+                $resolver->bgsend( $lookup, 'TXT' );
+                $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
+            }
+        }
+
     }
     return;
 }
