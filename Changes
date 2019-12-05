@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20191205 2019-12-05 01:25:51+00:00 UTC
         - Send DNS requests early
         - Fix header parse bug
 
