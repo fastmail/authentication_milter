@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+20191206  2019-12-05 02:14:47+00:00 UTC
         - Fix second header parse bug
 
 2.20191205 2019-12-05 01:25:51+00:00 UTC
