@@ -62,10 +62,10 @@ sub show_domainkeys {
 }
 
 sub header_callback {
-    my ( $self, $header, $value ) = @_;
+    my ( $self, $header, $value, $original ) = @_;
     return if ( $self->{'failmode'} );
     my $EOL        = "\015\012";
-    my $dkim_chunk = $header . ': ' . $value . $EOL;
+    my $dkim_chunk = $original . $EOL;
     $dkim_chunk =~ s/\015?\012/$EOL/g;
     push @{$self->{'headers'}} , $dkim_chunk;
 

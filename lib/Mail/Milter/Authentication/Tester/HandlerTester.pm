@@ -223,8 +223,9 @@ sub rcptto {
 }
 
 sub header {
-    my ( $self, $key, $value ) = @_;
-    return $self->handler()->top_header_callback( $key, $value );
+    my ( $self, $key, $value, $original ) = @_;
+    $original = "$key: $value" if ! defined $original;
+    return $self->handler()->top_header_callback( $key, $value, $original );
 }
 
 sub end_of_headers {
