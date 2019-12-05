@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication-ARC
 
 {{$NEXT}}
+        - Fix header parse bug
 
 2.20181013 2018-10-13 09:22:28-04:00 America/New_York
         - Add smtp.remote-ip
