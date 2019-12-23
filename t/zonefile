@@ -1,4 +1,10 @@
 example.com 10 IN A 1.2.3.4
 _dmarc.example.com 10 IN TXT  ( "v=DMARC1; p=reject; pct=100;" )
-example.com 10 IN TXT ( "v=spf1 ip4:1.2.3.4 -all" )
+testsel._bimi.example.com 10 IN TXT ( "v=bimi1; l=https://bimi.example.com/test.svg" )
+testselone._bimi.one.example.com 10 IN TXT ( "v=bimi1; l=https://bimi.example.com/test.svg" )
 default._bimi.example.com 10 IN TXT ( "v=bimi1; l=https://bimi.example.com/test.svg" )
+example.com 10 IN TXT ( "v=spf1 ip4:1.2.3.4 -all" )
+dkim1._domainkey.example.com 10 IN TXT ( "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErv0qLGKJ933gdhx2MUBqb/XhTloMjJhH0kdQsxkVuhRFzINgDzMGOq83xEwNEk4jC/J+E49fNQ+TSVymq+XGvrkeW7/7llEOTFosY6OGlwdeUZyyUCEM6SIYIBeHuIQn4Ohwhq7P0nZFfXNAG7Wrlxx1O+E881wTRhFOBxAjdQIDAQAB" )
+dkim1._domainkey.one.example.com 10 IN TXT ( "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErv0qLGKJ933gdhx2MUBqb/XhTloMjJhH0kdQsxkVuhRFzINgDzMGOq83xEwNEk4jC/J+E49fNQ+TSVymq+XGvrkeW7/7llEOTFosY6OGlwdeUZyyUCEM6SIYIBeHuIQn4Ohwhq7P0nZFfXNAG7Wrlxx1O+E881wTRhFOBxAjdQIDAQAB" )
+dkim1._domainkey.example.org 10 IN TXT ( "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErv0qLGKJ933gdhx2MUBqb/XhTloMjJhH0kdQsxkVuhRFzINgDzMGOq83xEwNEk4jC/J+E49fNQ+TSVymq+XGvrkeW7/7llEOTFosY6OGlwdeUZyyUCEM6SIYIBeHuIQn4Ohwhq7P0nZFfXNAG7Wrlxx1O+E881wTRhFOBxAjdQIDAQAB" )
+
