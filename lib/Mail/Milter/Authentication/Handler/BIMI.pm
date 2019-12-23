@@ -7,6 +7,7 @@ use base 'Mail::Milter::Authentication::Handler';
 # ABSTRACT: BIMI handler for authentication milter
 
 use English qw{ -no_match_vars };
+use Clone qw{ clone };
 use Mail::BIMI 1.20190210;
 use Sys::Syslog qw{:standard :macros};
 use Mail::AuthenticationResults::Header::Entry;
@@ -151,7 +152,32 @@ sub eom_callback {
             }
             else {
                 # If Multiple DMARC results is OK then... foreach my $DMARCResult ( @$DMARCResults ) {
-                my $DMARCResult = $DMARCResults->[0];
+                my $DMARCResult = clone $DMARCResults->[0]; # Clone so we can modify without breaking reporting data
+
+                ## Consider ARC
+                # We only have 1 DMARC result so we find the auth results header that it added
+                my $selector_arc_pass = 0;
+                if ( $DMARCResult->result ne 'pass' ) {
+                    my $top_handler = $self->get_top_handler();
+                    my @auth_headers;
+                    if ( exists( $top_handler->{'auth_headers'} ) ) {
+                        @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
+                    }
+                    if (@auth_headers) {
+                        foreach my $auth_header ( @auth_headers ) {
+                            next if $auth_header->key ne 'dmarc';
+                            my $arc_aware_result = eval{ $auth_header->search({key=>'policy.arc-aware-result'})->children->[0]->value } // '';
+                            $self->handle_exception( $@ );
+                            if ( $arc_aware_result eq 'pass' ) {
+                                $self->log_error( 'BIMI DMARC ARC pass detected' );
+                                $DMARCResult->{result} = $arc_aware_result; # Feels hacky, but does the right thing
+                                # Note, we can't check for signness of BIMI-Selector for arc forwarded mail where DKIM context has been lost
+                                # When we have a pass by arc we skip the DKIM check for BIMI-Selector
+                                $selector_arc_pass = 1;
+                            }
+                        }
+                    }
+                }
 
                 my $Selector = $self->{ 'selector' };
                 if ( !$Selector ) {
@@ -193,13 +219,14 @@ sub eom_callback {
                     }
                     my $Alignment = $selector_was_domain_signed ? 'domain'
                                   : $selector_was_org_domain_signed ? 'orgdomain'
+                                  : $selector_arc_pass ? 'arc'
                                   : $selector_was_third_party_domain_signed ? 'thirdparty'
                                   : 'unsigned';
                     if ( $Alignment eq 'unsigned' || $Alignment eq 'thirdparty' ) {
-                        $self->log_error( 'DKIM '.$Alignment.' for Selector '.$Selector.' - ignoring' );
+                        $self->log_error( 'BIMI Header DKIM '.$Alignment.' for Selector '.$Selector.' - ignoring' );
                         $Selector = 'default';
                     }
-                    ## TODO Consider ARC
+
                 }
                 else {
                     $self->log_error( 'BIMI Invalid Selector Header: ' . $Selector );

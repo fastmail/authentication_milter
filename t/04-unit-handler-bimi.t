@@ -11,6 +11,7 @@ use Mail::Milter::Authentication::Constants qw{ :all };
 use Test::Exception;
 use Test::More;
 use Mail::DKIM::Signer;
+use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::PrivateKey;
 
 my $private_key = Mail::DKIM::PrivateKey->load(Data=>'MIICXQIBAAKBgQDErv0qLGKJ933gdhx2MUBqb/XhTloMjJhH0kdQsxkVuhRFzINgDzMGOq83xEwNEk4jC/J+E49fNQ+TSVymq+XGvrkeW7/7llEOTFosY6OGlwdeUZyyUCEM6SIYIBeHuIQn4Ohwhq7P0nZFfXNAG7Wrlxx1O+E881wTRhFOBxAjdQIDAQABAoGAP4cF3olXipiV39pGdyaRV8+x64QTMdp3lTsmLbqrb4ka4zCbfntqT6jEz45nwhEXi9pgCLjopifNUBVyB6OeI3KdaGQzfYVBCgTyvwMp+68rTnYtDeByrhXm+yccMpvFNA1BHxYiByucCGy8cc8jTfAvSKPTRpJ5TZM4S59ZkEECQQDkHOJ/Uzt5mm5Yq34HF78FzkY8w8TKRhVcsI0ZWS+Y1EBJTKZOoOS08d6Zetk0TNd52e6Gb0zxt325l5msKH3TAkEA3Lp67CXopC43Y8H7sJwMJiIYpN2F1lgt0XYsnyHhBnANS4Ap6d32j3MhtIEHwWv1vbRkCOSOm0h6Tq2Tj6rklwJBAOHQylN7JLxbqXLzyZ3h3wMzUQqkTjJjMJCCYhu+00R6kW0+iL/7vIx3h4HuQAjrLL/+gobotYXvvHE2ZzUrHGsCQQDAvmZQh9naZDEh/2ZVFi7VrbhvXrFcNqvr2JGmc+MXyAkUANqYyaZgJV0tTe8Dy85O1ZL04QBWQLfstE3CiqwJAkBJz/qjnUlfbyuTU1PHaWbkcTCZH48VE6nvsoHOKlyvxTUtRlfTILBPcQ5G5U3TePQMdzXInQASs0oncbz51NQ3');
@@ -30,8 +31,28 @@ sub signed {
   $dkim->PRINT( $signtext );
   $dkim->CLOSE;
   my $signed = $dkim->signature->as_string . "\n" . $text;
+  $signed =~ s/\r\n/\n/g;
   return $signed;
 };
+
+sub sealed {
+  my ( $text, %args ) = @_;
+  my $arc = Mail::DKIM::ARC::Signer->new(
+    Algorithm => 'rsa-sha256',
+    SrvId => $args{srvid},,
+    Domain => $args{domain},
+    Selector => $args{selector},
+    Key => $private_key,
+    Chain => 'none',
+    Timestamp => time(),
+  );
+  my $signtext = $text;
+  $signtext =~ s/\n/\r\n/g;
+  $arc->PRINT( $signtext );
+  $arc->CLOSE;
+  my $sealed = $arc->as_string . $text;
+  return $sealed;
+}
 
 my $basedir = q{};
 
@@ -44,7 +65,8 @@ my $tester = Mail::Milter::Authentication::Tester::HandlerTester->new({
     'prefix'   => $basedir . 't/config/handler/etc',
     'zonefile' => $basedir . 't/zonefile',
     'handler_config' => {
-        'DMARC' => {},
+        'DMARC' => { use_arc => 1 },
+        'ARC' => { trusted_domains => [ 'arcsealed.com' ] },
         'DKIM' => {},
         'SPF' => {},
         'BIMI' => {},
@@ -263,5 +285,30 @@ Testing
 
 };
 
+subtest 'arc passed dmarc' => sub {
+    $tester->switch( 'new' );
+    $tester->run({
+        'connect_ip' => '1.2.3.9',
+        'connect_name' => 'mx.example.com',
+        'helo' => 'mx.example.com',
+        'mailfrom' => 'test@example.com',
+        'rcptto' => [ 'test@example.net' ],
+        'body' => sealed('Authentication-Results: arcsealed.com; dkim=pass header.d=example.com;
+BIMI-Selector: v=BIMI1; s=testsel;
+From: test@example.com
+To: test@example.net
+Subject: ArcSeal
+
+Testing
+',
+    domain => 'arcsealed.com',
+    selector => 'dkim1',
+    srvid => 'arcsealed.com',
+        ),
+    });
+
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com selector=testsel', 'Domain Signed Selector BIMI pass' );
+
+};
 
 done_testing;

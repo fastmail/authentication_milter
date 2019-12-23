@@ -14,3 +14,5 @@ dkim1._domainkey.nobimi.com 10 IN TXT ( "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBA
 nobimi.com 10 IN A 1.2.3.4
 nobimi.com 10 IN TXT ( "v=spf1 ip4:1.2.3.5 -all" )
 
+dkim1._domainkey.arcsealed.com 10 IN TXT ( "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErv0qLGKJ933gdhx2MUBqb/XhTloMjJhH0kdQsxkVuhRFzINgDzMGOq83xEwNEk4jC/J+E49fNQ+TSVymq+XGvrkeW7/7llEOTFosY6OGlwdeUZyyUCEM6SIYIBeHuIQn4Ohwhq7P0nZFfXNAG7Wrlxx1O+E881wTRhFOBxAjdQIDAQAB" )
+
