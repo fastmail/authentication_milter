@@ -143,7 +143,7 @@ Testing
 
 };
 
-subtest 'domain signed selector undigned header' => sub {
+subtest 'domain signed selector unsigned header' => sub {
     $tester->switch( 'new' );
     $tester->run({
         'connect_ip' => '1.2.3.4',
@@ -236,6 +236,30 @@ Testing',
     });
 
     is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com selector=default', 'Fallback BIMI pass' );
+
+};
+
+subtest 'no bimi' => sub {
+    $tester->switch( 'new' );
+    $tester->run({
+        'connect_ip' => '1.2.3.5',
+        'connect_name' => 'mx.nobimi.com',
+        'helo' => 'mx.nobimi.com',
+        'mailfrom' => 'test@nobimi.com',
+        'rcptto' => [ 'test@example.net' ],
+        'body' => signed( 'From: test@nobimi.com
+To: test@example.net
+Subject: This is a test
+
+Testing
+',
+          domain => 'nobimi.com',
+          selector => 'dkim1',
+          headers => '',
+        ),
+    });
+
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=none (Domain is not BIMI enabled)', 'Does Not Have BIMI' );
 
 };
 
