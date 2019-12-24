@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - DMARC: Store all DMARC result object for other handlers
+        - Properly set IP objects in tester
 
 2.20191206 2019-12-05 02:14:47+00:00 UTC
         - Fix second header parse bug
