@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20200102 2020-01-02 01:14:35+00:00 UTC
         - DMARC: Store all DMARC result object for other handlers
         - Properly set IP objects in tester
 
