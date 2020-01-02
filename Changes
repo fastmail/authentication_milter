@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+2.20200102 2020-01-02 UTC
         - Updated for new Mail::BIMI
         - Trust ARC
 
