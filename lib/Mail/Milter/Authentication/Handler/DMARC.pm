@@ -388,10 +388,11 @@ sub _process_dmarc_for {
     my $dmarc_result = $dmarc->validate();
     my $is_subdomain = $dmarc->is_subdomain();
 
-    # ToDo Set multiple dmarc_result objects here
-    # this will become relevant when the BIMI handler
-    # is production ready.
     $self->set_object('dmarc_result', $dmarc_result, 1 );
+    my $dmarc_results = $self->get_object('dmarc_results');
+    $dmarc_results = [] if ! $dmarc_results;
+    push @$dmarc_results, $dmarc_result;
+    $self->set_object('dmarc_results',$dmarc_results,1);
 
     my $dmarc_code   = $dmarc_result->result;
     $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
@@ -907,6 +908,7 @@ sub close_callback {
     delete $self->{'report_queue'};
     $self->destroy_object('dmarc');
     $self->destroy_object('dmarc_result');
+    $self->destroy_object('dmarc_results');
     return;
 }
 

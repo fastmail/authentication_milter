@@ -204,12 +204,14 @@ sub connect { ## no critic
     my $ip_obj = eval{ Net::IP->new( $ip ) } // undef;
     # An undef here should not make it through to handlers, however
     # for testing we will allow this.
-    return $self->handler()->top_connect_callback( $name, $ip_obj );
+    $self->handler()->remap_connect_callback( $name, $ip_obj );
+    return $self->handler()->top_connect_callback( $name, $self->handler()->{ 'ip_object' } );
 }
 
 sub helo {
     my ( $self, $helo ) = @_;
-    return $self->handler()->top_helo_callback( $helo );
+    $self->handler()->remap_helo_callback( $helo );
+    return $self->handler()->top_helo_callback( $self->handler()->{ 'helo_name' } );
 }
 
 sub mailfrom {
