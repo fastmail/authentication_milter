@@ -1548,8 +1548,8 @@ sub destroy_object {
     # cache errors within a single transaction.
     return if ! $thischild->{'object'}->{$name};
     if ($name eq 'resolver' ) {
-        if ( $thischild->{'object'}->{'resolver'}->can( 'clear_error_cache' ) ) {
-            $thischild->{'object'}->{'resolver'}->clear_error_cache();
+        if ( $thischild->{'object'}->{'resolver'}->{'object'}->can( 'clear_error_cache' ) ) {
+            $thischild->{'object'}->{'resolver'}->{'object'}->clear_error_cache();
         }
     }
     return if ! $thischild->{'object'}->{$name}->{'destroy'};
