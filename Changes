@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20200106 2020-01-06 04:09:07+00:00 UTC
         - Properly clear DNS errors cache on close
 
 2.20200102 2020-01-02 01:14:35+00:00 UTC
