@@ -1546,13 +1546,13 @@ sub destroy_object {
     # destroyed for performance reasons
     # Resolver, however, has its error cache cleared, as this should only
     # cache errors within a single transaction.
+    return if ! $thischild->{'object'}->{$name};
     if ($name eq 'resolver' ) {
-        if ( $thischild->{'object'}->{'resolver'}->can( 'clear_error_cache' ) ) {
-            $thischild->{'object'}->{'resolver'}->clear_error_cache();
+        if ( $thischild->{'object'}->{'resolver'}->{'object'}->can( 'clear_error_cache' ) ) {
+            $thischild->{'object'}->{'resolver'}->{'object'}->clear_error_cache();
         }
     }
     return if ! $thischild->{'object'}->{$name}->{'destroy'};
-    return if ! $thischild->{'object'}->{$name};
     $self->dbgout( 'Object destroyed', $name, LOG_DEBUG );
     delete $thischild->{'object'}->{$name};
     return;
