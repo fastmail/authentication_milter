@@ -80,10 +80,12 @@ sub header_callback {
             if ( $selector && $domain ) {
                 my $resolver = $self->get_object('resolver');
                 my $lookup = $selector.'._domainkey.'.$domain;
-                $resolver->bgsend( $lookup, 'TXT' );
+                eval{ $resolver->bgsend( $lookup, 'TXT' ) };
+                $self->handle_exception( $@ );
                 $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
                 $lookup = '_adsp._domainkey.'.$domain;
-                $resolver->bgsend( $lookup, 'TXT' );
+                eval{ $resolver->bgsend( $lookup, 'TXT' ) };
+                $self->handle_exception( $@ );
                 $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
             }
         }
