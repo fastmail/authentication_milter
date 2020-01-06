@@ -705,7 +705,8 @@ sub header_callback {
         if ( $domain ) {
             my $lookup = '_dmarc.'.$domain;
             my $resolver = $self->get_object('resolver');
-            $resolver->bgsend( $lookup, 'TXT' );
+            eval{ $resolver->bgsend( $lookup, 'TXT' ) };
+            $self->handle_exception( $@ );
             $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
             my $dmarc = $self->new_dmarc_object();
             my $org_domain = eval{ $dmarc->get_organizational_domain( $domain ) };
@@ -713,7 +714,8 @@ sub header_callback {
             if ( $org_domain && ($org_domain ne $domain) ) {
                 my $lookup = '_dmarc.'.$org_domain;
                 my $resolver = $self->get_object('resolver');
-                $resolver->bgsend( $lookup, 'TXT' );
+                eval{ $resolver->bgsend( $lookup, 'TXT' ) };
+                $self->handle_exception( $@ );
                 $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
             }
         }

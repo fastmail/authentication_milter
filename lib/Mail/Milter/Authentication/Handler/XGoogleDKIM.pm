@@ -71,7 +71,8 @@ sub header_callback {
         my $resolver = $self->get_object('resolver');
         if ( $selector && $domain ) {
             my $lookup = $selector.'._domainkey.'.$domain;
-            $resolver->bgsend( $lookup, 'TXT' );
+            eval{ $resolver->bgsend( $lookup, 'TXT' ) };
+            $self->handle_exception( $@ );
             $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
         }
     }
