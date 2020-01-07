@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Ignore Errors from bgsend
 
 2.20200106 2020-01-06 04:09:07+00:00 UTC
         - Properly clear DNS errors cache on close
