@@ -116,6 +116,27 @@ sub metric_count {
     return;
 }
 
+=metric_method I<metric_set( $id, $labels, $count )>
+
+Set a metrics counter to $count
+
+=cut
+
+sub metric_set {
+    my ( $self, $count_id, $labels, $count ) = @_;
+    $labels = {} if ! defined $labels;
+    die 'Must set count in metric_set call' if ! defined $count;
+
+    my $metric = $self->{'thischild'}->{'metric'};
+    $metric->set({
+        'count_id' => $count_id,
+        'labels'   => $labels,
+        'server'   => $self->{'thischild'},
+        'count'    => $count,
+    });
+    return;
+}
+
 =metric_method I<metric_send()>
 
 Send metrics to the parent
@@ -518,6 +539,25 @@ sub remap_connect_callback {
     }
     $self->{'ip_object'} = $ip;
     return;
+}
+
+=callback_method I<top_metrics_callback()>
+
+Top level handler for the metrics event.
+
+=cut
+
+sub top_metrics_callback {
+    my ( $self ) = @_;
+    my $callbacks = $self->get_callbacks( 'metrics' );
+    foreach my $handler ( @$callbacks ) {
+        $self->dbgout( 'CALLBACK', 'Metrics ' . $handler, LOG_DEBUG );
+        eval{ $self->get_handler($handler)->metrics_callback(); };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'Metrics callback error ' . $error );
+        }
+    };
 }
 
 =callback_method I<top_connect_callback( $hostname, $ip )>
