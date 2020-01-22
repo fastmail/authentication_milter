@@ -5,7 +5,6 @@ use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 
 use Data::Dumper;
-use Clone;
 use English qw{ -no_match_vars };
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
@@ -463,7 +462,7 @@ sub _process_dmarc_for {
                   $remote_ip //= eval{ $aar->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'policy.iprev'})->children()->[0]->value(); };
                   $self->handle_exception( $@ );
 
-                  $comment .= ' as['.$instance.'].d='.$domain.' as['.$instance.'].s='.$selector.'='.$selector.' remote-ip['.$instance.']='.$remote_ip;
+                  $comment .= ' as['.$instance.'].d='.$domain.' as['.$instance.'].s='.$selector.' remote-ip['.$instance.']='.$remote_ip;
                 }
               }
             }
