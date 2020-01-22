@@ -5,6 +5,7 @@ use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 
 use Data::Dumper;
+use Clone;
 use English qw{ -no_match_vars };
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
@@ -434,10 +435,41 @@ sub _process_dmarc_for {
     if ( $dmarc_code eq 'fail' ) {
         # Policy override decisions.
         if ( $arc_aware_result eq 'pass' ) {
-            $self->dbgout( 'DMARCReject', "Policy overridden using ARC Chain", LOG_INFO );
             $dmarc_result->disposition('none');
             $dmarc_disposition = 'none';
-            $dmarc_result->reason( 'type' => 'trusted_forwarder', 'comment' => 'Policy overriden using trusted ARC chain' );
+            my $comment = 'Policy overriden using trusted ARC chain';
+            # arc=pass as[2].d=d2.example as[2].s=s2 as[1].d=d1.example as[1].s=s3 remote-ip[1]=2001:DB8::1A
+            my $arc_object = $self->get_object('arc');
+            my $arc_signatures = $arc_object->{'signatures'};
+
+            my $arc_handler = $self->get_handler('ARC');
+            if ( $arc_handler ) {
+              if ( $arc_handler->{ 'arc_result' } eq 'pass' ) {
+                # If it wasn't a pass then we wouldn't be in here.
+                $comment = 'arc=pass';
+                my $arc_auth_results = $arc_handler->{'arc_auth_results'};
+                  foreach my $instance ( reverse sort keys %$arc_auth_results ) {
+                    my $domain = '';
+                    my $selector = '';
+                    my $remote_ip = '';
+                    foreach my $signature ( @$arc_signatures ) {
+                      next if $signature->instance() ne $instance;
+                      $domain = $signature->domain();
+                      $selector = $signature->selector();
+                    }
+                    my $aar = $arc_auth_results->{$instance};
+                    $remote_ip = eval{ $aar->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'smtp.remote-ip'})->children()->[0]->value(); };
+                    $self->handle_exception( $@ );
+                    $ip //= eval{ $aar->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'policy.iprev'})->children()->[0]->value(); };
+                    $self->handle_exception( $@ );
+
+                    $comment .= ' as['.$instance.'].d='.$domain.' as['.$instance.'].s='.$selector.'='.$selector.' remote-ip['.$instance.']='.$remote_ip;
+                  }
+                }
+              }
+            }
+            $self->dbgout( 'DMARCReject', "Policy overridden using ARC Chain: $comment", LOG_INFO );
+            $dmarc_result->reason( 'type' => 'local_policy', 'comment' => $commend );
         }
         elsif ( $is_whitelisted ) {
             $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
