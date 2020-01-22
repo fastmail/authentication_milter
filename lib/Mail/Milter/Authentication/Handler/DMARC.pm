@@ -448,28 +448,27 @@ sub _process_dmarc_for {
                 # If it wasn't a pass then we wouldn't be in here.
                 $comment = 'arc=pass';
                 my $arc_auth_results = $arc_handler->{'arc_auth_results'};
-                  foreach my $instance ( reverse sort keys %$arc_auth_results ) {
-                    my $domain = '';
-                    my $selector = '';
-                    my $remote_ip = '';
-                    foreach my $signature ( @$arc_signatures ) {
-                      next if $signature->instance() ne $instance;
-                      $domain = $signature->domain();
-                      $selector = $signature->selector();
-                    }
-                    my $aar = $arc_auth_results->{$instance};
-                    $remote_ip = eval{ $aar->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'smtp.remote-ip'})->children()->[0]->value(); };
-                    $self->handle_exception( $@ );
-                    $ip //= eval{ $aar->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'policy.iprev'})->children()->[0]->value(); };
-                    $self->handle_exception( $@ );
-
-                    $comment .= ' as['.$instance.'].d='.$domain.' as['.$instance.'].s='.$selector.'='.$selector.' remote-ip['.$instance.']='.$remote_ip;
+                foreach my $instance ( reverse sort keys %$arc_auth_results ) {
+                  my $domain = '';
+                  my $selector = '';
+                  my $remote_ip = '';
+                  foreach my $signature ( @$arc_signatures ) {
+                    next if $signature->instance() ne $instance;
+                    $domain = $signature->domain();
+                    $selector = $signature->selector();
                   }
+                  my $aar = $arc_auth_results->{$instance};
+                  $remote_ip = eval{ $aar->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'smtp.remote-ip'})->children()->[0]->value(); };
+                  $self->handle_exception( $@ );
+                  $remote_ip //= eval{ $aar->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'policy.iprev'})->children()->[0]->value(); };
+                  $self->handle_exception( $@ );
+
+                  $comment .= ' as['.$instance.'].d='.$domain.' as['.$instance.'].s='.$selector.'='.$selector.' remote-ip['.$instance.']='.$remote_ip;
                 }
               }
             }
             $self->dbgout( 'DMARCReject', "Policy overridden using ARC Chain: $comment", LOG_INFO );
-            $dmarc_result->reason( 'type' => 'local_policy', 'comment' => $commend );
+            $dmarc_result->reason( 'type' => 'local_policy', 'comment' => $comment );
         }
         elsif ( $is_whitelisted ) {
             $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
