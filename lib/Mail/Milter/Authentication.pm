@@ -1012,7 +1012,7 @@ sub setup_handler {
     my $object = $package->new( $self );
     $self->{'handler'}->{$name} = $object;
 
-    foreach my $callback ( qw { setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
+    foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
         if ( $object->can( $callback . '_callback' ) ) {
             $self->register_callback( $name, $callback );
         }
@@ -1061,7 +1061,7 @@ Sort the callbacks into the order in which they must be called
 
 sub sort_all_callbacks {
     my ($self) = @_;
-    foreach my $callback ( qw { setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
+    foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
         $self->sort_callbacks( $callback );
     }
     return;

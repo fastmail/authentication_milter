@@ -116,6 +116,27 @@ sub metric_count {
     return;
 }
 
+=metric_method I<metric_set( $id, $labels, $count )>
+
+Set a metrics counter to $count
+
+=cut
+
+sub metric_set {
+    my ( $self, $gauge_id, $labels, $value ) = @_;
+    $labels = {} if ! defined $labels;
+    die 'Must set value in metric_set call' if ! defined $value;
+
+    my $metric = $self->{'thischild'}->{'metric'};
+    $metric->set({
+        'gauge_id' => $gauge_id,
+        'labels'   => $labels,
+        'server'   => $self->{'thischild'},
+        'value'    => $value,
+    });
+    return;
+}
+
 =metric_method I<metric_send()>
 
 Send metrics to the parent
@@ -517,6 +538,26 @@ sub remap_connect_callback {
         $self->dbgout( 'RemappedConnect', $self->{'raw_ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
     }
     $self->{'ip_object'} = $ip;
+    return;
+}
+
+=callback_method I<top_metrics_callback()>
+
+Top level handler for the metrics event.
+
+=cut
+
+sub top_metrics_callback {
+    my ( $self ) = @_;
+    my $callbacks = $self->get_callbacks( 'metrics' );
+    foreach my $handler ( @$callbacks ) {
+        $self->dbgout( 'CALLBACK', 'Metrics ' . $handler, LOG_DEBUG );
+        eval{ $self->get_handler($handler)->metrics_callback(); };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'Metrics callback error ' . $error );
+        }
+    };
     return;
 }
 

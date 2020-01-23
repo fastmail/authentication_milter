@@ -128,6 +128,50 @@ sub count {
     return;
 }
 
+=method I<set($args)>
+
+Set the metric for the given counter
+Called from the base handler, do not call directly.
+$server is the current handler object
+
+ count_id - the name of the metric to act on
+
+ labels - hashref of labels to apply
+
+ server - the current server object
+
+ count - number to increment by (defaults to 1)
+
+=cut
+
+sub set {
+    my ( $self, $args ) = @_;
+    return if ( ! $self->{ 'enabled' } );
+
+    my $gauge_id = $args->{ 'gauge_id' };
+    my $labels   = $args->{ 'labels' };
+    my $server   = $args->{ 'server' };
+    my $value    = $args->{ 'value' };
+
+    die 'metric set must define value' if ! defined $value;
+
+    $gauge_id =  $self->clean_label( $gauge_id );
+
+    my $clean_labels = {};
+    if ( $labels ) {
+        foreach my $l ( sort keys %$labels ) {
+            $clean_labels->{ $self->clean_label( $l ) } = $self->clean_label( $labels->{$l} );
+        }
+    }
+
+    $clean_labels->{ident} = $self->clean_label( $Mail::Milter::Authentication::Config::IDENT );
+
+    eval{ $self->{prom}->set( 'authmilter_' . $gauge_id, $value, $clean_labels ); };
+    ## TODO catch and re-throw timeouts
+
+    return;
+}
+
 =method I<send( $server )>
 
 Send metrics to the parent server process.
@@ -153,8 +197,17 @@ sub register_metrics {
     return if ( ! $self->{ 'enabled' } );
 
     foreach my $metric ( keys %$hash ) {
-        my $help = $hash->{ $metric };
-        $self->{prom}->declare( 'authmilter_' . $metric, help => $help, type => 'counter');
+        my $data = $hash->{ $metric };
+        my $help;
+        my $type = 'counter';
+        if ( ref $data eq 'HASH' ) {
+            $help = $data->{help};
+            $type = $data->{type};
+        }
+        else {
+            $help = $data;
+        }
+        $self->{prom}->declare( 'authmilter_' . $metric, help => $help, type => $type);
         $self->{prom}->set( 'authmilter_' . $metric,0, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
     }
     return;
@@ -179,7 +232,7 @@ sub master_metric_update {
     return;
 }
 
-=method I<child_handler( $server)>
+=method I<child_handler( $server )>
 
 Handle a metrics or http request in the child process.
 
@@ -228,6 +281,7 @@ sub child_handler {
         }
 
         if ( $request_uri eq '/metrics' ) {
+            $server->{'handler'}->{'_Handler'}->top_metrics_callback();
             $self->{prom}->set( 'authmilter_uptime_seconds_total', time - $self->{'start_time'}, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
 
             print $socket "HTTP/1.0 200 OK\n";
