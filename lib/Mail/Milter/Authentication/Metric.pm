@@ -148,14 +148,14 @@ sub set {
     my ( $self, $args ) = @_;
     return if ( ! $self->{ 'enabled' } );
 
-    my $count_id = $args->{ 'count_id' };
+    my $gauge_id = $args->{ 'gauge_id' };
     my $labels   = $args->{ 'labels' };
     my $server   = $args->{ 'server' };
-    my $count    = $args->{ 'count' };
+    my $value    = $args->{ 'value' };
 
-    $count = 1 if ! defined $count;
+    die 'metric set must define value' if ! defined $value;
 
-    $count_id =  $self->clean_label( $count_id );
+    $gauge_id =  $self->clean_label( $gauge_id );
 
     my $clean_labels = {};
     if ( $labels ) {
@@ -166,7 +166,7 @@ sub set {
 
     $clean_labels->{ident} = $self->clean_label( $Mail::Milter::Authentication::Config::IDENT );
 
-    eval{ $self->{prom}->set( 'authmilter_' . $count_id, $count, $clean_labels ); };
+    eval{ $self->{prom}->set( 'authmilter_' . $gauge_id, $value, $clean_labels ); };
     ## TODO catch and re-throw timeouts
 
     return;
@@ -197,8 +197,17 @@ sub register_metrics {
     return if ( ! $self->{ 'enabled' } );
 
     foreach my $metric ( keys %$hash ) {
-        my $help = $hash->{ $metric };
-        $self->{prom}->declare( 'authmilter_' . $metric, help => $help, type => 'counter');
+        my $data = $hash->{ $metric };
+        my $help;
+        my $type = 'counter';
+        if ( ref $data eq 'HASH' ) {
+            $help = $data->{help};
+            $type = $data->{type};
+        }
+        else {
+            $help = $data;
+        }
+        $self->{prom}->declare( 'authmilter_' . $metric, help => $help, type => $type);
         $self->{prom}->set( 'authmilter_' . $metric,0, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
     }
     return;

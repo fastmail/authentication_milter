@@ -123,16 +123,16 @@ Set a metrics counter to $count
 =cut
 
 sub metric_set {
-    my ( $self, $count_id, $labels, $count ) = @_;
+    my ( $self, $gauge_id, $labels, $value ) = @_;
     $labels = {} if ! defined $labels;
-    die 'Must set count in metric_set call' if ! defined $count;
+    die 'Must set value in metric_set call' if ! defined $value;
 
     my $metric = $self->{'thischild'}->{'metric'};
     $metric->set({
-        'count_id' => $count_id,
+        'gauge_id' => $gauge_id,
         'labels'   => $labels,
         'server'   => $self->{'thischild'},
-        'count'    => $count,
+        'value'    => $value,
     });
     return;
 }
@@ -558,6 +558,7 @@ sub top_metrics_callback {
             $self->log_error( 'Metrics callback error ' . $error );
         }
     };
+    return;
 }
 
 =callback_method I<top_connect_callback( $hostname, $ip )>

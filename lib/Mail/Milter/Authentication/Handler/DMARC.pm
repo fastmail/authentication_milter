@@ -179,7 +179,7 @@ sub pre_fork_setup {
 sub register_metrics {
     return {
         'dmarc_total' => 'The number of emails processed for DMARC',
-        'dmarc_reports_total' => 'The number of pending DMARC reports',
+        'dmarc_reports_total' => { type => 'gauge', help => 'The number of pending DMARC reports' },
     };
 }
 
@@ -188,12 +188,15 @@ sub metrics_callback {
     my $config = $self->handler_config();
     return if $config->{'no_report'};
 
-    my $time = time;
-    my $backend = Mail::DMARC::Report::Store->new()->backend;
-    my $queued_result = $backend->query("SELECT COUNT(*) AS c FROM report WHERE end >= $time");
-    my $pending_result = $backend->query("SELECT COUNT(*) AS c FROM report WHERE end < $time");
-    $self->metric_set( 'dmarc_reports_total', { 'state' => 'queued' }, $queued_result->{c} );
-    $self->metric_set( 'dmarc_reports_total', { 'state' => 'pending' }, $pending_result->{c} );
+    eval {
+        my $time = time;
+        my $backend = Mail::DMARC::Report::Store->new()->backend;
+        my $current = $backend->query("SELECT COUNT(1) AS c FROM report WHERE end >= $time")->[0]->{c};
+        my $pending = $backend->query("SELECT COUNT(1) AS c FROM report WHERE end < $time")->[0]->{c};
+        $self->metric_set( 'dmarc_reports_total', { 'state' => 'current' }, $current );
+        $self->metric_set( 'dmarc_reports_total', { 'state' => 'pending' }, $pending );
+    };
+
     return;
 }
 
