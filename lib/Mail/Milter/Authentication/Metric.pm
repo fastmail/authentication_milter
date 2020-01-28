@@ -50,11 +50,29 @@ sub new {
         $self->{'prom'}->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
         $self->{'prom'}->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
         $self->{'prom'}->declare( 'authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
+        $self->{'prom'}->declare( 'authmilter_version', help => 'Running versions', type => 'counter' );
     }
 
     bless $self, $class;
     return $self;
 }
+
+=method I<set_versions( $server )>
+
+Setup version metrics
+
+=cut
+
+sub set_versions {
+    my ( $self, $server ) = @_;
+    $self->{'prom'}->set( 'authmilter_version', 1, { version => $Mail::Milter::Authentication::VERSION, module => 'core', ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+    foreach my $Handler ( sort keys %{ $server->{ 'handler' } } ) {
+        next if $Handler eq '_Handler';
+        $self->{'prom'}->set( 'authmilter_version', 1, { version => $server->{ 'handler' }->{ $Handler }->get_version(), module => $Handler, ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+    }
+    return;
+}
+
 
 =method I<get_timeout()>
 

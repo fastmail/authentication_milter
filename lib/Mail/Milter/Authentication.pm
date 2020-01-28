@@ -214,6 +214,8 @@ sub pre_loop_hook {
         open( STDOUT, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
     }
 
+    $self->{'metric'}->set_versions( $self );
+
     return;
 
 }
