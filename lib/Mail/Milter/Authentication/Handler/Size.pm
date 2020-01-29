@@ -65,13 +65,13 @@ sub close_callback {
     if ( exists( $top_handler->{'pre_headers'} ) ) {
         foreach my $header ( @{ $top_handler->{'pre_headers'} } ) {
             my $size = length( $header->{'field'} ) + length ( $header->{'value'} ) + 3;
-            $self->metric_count( 'size_body_bytes_added_total', { where => 'pre', 'header' => $header->{'field'} }, $size );
+            $self->metric_count( 'size_header_bytes_added_total', { where => 'pre', 'header' => $header->{'field'} }, $size );
         }
     }
     if ( exists( $top_handler->{'add_headers'} ) ) {
         foreach my $header ( @{ $top_handler->{'add_headers'} } ) {
             my $size = length( $header->{'field'} ) + length ( $header->{'value'} ) + 3;
-            $self->metric_count( 'size_body_bytes_added_total', { where => 'add', 'header' => $header->{'field'} }, $size );
+            $self->metric_count( 'size_header_bytes_added_total', { where => 'add', 'header' => $header->{'field'} }, $size );
         }
     }
 
