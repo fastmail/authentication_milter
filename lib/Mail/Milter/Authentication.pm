@@ -310,6 +310,7 @@ sub child_init_hook {
     $self->{'object_maker'}   = $object_maker;
 
     $self->setup_handlers();
+    $self->{'metric'}->set_versions( $self );
 
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(0)';
     return;
