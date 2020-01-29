@@ -50,7 +50,7 @@ sub new {
         $self->{'prom'}->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
         $self->{'prom'}->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
         $self->{'prom'}->declare( 'authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
-        $self->{'prom'}->declare( 'authmilter_version', help => 'Running versions', type => 'counter' );
+        $self->{'prom'}->declare( 'authmilter_version', help => 'Running versions', type => 'gauge' );
     }
 
     bless $self, $class;

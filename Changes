@@ -3,6 +3,7 @@ Revision history for Mail-Milter-Authentication
 {{$NEXT}}
         - DMARC: Updated ARC override reporting re RFC
         - DMARC: Add metrics for active/pending reports
+        - Core: Added version metrics
 
 2.20200107 2020-01-07 04:26:20+00:00 UTC
         - Ignore Errors from bgsend
