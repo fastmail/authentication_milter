@@ -1,7 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
-
+        - Size: Add metrics for added header bytes
+        
 2.20200202 2020-02-02 14:23:58+00:00 UTC
         - DMARC: Updated ARC override reporting re RFC
         - DMARC: Add metrics for active/pending reports

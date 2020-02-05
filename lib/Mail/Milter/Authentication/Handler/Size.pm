@@ -22,6 +22,7 @@ sub grafana_rows {
 sub register_metrics {
     return {
         'size_total' => 'The number of emails processed for Size',
+        'size_header_bytes_added_total' => 'The header size added to emails processed for Size',
         'size_header_bytes_total' => 'The header size of emails processed for Size',
         'size_body_bytes_total' => 'The body size of emails processed for Size',
     };
@@ -59,6 +60,21 @@ sub eom_callback {
 
 sub close_callback {
     my ( $self ) = @_;
+
+    my $top_handler = $self->get_top_handler();
+    if ( exists( $top_handler->{'pre_headers'} ) ) {
+        foreach my $header ( @{ $top_handler->{'pre_headers'} } ) {
+            my $size = length( $header->{'field'} ) + length ( $header->{'value'} ) + 3;
+            $self->metric_count( 'size_header_bytes_added_total', { where => 'pre', 'header' => $header->{'field'} }, $size );
+        }
+    }
+    if ( exists( $top_handler->{'add_headers'} ) ) {
+        foreach my $header ( @{ $top_handler->{'add_headers'} } ) {
+            my $size = length( $header->{'field'} ) + length ( $header->{'value'} ) + 3;
+            $self->metric_count( 'size_header_bytes_added_total', { where => 'add', 'header' => $header->{'field'} }, $size );
+        }
+    }
+
     delete $self->{'bodysize'};
     delete $self->{'headersize'};
     return;
