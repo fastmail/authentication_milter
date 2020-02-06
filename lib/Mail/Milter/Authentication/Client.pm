@@ -196,7 +196,6 @@ sub r { ## no critic [Subroutines::RequireArgUnpacking]
             warn Dumper $result;
         }
     }
-    return;
 }
 
 =method I<insert_header()>
@@ -222,7 +221,6 @@ sub insert_header {
         $i++;
     }
     $self->{'header_pairs'} = \@header_pairs;
-    return;
 }
 
 =method I<replace_header()>
@@ -262,7 +260,6 @@ sub replace_header {
         }
     }
     $self->{'header_pairs'} = \@header_pairs;
-    return;
 }
 
 =method I<add_header()>
@@ -277,7 +274,6 @@ sub add_header {
     push @header_pairs, $header;
     push @header_pairs, $value;
     $self->{'header_pairs'} = \@header_pairs;
-    return;
 }
 
 =method I<load_mail()>
@@ -341,7 +337,6 @@ sub load_mail {
     my $message_object = Email::Simple->new( $mail_data );
     $self->{'message_object'} = $message_object;
     $self->{'header_pairs'}   = \@header_pairs;
-    return;
 }
 
 =method I<process()>
@@ -436,7 +431,6 @@ sub process {
     }
 
     $self->{'result'} =  $self->{'message_object'}->as_string();
-    return;
 }
 
 =method I<result()>

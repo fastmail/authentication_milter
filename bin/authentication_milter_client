@@ -50,7 +50,6 @@ if ( $prefix ) {
 
 sub usage {
     pod2usage( -verbose => 2 );
-    return;
 }
 
 my $args = {

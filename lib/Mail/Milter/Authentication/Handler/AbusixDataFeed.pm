@@ -20,7 +20,6 @@ sub default_config {
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'helo_name'} = $helo_host;
-    return;
 }
 
 sub envfrom_callback {
@@ -54,8 +53,6 @@ sub envfrom_callback {
         }
     }
     $self->{ 'abusix_feed' }->reverse_dns( join( ',', @rdns ) );
-
-    return;
 }
 
 sub header_callback {
@@ -66,7 +63,6 @@ sub header_callback {
     return if $protocol ne 'smtp';
 
     $self->{ 'first_received' } = $value;
-    return;
 }
 
 sub eoh_callback {
@@ -85,7 +81,6 @@ sub eoh_callback {
         }
     }
     $self->{ 'abusix_feed' }->send();
-    return;
 }
 
 
@@ -95,7 +90,6 @@ sub close_callback {
     delete $self->{'helo_name'};
     delete $self->{'abusix_feed'};
     delete $self->{ 'first_received' };
-    return;
 }
 
 1;

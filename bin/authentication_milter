@@ -77,7 +77,6 @@ Mail::Milter::Authentication::start({
 
 sub usage {
     pod2usage( -verbose => 2 );
-    return;
 }
 
 sub module_usage {
@@ -100,8 +99,6 @@ sub module_usage {
         die "Could not find help for $module";
     }
     pod2usage( -input => $module_file, -verbose => 2 );
-
-    return;
 }
 
 sub modules_installed {
@@ -112,7 +109,6 @@ sub modules_installed {
         uniq sort @$installed_handlers,
     );
     print "\n\n";
-    return;
 }
 
 sub show_default_config {

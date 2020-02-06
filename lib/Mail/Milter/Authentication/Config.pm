@@ -109,8 +109,6 @@ sub set_config {
     my $protocol = $config->{'protocol'} || 'milter';
     $config->{'protocol'} = $protocol;
     $CONFIG = $config;
-
-    return;
 }
 
 =func I<load_file( $file )>
@@ -166,7 +164,6 @@ will be called with $config as the argument.g
 
     sub process_config {
         my ( $self, $config ) = @_;
-        return;
     }
 
     1;

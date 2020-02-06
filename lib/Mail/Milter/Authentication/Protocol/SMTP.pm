@@ -44,7 +44,6 @@ sub smtp_status {
     my ( $self, $status ) = @_;
     my $smtp = $self->{'smtp'};
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':' . $status . '(' . $self->{'count'} . '.' . $smtp->{'count'} . ')';
-    return;
 }
 
 sub smtp_init {
@@ -65,8 +64,6 @@ sub smtp_init {
     $handler->dbgout( 'SMTP Transaction count', $self->{'count'} . '.' . $smtp->{'count'} , LOG_INFO );
 
     $smtp->{'init_required'} = 0;
-
-    return;
 }
 
 sub protocol_process_request {
@@ -205,7 +202,6 @@ sub protocol_process_request {
     $self->close_destination_socket();
 
     delete $self->{'smtp'};
-    return;
 }
 
 sub smtp_queue_id {
@@ -252,7 +248,6 @@ sub smtp_command_lhlo {
     print $socket "250-PIPELINING\r\n";
     print $socket "250-ENHANCEDSTATUSCODES\r\n";
     print $socket "250 8BITMIME\r\n";
-    return;
 }
 
 sub smtp_command_ehlo {
@@ -278,7 +273,6 @@ sub smtp_command_ehlo {
     print $socket "250-PIPELINING\r\n";
     print $socket "250-ENHANCEDSTATUSCODES\r\n";
     print $socket "250 8BITMIME\r\n";
-    return;
 }
 
 sub smtp_command_helo {
@@ -295,7 +289,6 @@ sub smtp_command_helo {
     }
     $smtp->{'helo_host'} = command_param( $command,5 );
     print $socket "250 " . $smtp->{'server_name'} . " Hi " . $smtp->{'helo_host'} . "\r\n";
-    return;
 }
 
 sub smtp_command_xforward {
@@ -341,7 +334,6 @@ sub smtp_command_xforward {
         }
     }
     print $socket "250 2.0.0 Ok\r\n";
-    return;
 }
 
 sub smtp_command_rset {
@@ -379,8 +371,6 @@ sub smtp_command_rset {
         }
     }
     print $socket "250 2.0.0 Ok\r\n";
-
-    return;
 }
 
 sub smtp_command_mailfrom {
@@ -469,8 +459,6 @@ sub smtp_command_mailfrom {
     else {
         print $socket "451 4.0.2 Connection - That's not right\r\n";
     }
-
-    return;
 }
 
 sub smtp_command_rcptto {
@@ -505,8 +493,6 @@ sub smtp_command_rcptto {
     else {
         print $socket "451 4.0.3 That's not right\r\n";
     }
-
-    return;
 }
 
 sub smtp_command_data {
@@ -784,7 +770,6 @@ sub smtp_command_data {
     $smtp->{'string'}           = q{};
     $self->{'handler'}->{'_Handler'}->top_close_callback();
     $smtp->{'init_required'}    = 1;
-    return;
 }
 
 sub smtp_insert_received_header {
@@ -820,7 +805,6 @@ sub smtp_insert_received_header {
     );
 
     splice @{ $smtp->{'headers'} }, 0, 0, 'Received: '. $value;
-    return;
 }
 
 sub smtp_forward_to_destination {
@@ -968,7 +952,6 @@ sub close_destination_socket {
     $self->send_smtp_packet( $sock, 'QUIT', '221' ) || return;
     $sock->close();
     delete $smtp->{'destination_sock'};
-    return;
 }
 
 sub send_smtp_packet {
@@ -1022,7 +1005,6 @@ sub add_header {
     my $smtp = $self->{'smtp'};
     $value =~ s/\015?\012/\015\012/g;
     push @{ $smtp->{'headers'} } , "$header: $value";
-    return;
 }
 
 sub change_header {
@@ -1055,8 +1037,6 @@ sub change_header {
             #untested.
         }
     }
-
-    return;
 }
 
 sub insert_header {
@@ -1064,7 +1044,6 @@ sub insert_header {
     my $smtp = $self->{'smtp'};
     $value =~ s/\015?\012/\015\012/g;
     splice @{ $smtp->{'headers'} }, $index - 1, 0, "$key: $value";
-    return;
 }
 
 1;

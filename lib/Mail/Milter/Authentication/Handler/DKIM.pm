@@ -45,7 +45,6 @@ sub envfrom_callback {
     $self->{'valid_domains'} = {};
     $self->{'carry'}         = q{};
     $self->destroy_object('dkim');
-    return;
 }
 
 sub show_domainkeys {
@@ -88,8 +87,6 @@ sub header_callback {
     if ( lc($header) eq 'domainkey-signature' ) {
         $self->{'has_dkim'} = 1 if $self->show_domainkeys();
     }
-
-    return;
 }
 
 sub eoh_callback {
@@ -151,8 +148,6 @@ sub eoh_callback {
     }
 
     $self->{'carry'} = q{};
-
-    return;
 }
 
 sub body_callback {
@@ -188,7 +183,6 @@ sub body_callback {
         $self->_check_error( $error );
         $self->metric_count( 'dkim_total', { 'result' => 'error' } );
     }
-    return;
 }
 
 sub eom_callback {
@@ -388,7 +382,6 @@ sub close_callback {
     delete $self->{'has_dkim'};
     delete $self->{'valid_domains'};
     $self->destroy_object('dkim');
-    return;
 }
 
 sub _check_error {
@@ -426,7 +419,6 @@ sub _check_error {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    return;
 }
 
 1;

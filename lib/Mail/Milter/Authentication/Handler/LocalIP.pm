@@ -64,13 +64,11 @@ sub connect_callback {
         $self->{'is_local_ip_address'} = 1;
         $self->metric_count( 'localip_connect_total' );
     }
-    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'is_local_ip_address'};
-    return;
 }
 
 1;

@@ -27,7 +27,6 @@ sub remove_bimi_header {
         $self->{'remove_bimi_headers'} = [];
     }
     push @{ $self->{'remove_bimi_headers'} }, $value;
-    return;
 }
 
 sub envfrom_callback {
@@ -35,7 +34,6 @@ sub envfrom_callback {
     delete $self->{'bimi_header_index'};
     delete $self->{'remove_bimi_headers'};
     $self->{ 'header_added' } = 0;
-    return;
 }
 
 sub header_callback {
@@ -92,7 +90,6 @@ sub header_callback {
         $self->{'from_header'} = $value;
     }
     ## ToDo remove/rename existing headers here
-    return;
 }
 
 sub eom_requires {
@@ -261,8 +258,6 @@ sub eom_callback {
             $self->{ 'header_added' } = 1;
         }
     }
-
-    return;
 }
 
 sub close_callback {
@@ -274,7 +269,6 @@ sub close_callback {
     delete $self->{'bimi_object'};
     delete $self->{'bimi_header_index'};
     delete $self->{ 'header_added' };
-    return;
 }
 
 1;

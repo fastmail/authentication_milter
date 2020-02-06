@@ -42,7 +42,6 @@ sub _dns_error {
           . ' with '
           . $error );
     }
-    return;
 }
 
 sub connect_requires {
@@ -223,8 +222,6 @@ sub connect_callback {
         $self->add_c_auth_header($header);
         $self->metric_count( 'iprev_total', { 'result' => 'pass'} );
     }
-
-    return;
 }
 
 sub _address_for_domain {
@@ -266,7 +263,6 @@ sub _address_for_domain {
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'verified_ptr'};
-    return;
 }
 
 1;

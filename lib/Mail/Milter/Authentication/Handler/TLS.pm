@@ -30,14 +30,12 @@ sub pre_loop_setup {
     if ( $protocol eq 'smtp' ) {
         warn 'When in smtp mode, the TLS handler requires the MTA to write TLS data into the first Received header.';
     }
-    return;
 }
 
 sub connect_callback {
     my ( $self ) = @_;
     # Reset state on a connection
     delete $self->{'is_encrypted'};
-    return;
 }
 
 sub envfrom_callback {
@@ -80,7 +78,6 @@ sub envfrom_callback {
     else {
         $self->{'is_encrypted'} = 0;
     }
-    return;
 }
 
 sub header_callback {
@@ -130,8 +127,6 @@ sub header_callback {
 
         $self->add_auth_header( $header );
     }
-
-    return;
 }
 
 sub eoh_callback {
@@ -140,14 +135,12 @@ sub eoh_callback {
     return if $protocol ne 'smtp';
     return if defined $self->{'is_encrypted'};
     $self->{'is_encrypted'} = 0;
-    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'first_header_read'};
     delete $self->{'is_encrypted'};
-    return;
 }
 
 1;

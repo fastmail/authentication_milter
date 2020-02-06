@@ -70,7 +70,6 @@ sub set_versions {
         next if $Handler eq '_Handler';
         $self->{'prom'}->set( 'authmilter_version', 1, { version => $server->{ 'handler' }->{ $Handler }->get_version(), module => $Handler, ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
     }
-    return;
 }
 
 
@@ -142,8 +141,6 @@ sub count {
 
     eval{ $self->{prom}->add( 'authmilter_' . $count_id, $count, $clean_labels ); };
     ## TODO catch and re-throw timeouts
-
-    return;
 }
 
 =method I<set($args)>
@@ -186,8 +183,6 @@ sub set {
 
     eval{ $self->{prom}->set( 'authmilter_' . $gauge_id, $value, $clean_labels ); };
     ## TODO catch and re-throw timeouts
-
-    return;
 }
 
 =method I<send( $server )>
@@ -198,7 +193,6 @@ Send metrics to the parent server process.
 
 sub send { ## no critic
     my ( $self, $server ) = @_;
-    return;
 }
 
 =method I<register_metrics( $hash )>
@@ -228,7 +222,6 @@ sub register_metrics {
         $self->{prom}->declare( 'authmilter_' . $metric, help => $help, type => $type);
         $self->{prom}->set( 'authmilter_' . $metric,0, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
     }
-    return;
 }
 
 =method I<master_metric_update( $server )>
@@ -246,8 +239,6 @@ sub master_metric_update {
             $self->{prom}->set('authmilter_processes_' . $type, $server->{'server'}->{'tally'}->{ $type }, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
         }
     };
-
-    return;
 }
 
 =method I<child_handler( $server )>
@@ -415,9 +406,6 @@ sub child_handler {
 
         alarm( 0 );
     };
-
-    return;
 }
 
 1;
-

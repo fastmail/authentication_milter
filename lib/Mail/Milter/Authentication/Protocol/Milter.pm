@@ -40,8 +40,6 @@ sub protocol_process_request {
         $self->milter_process_command( $command, $data );
 
     }
-
-    return;
 }
 
 sub milter_process_command {
@@ -221,8 +219,6 @@ sub milter_process_command {
             }
         }
     }
-
-    return;
 }
 
 sub milter_process_connect {
@@ -293,7 +289,6 @@ sub add_header {
         . $value
         . "\0"
     );
-    return;
 }
 
 sub change_header {
@@ -306,7 +301,6 @@ sub change_header {
         . $value
         . "\0"
     );
-    return;
 }
 
 sub insert_header {
@@ -318,7 +312,6 @@ sub insert_header {
         . $value
         . "\0"
     );
-    return;
 }
 
 sub write_packet {
@@ -330,7 +323,6 @@ sub write_packet {
     $socket->syswrite($len);
     $socket->syswrite($code);
     $socket->syswrite($data);
-    return;
 }
 
 1;

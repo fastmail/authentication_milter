@@ -30,7 +30,6 @@ sub pre_loop_setup {
     if ( $protocol ne 'milter' ) {
         warn 'The Auth handler only works with the milter protocol';
     }
-    return;
 }
 
 sub get_auth_name {
@@ -42,7 +41,6 @@ sub get_auth_name {
 sub connect_callback {
     my ( $self, $hostname, $ip ) = @_;
     $self->{'is_authenticated'} = 0;
-    return;
 }
 
 sub envfrom_callback {
@@ -60,13 +58,11 @@ sub envfrom_callback {
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'auth' )->safe_set_value( 'pass' );
         $self->add_auth_header( $header );
     }
-    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'is_authenticated'};
-    return;
 }
 
 1;

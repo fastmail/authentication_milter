@@ -175,7 +175,6 @@ sub snapshot {
     my ( $self, $name ) = @_;
     my $snapshot = clone( $self->{ 'authmilter' } );
     $self->{ 'snapshots' }->{ $name } = $snapshot;
-    return;
 }
 
 sub switch {
@@ -183,7 +182,6 @@ sub switch {
     croak 'unknown snapshot' if ! exists ( $self->{ 'snapshots' }->{ $name } );
     my $snapshot = clone( $self->{ 'snapshots' }->{ $name } );
     $self->{ 'authmilter' } = $snapshot;
-    return;
 }
 
 sub handler {
@@ -315,8 +313,6 @@ sub run {
 
     $self->addheader();
     #    $self->close();
-
-    return;
 }
 
 sub get_return {

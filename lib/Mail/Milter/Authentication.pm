@@ -67,7 +67,6 @@ sub _warn {
         next if $part eq q{};
         print STDERR scalar(localtime) . ' ' . $Mail::Milter::Authentication::Config::IDENT . "[$PID] $part\n";
     }
-    return;
 }
 
 =method preload_modules( $from, $matching )
@@ -100,7 +99,6 @@ sub preload_modules {
             }
         }
     }
-    return;
 }
 
 =func I<get_installed_handlers()>
@@ -139,7 +137,6 @@ sub write_to_log_hook {
                      : $priority == 4 ? 'error'
                      : 'debug';
     logger()->log( { 'level' => $log_priority }, $line );
-    return;
 }
 
 =method I<idle_loop_hook()>
@@ -151,7 +148,6 @@ Hook which runs in the master periodically.
 sub idle_loop_hook {
     my ( $self ) = @_;
     $self->{'metric'}->master_metric_update( $self );
-    return;
 }
 
 =method I<pre_loop_hook()>
@@ -205,9 +201,6 @@ sub pre_loop_hook {
         open( STDERR, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
         open( STDOUT, '>>', $config->{'error_log'} ) || die "Cannot open errlog [$!]";
     }
-
-    return;
-
 }
 
 =method I<run_n_children_hook()>
@@ -230,8 +223,6 @@ sub run_n_children_hook {
         }
 
     }
-
-    return;
 }
 
 =method I<child_init_hook()>
@@ -305,7 +296,6 @@ sub child_init_hook {
     $self->{'metric'}->set_versions( $self );
 
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(0)';
-    return;
 }
 
 =method I<child_finish_hook()>
@@ -322,7 +312,6 @@ sub child_finish_hook {
         $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
     };
     $self->destroy_objects();
-    return;
 }
 
 =method I<pre_server_close_hook()>
@@ -334,7 +323,6 @@ Hook which runs before the server closes.
 sub pre_server_close_hook {
     my ($self) = @_;
     $self->loginfo( 'Server closing down' );
-    return;
 }
 
 =method I<get_client_proto()>
@@ -365,8 +353,6 @@ sub get_client_proto {
     }
 
     $self->logerror( "Could not determine connection protocol: " . ref($socket) );
-
-    return;
 }
 
 =method I<get_client_port()>
@@ -420,7 +406,6 @@ sub get_client_details {
     elsif ( $proto eq 'unix' ) {
         return 'unix:' . $self->get_client_path();
     }
-    return;
 }
 
 =method I<process_request()>
@@ -468,7 +453,6 @@ sub process_request {
 
     my $count = $self->{'count'};
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(' . $count . ')';
-    return;
 }
 
 =method I<process_main()>
@@ -513,7 +497,6 @@ sub process_main {
     delete $self->{'handler'}->{'_Handler'}->{'return_code'};
     delete $self->{'socket'};
     $self->logdebug( 'Request processing completed' );
-    return;
 }
 
 
@@ -638,8 +621,6 @@ sub control {
     else {
         die 'unknown command';
     }
-
-    return;
 }
 
 =func I<start($hashref)>
@@ -661,7 +642,6 @@ sub start {
             logger()->log( { level => 'warning' }, "Warning: $msg" );
             _warn( "Warning: $msg" );
         }
-        return;
     };
 
     my $config                 = get_config();
@@ -906,8 +886,6 @@ sub start {
     }
     _warn "Server exiting abnormally";
     die;
-
-    return; ## no critic
 }
 
 ##### Protocol methods
@@ -963,7 +941,6 @@ sub setup_handlers {
         $self->setup_handler( $name );
     }
     $self->sort_all_callbacks();
-    return;
 }
 
 =method I<load_handler( $name )>
@@ -986,7 +963,6 @@ sub load_handler {
             $self->fatal_global('Could not load handler ' . $name . ' : ' . $error);
         }
     }
-    return;
 }
 
 =method I<setup_handler( $name )>
@@ -1010,8 +986,6 @@ sub setup_handler {
             $self->register_callback( $name, $callback );
         }
     }
-
-    return;
 }
 
 =method I<destroy_handler( $name )>
@@ -1027,7 +1001,6 @@ sub destroy_handler {
     delete $self->{'handler'}->{$name}->{'thischild'};
     # Remove reference to handler
     delete $self->{'handler'}->{$name};
-    return;
 }
 
 =method I<register_callback( $name, $callback )>
@@ -1043,7 +1016,6 @@ sub register_callback {
         $self->{'callbacks'}->{$callback} = [];
     }
     push @{ $self->{'callbacks'}->{$callback} }, $name;
-    return;
 }
 
 =method I<sort_all_callbacks()>
@@ -1057,7 +1029,6 @@ sub sort_all_callbacks {
     foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
         $self->sort_callbacks( $callback );
     }
-    return;
 }
 
 =method I<sort_callbacks( $callback )>
@@ -1140,7 +1111,6 @@ sub sort_callbacks {
     }
 
     $self->{'callbacks_list'}->{$callback} = \@order;
-    return;
 }
 
 =method I<destroy_objects()>
@@ -1163,7 +1133,6 @@ sub destroy_objects {
         delete $self->{'handler'}->{'_Handler'}->{'thischild'};
         delete $self->{'handler'}->{'_Handler'};
     }
-    return;
 }
 
 
@@ -1208,7 +1177,6 @@ sub enable_extra_debugging {
     $self->logerror( 'Extra debugging enabled. Child will exit on close.' );
     # We don't want to persist this, so force an exit on close state.
     $self->{'handler'}->{'_Handler'}->{'exit_on_close'} = 1;
-    return;
 }
 
 =method I<extra_debugging( $line )>
@@ -1222,7 +1190,6 @@ sub extra_debugging {
     if ( $self->{'extra_debugging'} ) {
         $self->logerror( $line );
     }
-    return;
 }
 
 =method I<logerror( $line )>
@@ -1239,7 +1206,6 @@ sub logerror {
     }
     _warn( $line ) if $config->{'logtoerr'};
     logger()->log( { 'level' => 'error' }, $line );
-    return;
 }
 
 =method I<loginfo( $line )>
@@ -1256,7 +1222,6 @@ sub loginfo {
     }
     _warn( $line ) if $config->{'logtoerr'};
     logger()->log( { 'level' => 'info' }, $line );
-    return;
 }
 
 =method I<logdebug( $line )>
@@ -1275,7 +1240,6 @@ sub logdebug {
         _warn( $line ) if $config->{'logtoerr'};
         logger()->log( { 'level' => 'debug' }, $line );
     }
-    return;
 }
 
 1;

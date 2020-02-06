@@ -101,8 +101,6 @@ sub _test_blocker {
             }
         }
     }
-
-    return;
 }
 
 sub default_config {
@@ -114,37 +112,31 @@ sub default_config {
 sub connect_callback {
     my ( $self, $hostname, $ip ) = @_;
     $self->_test_blocker( 'connect', $ip->ip );
-    return;
 }
 
 sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->_test_blocker( 'helo', $helo_host );
-    return;
 }
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
     $self->_test_blocker( 'envfrom', $env_from );
-    return;
 }
 
 sub envrcpt_callback {
     my ( $self, $env_to ) = @_;
     $self->_test_blocker( 'envrcpt', $env_to );
-    return;
 }
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
     $self->_test_blocker( 'header', "$header: $value" );
-    return;
 }
 
 sub close_callback {
     my ($self) = @_;
     delete $self->{'blocker_config'};
-    return;
 }
 
 1;

@@ -172,8 +172,6 @@ sub test_metrics {
         }
 
     };
-
-    return;
 }
 
 sub smtp_process {
@@ -219,8 +217,6 @@ sub smtp_process {
     else {
         is( $return, 1, 'SMTP Put Returned ok' );
     }
-
-    return;
 }
 
 sub smtp_process_multi {
@@ -282,8 +278,6 @@ sub smtp_process_multi {
     waitpid( $cat_pid,0 );
 
     files_eq_or_diff( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
-
-    return;
 }
 
 sub milter_process {
@@ -309,8 +303,6 @@ sub milter_process {
     });
 
     files_eq_or_diff( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'milter ' . $args->{'desc'} );
-
-    return;
 }
 
 sub smtpput {
@@ -565,7 +557,6 @@ sub client {
 
     }
     waitpid( $pid, 0 );
-    return;
 }
 
 1;

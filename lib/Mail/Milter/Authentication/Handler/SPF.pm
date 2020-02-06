@@ -47,7 +47,6 @@ sub setup_callback {
             'destroy' => 0,
         };
     });
-    return;
 }
 
 sub register_metrics {
@@ -68,7 +67,6 @@ sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'failmode'} = 0;
     $self->{'helo_name'} = $helo_host;
-    return;
 }
 
 sub envfrom_callback {
@@ -191,8 +189,6 @@ sub envfrom_callback {
         $self->add_auth_header($header);
         $self->metric_count( 'spf_total', { 'result' => 'error' } );
     }
-
-    return;
 }
 
 sub close_callback {
@@ -202,7 +198,6 @@ sub close_callback {
     delete $self->{'dmarc_result'};
     delete $self->{'failmode'};
     delete $self->{'helo_name'};
-    return;
 }
 
 1;

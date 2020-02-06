@@ -58,8 +58,6 @@ sub helo_callback {
     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.ptr' )->safe_set_value( $domains ) );
     $self->add_c_auth_header( $header );
     $self->metric_count( 'ptr_total', { 'result' => $result} );
-
-    return;
 }
 
 1;

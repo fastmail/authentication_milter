@@ -46,8 +46,6 @@ sub envfrom_callback {
         $self->{ 'smtp_address'} = lc $email;
         $self->{ 'smtp_domain'} = lc $self->get_domain_from( $email );
     }
-
-    return;
 }
 
 sub header_callback {
@@ -75,8 +73,6 @@ sub header_callback {
         # If there are more than 1 then the result will be set to error in the eom callback
         # Multiple from headers should always set the result to error.
     }
-
-    return;
 }
 
 sub close_callback {
@@ -86,7 +82,6 @@ sub close_callback {
     delete $self->{ 'header_domain' };
     delete $self->{ 'smtp_address' };
     delete $self->{ 'smtp_domain' };
-    return;
 }
 
 # error = multiple from headers present
@@ -174,8 +169,6 @@ sub eom_callback {
     $self->add_auth_header( $header );
 
     $self->metric_count( 'alignedfrom_total', { 'result' => $result } );
-
-    return;
 }
 
 1;

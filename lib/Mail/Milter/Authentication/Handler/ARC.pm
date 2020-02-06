@@ -234,7 +234,6 @@ sub inherit_trusted_spf_results {
             $self->log_error( 'ARC Inherit Error ' . $error );
         }
     }
-    return;
 }
 
 sub inherit_trusted_dkim_results {
@@ -321,7 +320,6 @@ sub inherit_trusted_dkim_results {
             $self->log_error( 'ARC Inherit Error ' . $error );
         }
     }
-    return;
 }
 
 sub inherit_trusted_ip_results {
@@ -350,8 +348,6 @@ sub inherit_trusted_ip_results {
             $self->log_error( 'ARC Inherit Error ' . $error );
         }
     }
-
-    return;
 }
 
 sub get_trusted_arc_authentication_results {
@@ -427,7 +423,6 @@ sub search_trusted_aar {
             return $found;
         }
     }
-    return;
 }
 
 sub envfrom_callback {
@@ -442,7 +437,6 @@ sub envfrom_callback {
     $self->{'arc_domain'}       = {};
     $self->{'arc_result'}       = '';
     $self->destroy_object('arc');
-    return;
 }
 
 sub header_callback {
@@ -468,8 +462,6 @@ sub header_callback {
     if ( lc($header) eq 'arc-message-signature' ) {
         $self->{'has_arc'} = 1;
     }
-
-    return;
 }
 
 sub eoh_callback {
@@ -575,7 +567,6 @@ sub body_callback {
             delete $self->{headers} unless $self->{has_arcseal};
         }
     }
-    return;
 }
 
 sub eom_requires {
@@ -662,9 +653,6 @@ sub eom_callback {
     $self->inherit_trusted_spf_results();
     $self->inherit_trusted_dkim_results();
     $self->inherit_trusted_ip_results();
-
-    return;
-
 }
 
 sub close_callback {
@@ -679,7 +667,6 @@ sub close_callback {
     delete $self->{'arc_result'};
     delete $self->{'arc_auth_results'};
     $self->destroy_object('arc');
-    return;
 }
 
 sub _check_error {
@@ -717,7 +704,6 @@ sub _check_error {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    return;
 }
 
 sub _fmtheader {

@@ -63,7 +63,6 @@ sub remove_auth_header {
         $self->{'remove_auth_headers'} = [];
     }
     push @{ $self->{'remove_auth_headers'} }, $index;
-    return;
 }
 
 sub get_headers_to_remove {
@@ -85,8 +84,6 @@ sub envfrom_callback {
         };
     }
     $self->{'header_hash'} = $headers;
-
-    return;
 }
 
 sub header_callback {
@@ -137,8 +134,6 @@ sub header_callback {
                 $forged_header );
         }
     }
-
-    return;
 }
 
 sub eom_callback {
@@ -162,8 +157,6 @@ sub eom_callback {
             }
         }
     }
-
-    return;
 }
 
 sub close_callback {
@@ -171,7 +164,6 @@ sub close_callback {
     delete $self->{'remove_auth_headers'};
     delete $self->{'auth_result_header_index'};
     delete $self->{'header_hash'};
-    return;
 }
 
 1;

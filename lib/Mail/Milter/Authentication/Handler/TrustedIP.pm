@@ -58,13 +58,11 @@ sub connect_callback {
         $self->{'is_trusted_ip_address'} = 1;
         $self->metric_count( 'trustedip_connect_total' );
     }
-    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'is_trusted_ip_address'};
-    return;
 }
 
 1;

@@ -141,7 +141,6 @@ sub pre_loop_setup {
     else {
         $self->{'thischild'}->logerror( 'DMARC Could not preload PSL' );
     }
-    return;
 }
 
 sub pre_fork_setup {
@@ -168,7 +167,6 @@ sub pre_fork_setup {
             $self->{'thischild'}->loginfo( 'DMARC PSL file update checking not available' );
         }
     }
-    return;
 }
 
 sub register_metrics {
@@ -191,8 +189,6 @@ sub metrics_callback {
         $self->metric_set( 'dmarc_reports_total', { 'state' => 'current' }, $current );
         $self->metric_set( 'dmarc_reports_total', { 'state' => 'pending' }, $pending );
     };
-
-    return;
 }
 
 sub _process_arc_dmarc_for {
@@ -597,8 +593,6 @@ sub _process_dmarc_for {
             $self->dbgout( 'DMARCReportTo (skipped)', $rua, LOG_INFO );
         }
     }
-
-    return;
 }
 
 sub get_dmarc_object {
@@ -650,7 +644,6 @@ sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'helo_name'} = $helo_host;
     $self->{'report_queue'} = [] if ! $self->{'report_queue'};
-    return;
 }
 
 sub envfrom_requires {
@@ -692,8 +685,6 @@ sub envfrom_callback {
     }
 
     $self->{ 'from_headers' } = [];
-
-    return;
 }
 
 sub check_skip_address {
@@ -707,7 +698,6 @@ sub check_skip_address {
             $self->{'skip_report'} = 1;
         }
     }
-    return;
 }
 
 sub envrcpt_callback {
@@ -718,8 +708,6 @@ sub envrcpt_callback {
 
     $self->{ 'env_to' } = $env_to;
     $self->check_skip_address( $env_to );
-
-    return;
 }
 
 sub header_callback {
@@ -764,7 +752,6 @@ sub header_callback {
         }
 
     }
-    return;
 }
 
 sub eom_requires {
@@ -841,8 +828,6 @@ sub eom_callback {
     }
 
     delete $self->{ 'dmarc_ar_headers' };
-
-    return;
 }
 
 sub can_sort_header {
@@ -898,13 +883,11 @@ sub _get_unique_dmarc_headers {
 sub _add_dmarc_header {
     my ( $self, $header ) = @_;
     push @{ $self->{ 'dmarc_ar_headers' } }, $header;
-    return;
 }
 
 sub addheader_callback {
     my $self = shift;
     my $handler = shift;
-    return;
 }
 
 sub _save_aggregate_reports {
@@ -936,7 +919,6 @@ sub _save_aggregate_reports {
         $self->handle_exception( $Error );
         $self->log_error( 'DMARC Report Error ' . $Error );
     }
-    return;
 }
 
 sub close_callback {
@@ -954,7 +936,6 @@ sub close_callback {
     $self->destroy_object('dmarc');
     $self->destroy_object('dmarc_result');
     $self->destroy_object('dmarc_results');
-    return;
 }
 
 1;
