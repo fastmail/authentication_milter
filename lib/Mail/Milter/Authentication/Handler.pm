@@ -5,8 +5,6 @@ use warnings;
 use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler superclass
 # VERSION
-use Mail::Milter::Authentication::Config;
-use Mail::Milter::Authentication::Constants qw { :all };
 use Mail::Milter::Authentication::Exception;
 use Mail::Milter::Authentication::Resolver;
 use Digest::MD5 qw{ md5_hex };
@@ -15,7 +13,6 @@ use Mail::SPF;
 use Net::DNS::Resolver;
 use Net::IP;
 use Sys::Hostname;
-use Sys::Syslog qw{:standard :macros};
 use Time::HiRes qw{ ualarm gettimeofday };
 
 =head1 DESCRIPTION

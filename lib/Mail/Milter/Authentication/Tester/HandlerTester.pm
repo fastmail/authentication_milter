@@ -6,11 +6,8 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Class for testing handlers
 # VERSION
 use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Config qw{ set_config get_config default_config };
-use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
-use Module::Load;
 use Net::DNS::Resolver::Mock;
 use Net::IP;
 

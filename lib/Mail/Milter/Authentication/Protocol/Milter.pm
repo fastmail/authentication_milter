@@ -5,7 +5,6 @@ use warnings;
 use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Milter protocol handling
 # VERSION
-use Mail::Milter::Authentication::Constants qw{ :all };
 use Net::IP;
 
 sub register_metrics {

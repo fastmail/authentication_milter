@@ -3,13 +3,11 @@ package Mail::Milter::Authentication::Config;
 use 5.20.0;
 use strict;
 use warnings;
-use Mail::Milter::Authentication::Pragmas;
+##use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Common configuration handling
 # VERSION
-use Mail::Milter::Authentication;
+use English;
 use JSON;
-use Module::Load;
-use Module::Loaded;
 use TOML;
 
 use Exporter qw{ import };
@@ -78,6 +76,7 @@ sub default_config {
         'handlers'                        => {}
     };
 
+    require Mail::Milter::Authentication;
     my $installed_handlers = Mail::Milter::Authentication::get_installed_handlers();
     foreach my $handler ( @$installed_handlers ) {
         my $handler_module = 'Mail::Milter::Authentication::Handler::' . $handler;

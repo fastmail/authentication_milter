@@ -7,14 +7,11 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Client;
-use Mail::Milter::Authentication::Config;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
 use Cwd qw{ cwd };
 use IO::Socket::INET;
 use IO::Socket::UNIX;
-use JSON;
-use Module::Load;
 use Net::DNS::Resolver::Mock 1.20171219;
 use Test::File::Contents;
 use Test::More;

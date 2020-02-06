@@ -5,10 +5,8 @@ use warnings;
 use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Class for metrics generation
 # VERSION
-use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::HTDocs;
 use Mail::Milter::Authentication::Metric::Grafana;
-use JSON;
 use Prometheus::Tiny::Shared;
 use TOML;
 

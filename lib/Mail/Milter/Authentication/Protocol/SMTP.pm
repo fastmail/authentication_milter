@@ -5,8 +5,6 @@ use warnings;
 use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: SMTP protocol handling
 # VERSION
-use Mail::Milter::Authentication::Config;
-use Mail::Milter::Authentication::Constants qw{ :all };
 use Digest::MD5 qw{ md5_hex };
 use Email::Date::Format qw{ email_date };
 use File::Temp;

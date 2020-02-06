@@ -6,17 +6,12 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: A Perl Mail Authentication Milter
 # VERSION
 use base 'Net::Server::PreFork';
-use Mail::Milter::Authentication::Config qw{ get_config };
-use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Handler;
 use Mail::Milter::Authentication::Metric;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
 use ExtUtils::Installed;
-use JSON;
 use Log::Dispatchouli;
-use Module::Load;
-use Module::Loaded;
 use Net::DNS::Resolver;
 use Net::IP;
 use Proc::ProcessTable;

@@ -3,7 +3,7 @@ package Mail::Milter::Authentication::Constants;
 use 5.20.0;
 use strict;
 use warnings;
-use Mail::Milter::Authentication::Pragmas;
+##use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Common constants
 # VERSION
 use base 'Exporter';
@@ -168,6 +168,5 @@ our @EXPORT = qw(
 );
 our @EXPORT_OK = ( @EXPORT );
 our %EXPORT_TAGS = ( 'all' => [ @EXPORT_OK ] );
-
 
 1;
