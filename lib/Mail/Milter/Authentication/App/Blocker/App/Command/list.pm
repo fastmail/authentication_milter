@@ -6,9 +6,9 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Command to list current blocks for a given file
 # VERSION
 use Mail::Milter::Authentication::App::Blocker::App -command;
+use Date::Format;
 use TOML;
 use Text::Table;
-use Date::Format;
 
 sub abstract { 'List current blocks in a given file' }
 sub description { 'Parse a toml file and list the current blocks' }

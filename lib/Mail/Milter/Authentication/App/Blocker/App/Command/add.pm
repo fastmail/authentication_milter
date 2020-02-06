@@ -6,9 +6,9 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Command to add a block to a given file
 # VERSION
 use Mail::Milter::Authentication::App::Blocker::App -command;
+use Date::Manip::Date;
 use TOML;
 use Text::Table;
-use Date::Manip::Date;
 
 sub abstract { 'Add a block to a given file' }
 sub description { 'Add a block to a given toml file' };

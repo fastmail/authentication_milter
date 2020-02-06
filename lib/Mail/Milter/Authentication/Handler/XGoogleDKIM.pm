@@ -3,19 +3,17 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
-use base 'Mail::Milter::Authentication::Handler';
+# ABSTRACT: Handler class for Google specific DKIM
 # VERSION
-
-use Data::Dumper;
+use base 'Mail::Milter::Authentication::Handler';
 use English qw{ -no_match_vars };
-use Sys::Syslog qw{:standard :macros};
-
-use Mail::DKIM;
-use Mail::DKIM::Verifier;
-use Mail::DKIM::DNS;
+use Mail::AuthenticationResults::Header::Comment;
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;
-use Mail::AuthenticationResults::Header::Comment;
+use Mail::DKIM::DNS;
+use Mail::DKIM::Verifier;
+use Mail::DKIM;
+use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {

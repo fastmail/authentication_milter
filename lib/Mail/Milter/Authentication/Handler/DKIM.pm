@@ -3,20 +3,18 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
-use base 'Mail::Milter::Authentication::Handler';
+# ABSTRACT: Handler class for DKIM
 # VERSION
-
-use Data::Dumper;
+use base 'Mail::Milter::Authentication::Handler';
 use English qw{ -no_match_vars };
-use Sys::Syslog qw{:standard :macros};
-
-use Mail::DKIM 0.39;
-use Mail::DKIM::Verifier 0.39;
-use Mail::DKIM::DNS;
-use Mail::DKIM::KeyValueList;
+use Mail::AuthenticationResults::Header::Comment;
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;
-use Mail::AuthenticationResults::Header::Comment;
+use Mail::DKIM 0.39;
+use Mail::DKIM::DNS;
+use Mail::DKIM::KeyValueList;
+use Mail::DKIM::Verifier 0.39;
+use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {

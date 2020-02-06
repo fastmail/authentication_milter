@@ -3,6 +3,7 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: DNS Recolver methods
 # VERSION
 use base 'Net::DNS::Resolver';
 use Scalar::Util qw{ weaken };

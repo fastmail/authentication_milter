@@ -3,7 +3,14 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Client for connecting back to the authmilter server
 # VERSION
+use Mail::Milter::Authentication::Config qw{ get_config };
+use Mail::Milter::Authentication::Net::Milter;
+use Data::Dumper;
+use Digest::MD5 qw{ md5_base64 };
+use Email::Simple;
+use English qw{ -no_match_vars };
 
 =head1 DESCRIPTION
 
@@ -14,14 +21,6 @@ Client to the Authentication Milter
 Connect to the Authentication Milter and pass it email, returning the result.
 
 =cut
-
-use Data::Dumper;
-use Digest::MD5 qw{ md5_base64 };
-use Email::Simple;
-use English qw{ -no_match_vars };
-
-use Mail::Milter::Authentication::Net::Milter;
-use Mail::Milter::Authentication::Config qw{ get_config };
 
 =constructor I<new( $args )>
 

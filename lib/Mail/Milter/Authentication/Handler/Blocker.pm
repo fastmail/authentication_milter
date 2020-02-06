@@ -3,10 +3,9 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
-use base 'Mail::Milter::Authentication::Handler';
-# VERSION
 # ABSTRACT: Block mail based on simple rules
-
+# VERSION
+use base 'Mail::Milter::Authentication::Handler';
 use Sys::Syslog qw{:standard :macros};
 use TOML;
 

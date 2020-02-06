@@ -3,32 +3,31 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler superclass
 # VERSION
+use Mail::Milter::Authentication::Config;
+use Mail::Milter::Authentication::Constants qw { :all };
+use Mail::Milter::Authentication::Exception;
+use Mail::Milter::Authentication::Resolver;
+use Clone qw{ clone };
+use Digest::MD5 qw{ md5_hex };
+use English qw{ -no_match_vars };
+use MIME::Base64;
+use Mail::AuthenticationResults 1.20180328;
+use Mail::AuthenticationResults::Header::AuthServID;
+use Mail::AuthenticationResults::Header;
+use Mail::SPF;
+use Net::DNS::Resolver;
+use Net::IP;
+use Sys::Hostname;
+use Sys::Syslog qw{:standard :macros};
+use Time::HiRes qw{ ualarm gettimeofday };
 
 =head1 DESCRIPTION
 
 Handle the milter requests and pass off to individual handlers
 
 =cut
-
-use Digest::MD5 qw{ md5_hex };
-use English qw{ -no_match_vars };
-use Clone qw{ clone };
-use Mail::SPF;
-use MIME::Base64;
-use Net::DNS::Resolver;
-use Net::IP;
-use Sys::Syslog qw{:standard :macros};
-use Sys::Hostname;
-use Time::HiRes qw{ ualarm gettimeofday };
-
-use Mail::Milter::Authentication::Constants qw { :all };
-use Mail::Milter::Authentication::Config;
-use Mail::Milter::Authentication::Exception;
-use Mail::Milter::Authentication::Resolver;
-use Mail::AuthenticationResults 1.20180328;
-use Mail::AuthenticationResults::Header;
-use Mail::AuthenticationResults::Header::AuthServID;
 
 our $TestResolver; # For Testing
 

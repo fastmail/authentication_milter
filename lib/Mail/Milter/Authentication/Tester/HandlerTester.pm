@@ -3,18 +3,18 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Class for testing handlers
 # VERSION
-
-use Carp;
-use Clone qw{ clone };
-use English qw{ -no_match_vars };
-use Mail::AuthenticationResults::Header;
-use Mail::AuthenticationResults::Header::AuthServID;
 use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Config qw{ set_config get_config default_config };
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
+use Carp;
+use Clone qw{ clone };
+use English qw{ -no_match_vars };
+use Mail::AuthenticationResults::Header::AuthServID;
+use Mail::AuthenticationResults::Header;
 use Module::Load;
 use Net::DNS::Resolver::Mock;
 use Net::IP;

@@ -3,14 +3,14 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
-use base 'Mail::Milter::Authentication::Handler';
+# ABSTRACT: Handler class for Checking Return address validity
 # VERSION
-
-use Net::DNS;
-use Sys::Syslog qw{:standard :macros};
+use base 'Mail::Milter::Authentication::Handler';
+use Mail::AuthenticationResults::Header::Comment;
 use Mail::AuthenticationResults::Header::Entry;
 use Mail::AuthenticationResults::Header::SubEntry;
-use Mail::AuthenticationResults::Header::Comment;
+use Net::DNS;
+use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {};

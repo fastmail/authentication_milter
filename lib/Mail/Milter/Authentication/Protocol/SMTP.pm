@@ -3,20 +3,19 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: SMTP protocol handling
 # VERSION
-
-use English qw{ -no_match_vars };
+use Mail::Milter::Authentication::Config;
+use Mail::Milter::Authentication::Constants qw{ :all };
+use Digest::MD5 qw{ md5_hex };
 use Email::Date::Format qw{ email_date };
+use English qw{ -no_match_vars };
 use File::Temp;
-use IO::Socket;
 use IO::Socket::INET;
 use IO::Socket::UNIX;
-use Digest::MD5 qw{ md5_hex };
+use IO::Socket;
 use Net::IP;
 use Sys::Syslog qw{:standard :macros};
-
-use Mail::Milter::Authentication::Constants qw{ :all };
-use Mail::Milter::Authentication::Config;
 
 sub register_metrics {
     return {

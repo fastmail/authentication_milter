@@ -6,6 +6,23 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: A Perl Mail Authentication Milter
 # VERSION
 use base 'Net::Server::PreFork';
+use Mail::Milter::Authentication::Config qw{ get_config };
+use Mail::Milter::Authentication::Constants qw{ :all };
+use Mail::Milter::Authentication::Handler;
+use Mail::Milter::Authentication::Metric;
+use Mail::Milter::Authentication::Protocol::Milter;
+use Mail::Milter::Authentication::Protocol::SMTP;
+use English qw{ -no_match_vars };
+use ExtUtils::Installed;
+use JSON;
+use Log::Dispatchouli;
+use Module::Load;
+use Module::Loaded;
+use Net::DNS::Resolver;
+use Net::IP;
+use Proc::ProcessTable;
+use Sys::Syslog qw{:standard :macros};
+use vars qw(@ISA);
 
 =head1 DESCRIPTION
 
@@ -26,25 +43,6 @@ Please see Net::Server docs for more detail of the server code.
 Please see the output of 'authentication_milter --help' for usage help.
 
 =cut
-
-use English qw{ -no_match_vars };
-use ExtUtils::Installed;
-use JSON;
-use Mail::Milter::Authentication::Config qw{ get_config };
-use Mail::Milter::Authentication::Constants qw{ :all };
-use Mail::Milter::Authentication::Handler;
-use Log::Dispatchouli;
-use Mail::Milter::Authentication::Metric;
-use Mail::Milter::Authentication::Protocol::Milter;
-use Mail::Milter::Authentication::Protocol::SMTP;
-use Module::Load;
-use Module::Loaded;
-use Net::DNS::Resolver;
-use Net::IP;
-use Proc::ProcessTable;
-use Sys::Syslog qw{:standard :macros};
-
-use vars qw(@ISA);
 
 {
     my $LOGGER;

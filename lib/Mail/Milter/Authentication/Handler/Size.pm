@@ -3,10 +3,9 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
-use base 'Mail::Milter::Authentication::Handler';
+# ABSTRACT: Handler class for message size metrics
 # VERSION
-
-use Data::Dumper;
+use base 'Mail::Milter::Authentication::Handler';
 use English qw{ -no_match_vars };
 use Sys::Syslog qw{:standard :macros};
 

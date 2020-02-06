@@ -3,26 +3,24 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Class used for testing
 # VERSION
-
-our @ISA = qw{ Exporter }; ## no critic
-our @EXPORT = qw{ start_milter stop_milter get_metrics test_metrics smtp_process smtp_process_multi milter_process smtpput send_smtp_packet smtpcat }; ## no critic
-
-use Net::DNS::Resolver::Mock 1.20171219;
-use Test::More;
-use Test::File::Contents;
-
-use Cwd qw{ cwd };
-use IO::Socket::INET;
-use IO::Socket::UNIX;
-use JSON;
-use Module::Load;
-
 use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Client;
 use Mail::Milter::Authentication::Config;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
+use Cwd qw{ cwd };
+use IO::Socket::INET;
+use IO::Socket::UNIX;
+use JSON;
+use Module::Load;
+use Net::DNS::Resolver::Mock 1.20171219;
+use Test::File::Contents;
+use Test::More;
+
+our @ISA = qw{ Exporter }; ## no critic
+our @EXPORT = qw{ start_milter stop_milter get_metrics test_metrics smtp_process smtp_process_multi milter_process smtpput send_smtp_packet smtpcat }; ## no critic
 
 my $base_dir = cwd();
 

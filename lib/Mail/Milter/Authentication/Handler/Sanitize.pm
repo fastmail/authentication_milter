@@ -3,9 +3,9 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
-use base 'Mail::Milter::Authentication::Handler';
+# ABSTRACT: Handler class for Removing headers
 # VERSION
-
+use base 'Mail::Milter::Authentication::Handler';
 use Sys::Syslog qw{:standard :macros};
 
 sub default_config {

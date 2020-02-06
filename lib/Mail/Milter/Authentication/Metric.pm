@@ -3,7 +3,15 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Class for metrics generation
 # VERSION
+use Mail::Milter::Authentication::Config qw{ get_config };
+use Mail::Milter::Authentication::HTDocs;
+use Mail::Milter::Authentication::Metric::Grafana;
+use English qw{ -no_match_vars };
+use JSON;
+use Prometheus::Tiny::Shared;
+use TOML;
 
 =head1 DESCRIPTION
 
@@ -11,13 +19,6 @@ Handle metrics collection and production for prometheus
 
 =cut
 
-use English qw{ -no_match_vars };
-use JSON;
-use TOML;
-use Prometheus::Tiny::Shared;
-use Mail::Milter::Authentication::Config qw{ get_config };
-use Mail::Milter::Authentication::Metric::Grafana;
-use Mail::Milter::Authentication::HTDocs;
 
 =constructor I<new()>
 

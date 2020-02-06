@@ -3,12 +3,11 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Milter protocol handling
 # VERSION
-
+use Mail::Milter::Authentication::Constants qw{ :all };
 use English qw{ -no_match_vars };
 use Net::IP;
-
-use Mail::Milter::Authentication::Constants qw{ :all };
 
 sub register_metrics {
     return {

@@ -3,13 +3,12 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler class for sending data to Abusix
+# VERSION
 use base 'Mail::Milter::Authentication::Handler';
-# ABSTRACT: Send data to Abusix
-## VERSION
-
 use English qw{ -no_match_vars };
-use Sys::Syslog qw{:standard :macros};
 use Mail::DataFeed::Abusix;
+use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {

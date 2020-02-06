@@ -4,8 +4,8 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Common configuration handling
 # VERSION
-
 use Mail::Milter::Authentication;
 use Module::Load;
 use Module::Loaded;

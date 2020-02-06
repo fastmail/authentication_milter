@@ -4,8 +4,9 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
-use base 'Exporter';
+# ABSTRACT: Common constants
 # VERSION
+use base 'Exporter';
 
 =head1 DESCRIPTION
 

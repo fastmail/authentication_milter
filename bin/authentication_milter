@@ -3,19 +3,18 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
-
+# ABSTRACT: A Perl Mail Authentication Milter
+# PODNAME: authentication_milter
+# VERSION
 use Getopt::Long;
 use JSON;
 use List::MoreUtils qw{ uniq };
-use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Protocol::Milter;
-use Mail::Milter::Authentication::Protocol::SMTP;
-use Mail::Milter::Authentication::Config qw{ get_config default_config };
 use Module::Load;
 use Pod::Usage;
-# ABSTRACT: A Perl Mail Authentication Milter
-# VERSION
-# PODNAME: authentication_milter
+use Mail::Milter::Authentication;
+use Mail::Milter::Authentication::Config qw{ get_config default_config };
+use Mail::Milter::Authentication::Protocol::Milter;
+use Mail::Milter::Authentication::Protocol::SMTP;
 
 # CONFIG
 my $pid_file = '/run/authentication_milter.pid';
