@@ -1,0 +1,36 @@
+[connect_test]
+callback = "connect"
+value = "192\.168\.0\.1"
+with = "451 4.7.28 flood policy violation (HOTtest)"
+percent = 100
+
+[connect_test_sampled]
+callback = "connect"
+value = "192\.168\.0\.2"
+with = "451 4.7.28 flood policy violation (HOTtest)"
+percent = 0
+
+[helo_test]
+callback = "helo"
+value = "helo.example.bad"
+with = "451 4.7.28 flood policy violation (HOTtest)"
+percent = 100
+
+[from_test]
+callback = "envfrom"
+value = "bad@example\.com"
+with = "451 4.7.28 flood policy violation (HOTtest)"
+percent = 100
+
+[to_test]
+callback = "envrcpt"
+value = "bad@example\.net"
+with = "451 4.7.28 flood policy violation (HOTtest)"
+percent = 100
+
+[header_test]
+callback = "header"
+value = "^BadHeader:"
+with = "451 4.7.28 flood policy violation (HOTtest)"
+percent = 100
+
