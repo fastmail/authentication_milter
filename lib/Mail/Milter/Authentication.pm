@@ -1,10 +1,11 @@
 package Mail::Milter::Authentication;
-# ABSTRACT: A Perl Mail Authentication Milter
-use 5.010;
+use 5.20.0;
 use strict;
 use warnings;
-use base 'Net::Server::PreFork';
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: A Perl Mail Authentication Milter
 # VERSION
+use base 'Net::Server::PreFork';
 
 =head1 DESCRIPTION
 

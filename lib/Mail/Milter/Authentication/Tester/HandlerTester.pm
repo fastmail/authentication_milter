@@ -1,7 +1,8 @@
 package Mail::Milter::Authentication::Tester::HandlerTester;
-
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
 # VERSION
 
 use Carp;

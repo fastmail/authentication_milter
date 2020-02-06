@@ -1,4 +1,4 @@
-package Mail::Milter::Authentication::App::Blocker::Pragmas;
+package Mail::Milter::Authentication::Pragmas;
 use 5.20.0;
 use strict;
 use warnings;

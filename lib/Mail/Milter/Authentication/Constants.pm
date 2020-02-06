@@ -1,7 +1,9 @@
 package Mail::Milter::Authentication::Constants;
 # ABSTRACT: Define and export useful constants
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
 use base 'Exporter';
 # VERSION
 

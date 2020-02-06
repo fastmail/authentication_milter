@@ -1,6 +1,8 @@
 package Mail::Milter::Authentication::Exception;
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
 # VERSION
 
 =constructor I<new( $args )>

@@ -1,7 +1,8 @@
 package Mail::Milter::Authentication::Handler::AbusixDataFeed;
+use 5.20.0;
 use strict;
 use warnings;
-use Mail::Milter::Authentication 2.201811;
+use Mail::Milter::Authentication::Pragmas;
 use base 'Mail::Milter::Authentication::Handler';
 # ABSTRACT: Send data to Abusix
 ## VERSION

@@ -1,6 +1,8 @@
 package Mail::Milter::Authentication::Handler::LocalIP;
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
 use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 

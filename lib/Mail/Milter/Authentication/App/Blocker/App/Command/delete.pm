@@ -2,9 +2,9 @@ package Mail::Milter::Authentication::App::Blocker::App::Command::delete;
 use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Command to delete a block for a given file
 # VERSION
-use Mail::Milter::Authentication::App::Blocker::Pragmas;
 use Mail::Milter::Authentication::App::Blocker::App -command;
 use TOML;
 use Text::Table;

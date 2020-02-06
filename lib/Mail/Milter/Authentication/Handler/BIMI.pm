@@ -1,7 +1,8 @@
 package Mail::Milter::Authentication::Handler::BIMI;
+use 5.20.0;
 use strict;
 use warnings;
-use Mail::Milter::Authentication 2.20191221;
+use Mail::Milter::Authentication::Pragmas;
 use base 'Mail::Milter::Authentication::Handler';
 # VERSION
 # ABSTRACT: BIMI handler for authentication milter

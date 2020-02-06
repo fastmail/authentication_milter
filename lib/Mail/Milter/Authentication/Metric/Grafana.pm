@@ -1,6 +1,8 @@
 package Mail::Milter::Authentication::Metric::Grafana;
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
 # VERSION
 
 use JSON;
