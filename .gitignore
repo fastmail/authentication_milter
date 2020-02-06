@@ -11,6 +11,7 @@
 /Makefile.old
 /_build/
 /blib/
+/cover_db/
 /debian
 /debian.bak
 /inc/
@@ -18,4 +19,3 @@
 /pm_to_blib
 /pod2htm*.tmp
 /t/tmp
-cover_db/
