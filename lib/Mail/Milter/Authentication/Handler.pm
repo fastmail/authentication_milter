@@ -54,7 +54,7 @@ sub get_version {
     my ( $self ) = @_;
     {
         no strict 'refs'; ## no critic;
-        return ${ ref( $self ) . "::VERSION" }; # no critic;
+        return ${ ref( $self ) . "::VERSION" } // 'unknown'; # no critic;
     }
     return;
 }
