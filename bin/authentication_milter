@@ -7,9 +7,7 @@ use Mail::Milter::Authentication::Pragmas;
 # PODNAME: authentication_milter
 # VERSION
 use Getopt::Long;
-use JSON;
 use List::MoreUtils qw{ uniq };
-use Module::Load;
 use Pod::Usage;
 use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Config qw{ get_config default_config };
