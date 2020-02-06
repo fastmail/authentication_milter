@@ -583,6 +583,7 @@ sub body_callback {
             delete $self->{headers} unless $self->{has_arcseal};
         }
     }
+    return;
 }
 
 sub eom_requires {
