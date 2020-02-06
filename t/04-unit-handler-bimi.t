@@ -61,7 +61,7 @@ open( STDERR, '>>', $basedir . 't/tmp/misc.err' ) || die "Cannot open errlog [$!
 my $tester = Mail::Milter::Authentication::Tester::HandlerTester->new({
     'protocol' => 'smtp',
     'prefix'   => $basedir . 't/config/handler/etc',
-    'zonefile' => $basedir . 't/zonefile',
+    'zonefile' => $basedir . 't/bimi.zonefile',
     'handler_config' => {
         'DMARC' => { use_arc => 1 },
         'ARC' => { trusted_domains => [ 'arcsealed.com' ] },
