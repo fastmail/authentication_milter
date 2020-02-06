@@ -1,7 +1,9 @@
 package Mail::Milter::Authentication::App::Blocker::App::Command::list;
+use 5.20.0;
+use strict;
+use warnings;
 # ABSTRACT: Command to list current blocks for a given file
 # VERSION
-use 5.20.0;
 use Mail::Milter::Authentication::App::Blocker::Pragmas;
 use Mail::Milter::Authentication::App::Blocker::App -command;
 use TOML;

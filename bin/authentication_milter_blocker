@@ -1,8 +1,10 @@
 #!/usr/bin/env perl
+use 5.20.0;
+use strict;
+use warnings;
 # PODNAME: authentication_milter_blocker
 # ABSTRACT: Manage the Authentication Milter Block List
 # VERSION
-use 5.20.0;
 use Mail::Milter::Authentication::App::Blocker::Pragmas;
 use Mail::Milter::Authentication::App::Blocker::App;
 Mail::Milter::Authentication::App::Blocker::App->run;

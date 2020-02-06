@@ -12,4 +12,5 @@ verbose  = [%p] %m at line %l, column %c.  %e.  (Severity: %s)\n
 
 [-Modules::ProhibitMultiplePackages]
 
-
+[-Subroutines::RequireFinalReturn]
+[-Subroutines::ProhibitSubroutinePrototypes]

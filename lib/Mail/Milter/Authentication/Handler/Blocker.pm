@@ -30,7 +30,7 @@ sub _load_blocker_config_file {
         }
     }
     else {
-        open ( my $outf, '>', $filename );
+        open ( my $outf, '>', $filename ); ## no critic
         print $outf qq(
 # Authentication Milter Blocker quick config
 #
@@ -65,7 +65,7 @@ sub _load_blocker_config {
     return $self->{'blocker_config'} if exists $self->{'blocker_config'};
 
     my %blocker_config = map {
-        %{ $self->_load_blocker_config_file( $_ ) },
+        %{ $self->_load_blocker_config_file( $_ ) }, ## no critic
     } ( @{$config->{ 'blocker_configs' } } );
 
     $self->{'blocker_config'} = \%blocker_config;

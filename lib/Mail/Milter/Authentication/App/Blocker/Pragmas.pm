@@ -1,9 +1,9 @@
 package Mail::Milter::Authentication::App::Blocker::Pragmas;
-# ABSTRACT: Setup system wide pragmas
-# VERSION
 use 5.20.0;
 use strict;
 use warnings;
+# ABSTRACT: Setup system wide pragmas
+# VERSION
 require feature;
 
 use open ':std', ':encoding(UTF-8)';
