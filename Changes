@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20200206 2020-02-06 01:15:45+00:00 UTC
         - Size: Add metrics for added header bytes
 
 2.20200202 2020-02-02 14:23:58+00:00 UTC
