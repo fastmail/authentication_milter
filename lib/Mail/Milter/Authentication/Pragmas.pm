@@ -9,8 +9,8 @@ require feature;
 use open ':std', ':encoding(UTF-8)';
 use Import::Into;
 
-use Mail::Milter::Authentication::Constants(qw{ :all });
-use Mail::Milter::Authentication::Config qw{ get_config };
+use Mail::Milter::Authentication::Constants;
+use Mail::Milter::Authentication::Config;
 use Carp;
 use Clone;
 use English;
@@ -31,12 +31,15 @@ sub import {
   feature->import($_)               for ( qw{ postderef signatures } );
   warnings->unimport($_)            for ( qw{ experimental::postderef experimental::signatures } );
 
+  Mail::Milter::Authentication::Config->import::into(scalar caller,qw{ set_config get_config default_config });
+  Mail::Milter::Authentication::Constants->import::into(scalar caller);
+
   Carp->import::into(scalar caller);
   Clone->import::into(scalar caller,qw{ clone });
   English->import::into(scalar caller);
-  Mail::Milter::Authentication::Constants->import::into(scalar caller);
-  Mail::Milter::Authentication::Config->import::into(scalar caller,qw{ get_config });
-
+  JSON->import::into(scalar caller);
+  Module::Load->import::into(scalar caller);
+  Module::Loaded->import::into(scalar caller);
 }
 
 1;
