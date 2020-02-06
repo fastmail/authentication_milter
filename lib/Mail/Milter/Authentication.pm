@@ -12,7 +12,6 @@ use Mail::Milter::Authentication::Handler;
 use Mail::Milter::Authentication::Metric;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
-use English qw{ -no_match_vars };
 use ExtUtils::Installed;
 use JSON;
 use Log::Dispatchouli;
@@ -21,7 +20,6 @@ use Module::Loaded;
 use Net::DNS::Resolver;
 use Net::IP;
 use Proc::ProcessTable;
-use Sys::Syslog qw{:standard :macros};
 use vars qw(@ISA);
 
 =head1 DESCRIPTION

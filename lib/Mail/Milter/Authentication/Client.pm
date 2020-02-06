@@ -10,7 +10,6 @@ use Mail::Milter::Authentication::Net::Milter;
 use Data::Dumper;
 use Digest::MD5 qw{ md5_base64 };
 use Email::Simple;
-use English qw{ -no_match_vars };
 
 =head1 DESCRIPTION
 

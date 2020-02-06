@@ -8,7 +8,6 @@ use Mail::Milter::Authentication::Pragmas;
 use Mail::Milter::Authentication::Config qw{ get_config };
 use Mail::Milter::Authentication::HTDocs;
 use Mail::Milter::Authentication::Metric::Grafana;
-use English qw{ -no_match_vars };
 use JSON;
 use Prometheus::Tiny::Shared;
 use TOML;

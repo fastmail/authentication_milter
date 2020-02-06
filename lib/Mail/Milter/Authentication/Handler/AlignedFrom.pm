@@ -6,10 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for Address alignment
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::AuthenticationResults::Header::Comment;
-use Mail::AuthenticationResults::Header::Entry;
 use Net::DNS;
-use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {};

@@ -6,18 +6,11 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for ARCx
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Clone qw{ clone };
-use English qw{ -no_match_vars };
-use Mail::AuthenticationResults 1.20180518;
-use Mail::AuthenticationResults::Header::Comment;
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
 use Mail::DKIM 0.50;
 use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::ARC::Verifier;
 use Mail::DKIM::DNS;
 use Mail::DKIM::TextWrap;
-use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {

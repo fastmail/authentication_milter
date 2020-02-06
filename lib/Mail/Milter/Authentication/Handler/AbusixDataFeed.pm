@@ -6,9 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for sending data to Abusix
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use English qw{ -no_match_vars };
 use Mail::DataFeed::Abusix;
-use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {

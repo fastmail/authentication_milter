@@ -2,15 +2,10 @@ package Mail::Milter::Authentication::Handler::SPF;
 use 5.20.0;
 use strict;
 use warnings;
-use base 'Mail::Milter::Authentication::Handler';
-# ABSTRACT: Handler class for SPFx
-# VERSION
 use Mail::Milter::Authentication::Pragmas;
-use Mail::AuthenticationResults::Header::Comment;
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
-use Sys::Syslog qw{:standard :macros};
-
+# ABSTRACT: Handler class for SPF
+# VERSION
+use base 'Mail::Milter::Authentication::Handler';
 use Mail::SPF;
 
 sub default_config {

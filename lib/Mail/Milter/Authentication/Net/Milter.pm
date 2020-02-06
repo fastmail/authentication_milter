@@ -3,6 +3,7 @@ package Mail::Milter::Authentication::Net::Milter;
 use strict;
 use Carp;
 use vars qw($DEBUG);
+# ABSTRACT: Local modified copy of Net::Milter
 # VERSION
 $DEBUG=0;
 

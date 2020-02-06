@@ -7,11 +7,7 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
 use Mail::Milter::Authentication::Handler::SPF;
-use Mail::AuthenticationResults::Header::Comment;
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
 use Mail::SPF;
-use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {

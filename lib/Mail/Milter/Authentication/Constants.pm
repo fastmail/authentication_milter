@@ -14,11 +14,25 @@ Exports useful constants.
 
 =head1 SYNOPSIS
 
-Constants defined here are used in the sendmail milter protocol.
+Constants defined here are used in the sendmail milter protocol
 
 =cut
 
 ## no critic [Modules::ProhibitAutomaticExportation]
+
+# Syslog Constants
+
+use constant LOG_DEBUG   => 7;
+use constant LOG_INFO    => 6;
+use constant LOG_NOTICE  => 5;
+use constant LOG_WARNING => 4;
+use constant LOG_ERR     => 3;
+use constant LOG_CRIT    => 2;
+use constant LOG_ALERT   => 1;
+use constant LOG_EMERG   => 0;
+use constant LOG_MAIL    => 16;
+
+# Sendmail Constants
 
 use constant SMFIA_UNKNOWN      => 'U';
 use constant SMFIA_UNIX         => 'L';
@@ -85,6 +99,15 @@ use constant SMFI_V2_ACTS       => SMFI_V1_ACTS|SMFIF_CHGHDRS;
 use constant SMFI_CURR_ACTS     => SMFI_V2_ACTS;
 
 our @EXPORT = qw(
+    LOG_DEBUG
+    LOG_INFO
+    LOG_NOTICE
+    LOG_WARNING
+    LOG_ERR
+    LOG_CRIT
+    LOG_ALERT
+    LOG_EMERG
+    LOG_MAIL
     SMFIA_UNKNOWN
     SMFIA_UNIX
     SMFIA_INET

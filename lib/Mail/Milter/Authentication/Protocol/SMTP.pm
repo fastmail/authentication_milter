@@ -9,13 +9,11 @@ use Mail::Milter::Authentication::Config;
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Digest::MD5 qw{ md5_hex };
 use Email::Date::Format qw{ email_date };
-use English qw{ -no_match_vars };
 use File::Temp;
 use IO::Socket::INET;
 use IO::Socket::UNIX;
 use IO::Socket;
 use Net::IP;
-use Sys::Syslog qw{:standard :macros};
 
 sub register_metrics {
     return {
@@ -1195,10 +1193,4 @@ Insert a header
 Update the process name status line
 
 =back
-
-=head1 DEPENDENCIES
-
-  English
-  Digest::MD5
-  Net::IP
 

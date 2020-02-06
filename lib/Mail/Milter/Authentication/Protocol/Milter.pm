@@ -6,7 +6,6 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Milter protocol handling
 # VERSION
 use Mail::Milter::Authentication::Constants qw{ :all };
-use English qw{ -no_match_vars };
 use Net::IP;
 
 sub register_metrics {
@@ -399,9 +398,4 @@ $data.
 Receive a new command from the protocol stream and process it.
 
 =back
-
-=head1 DEPENDENCIES
-
-  English
-  Net::IP
 

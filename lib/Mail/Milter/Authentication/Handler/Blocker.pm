@@ -6,7 +6,6 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Block mail based on simple rules
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Sys::Syslog qw{:standard :macros};
 use TOML;
 
 sub register_metrics {

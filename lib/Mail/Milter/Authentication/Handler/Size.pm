@@ -6,8 +6,6 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for message size metrics
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use English qw{ -no_match_vars };
-use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {};

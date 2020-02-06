@@ -6,11 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for Trusted IP addresses
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::AuthenticationResults::Header::Comment;
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
 use Net::IP;
-use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {

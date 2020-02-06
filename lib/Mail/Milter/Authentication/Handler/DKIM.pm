@@ -6,15 +6,10 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for DKIM
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use English qw{ -no_match_vars };
-use Mail::AuthenticationResults::Header::Comment;
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
 use Mail::DKIM 0.39;
 use Mail::DKIM::DNS;
 use Mail::DKIM::KeyValueList;
 use Mail::DKIM::Verifier 0.39;
-use Sys::Syslog qw{:standard :macros};
 
 sub default_config {
     return {

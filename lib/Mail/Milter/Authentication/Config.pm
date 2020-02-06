@@ -7,8 +7,10 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Common configuration handling
 # VERSION
 use Mail::Milter::Authentication;
+use JSON;
 use Module::Load;
 use Module::Loaded;
+use TOML;
 
 use Exporter qw{ import };
 our @EXPORT_OK = qw{
@@ -16,9 +18,6 @@ our @EXPORT_OK = qw{
   set_config
   default_config
 };
-
-use JSON;
-use TOML;
 
 =head1 DESCRIPTION
 

@@ -1,12 +1,14 @@
 package AuthMilterTest;
-
+use 5.20.0;
 use strict;
 use warnings;
-use Test::More;
-use Test::File::Contents;
-use Cwd qw{ cwd };
-
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Test Authentication Milter
+# VERSION
 use Mail::Milter::Authentication::Tester;
+use Cwd qw{ cwd };
+use Test::File::Contents;
+use Test::More;
 
 my $base_dir = cwd();
 

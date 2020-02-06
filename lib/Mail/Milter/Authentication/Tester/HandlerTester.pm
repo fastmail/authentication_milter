@@ -10,11 +10,6 @@ use Mail::Milter::Authentication::Config qw{ set_config get_config default_confi
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
-use Carp;
-use Clone qw{ clone };
-use English qw{ -no_match_vars };
-use Mail::AuthenticationResults::Header::AuthServID;
-use Mail::AuthenticationResults::Header;
 use Module::Load;
 use Net::DNS::Resolver::Mock;
 use Net::IP;

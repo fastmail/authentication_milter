@@ -6,14 +6,9 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for DMARC
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use English qw{ -no_match_vars };
 use List::MoreUtils qw{ uniq };
-use Mail::AuthenticationResults::Header::Comment;
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
 use Mail::DMARC::PurePerl 1.20160612;
 use Net::IP;
-use Sys::Syslog qw{:standard :macros};
 
 my $PSL_CHECKED_TIME;
 
