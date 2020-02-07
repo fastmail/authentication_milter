@@ -79,8 +79,7 @@ sub usage {
     pod2usage( -verbose => 2 );
 }
 
-sub module_usage {
-    my ( $module ) = @_;
+sub module_usage($module) {
     $module =~ s/[^a-zA-Z0-9]//g;
     my $full_module = 'Mail::Milter::Authentication::Handler::' . $module;
     eval {
