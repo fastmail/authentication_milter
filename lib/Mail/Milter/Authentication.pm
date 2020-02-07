@@ -60,8 +60,7 @@ Please see the output of 'authentication_milter --help' for usage help.
     }
 }
 
-sub _warn {
-    my ( $msg ) = @_;
+sub _warn($msg) {
     my @parts = split "\n", $msg;
     foreach my $part ( @parts ) {
         next if $part eq q{};
@@ -77,10 +76,8 @@ Takes a Package Name and a Base module, and loads all modules which match.
 
 =cut
 
-sub preload_modules {
-    my ( $self, $from, $matching ) = @_;
+sub preload_modules($self,$from,$matching) {
     my $installed = ExtUtils::Installed->new( 'skip_cwd' => 1 );
-
     my $path_matching = $matching;
     $path_matching =~ s/::/\//g;
     foreach my $module ( grep { /$from/ } $installed->modules() ) {
@@ -128,8 +125,7 @@ Hook which runs to write logs
 
 =cut
 
-sub write_to_log_hook {
-    my ( $self, $priority, $line ) = @_;
+sub write_to_log_hook($self,$priority,$line,@) {
     my $log_priority = $priority == 0 ? 'debug'
                      : $priority == 1 ? 'info'
                      : $priority == 2 ? 'notice'
@@ -145,8 +141,7 @@ Hook which runs in the master periodically.
 
 =cut
 
-sub idle_loop_hook {
-    my ( $self ) = @_;
+sub idle_loop_hook($self,@) {
     $self->{'metric'}->master_metric_update( $self );
 }
 
@@ -156,9 +151,7 @@ Hook which runs in the master before looping.
 
 =cut
 
-sub pre_loop_hook {
-    my ( $self ) = @_;
-
+sub pre_loop_hook($self,@) {
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':master';
 
     $self->preload_modules( 'Net::DNS', 'Net::DNS::RR' );
@@ -209,9 +202,7 @@ Hook which runs in parent before it forks children.
 
 =cut
 
-sub run_n_children_hook {
-    my ( $self ) = @_;
-
+sub run_n_children_hook($self,@) {
     # Load handlers
     my $config = get_config();
     foreach my $name ( @{$config->{'load_handlers'}} ) {
@@ -231,8 +222,7 @@ Hook which runs after forking, sets up per process items.
 
 =cut
 
-sub child_init_hook {
-    my ( $self ) = @_;
+sub child_init_hook($self,@) {
     srand();
 
     my $config = get_config();
@@ -304,8 +294,7 @@ Hook which runs when the child is about to finish.
 
 =cut
 
-sub child_finish_hook {
-    my ($self) = @_;
+sub child_finish_hook($self,@) {
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':exiting';
     $self->loginfo( "Child process $PID shutting down" );
     eval {
@@ -320,8 +309,7 @@ Hook which runs before the server closes.
 
 =cut
 
-sub pre_server_close_hook {
-    my ($self) = @_;
+sub pre_server_close_hook($self,@) {
     $self->loginfo( 'Server closing down' );
 }
 
@@ -331,8 +319,7 @@ Get the protocol of the connecting client.
 
 =cut
 
-sub get_client_proto {
-    my ( $self ) = @_;
+sub get_client_proto($self,@) {
     my $socket = $self->{server}{client};
     if ($socket->isa("Net::Server::Proto")) {
         my $proto = $socket->NS_proto;
@@ -361,8 +348,7 @@ Get the port of the connecting client.
 
 =cut
 
-sub get_client_port {
-    my ( $self ) = @_;
+sub get_client_port($self,@) {
     my $socket = $self->{server}{client};
     return $socket->sockport();
 }
@@ -373,8 +359,7 @@ Get the host of the connecting client.
 
 =cut
 
-sub get_client_host {
-    my ( $self ) = @_;
+sub get_client_host($self,@) {
     my $socket = $self->{server}{client};
     return $socket->sockhost();
 }
@@ -385,8 +370,7 @@ Get the path of the connecting client.
 
 =cut
 
-sub get_client_path {
-    my ( $self ) = @_;
+sub get_client_path($self,@) {
     my $socket = $self->{server}{client};
     return $socket->hostpath();
 }
@@ -397,8 +381,7 @@ Get the details of the connecting client.
 
 =cut
 
-sub get_client_details {
-    my ( $self ) = @_;
+sub get_client_details($self,@) {
     my $proto = lc $self->get_client_proto();
     if ( $proto eq 'tcp' ) {
         return 'inet:' . $self->get_client_port();
@@ -414,8 +397,7 @@ Hook which runs for each request, passes control to metrics handler or process_m
 
 =cut
 
-sub process_request {
-    my ( $self ) = @_;
+sub process_request($self,@) {
     my $config = $self->{'config'};
 
     my $metric_type;
@@ -461,9 +443,7 @@ Method which runs for each request, sets up per request items and processes the 
 
 =cut
 
-sub process_main {
-    my ( $self ) = @_;
-
+sub process_main($self,@) {
     $self->{'count'}++;
     my $count = $self->{'count'};
     my $config = $self->{'config'};
@@ -507,8 +487,7 @@ Given a pid file, check for a valid process ID and return if valid.
 
 =cut
 
-sub get_valid_pid {
-    my ( $pid_file ) = @_;
+sub get_valid_pid($pid_file) {
     if ( ! $pid_file ) {
         return undef; ## no critic
     }
@@ -525,7 +504,7 @@ sub get_valid_pid {
     my $found_pid  = 0;
 
     my $process_table = Proc::ProcessTable->new();
-    foreach my $process ( @{$process_table->table} ) {
+    foreach my $process ( $process_table->table->@* ) {
         if ( $process->pid == $self_pid ) {
             if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':control' ) {
                 $found_self = 1;
@@ -559,7 +538,7 @@ Search the process table for an authentication_milter master process
 
 sub find_process {
     my $process_table = Proc::ProcessTable->new();
-    foreach my $process ( @{$process_table->table} ) {
+    foreach my $process ( $process_table->table->@* ) {
         if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':master' ) {
             return $process->pid;
         }
@@ -573,8 +552,7 @@ Run a daemon command.  Command can be one of start/restart/stop/status.
 
 =cut
 
-sub control {
-    my ( $args ) = @_;
+sub control($args) {
     my $pid_file = $args->{'pid_file'};
     my $command  = $args->{'command'};
 
@@ -634,9 +612,7 @@ Start the server. This method does not return.
 
 =cut
 
-sub start {
-    my ($args)     = @_;
-
+sub start($args) {
     local $SIG{__WARN__} = sub {
         foreach my $msg ( @_ ) {
             logger()->log( { level => 'warning' }, "Warning: $msg" );
@@ -896,8 +872,7 @@ Log a fatal error and die in child
 
 =cut
 
-sub fatal {
-    my ( $self, $error ) = @_;
+sub fatal($self,$error) {
     $self->logerror( "Child process $PID shutting down due to fatal error: $error" );
     die "$error\n";
 }
@@ -908,8 +883,7 @@ Log a fatal error and die in child and parent
 
 =cut
 
-sub fatal_global {
-    my ( $self, $error ) = @_;
+sub fatal_global($self,$error) {
     my $ppid = $self->{'server'}->{'ppid'};
     if ( $ppid == $PID ) {
         $self->logerror( "Global shut down due to fatal error: $error" );
@@ -927,9 +901,7 @@ Setup the Handler objects.
 
 =cut
 
-sub setup_handlers {
-    my ( $self ) = @_;
-
+sub setup_handlers($self) {
     $self->logdebug( 'setup objects' );
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'}->{'_Handler'} = $handler;
@@ -937,7 +909,7 @@ sub setup_handlers {
     $handler->metric_count( 'forked_children_total', {}, 1 );
 
     my $config = $self->{'config'};
-    foreach my $name ( @{$config->{'load_handlers'}} ) {
+    foreach my $name ( $config->{'load_handlers'}->@* ) {
         $self->setup_handler( $name );
     }
     $self->sort_all_callbacks();
@@ -949,9 +921,7 @@ Load the $name Handler module
 
 =cut
 
-sub load_handler {
-    my ( $self, $name ) = @_;
-
+sub load_handler($self,$name) {
     ## TODO error handling here
     $self->logdebug( "Load Handler $name" );
 
@@ -971,9 +941,7 @@ Setup the $name Handler object
 
 =cut
 
-sub setup_handler {
-    my ( $self, $name ) = @_;
-
+sub setup_handler($self,$name) {
     ## TODO error handling here
     $self->logdebug( "Instantiate Handler $name" );
 
@@ -1009,8 +977,7 @@ Register the specified callback
 
 =cut
 
-sub register_callback {
-    my ( $self, $name, $callback ) = @_;
+sub register_callback($self,$name,$callback) {
     $self->logdebug( "Register Callback $name:$callback" );
     if ( ! exists $self->{'callbacks'}->{$callback} ) {
         $self->{'callbacks'}->{$callback} = [];
@@ -1024,8 +991,7 @@ Sort the callbacks into the order in which they must be called
 
 =cut
 
-sub sort_all_callbacks {
-    my ($self) = @_;
+sub sort_all_callbacks($self) {
     foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
         $self->sort_callbacks( $callback );
     }
@@ -1037,9 +1003,7 @@ Sort the callbacks for the $callback callback into the right order
 
 =cut
 
-sub sort_callbacks {
-    my ( $self, $callback ) = @_;
-
+sub sort_callbacks($self,$callback) {
     if ( ! exists $self->{'callbacks'}->{$callback} ) {
         $self->{'callbacks'}->{$callback} = [];
     }
@@ -1067,7 +1031,7 @@ sub sort_callbacks {
         my $requires_method = $callback . '_requires';
         if ( $handler->can( $requires_method ) ) {
             my $requires = $handler->$requires_method;
-            foreach my $require ( @{ $requires } ) {
+            foreach my $require ( $requires->@* ) {
                 push @{ $requirements->{ $item } }, $require;
             }
         }
@@ -1077,7 +1041,7 @@ sub sort_callbacks {
         my $requires_method = $callback . '_required_before';
         if ( $handler->can( $requires_method ) ) {
             my $requires = $handler->$requires_method;
-            foreach my $require ( @{ $requires } ) {
+            foreach my $require ( $requires->@* ) {
                 push @{ $requirements->{ $require } }, $item;
             }
         }
@@ -1088,7 +1052,7 @@ sub sort_callbacks {
         foreach my $item ( @todo ) {
             my $requires_met = 1;
             my $requires = $requirements->{ $item };
-            foreach my $require ( @{ $requires } ) {
+            foreach my $require ( $requires->@* ) {
                 if ( ! exists $added->{$require} ) {
                     $requires_met = 0;
                 }
@@ -1119,14 +1083,13 @@ Remove references to all objects
 
 =cut
 
-sub destroy_objects {
-    my ( $self ) = @_;
+sub destroy_objects($self) {
     $self->logdebug ( 'destroy objects' );
     my $handler = $self->{'handler'}->{'_Handler'};
     if ( $handler ) {
         $handler->destroy_all_objects();
         my $config = $self->{'config'};
-        foreach my $name ( @{$config->{'load_handlers'}} ) {
+        foreach my $name ( $config->{'load_handlers'}->@* )  {
             $self->destroy_handler( $name );
         }
         delete $self->{'handler'}->{'_Handler'}->{'config'};
@@ -1146,8 +1109,7 @@ Return the queue ID (for logging) if possible.
 
 =cut
 
-sub get_queue_id {
-    my ( $self ) = @_;
+sub get_queue_id($self) {
     my $queue_id;
 
     if ( exists ( $self->{'smtp'} ) ) {
@@ -1168,8 +1130,7 @@ Turn on extra debugging mode, will cause child to exit on close.
 
 =cut
 
-sub enable_extra_debugging {
-    my ($self) = @_;
+sub enable_extra_debugging($self) {
     my $config = $self->{'config'} || get_config();
     $config->{'logtoerr'} = 1;
     $config->{'debug'}    = 1;
@@ -1185,8 +1146,7 @@ Cause $line to be written to log if extra debugging mode is enabled.
 
 =cut
 
-sub extra_debugging {
-    my ($self,$line) = @_;
+sub extra_debugging($self,$line) {
     if ( $self->{'extra_debugging'} ) {
         $self->logerror( $line );
     }
@@ -1198,8 +1158,7 @@ Log to the error log.
 
 =cut
 
-sub logerror {
-    my ($self,$line) = @_;
+sub logerror($self,$line) {
     my $config = $self->{'config'} || get_config();
     if ( my $queue_id = $self->get_queue_id() ) {
         $line = $queue_id . ': ' . $line;
@@ -1214,8 +1173,7 @@ Log to the info log.
 
 =cut
 
-sub loginfo {
-    my ($self,$line) = @_;
+sub loginfo($self,$line) {
     my $config = $self->{'config'} || get_config();
     if ( my $queue_id = $self->get_queue_id() ) {
         $line = $queue_id . ': ' . $line;
@@ -1230,8 +1188,7 @@ Log to the debug log.
 
 =cut
 
-sub logdebug {
-    my ($self,$line) = @_;
+sub logdebug($self,$line) {
     my $config = $self->{'config'} || get_config();
     if ( my $queue_id = $self->get_queue_id() ) {
         $line = $queue_id . ': ' . $line;
