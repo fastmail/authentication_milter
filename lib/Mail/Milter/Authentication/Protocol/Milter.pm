@@ -152,7 +152,10 @@ sub milter_process_command {
     }
 
     if (defined $returncode) {
-        if ( $returncode == SMFIS_CONTINUE ) {
+        if ( $returncode eq SMFIR_QUARANTINE ) {
+            # NOP
+        }
+        elsif ( $returncode == SMFIS_CONTINUE ) {
             $returncode = SMFIR_CONTINUE;
         }
         elsif ( $returncode == SMFIS_TEMPFAIL ) {
