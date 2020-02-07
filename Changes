@@ -1,6 +1,12 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+        - Require minimum Perl 5.20
+        - ARC: Merge ARC Handler into core
+        - Abusix: Merge Abusix Handler into core
+        - BIMI: Merge BIMI Handler into core
+        - Blocker: Merge Blocker Handler into core
+        - Core: Modernise and tind some code
         - Core: Set a default version for metrics where one does not exist
 
 2.20200206 2020-02-06 01:15:45+00:00 UTC
