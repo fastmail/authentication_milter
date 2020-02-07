@@ -99,7 +99,7 @@ To install the latest version released to CPAN, run the following commands:
 
  - cpanm Mail::Milter::Authentication
 
-### From source
+### From source tarball
 
 To install this module from source, run the following commands:
 
@@ -107,6 +107,19 @@ To install this module from source, run the following commands:
  - make
  - make test
  - make install
+
+### From checkout
+
+This module uses Dist::Zilla, you can install from a checkout using the following commands:
+
+ - cpanm Dist::Zilla
+ - dzil authordeps --missing|cpanm
+ - dzil listdeps --missing|cpanm
+ - dzil install
+
+Note, installing via checkout will cause Dist::Zilla to generate a new version number each time you install based on the date of installation.
+
+### DMARC
 
 The DMARC module requires a little extra setup.
 
