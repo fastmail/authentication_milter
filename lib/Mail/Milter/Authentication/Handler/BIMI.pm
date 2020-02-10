@@ -6,7 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for BIMI
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::BIMI 1.20190210;
+use Mail::BIMI 1.20200210;
 
 sub default_config {
     return {
@@ -118,9 +118,7 @@ sub eom_callback {
     eval {
         my $Domain = $self->get_domain_from( $self->{'from_header'} );
 
-        # Rework this to allow for multiple dmarc_result objects as per new DMARC handler
         my $DMARCResults = $self->get_object( 'dmarc_results' );
-
         if ( ! $DMARCResults ) {
 
             $self->log_error( 'BIMI Error No DMARC Results object');
@@ -224,9 +222,19 @@ sub eom_callback {
                     $Selector = 'default';
                 }
 
+                my $RelevantSPFResult;
+                my $SPFResults = $self->get_object( 'spf_results' );
+                if ( $SPFResults ) {
+                    foreach my $SPFResult $SPFResults->@* {
+                        next if lc $SPFResults->request->domain ne $Domain;
+                        $RelevantSPFResult = $SPFResult;
+                    }
+                }
+
                 my $BIMI = Mail::BIMI->new(
                     resolver => $self->get_object( 'resolver' ),
                     dmarc_object => $DMARCResult,
+                    spf_object => $RelevantSPFResult,
                     domain => $Domain,
                     selector => $Selector,
                 );
