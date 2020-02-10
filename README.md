@@ -1,22 +1,24 @@
 Authentication Milter
----------------------
+ot---------------------
 
 A Perl implementation of email authentication standards rolled up into a single easy to use milter.
 
 This milter verifies using the following standards.
 
-- SPF
-- SenderID
+- ARC
+- BIMI
+- Check HELO matches it's IP address
 - DKIM (including ADSP)
 - DMARC
 - IPRev
-- Check HELO matches it's IP address
+- SPF
+- SenderID
 
 Includes 3 additional modules.
 
-- TLS (milter protocol only) - identifies TLS protected connections
 - AddID - add a header to all email (example)
 - ReturnOK - Checks that return addresses have properly configured MX records
+- TLS (milter protocol only) - identifies TLS protected connections
 
 Badges
 ------
