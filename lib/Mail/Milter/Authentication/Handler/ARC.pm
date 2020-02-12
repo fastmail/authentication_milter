@@ -696,12 +696,11 @@ sub _check_error {
         $self->add_auth_header( $header );
     }
     else {
-        $self->log_error( 'Unexpected ARC Error - ' . $error );
+        $self->exit_on_close( 'Unexpected ARC Error - ' . $error );
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( 'temperror' );
         $self->add_auth_header( $header );
         # Fill these in as they occur, but for unknowns err on the side of caution
         # and tempfail/exit
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
 }

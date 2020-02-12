@@ -457,7 +457,8 @@ sub process_main($self,@) {
     # Call close callback
     $self->{'handler'}->{'_Handler'}->top_close_callback();
     if ( $self->{'handler'}->{'_Handler'}->{'exit_on_close'} ) {
-        $self->fatal('exit_on_close requested');
+        my $error = $self->{'handler'}->{'_Handler'}->{'exit_on_close_error'} // 'no reason given';
+        $self->fatal('exit_on_close requested - '.$error);
     }
 
     if ( $config->{'debug'} ) {
