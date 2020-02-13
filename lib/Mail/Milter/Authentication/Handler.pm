@@ -7,6 +7,7 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use Mail::Milter::Authentication::Exception;
 use Mail::Milter::Authentication::Resolver;
+use Date::Format qw{ time2str };
 use Digest::MD5 qw{ md5_hex };
 use MIME::Base64;
 use Mail::SPF;
@@ -2146,7 +2147,7 @@ sub dbgout {
 
     my $thischild = $self->{'thischild'};
     if ( exists $thischild->{'tracelog'} ) {
-        push $thischild->{'tracelog'}->@*, "$queue_id: $key: $value";
+        push $thischild->{'tracelog'}->@*, time2str('%Y:%m:%d %X %z',time) . " $queue_id: $key: $value";
     }
 
     my $config = $self->config();

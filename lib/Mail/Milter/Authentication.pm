@@ -506,10 +506,6 @@ sub send_exception_email {
 
     $email .= "Child PID: $PID\n\n";
 
-    $email .= "Processes: "
-           . "processing=".$self->{'server'}->{'tally'}->{processing}." "
-           . "waiting=".$self->{'server'}->{'tally'}->{waiting}."\n\n";
-
     $email .= "Log:\n";
     $email .= join( "\n", $self->{'tracelog'}->@* );
     $email .= "\n\n";
