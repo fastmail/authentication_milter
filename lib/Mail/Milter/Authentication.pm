@@ -10,6 +10,9 @@ use Mail::Milter::Authentication::Handler;
 use Mail::Milter::Authentication::Metric;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
+use Email::Sender::Simple qw(try_to_sendmail);
+use Email::Simple::Creator;
+use Email::Simple;
 use ExtUtils::Installed;
 use Log::Dispatchouli;
 use Net::DNS::Resolver;
@@ -452,43 +455,19 @@ sub process_main($self,@) {
     $self->logdebug( 'Processing request ' . $self->{'count'} );
     $self->{'socket'} = $self->{'server'}->{'client'};
 
+    $self->{'tracelog'} = [];
+
     $self->protocol_process_request();
 
     # Call close callback
     $self->{'handler'}->{'_Handler'}->top_close_callback();
     if ( $self->{'handler'}->{'_Handler'}->{'exit_on_close'} ) {
         my $error = $self->{'handler'}->{'_Handler'}->{'exit_on_close_error'} // 'no reason given';
-
-        {
-            my $email = "Authentication Milter " . $Mail::Milter::Authentication::Config::IDENT , " Fatal Error\n\n";
-            $email .= "$error\n\n"
-
-            $email .= "Child PID: $PID\n\n";
-
-            $email .= "Processes: "
-                   . "processing=".$self->$server->{'server'}->{'tally'}->{processing}." "
-                   . "waiting=".$self->$server->{'server'}->{'tally'}->{waiting}."\n\n";
-
-            $email .= "Processes Running\n";
-            my $ppid = $self->{'server'}->{'ppid'};
-            my $process_table = Proc::ProcessTable->new;
-            my @fields = $process_table->fields;
-            foreach my $process ( $process_table->table->@* ) {
-                next if ! ( $process->pid == $ppid || $process->ppid == $ppid );
-                my $uid = $process->uid;
-                my $pid = $process->pid;
-                my $cmndline = $process->cmndline;
-                my $size   = $process->size;
-                my $rss    = $process->rss;
-                my $pctmem = $process->pctmem;
-                my $pctcpu = $process->pctcpu;
-                $email .= "pid:$pid, $cmndline, size:$size, mem:$rss ($pctmem%), cpu: $pctcpu%\n";
-            }
-        }
-
-
+        $self->send_exception_email($error);
         $self->fatal('exit_on_close requested - '.$error);
     }
+
+    $self->{'tracelog'} = [];
 
     if ( $config->{'debug'} ) {
         my $process_table = Proc::ProcessTable->new();
@@ -509,7 +488,56 @@ sub process_main($self,@) {
     $self->logdebug( 'Request processing completed' );
 }
 
+=method I<send_exception_email()>
 
+Send an email to the administrator with details of a problem.
+
+=cut
+
+sub send_exception_email {
+    my ( $self, $error ) = @_;
+
+    my $config      = get_config();
+    my $errors_to   = $config->{'errors_to'} || return;
+    my $errors_from = $config->{'errors_from'} || return;
+
+    my $email = "Authentication Milter " . $Mail::Milter::Authentication::Config::IDENT . " Error\n\n";
+    $email .= "$error\n\n";
+
+    $email .= "Child PID: $PID\n\n";
+
+    $email .= "Processes: "
+           . "processing=".$self->{'server'}->{'tally'}->{processing}." "
+           . "waiting=".$self->{'server'}->{'tally'}->{waiting}."\n\n";
+
+    $email .= "Log:\n";
+    $email .= join( "\n", $self->{'tracelog'}->@* );
+    $email .= "\n\n";
+
+    $email .= "Processes Running\n";
+    my $ppid = $self->{'server'}->{'ppid'};
+    my $process_table = Proc::ProcessTable->new;
+    foreach my $process ( $process_table->table->@* ) {
+        next if ! ( $process->pid == $ppid || $process->ppid == $ppid );
+        my $pid = eval{ $process->pid } // '';
+        my $cmndline = eval{ $process->cmndline } // '';
+        my $size   = eval{ $process->size } // '';
+        my $rss    = eval{ $process->rss } // '';
+        my $pctmem = eval{ $process->pctmem } // '';
+        my $pctcpu = eval{ $process->pctcpu } // '';
+        $email .= "pid:$pid, $cmndline, size:$size, mem:$rss ($pctmem%), cpu: $pctcpu%\n";
+    }
+
+    my $emailer = Email::Simple->create(
+        header => [
+            To      => $errors_to,
+            From    => $errors_from,
+            Subject => "Authentication Milter Error",
+        ],
+        body => $email,
+    );
+    try_to_sendmail($emailer);
+}
 
 =func I<get_valid_pid($pid_file)>
 

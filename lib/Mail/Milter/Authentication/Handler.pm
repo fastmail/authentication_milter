@@ -2144,6 +2144,11 @@ sub dbgout {
     $key   = q{--} if ! defined $key;
     $value = q{--} if ! defined $value;
 
+    my $thischild = $self->{'thischild'};
+    if ( exists $thischild->{'tracelog'} ) {
+        push $thischild->{'tracelog'}->@*, "$queue_id: $key: $value";
+    }
+
     my $config = $self->config();
     if (
         $priority == LOG_DEBUG
