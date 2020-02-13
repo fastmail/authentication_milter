@@ -458,6 +458,35 @@ sub process_main($self,@) {
     $self->{'handler'}->{'_Handler'}->top_close_callback();
     if ( $self->{'handler'}->{'_Handler'}->{'exit_on_close'} ) {
         my $error = $self->{'handler'}->{'_Handler'}->{'exit_on_close_error'} // 'no reason given';
+
+        {
+            my $email = "Authentication Milter " . $Mail::Milter::Authentication::Config::IDENT , " Fatal Error\n\n";
+            $email .= "$error\n\n"
+
+            $email .= "Child PID: $PID\n\n";
+
+            $email .= "Processes: "
+                   . "processing=".$self->$server->{'server'}->{'tally'}->{processing}." "
+                   . "waiting=".$self->$server->{'server'}->{'tally'}->{waiting}."\n\n";
+
+            $email .= "Processes Running\n";
+            my $ppid = $self->{'server'}->{'ppid'};
+            my $process_table = Proc::ProcessTable->new;
+            my @fields = $process_table->fields;
+            foreach my $process ( $process_table->table->@* ) {
+                next if ! ( $process->pid == $ppid || $process->ppid == $ppid );
+                my $uid = $process->uid;
+                my $pid = $process->pid;
+                my $cmndline = $process->cmndline;
+                my $size   = $process->size;
+                my $rss    = $process->rss;
+                my $pctmem = $process->pctmem;
+                my $pctcpu = $process->pctcpu;
+                $email .= "pid:$pid, $cmndline, size:$size, mem:$rss ($pctmem%), cpu: $pctcpu%\n";
+            }
+        }
+
+
         $self->fatal('exit_on_close requested - '.$error);
     }
 
