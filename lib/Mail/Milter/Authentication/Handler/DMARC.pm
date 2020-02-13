@@ -471,6 +471,10 @@ sub _process_dmarc_for {
                   $remote_ip //= eval{ $aar->search({ 'isa' => 'entry', 'key' => 'iprev' })->children()->[0]->search({ 'isa' => 'subentry', 'key' => 'policy.iprev'})->children()->[0]->value(); };
                   $self->handle_exception( $@ );
 
+                  $domain //= '';
+                  $selector //= '';
+                  $remote_ip //= '';
+
                   $comment .= ' as['.$instance.'].d='.$domain.' as['.$instance.'].s='.$selector.' remote-ip['.$instance.']='.$remote_ip;
                 }
               }
