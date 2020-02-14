@@ -662,6 +662,7 @@ sub close_callback {
     delete $self->{'body'};
     delete $self->{'carry'};
     delete $self->{'has_arc'};
+    delete $self->{'has_arcseal'};
     delete $self->{'valid_domains'};
     delete $self->{'arc_domain'};
     delete $self->{'arc_result'};
