@@ -529,20 +529,21 @@ sub send_exception_email {
         $email .= "pid:$pid, $cmndline, size:$size, mem:$rss ($pctmem%), cpu: $pctcpu%\n";
     }
 
-    my %headers;
+    my @headers;
     foreach my $key ( sort keys $errors_headers->%* ) {
-        $headers{$key} = $errors_headers->{$key};
+        push @headers, $key => $errors_headers->{$key};
     }
-    $headers{To} = $errors_to;
-    $headers{From} = $errors_from;
-    $headers{Subject} = 'Authentication Milter Error';
-    $headers{'X-Authentication-Milter-Error'} = 'Generated Error Report';
+    push @headers, to => $errors_to;
+    push @headers, From => $errors_from;
+    push @headers, Subject => 'Authentication Milter Error';
+    push @headers, 'X-Authentication-Milter-Error' => 'Generated Error Report';
 
     my $emailer = Email::Simple->create(
-        header => %headers,
+        header => \@headers,
         body => $email,
     );
     try_to_sendmail($emailer);
+
 }
 
 =func I<get_valid_pid($pid_file)>
