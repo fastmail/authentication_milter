@@ -711,6 +711,7 @@ sub top_envfrom_callback {
         delete $self->{'auth_headers'};
         delete $self->{'pre_headers'};
         delete $self->{'add_headers'};
+        delete $self->{'suppress_error_emails'};
 
         my $callbacks = $self->get_callbacks( 'envfrom' );
         foreach my $handler ( @$callbacks ) {
@@ -811,6 +812,11 @@ sub top_header_callback {
     $self->set_return( $self->smfis_continue() );
     $value = q{} if ! defined $value;
     my $config = $self->config();
+
+    if ( $header eq 'X-Authentication-Milter-Error' && $value eq 'Generated Error Report' ) {
+        $self->{'suppress_error_emails'} = 1;
+    }
+
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Header callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'content' ) ) {

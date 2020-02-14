@@ -497,9 +497,14 @@ Send an email to the administrator with details of a problem.
 sub send_exception_email {
     my ( $self, $error ) = @_;
 
-    my $config      = get_config();
-    my $errors_to   = $config->{'errors_to'} || return;
-    my $errors_from = $config->{'errors_from'} || return;
+    if ( $self->{'handler'}->{'_Handler'}->{'suppress_error_emails'} ) {
+        return;
+    }
+
+    my $config         = get_config();
+    my $errors_to      = $config->{'errors_to'} || return;
+    my $errors_from    = $config->{'errors_from'} || return;
+    my $errors_headers = $config->{'errors_headers'} || {};
 
     my $email = "Authentication Milter " . $Mail::Milter::Authentication::Config::IDENT . " Error\n\n";
     $email .= "$error\n\n";
@@ -524,12 +529,17 @@ sub send_exception_email {
         $email .= "pid:$pid, $cmndline, size:$size, mem:$rss ($pctmem%), cpu: $pctcpu%\n";
     }
 
+    my %headers;
+    foreach my $key ( sort keys $errors_headers->%* ) {
+        $headers{$key} = $errors_headers->{$key};
+    }
+    $headers{To} = $errors_to;
+    $headers{From} = $errors_from;
+    $headers{Subject} = 'Authentication Milter Error';
+    $headers{'X-Authentication-Milter-Error'} = 'Generated Error Report';
+
     my $emailer = Email::Simple->create(
-        header => [
-            To      => $errors_to,
-            From    => $errors_from,
-            Subject => "Authentication Milter Error",
-        ],
+        header => %headers,
         body => $email,
     );
     try_to_sendmail($emailer);
