@@ -77,6 +77,7 @@ sub header_callback {
 
 sub close_callback {
     my ( $self ) = @_;
+    delete $self->{ 'envfrom_count' };
     delete $self->{ 'from_header_count' };
     delete $self->{ 'header_address' };
     delete $self->{ 'header_domain' };
