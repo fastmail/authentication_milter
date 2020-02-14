@@ -225,7 +225,7 @@ sub eom_callback {
                 my $RelevantSPFResult;
                 my $SPFResults = $self->get_object( 'spf_results' );
                 if ( $SPFResults ) {
-                    foreach my $SPFResult $SPFResults->@* {
+                    foreach my $SPFResult ( $SPFResults->@* ) {
                         next if lc $SPFResults->request->domain ne $Domain;
                         $RelevantSPFResult = $SPFResult;
                     }
