@@ -1120,6 +1120,12 @@ sub top_close_callback {
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'close', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
+
+            my $handler_object = $self->get_handler($handler);
+            foreach my $key ( sort keys $handler_object->%* ) {
+                next if $key eq 'thischild';
+                $self->exit_on_close( 'Handler '.$handler.' did not clean up data for key '.$key.' in close callback' );
+            }
         }
         $self->set_alarm(0);
     };
