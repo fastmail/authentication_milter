@@ -226,7 +226,7 @@ sub eom_callback {
                 my $SPFResults = $self->get_object( 'spf_results' );
                 if ( $SPFResults ) {
                     foreach my $SPFResult ( $SPFResults->@* ) {
-                        next if lc $SPFResults->request->domain ne $Domain;
+                        next if lc $SPFResult->request->domain ne $Domain;
                         $RelevantSPFResult = $SPFResult;
                     }
                 }
@@ -234,7 +234,7 @@ sub eom_callback {
                 my $BIMI = Mail::BIMI->new(
                     resolver => $self->get_object( 'resolver' ),
                     dmarc_object => $DMARCResult,
-                    spf_object => $RelevantSPFResult,
+                    $RelevantSPFResult ? ( spf_object => $RelevantSPFResult ) : (),
                     domain => $Domain,
                     selector => $Selector,
                 );
