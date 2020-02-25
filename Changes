@@ -1,7 +1,6 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
-<<<<<<< HEAD
   - Require minimum Perl 5.20
   - ARC: Merge ARC Handler into core
   - Abusix: Merge Abusix Handler into core
