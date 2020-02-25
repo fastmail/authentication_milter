@@ -6,7 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for BIMI
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::BIMI 1.20200210;
+use Mail::BIMI 1.20200214;
 
 sub default_config {
     return {
