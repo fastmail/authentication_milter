@@ -1,265 +1,325 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
-        - Require minimum Perl 5.20
-        - ARC: Merge ARC Handler into core
-        - Abusix: Merge Abusix Handler into core
-        - BIMI: Merge BIMI Handler into core
-        - Blocker: Merge Blocker Handler into core
-        - Core: Modernise and tind some code
-        - Core: Set a default version for metrics where one does not exist
+  - Require minimum Perl 5.20
+  - ARC: Merge ARC Handler into core
+  - Abusix: Merge Abusix Handler into core
+  - BIMI: Merge BIMI Handler into core
+  - Blocker: Merge Blocker Handler into core
+  - Core: Modernise and tind some code
+  - Core: Set a default version for metrics where one does not exist
+  - Core: Milter protocol quarantine fixes
 
 2.20200206 2020-02-06 01:15:45+00:00 UTC
-        - Size: Add metrics for added header bytes
+  - Size: Add metrics for added header bytes
 
 2.20200202 2020-02-02 14:23:58+00:00 UTC
-        - DMARC: Updated ARC override reporting re RFC
-        - DMARC: Add metrics for active/pending reports
-        - Core: Added version metrics
+  - DMARC: Updated ARC override reporting re RFC
+  - DMARC: Add metrics for active/pending reports
+  - Core: Added version metrics
+
+2.20200129 (BIMI) 2020-01-29 UTC
+  - Update declaration of PreReqs
 
 2.20200107 2020-01-07 04:26:20+00:00 UTC
-        - Ignore Errors from bgsend
+  - Ignore Errors from bgsend
 
 2.20200106 2020-01-06 04:09:07+00:00 UTC
-        - Properly clear DNS errors cache on close
+  - Properly clear DNS errors cache on close
+
+2.20200102 (BIMI) 2020-01-02 UTC
+  - Updated for new Mail::BIMI
+  - Trust ARC
 
 2.20200102 2020-01-02 01:14:35+00:00 UTC
-        - DMARC: Store all DMARC result object for other handlers
-        - Properly set IP objects in tester
+  - DMARC: Store all DMARC result object for other handlers
+  - Properly set IP objects in tester
 
 2.20191206 2019-12-05 02:14:47+00:00 UTC
-        - Fix second header parse bug
+  - Fix second header parse bug
+
+2.20191205 (ARC) 2019-12-05 01:46:10+00:00 UTC
+  - Fix header parse bug
 
 2.20191205 2019-12-05 01:25:51+00:00 UTC
-        - Send DNS requests early
-        - Fix header parse bug
+  - Send DNS requests early
+  - Fix header parse bug
+
+2.20191120 (blocker) 2019-11-20 23:57:12+00:00 UTC
+  - First release
 
 2.20191106 2019-11-06 01:22:25+00:00 UTC
-        - More aggressive handling of DNS timeoutsi
+  - More aggressive handling of DNS timeoutsi
 
 2.20190523 2019-05-23 02:16:29+00:00 UTC
-        - ReturnOK: Add detail in comments
-        - ReturnOK: Don't duplicate checks for repeated domains
-        - Core: Use Log::Dispatchouli for logging
+  - ReturnOK: Add detail in comments
+  - ReturnOK: Don't duplicate checks for repeated domains
+  - Core: Use Log::Dispatchouli for logging
 
 2.20190502 2019-05-02 15:54:56+10:00 Australia/Melbourne
-        - DMARC: Make sure we actually have a trusted ARC chain before
-          applying arc_before_list
+  - DMARC: Make sure we actually have a trusted ARC chain before
+    applying arc_before_list
 
 2.20190501 2019-05-01 11:52:35+10:00 Australia/Melbourne
-        - DMARC: Option to override List-ID detection if we have ARC
+  - DMARC: Option to override List-ID detection if we have ARC
+
+2.20181213 (Abusix) 2018-12-13 Australia/Melbourne
+  - Removed stray debugging output
 
 2.20181212 2018-12-12 15:17:16+11:00 Australia/Melbourne
-        - Core: Remap IP addresses as early as possible.
+  - Core: Remap IP addresses as early as possible.
+
+2.20181204 (Abusix) 2018-12-03 Australia/Melbourne
+  - Set TLS to 0 if not encrypted and TLS handler is loaded
+
+2.20181203 (Abusix) 2018-12-03 Australia/Melbourne
+  - First Release
 
 2.20181130 2018-11-30 15:12:34+11:00 Australia/Melbourne
-        - Core/TLS: Expose the TLS state in a helper method.
-        - Core: Enforce DNS timeouts
+  - Core/TLS: Expose the TLS state in a helper method.
+  - Core: Enforce DNS timeouts
 
 2.20181114 2018-11-14 15:20:39+11:00 Australia/Melbourne
-        - Core: Return effective config in toml or json
-          NB The version of TOML used here is not sufficient to
-             express all possible configurations, in particular those
-             which would require a . in the key name (ip addresses etc) are
-             not possible to express in TOML.
-             As such, TOML should be considered as experimental.
-        - Core: Allow ip remapping based on received HELO host
-        - Core: Pre-load some Net::DNS::RR modules pre-fork
-        - Core: Allow multiple digit extended return codes
+  - Core: Return effective config in toml or json
+    NB The version of TOML used here is not sufficient to
+       express all possible configurations, in particular those
+       which would require a . in the key name (ip addresses etc) are
+       not possible to express in TOML.
+       As such, TOML should be considered as experimental.
+  - Core: Allow ip remapping based on received HELO host
+  - Core: Pre-load some Net::DNS::RR modules pre-fork
+  - Core: Allow multiple digit extended return codes
 
 2.20181024 2018-10-24 12:02:46+11:00 Australia/Melbourne
-        - DMARC: Defer saving of aggregate reports until the close stage
-        - Metrics: Use shared memory for metrics processing rather than
-          child<>parent socket calls.
-          Requires Prometheus::Tiny::Shared (and Cache::FastMmap)
+  - DMARC: Defer saving of aggregate reports until the close stage
+  - Metrics: Use shared memory for metrics processing rather than
+    child<>parent socket calls.
+    Requires Prometheus::Tiny::Shared (and Cache::FastMmap)
+
+2.20181013 (ARC) 2018-10-13 09:22:28-04:00 America/New_York
+  - Add smtp.remote-ip
 
 2.20181013 2018-10-13 08:58:04-04:00 America/New_York
-        - IPRev: rename policy.iprev to smtp.remote-ip for interop
+  - IPRev: rename policy.iprev to smtp.remote-ip for interop
 
 2.20180927 2018-09-27 14:00:13+10:00 Australia/Melbourne
-        - DMARC: Record policy used (p or sp) in header and metrics
+  - DMARC: Record policy used (p or sp) in header and metrics
 
 2.20180912 2018-09-12 22:03:15+10:00 Australia/Melbourne
-        - Fix bug in loading of conf.d files
+  - Fix bug in loading of conf.d files
+
+2.20180911 (ARC) 2018-09-11 13:03:03+10:00 Australia/Melbourne
+  - Fix detection of domain in identity when inheriting DKIM results.
+
+2.20180903 (ARC) 2018-09-03 15:52:55+10:00 Australia/Melbourne
+  - Option to lookup trusted arc domains via DNS
 
 2.20180903 2018-09-03 14:47:52+10:00 Australia/Melbourne
-        - DMARC: Allow whitelist by passing SPF domain.
-        - DMARC: Allow whitelist lookup via a dns whitelist.
-        - DMARC: Allow configuration of disposition for failing mailing list messages
-        - DMARC: Check whitelist before list detection
+  - DMARC: Allow whitelist by passing SPF domain.
+  - DMARC: Allow whitelist lookup via a dns whitelist.
+  - DMARC: Allow configuration of disposition for failing mailing list messages
+  - DMARC: Check whitelist before list detection
 
 2.20180726 2018-07-26 16:30:40+01:00 Europe/London
-        - Allow config file to be written in TOML
-        - DMARC: Add policy decision factors in policy ptype entries
-        - SMTP: Don't hold entire message in memory unless necessary
-          Option to chunk message when passing to handlers
-          Option to use spool file rather than using memory
-        - SMTP: Count quarantined mail properly in metrics
+  - Allow config file to be written in TOML
+  - DMARC: Add policy decision factors in policy ptype entries
+  - SMTP: Don't hold entire message in memory unless necessary
+    Option to chunk message when passing to handlers
+    Option to use spool file rather than using memory
+  - SMTP: Count quarantined mail properly in metrics
+
+2.20180612 (ARC) 2018-06-12 13:47:27+10:00 Australia/Melbourne
+  - Follow RFC 8301 security recommendations by default
+  - Handle full identities in override
 
 2.20180612 2018-06-12 13:32:26+10:00 Australia/Melbourne
-        - Bugfix: clear quarantine reason after use
+  - Bugfix: clear quarantine reason after use
 
 2.20180608 2018-06-08 21:14:19+02:00 Europe/Berlin
-        - ReturnOK: Rewrite Handler to handle multiple addresses properly
-        - Core: Fix per-protocol-section timeouts
-        - DKIM: Follow RFC 8301 security recommendations by default
-        - Core: Improved the HTTP status page
-        - DMARC: Correctly report DMARC policy when using ARC override
-        - DMARC: Set the disposition more reliably
-        - Core: methods to set defer/quarantine reasons
-        - Core: set a header for quarantined mail
-        - Sanitize: Add code to remove arbitrary headers
-        - Milter: Experimental support for Quarantine action
+  - ReturnOK: Rewrite Handler to handle multiple addresses properly
+  - Core: Fix per-protocol-section timeouts
+  - DKIM: Follow RFC 8301 security recommendations by default
+  - Core: Improved the HTTP status page
+  - DMARC: Correctly report DMARC policy when using ARC override
+  - DMARC: Set the disposition more reliably
+  - Core: methods to set defer/quarantine reasons
+  - Core: set a header for quarantined mail
+  - Sanitize: Add code to remove arbitrary headers
+  - Milter: Experimental support for Quarantine action
 
 2.20180526 2018-05-27 09:11:02+10:00 Australia/Melbourne
-        - Removed experimental external callback stage hooks
-        - Allow handlers to specify required BEFORE other handlers
+  - Removed experimental external callback stage hooks
+  - Allow handlers to specify required BEFORE other handlers
 
 2.20180525 2018-05-25 13:01:51+10:00 Australia/Melbourne
-        - Add external callback hooks for stage callbacks
-        - Add external callback hook for handler config
-        - More timeout improvements
-        - DKIM: switch extra properties to more standard properties
-        - Minimum perl verion 5.10 required (Dependencies demand it)
-        - Make ptype of TLS/PTR/SPF entries more correct
+  - Add external callback hooks for stage callbacks
+  - Add external callback hook for handler config
+  - More timeout improvements
+  - DKIM: switch extra properties to more standard properties
+  - Minimum perl verion 5.10 required (Dependencies demand it)
+  - Make ptype of TLS/PTR/SPF entries more correct
+
+2.20180521 (ARC) 2018-05-21 14:41:56+10:00 Australia/Melbourne
+  - Option to pull values from a trusted ARC chain for use elsewhere
+  - Manually check timeout status in key stages
 
 2.20180521 2018-05-21 14:33:46+10:00 Australia/Melbourne
-        - Add method to manually check timeout status in Handlers
-        - Switch to useconds internally for Handler timeouts
-        - Fix test data on some BSD systems
-        - DMARC: Option to pull values from a trusted ARC chain
+  - Add method to manually check timeout status in Handlers
+  - Switch to useconds internally for Handler timeouts
+  - Fix test data on some BSD systems
+  - DMARC: Option to pull values from a trusted ARC chain
 
 2.20180511 2018-05-11 11:50:22+10:00 Australia/Melbourne
-        - Return exception type correctly to caller
+  - Return exception type correctly to caller
+
+2.20180510 (BIMI) 2018-05-10 Australia/Melbourne
+  - Improve handling of timeouts
+
+2.20180510 (ARC) 2018-05-10 15:15:15+10:00 Australia/Melbourne
+  - Improve handling of timeouts
 
 2.20180510 2018-05-10 14:58:08+10:00 Australia/Melbourne
-        - Improve handling of timeouts
+  - Improve handling of timeouts
 
 2.20180509 2018-05-09 15:19:12+10:00 Australia/Melbourne
-        - Make sure timeout events are propigated correctly
-        - Silence some warnings
+  - Make sure timeout events are propigated correctly
+  - Silence some warnings
 
 2.20180430 2018-04-30 21:02:23+10:00 Australia/Melbourne
-        - Allow folding of Authentication-Results header
-        - Fix bug where handlers could receive emptystring instead of 0
+  - Allow folding of Authentication-Results header
+  - Fix bug where handlers could receive emptystring instead of 0
 
 2.20180329 2018-03-29 11:12:49+11:00 Australia/Melbourne
-        - Updated config processor to be a generic external callback handler
+  - Updated config processor to be a generic external callback handler
 
 2.20180328 2018-03-28 21:26:54+11:00 Australia/Melbourne
-        - Add config option to process loaded config with a named Perl module
+  - Add config option to process loaded config with a named Perl module
 
 2.20180326 2018-03-26 13:09:14+11:00 Australia/Melbourne
-        - Allow indent/fold style and depth to be configured
-        - Build the internal AR header list using objects
+  - Allow indent/fold style and depth to be configured
+  - Build the internal AR header list using objects
+
+2.20180318 (ARC) 2018-03-18 Australia/Melbourne
+  - Pass headers as objects
+  - Change build system to dist zilla
 
 2.20180318 2018-03-18 Australia/Melbourne
-        - Allow remapping of IP address/HELO based on source IP address
-        - Authentication-Results headers are now passed as objects internally
-        - Added Mail::Milter::Authentication::Tester::HandlerTester to improve testing of handlers
-        - Improved testing frameworks
-        - Switched build framework to Dist::Zilla
-        - Minimum Perl version is now 5.10 due to dependencies in Mail::DMARC
-        - Improve output from tests when there are failures
-        - Fix Best guess SPF mode
+  - Allow remapping of IP address/HELO based on source IP address
+  - Authentication-Results headers are now passed as objects internally
+  - Added Mail::Milter::Authentication::Tester::HandlerTester to improve testing of handlers
+  - Improved testing frameworks
+  - Switched build framework to Dist::Zilla
+  - Minimum Perl version is now 5.10 due to dependencies in Mail::DMARC
+  - Improve output from tests when there are failures
+  - Fix Best guess SPF mode
 
 1.1.7   2017-12-21
-        - Removed nasty recursion bug in header sorting
-        - Updated DMARC policy reporting
+  - Removed nasty recursion bug in header sorting
+  - Updated DMARC policy reporting
 
 1.1.6   2017-12-20
-        - DMARC processing for all domains found in message headers
-        - Avoid semicolon in DMARC result comment
-        - Updated IPRev (and PTR) to follow CNAMEs
-        - Added experimental "Best Guess SPF" option
+  - DMARC processing for all domains found in message headers
+  - Avoid semicolon in DMARC result comment
+  - Updated IPRev (and PTR) to follow CNAMEs
+  - Added experimental "Best Guess SPF" option
+
+1.1.6 (ARC)   2017-12-18
+  - Fix bug which prevented ARCSealing when Domain != ServerId
+
+1.1.5 (ARC)   2017-12-16
+  - First production ready release
 
 1.1.5   2017-12-16
-        - Added Mail::Milter::Authentication::Tester module to help with testing handlers
-        - Report DMARC policy deviations
+  - Added Mail::Milter::Authentication::Tester module to help with testing handlers
+  - Report DMARC policy deviations
 
 1.1.4   2017-10-19
-        - Added a FromAlignment checker handler
-        - Improvements in timeout handling
-        - Added more metrics to the ReturkOK handler
-        - Extra optional information in DKIM results
+  - Added a FromAlignment checker handler
+  - Improvements in timeout handling
+  - Added more metrics to the ReturkOK handler
+  - Extra optional information in DKIM results
+
+1.1.3 (ARC)   2017-10-02
+  - First public release of ARC handler
+  - This handler is experimental
 
 1.1.3   2017-10-01
-        - Handler for capturing metrics on message size
-        - Collect metrics for processing time in each handler/stage
-        - Defer internal counting of metrics until after transaction
-        - Generate grafana dashboard automatically for installed handlers
-        - Allow metrics port to be unix socket
-        - Tests for metrics system
-        - New handler to gather metrics of the size of messages/headers processed
-        - Make the IPRev handler rfc compliant
-        - Add metrics for IPRev, PTR, and ReturnOK handlers
-        - Stability fixes
+  - Handler for capturing metrics on message size
+  - Collect metrics for processing time in each handler/stage
+  - Defer internal counting of metrics until after transaction
+  - Generate grafana dashboard automatically for installed handlers
+  - Allow metrics port to be unix socket
+  - Tests for metrics system
+  - New handler to gather metrics of the size of messages/headers processed
+  - Make the IPRev handler rfc compliant
+  - Add metrics for IPRev, PTR, and ReturnOK handlers
+  - Stability fixes
 
 1.1.2   2017-08-22
-        - Fixed process management under SmartOS
-        - Added post processing callback for adding headers (Required for future ARC handler)
-        - Improve DNS mocking in tests by using Net::DNS::Resolver::Mock
-        - Fix syslog for Debian 9
-        - Add DKIM hash algorithm to metrics and AR comments
-        - Parse headers for TLS information in SMTP protocol mode
-        - Misc bugfixes
+  - Fixed process management under SmartOS
+  - Added post processing callback for adding headers (Required for future ARC handler)
+  - Improve DNS mocking in tests by using Net::DNS::Resolver::Mock
+  - Fix syslog for Debian 9
+  - Add DKIM hash algorithm to metrics and AR comments
+  - Parse headers for TLS information in SMTP protocol mode
+  - Misc bugfixes
 
 1.1.1   2017-04-14
-        - Added metrics collection (prometheus)
-        - Re-write address parsing code to avoid Email::Address::parse issues
-        - SMTP Debugging modes added
-        - Correctly handle From header with odd case in DMARC module
-        - Added example metrics dashboard for Grafana
-        - Metrics bugfixes
-        - Improved test suite
+  - Added metrics collection (prometheus)
+  - Re-write address parsing code to avoid Email::Address::parse issues
+  - SMTP Debugging modes added
+  - Correctly handle From header with odd case in DMARC module
+  - Added example metrics dashboard for Grafana
+  - Metrics bugfixes
+  - Improved test suite
 
 1.1.0   2016-07-01
-        - Allow email to be rejected by handlers
-        - Option to reject DMARC p=reject failures
-        - DMARC reject whitelist based on ip or dkim
-        - Split X-Google-DKIM checks into own handler
-        - DKIM DNS error handling improvements
-        - Optionally hide Domainkeys results
-        - Updates to improve operation when running as a postfix pre-queue filter
-        - Do not drop connections when restarting
-        - Better handling of multiple instances
-        - Updated daemon control
-        - Improved logging
+  - Allow email to be rejected by handlers
+  - Option to reject DMARC p=reject failures
+  - DMARC reject whitelist based on ip or dkim
+  - Split X-Google-DKIM checks into own handler
+  - DKIM DNS error handling improvements
+  - Optionally hide Domainkeys results
+  - Updates to improve operation when running as a postfix pre-queue filter
+  - Do not drop connections when restarting
+  - Better handling of multiple instances
+  - Updated daemon control
+  - Improved logging
 
 1.0.1   2015-09-11
-        - Removed unrequired error handling
-        - Fixed some typos (sergeyromanov)
-        - Allow relaxed JSON parsing in config
+  - Removed unrequired error handling
+  - Fixed some typos (sergeyromanov)
+  - Allow relaxed JSON parsing in config
 
 1.0.0   2015-08-22
-        - Version bump to avoid confusion with old unreleased versions
-        - Cleaned up CPANTS errors
-        - Fixed inconsistent versions
-        - Moved handler config docs into handlers
-        - Fixed possible dependency loop when misconfigured
-        - Improve logging to stderr when logtoerr is set
+  - Version bump to avoid confusion with old unreleased versions
+  - Cleaned up CPANTS errors
+  - Fixed inconsistent versions
+  - Moved handler config docs into handlers
+  - Fixed possible dependency loop when misconfigured
+  - Improve logging to stderr when logtoerr is set
 
 0.1.1   2015-08-05
-        - Released to CPAN
+  - Released to CPAN
 
 0.1.0   2015-07-21
-        - Catch warnings and report in log with context.
-        - Skip DMARC reporting for specified addresses.
+  - Catch warnings and report in log with context.
+  - Skip DMARC reporting for specified addresses.
 
 0.08    2015-02-23
-        - Fixes header unwrapping issue
-        - Allow DMARC reporting to be disabled
-        - DMARC: preload the PSL where possible
-        - Better SMTP pipeline handling
+  - Fixes header unwrapping issue
+  - Allow DMARC reporting to be disabled
+  - DMARC: preload the PSL where possible
+  - Better SMTP pipeline handling
 
 0.07    2015-02-02
-        - Fix up some warning output.
-        - Fixed edge case which caused false DKIM failures.
-        - Allow use as an SMTP proxy based after queue filter.
-        - More test casese added.
-        - Allow listening on multiple ports.
-        - Bug Fixes.
+  - Fix up some warning output.
+  - Fixed edge case which caused false DKIM failures.
+  - Allow use as an SMTP proxy based after queue filter.
+  - More test casese added.
+  - Allow listening on multiple ports.
+  - Bug Fixes.
 
 0.06    2015-01-13
-        - First version, released on an unsuspecting world.
+  - First version, released on an unsuspecting world.
 

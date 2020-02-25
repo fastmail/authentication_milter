@@ -1,22 +1,24 @@
 Authentication Milter
----------------------
+ot---------------------
 
 A Perl implementation of email authentication standards rolled up into a single easy to use milter.
 
 This milter verifies using the following standards.
 
-- SPF
-- SenderID
+- ARC
+- BIMI
+- Check HELO matches it's IP address
 - DKIM (including ADSP)
 - DMARC
 - IPRev
-- Check HELO matches it's IP address
+- SPF
+- SenderID
 
 Includes 3 additional modules.
 
-- TLS (milter protocol only) - identifies TLS protected connections
 - AddID - add a header to all email (example)
 - ReturnOK - Checks that return addresses have properly configured MX records
+- TLS (milter protocol only) - identifies TLS protected connections
 
 Badges
 ------
@@ -99,7 +101,7 @@ To install the latest version released to CPAN, run the following commands:
 
  - cpanm Mail::Milter::Authentication
 
-### From source
+### From source tarball
 
 To install this module from source, run the following commands:
 
@@ -107,6 +109,19 @@ To install this module from source, run the following commands:
  - make
  - make test
  - make install
+
+### From checkout
+
+This module uses Dist::Zilla, you can install from a checkout using the following commands:
+
+ - cpanm Dist::Zilla
+ - dzil authordeps --missing|cpanm
+ - dzil listdeps --missing|cpanm
+ - dzil install
+
+Note, installing via checkout will cause Dist::Zilla to generate a new version number each time you install based on the date of installation.
+
+### DMARC
 
 The DMARC module requires a little extra setup.
 
