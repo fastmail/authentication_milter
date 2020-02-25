@@ -1,32 +1,25 @@
 package Mail::Milter::Authentication::Handler;
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler superclass
 # VERSION
+use Mail::Milter::Authentication::Exception;
+use Mail::Milter::Authentication::Resolver;
+use Digest::MD5 qw{ md5_hex };
+use MIME::Base64;
+use Mail::SPF;
+use Net::DNS::Resolver;
+use Net::IP;
+use Sys::Hostname;
+use Time::HiRes qw{ ualarm gettimeofday };
 
 =head1 DESCRIPTION
 
 Handle the milter requests and pass off to individual handlers
 
 =cut
-
-use Digest::MD5 qw{ md5_hex };
-use English qw{ -no_match_vars };
-use Clone qw{ clone };
-use Mail::SPF;
-use MIME::Base64;
-use Net::DNS::Resolver;
-use Net::IP;
-use Sys::Syslog qw{:standard :macros};
-use Sys::Hostname;
-use Time::HiRes qw{ ualarm gettimeofday };
-
-use Mail::Milter::Authentication::Constants qw { :all };
-use Mail::Milter::Authentication::Config;
-use Mail::Milter::Authentication::Exception;
-use Mail::Milter::Authentication::Resolver;
-use Mail::AuthenticationResults 1.20180328;
-use Mail::AuthenticationResults::Header;
-use Mail::AuthenticationResults::Header::AuthServID;
 
 our $TestResolver; # For Testing
 
@@ -60,7 +53,6 @@ sub get_version {
         no strict 'refs'; ## no critic;
         return ${ ref( $self ) . "::VERSION" } // 'unknown'; # no critic;
     }
-    return;
 }
 
 =metric_method I<get_json( $file )>
@@ -92,7 +84,6 @@ Register a metric type
 sub metric_register {
     my ( $self, $id, $help ) = @_;
     $self->{'thischild'}->{'metric'}->register( $id, $help, $self->{'thischild'} );
-    return;
 }
 
 =metric_method I<metric_count( $id, $labels, $count )>
@@ -113,7 +104,6 @@ sub metric_count {
         'server'   => $self->{'thischild'},
         'count'    => $count,
     });
-    return;
 }
 
 =metric_method I<metric_set( $id, $labels, $count )>
@@ -134,7 +124,6 @@ sub metric_set {
         'server'   => $self->{'thischild'},
         'value'    => $value,
     });
-    return;
 }
 
 =metric_method I<metric_send()>
@@ -147,7 +136,6 @@ sub metric_send {
     my ( $self ) = @_;
     # NOOP
     # TODO Deprecate and remove
-    return;
 }
 
 =rbl_method I<rbl_check_ip( $ip, $list )>
@@ -264,7 +252,6 @@ sub top_setup_callback {
         $self->metric_count( 'time_microseconds_total', { 'callback' => 'setup', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
     }
     $self->status('postsetup');
-    return;
 }
 
 =timeout_method I<is_exception_type( $exception )>
@@ -300,7 +287,6 @@ sub handle_exception {
     return if ! $Type;
     die $exception if $Type eq 'Timeout';
     #my $Text = $exception->{ 'Text' } || 'Unknown';
-    return;
 }
 
 =timeout_method I<get_time_remaining()>
@@ -338,7 +324,6 @@ sub set_alarm {
     else {
         $top_handler->{ 'timeout_at' } = $self->get_microseconds() + ( $microseconds );
     }
-    return;
 }
 
 =timeout_method I<set_handler_alarm( $microseconds )>
@@ -363,7 +348,6 @@ sub set_handler_alarm {
         $self->dbgout( 'Handler tmeout set', $microseconds, LOG_DEBUG );
         ualarm( $microseconds );
     }
-    return;
 }
 
 =timeout_method I<reset_alarm()>
@@ -385,7 +369,6 @@ sub reset_alarm {
         die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Reset check timeout' });
     }
     ualarm( $remaining );
-    return;
 }
 
 =timeout_method I<clear_overall_timeout()>
@@ -399,7 +382,6 @@ sub clear_overall_timeout {
     $self->dbgout( 'Overall timeout', 'Clear', LOG_DEBUG );
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{ 'overall_timeout' };
-    return;
 }
 
 =timeout_method I<set_overall_timeout( $microseconds )>
@@ -413,7 +395,6 @@ sub set_overall_timeout {
     my $top_handler = $self->get_top_handler();
     $self->dbgout( 'Overall timeout', $microseconds, LOG_DEBUG );
     $top_handler->{ 'overall_timeout' } = $self->get_microseconds() + $microseconds;
-    return;
 }
 
 =timeout_method I<get_type_timeout( $type )>
@@ -520,7 +501,6 @@ sub _remap_ip_and_helo {
             }
         }
     }
-    return;
 }
 
 =callback_method I<remap_connect_callback( $hostname, $ip )>
@@ -538,7 +518,6 @@ sub remap_connect_callback {
         $self->dbgout( 'RemappedConnect', $self->{'raw_ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
     }
     $self->{'ip_object'} = $ip;
-    return;
 }
 
 =callback_method I<top_metrics_callback()>
@@ -558,7 +537,6 @@ sub top_metrics_callback {
             $self->log_error( 'Metrics callback error ' . $error );
         }
     };
-    return;
 }
 
 =callback_method I<top_connect_callback( $hostname, $ip )>
@@ -645,7 +623,6 @@ sub remap_helo_callback {
 
         $self->{'helo_name'} = $helo_host;
     }
-    return;
 }
 
 =callback_method I<top_helo_callback( $helo_host )>
@@ -1069,8 +1046,6 @@ sub apply_policy {
 
     #use Data::Dumper;
     #print Dumper \@structured_headers;
-
-    return;
 }
 
 =callback_method I<top_abort_callback()>
@@ -1232,8 +1207,6 @@ sub top_addheader_callback {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-
-    return;
 }
 
 
@@ -1259,7 +1232,6 @@ sub status {
     else {
         $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':processing(' . $count . ')';
     }
-    return;
 }
 
 =method I<config()>
@@ -1296,7 +1268,6 @@ sub handler_config {
 
         return $handler_config;
     }
-    return;
 }
 
 =method I<handler_type()>
@@ -1330,7 +1301,6 @@ sub set_return {
     my ( $self, $return ) = @_;
     my $top_handler = $self->get_top_handler();
     $top_handler->{'return_code'} = $return;
-    return;
 }
 
 =method I<get_return()>
@@ -1376,7 +1346,6 @@ sub clear_reject_mail {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'reject_mail'};
-    return;
 }
 
 =method I<get_defer_mail()>
@@ -1401,7 +1370,6 @@ sub clear_defer_mail {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'defer_mail'};
-    return;
 }
 
 
@@ -1427,7 +1395,6 @@ sub clear_quarantine_mail {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'quarantine_mail'};
-    return;
 }
 
 =method I<get_top_handler()>
@@ -1494,7 +1461,6 @@ sub set_object_maker {
     my $thischild = $self->{'thischild'};
     return if $thischild->{'object_maker'}->{$name};
     $thischild->{'object_maker'}->{$name} = $ref;
-    return;
 }
 
 =method I<get_object( $name )>
@@ -1569,7 +1535,6 @@ sub set_object {
         'object'  => $object,
         'destroy' => $destroy,
     };
-    return;
 }
 
 =method I<destroy_object( $name )>
@@ -1596,7 +1561,6 @@ sub destroy_object {
     return if ! $thischild->{'object'}->{$name}->{'destroy'};
     $self->dbgout( 'Object destroyed', $name, LOG_DEBUG );
     delete $thischild->{'object'}->{$name};
-    return;
 }
 
 =method I<destroy_all_objects()>
@@ -1615,7 +1579,6 @@ sub destroy_all_objects {
     {
         $self->destroy_object( $name );
     }
-    return;
 }
 
 =method I<exit_on_close()>
@@ -1628,7 +1591,6 @@ sub exit_on_close {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     $top_handler->{'exit_on_close'} = 1;
-    return;
 }
 
 =method I<reject_mail( $reason )>
@@ -1646,7 +1608,6 @@ sub reject_mail {
     }
     my $top_handler = $self->get_top_handler();
     $top_handler->{'reject_mail'} = $reason;
-    return;
 }
 
 =method I<quarantine_mail( $reason )>
@@ -1659,7 +1620,6 @@ sub quarantine_mail {
     my ( $self, $reason ) = @_;
     my $top_handler = $self->get_top_handler();
     $top_handler->{'quarantine_mail'} = $reason;
-    return;
 }
 
 =method I<defer_mail( $reason )>
@@ -1677,7 +1637,6 @@ sub defer_mail {
     }
     my $top_handler = $self->get_top_handler();
     $top_handler->{'defer_mail'} = $reason;
-    return;
 }
 
 =method I<clear_all_symbols()>
@@ -1690,7 +1649,6 @@ sub clear_all_symbols {
     my ( $self ) = @_;
     my $top_handler = $self->get_top_handler();
     delete $top_handler->{'symbols'};
-    return;
 }
 
 =method I<clear_symbols()>
@@ -1717,8 +1675,6 @@ sub clear_symbols {
             'C' => $connect_symbols,
         };
     }
-
-    return;
 }
 
 =method I<set_symbol( $code, $key, $value )>
@@ -1738,7 +1694,6 @@ sub set_symbol {
         $top_handler->{'symbols'}->{$code} = {};
     }
     $top_handler->{'symbols'}->{$code}->{$key} = $value;;
-    return;
 }
 
 =method I<get_symbol( $searchkey )>
@@ -1759,7 +1714,6 @@ sub get_symbol {
             }
         }
     }
-    return;
 }
 
 =method I<tempfail_on_error()>
@@ -1797,7 +1751,6 @@ sub tempfail_on_error {
             $self->set_return( $self->smfis_tempfail() );
         }
     }
-    return;
 }
 
 
@@ -2247,8 +2200,6 @@ sub dbgout {
     if ( $self->get_symbol('i') ) {
         $self->dbgoutwrite();
     }
-
-    return;
 }
 
 =log_method I<log_error( $error )>
@@ -2260,7 +2211,6 @@ Log an error.
 sub log_error {
     my ( $self, $error ) = @_;
     $self->dbgout( 'ERROR', $error, LOG_ERR );
-    return;
 }
 
 =log_method I<dbgoutwrite()>
@@ -2301,7 +2251,6 @@ sub dbgoutwrite {
     $self->handle_exception( $@ );  # Not usually called within an eval, however we shouldn't
                                     # ever get a Timeout (for example) here, so it is safe to
                                     # pass to handle_exception anyway.
-    return;
 }
 
 
@@ -2468,8 +2417,6 @@ sub add_headers {
             $self->add_header( $header->{'field'}, $header->{'value'} );
         }
     }
-
-    return;
 }
 
 =method I<prepend_header( $field, $value )>
@@ -2489,7 +2436,6 @@ sub prepend_header {
         'field' => $field,
         'value' => $value,
       };
-    return;
 }
 
 =method I<add_auth_header( $value )>
@@ -2505,7 +2451,6 @@ sub add_auth_header {
         $top_handler->{'auth_headers'} = [];
     }
     push @{ $top_handler->{'auth_headers'} }, $value;
-    return;
 }
 
 =method I<add_c_auth_header( $value )>
@@ -2523,7 +2468,6 @@ sub add_c_auth_header {
         $top_handler->{'c_auth_headers'} = [];
     }
     push @{ $top_handler->{'c_auth_headers'} }, $value;
-    return;
 }
 
 =method I<append_header( $field, $value )>
@@ -2543,7 +2487,6 @@ sub append_header {
         'field' => $field,
         'value' => $value,
       };
-    return;
 }
 
 
@@ -2612,7 +2555,6 @@ sub write_packet {
     my ( $self, $type, $data ) = @_;
     my $thischild = $self->{'thischild'};
     $thischild->write_packet( $type, $data );
-    return;
 }
 
 =low_method I<add_header( $key, $value )>
@@ -2627,7 +2569,6 @@ sub add_header {
     my $config = $self->config();
     return if $config->{'dryrun'};
     $thischild->add_header( $key, $value );
-    return;
 }
 
 =low_method I<insert_header( $index, $key, $value )>
@@ -2642,7 +2583,6 @@ sub insert_header {
     my $config = $self->config();
     return if $config->{'dryrun'};
     $thischild->insert_header( $index, $key, $value );
-    return;
 }
 
 =low_method I<change_header( $key, $index, $value )>
@@ -2657,7 +2597,6 @@ sub change_header {
     my $config = $self->config();
     return if $config->{'dryrun'};
     $thischild->change_header( $key, $index, $value );
-    return;
 }
 
 1;

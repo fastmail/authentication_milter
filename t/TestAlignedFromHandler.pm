@@ -1,9 +1,13 @@
 package TestAlignedFromHandler;
-
-use Test::More;
-
-use Mail::Milter::Authentication::Tester::HandlerTester;
+use 5.20.0;
+use strict;
+use warnings;
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Test the Aligned From Handler
+# VERSION
 use Mail::Milter::Authentication::Constants qw{ :all };
+use Mail::Milter::Authentication::Tester::HandlerTester;
+use Test::More;
 
 # Common subs for testing the Aligned From handler in different configurations
 

@@ -1,10 +1,11 @@
 package Mail::Milter::Authentication::Handler::AddID;
+use 5.20.0;
 use strict;
 use warnings;
-use base 'Mail::Milter::Authentication::Handler';
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Example handler class
 # VERSION
-
-use Sys::Syslog qw{:standard :macros};
+use base 'Mail::Milter::Authentication::Handler';
 
 sub default_config {
     return {};
@@ -15,7 +16,6 @@ sub eom_callback {
     # On HELO
     my ( $self, $helo_host ) = @_;
     $self->append_header('X-Authentication-Milter','Header added by Authentication Milter');
-    return;
 }
 
 1;

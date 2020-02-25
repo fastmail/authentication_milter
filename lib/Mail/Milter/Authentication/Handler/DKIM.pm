@@ -1,20 +1,15 @@
 package Mail::Milter::Authentication::Handler::DKIM;
+use 5.20.0;
 use strict;
 use warnings;
-use base 'Mail::Milter::Authentication::Handler';
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler class for DKIM
 # VERSION
-
-use Data::Dumper;
-use English qw{ -no_match_vars };
-use Sys::Syslog qw{:standard :macros};
-
+use base 'Mail::Milter::Authentication::Handler';
 use Mail::DKIM 0.39;
-use Mail::DKIM::Verifier 0.39;
 use Mail::DKIM::DNS;
 use Mail::DKIM::KeyValueList;
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
-use Mail::AuthenticationResults::Header::Comment;
+use Mail::DKIM::Verifier 0.39;
 
 sub default_config {
     return {
@@ -50,7 +45,6 @@ sub envfrom_callback {
     $self->{'valid_domains'} = {};
     $self->{'carry'}         = q{};
     $self->destroy_object('dkim');
-    return;
 }
 
 sub show_domainkeys {
@@ -93,8 +87,6 @@ sub header_callback {
     if ( lc($header) eq 'domainkey-signature' ) {
         $self->{'has_dkim'} = 1 if $self->show_domainkeys();
     }
-
-    return;
 }
 
 sub eoh_callback {
@@ -156,8 +148,6 @@ sub eoh_callback {
     }
 
     $self->{'carry'} = q{};
-
-    return;
 }
 
 sub body_callback {
@@ -193,7 +183,6 @@ sub body_callback {
         $self->_check_error( $error );
         $self->metric_count( 'dkim_total', { 'result' => 'error' } );
     }
-    return;
 }
 
 sub eom_callback {
@@ -393,7 +382,6 @@ sub close_callback {
     delete $self->{'has_dkim'};
     delete $self->{'valid_domains'};
     $self->destroy_object('dkim');
-    return;
 }
 
 sub _check_error {
@@ -431,7 +419,6 @@ sub _check_error {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    return;
 }
 
 1;

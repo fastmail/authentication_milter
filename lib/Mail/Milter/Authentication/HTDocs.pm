@@ -1,6 +1,9 @@
 package Mail::Milter::Authentication::HTDocs;
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Load and serve static files via the in-built http server.
 # VERSION
 
 =head1 DESCRIPTION

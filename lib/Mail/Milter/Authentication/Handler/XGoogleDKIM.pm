@@ -1,19 +1,14 @@
 package Mail::Milter::Authentication::Handler::XGoogleDKIM;
+use 5.20.0;
 use strict;
 use warnings;
-use base 'Mail::Milter::Authentication::Handler';
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler class for Google specific DKIM
 # VERSION
-
-use Data::Dumper;
-use English qw{ -no_match_vars };
-use Sys::Syslog qw{:standard :macros};
-
-use Mail::DKIM;
-use Mail::DKIM::Verifier;
+use base 'Mail::Milter::Authentication::Handler';
 use Mail::DKIM::DNS;
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
-use Mail::AuthenticationResults::Header::Comment;
+use Mail::DKIM::Verifier;
+use Mail::DKIM;
 
 sub default_config {
     return {
@@ -41,7 +36,6 @@ sub envfrom_callback {
     $self->{'has_dkim'}     = 0;
     $self->{'carry'}        = q{};
     $self->destroy_object('xgdkim');
-    return;
 }
 
 sub header_callback {
@@ -76,8 +70,6 @@ sub header_callback {
             $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
         }
     }
-
-    return;
 }
 
 sub eoh_callback {
@@ -135,8 +127,6 @@ sub eoh_callback {
     }
 
     $self->{'carry'} = q{};
-
-    return;
 }
 
 sub body_callback {
@@ -172,7 +162,6 @@ sub body_callback {
         $self->_check_error( $error );
         $self->metric_count( 'xgoogledkim_total', { 'result' => 'error' } );
     }
-    return;
 }
 
 sub eom_callback {
@@ -274,7 +263,6 @@ sub close_callback {
     delete $self->{'carry'};
     delete $self->{'has_dkim'};
     $self->destroy_object('xgdkim');
-    return;
 }
 
 sub _check_error {
@@ -306,7 +294,6 @@ sub _check_error {
         $self->exit_on_close();
         $self->tempfail_on_error();
     }
-    return;
 }
 
 1;

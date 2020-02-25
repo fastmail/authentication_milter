@@ -1,26 +1,23 @@
 package Mail::Milter::Authentication::Tester;
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Class used for testing
 # VERSION
-
-our @ISA = qw{ Exporter }; ## no critic
-our @EXPORT = qw{ start_milter stop_milter get_metrics test_metrics smtp_process smtp_process_multi milter_process smtpput send_smtp_packet smtpcat }; ## no critic
-
-use Net::DNS::Resolver::Mock 1.20171219;
-use Test::More;
-use Test::File::Contents;
-
+use Mail::Milter::Authentication;
+use Mail::Milter::Authentication::Client;
+use Mail::Milter::Authentication::Protocol::Milter;
+use Mail::Milter::Authentication::Protocol::SMTP;
 use Cwd qw{ cwd };
 use IO::Socket::INET;
 use IO::Socket::UNIX;
-use JSON;
-use Module::Load;
+use Net::DNS::Resolver::Mock 1.20171219;
+use Test::File::Contents;
+use Test::More;
 
-use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Client;
-use Mail::Milter::Authentication::Config;
-use Mail::Milter::Authentication::Protocol::Milter;
-use Mail::Milter::Authentication::Protocol::SMTP;
+our @ISA = qw{ Exporter }; ## no critic
+our @EXPORT = qw{ start_milter stop_milter get_metrics test_metrics smtp_process smtp_process_multi milter_process smtpput send_smtp_packet smtpcat }; ## no critic
 
 my $base_dir = cwd();
 
@@ -175,8 +172,6 @@ sub test_metrics {
         }
 
     };
-
-    return;
 }
 
 sub smtp_process {
@@ -222,8 +217,6 @@ sub smtp_process {
     else {
         is( $return, 1, 'SMTP Put Returned ok' );
     }
-
-    return;
 }
 
 sub smtp_process_multi {
@@ -285,8 +278,6 @@ sub smtp_process_multi {
     waitpid( $cat_pid,0 );
 
     files_eq_or_diff( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'smtp ' . $args->{'desc'} );
-
-    return;
 }
 
 sub milter_process {
@@ -312,8 +303,6 @@ sub milter_process {
     });
 
     files_eq_or_diff( 'data/example/' . $args->{'dest'}, 'tmp/result/' . $args->{'dest'}, 'milter ' . $args->{'desc'} );
-
-    return;
 }
 
 sub smtpput {
@@ -568,7 +557,6 @@ sub client {
 
     }
     waitpid( $pid, 0 );
-    return;
 }
 
 1;

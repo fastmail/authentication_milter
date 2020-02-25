@@ -1,12 +1,11 @@
 package Mail::Milter::Authentication::Protocol::Milter;
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Milter protocol handling
 # VERSION
-
-use English qw{ -no_match_vars };
 use Net::IP;
-
-use Mail::Milter::Authentication::Constants qw{ :all };
 
 sub register_metrics {
     return {
@@ -41,8 +40,6 @@ sub protocol_process_request {
         $self->milter_process_command( $command, $data );
 
     }
-
-    return;
 }
 
 sub milter_process_command {
@@ -225,8 +222,6 @@ sub milter_process_command {
             }
         }
     }
-
-    return;
 }
 
 sub milter_process_connect {
@@ -297,7 +292,6 @@ sub add_header {
         . $value
         . "\0"
     );
-    return;
 }
 
 sub change_header {
@@ -310,7 +304,6 @@ sub change_header {
         . $value
         . "\0"
     );
-    return;
 }
 
 sub insert_header {
@@ -322,7 +315,6 @@ sub insert_header {
         . $value
         . "\0"
     );
-    return;
 }
 
 sub write_packet {
@@ -334,7 +326,6 @@ sub write_packet {
     $socket->syswrite($len);
     $socket->syswrite($code);
     $socket->syswrite($data);
-    return;
 }
 
 1;
@@ -401,9 +392,4 @@ $data.
 Receive a new command from the protocol stream and process it.
 
 =back
-
-=head1 DEPENDENCIES
-
-  English
-  Net::IP
 

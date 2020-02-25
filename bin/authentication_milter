@@ -1,20 +1,18 @@
 #!/usr/bin/env perl
-
+use 5.20.0;
 use strict;
 use warnings;
-
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: A Perl Mail Authentication Milter
+# PODNAME: authentication_milter
+# VERSION
 use Getopt::Long;
-use JSON;
 use List::MoreUtils qw{ uniq };
+use Pod::Usage;
 use Mail::Milter::Authentication;
+use Mail::Milter::Authentication::Config qw{ get_config default_config };
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
-use Mail::Milter::Authentication::Config qw{ get_config default_config };
-use Module::Load;
-use Pod::Usage;
-# ABSTRACT: A Perl Mail Authentication Milter
-# VERSION
-# PODNAME: authentication_milter
 
 # CONFIG
 my $pid_file = '/run/authentication_milter.pid';
@@ -79,11 +77,9 @@ Mail::Milter::Authentication::start({
 
 sub usage {
     pod2usage( -verbose => 2 );
-    return;
 }
 
-sub module_usage {
-    my ( $module ) = @_;
+sub module_usage($module) {
     $module =~ s/[^a-zA-Z0-9]//g;
     my $full_module = 'Mail::Milter::Authentication::Handler::' . $module;
     eval {
@@ -102,8 +98,6 @@ sub module_usage {
         die "Could not find help for $module";
     }
     pod2usage( -input => $module_file, -verbose => 2 );
-
-    return;
 }
 
 sub modules_installed {
@@ -114,7 +108,6 @@ sub modules_installed {
         uniq sort @$installed_handlers,
     );
     print "\n\n";
-    return;
 }
 
 sub show_default_config {

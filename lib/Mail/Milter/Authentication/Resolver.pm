@@ -1,6 +1,9 @@
 package Mail::Milter::Authentication::Resolver;
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: DNS Recolver methods
 # VERSION
 use base 'Net::DNS::Resolver';
 use Scalar::Util qw{ weaken };
@@ -29,7 +32,6 @@ to Net::DNS::Resolver
 sub clear_error_cache {
     my $self = shift;
     $self->{ _timedout } = {};
-    return;
 }
 
 sub _do { ## no critic

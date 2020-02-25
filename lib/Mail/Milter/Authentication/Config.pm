@@ -1,12 +1,14 @@
 package Mail::Milter::Authentication::Config;
 # ABSTRACT: Load config files for Authentication Milter
+use 5.20.0;
 use strict;
 use warnings;
+##use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Common configuration handling
 # VERSION
-
-use Mail::Milter::Authentication;
-use Module::Load;
-use Module::Loaded;
+use English;
+use JSON;
+use TOML;
 
 use Exporter qw{ import };
 our @EXPORT_OK = qw{
@@ -14,9 +16,6 @@ our @EXPORT_OK = qw{
   set_config
   default_config
 };
-
-use JSON;
-use TOML;
 
 =head1 DESCRIPTION
 
@@ -77,6 +76,7 @@ sub default_config {
         'handlers'                        => {}
     };
 
+    require Mail::Milter::Authentication;
     my $installed_handlers = Mail::Milter::Authentication::get_installed_handlers();
     foreach my $handler ( @$installed_handlers ) {
         my $handler_module = 'Mail::Milter::Authentication::Handler::' . $handler;
@@ -109,8 +109,6 @@ sub set_config {
     my $protocol = $config->{'protocol'} || 'milter';
     $config->{'protocol'} = $protocol;
     $CONFIG = $config;
-
-    return;
 }
 
 =func I<load_file( $file )>
@@ -166,7 +164,6 @@ will be called with $config as the argument.g
 
     sub process_config {
         my ( $self, $config ) = @_;
-        return;
     }
 
     1;

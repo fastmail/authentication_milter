@@ -1,8 +1,14 @@
 package Mail::Milter::Authentication::Client;
-
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Client for connecting back to the authmilter server
 # VERSION
+use Mail::Milter::Authentication::Net::Milter;
+use Data::Dumper;
+use Digest::MD5 qw{ md5_base64 };
+use Email::Simple;
 
 =head1 DESCRIPTION
 
@@ -13,14 +19,6 @@ Client to the Authentication Milter
 Connect to the Authentication Milter and pass it email, returning the result.
 
 =cut
-
-use Data::Dumper;
-use Digest::MD5 qw{ md5_base64 };
-use Email::Simple;
-use English qw{ -no_match_vars };
-
-use Mail::Milter::Authentication::Net::Milter;
-use Mail::Milter::Authentication::Config qw{ get_config };
 
 =constructor I<new( $args )>
 
@@ -198,7 +196,6 @@ sub r { ## no critic [Subroutines::RequireArgUnpacking]
             warn Dumper $result;
         }
     }
-    return;
 }
 
 =method I<insert_header()>
@@ -224,7 +221,6 @@ sub insert_header {
         $i++;
     }
     $self->{'header_pairs'} = \@header_pairs;
-    return;
 }
 
 =method I<replace_header()>
@@ -264,7 +260,6 @@ sub replace_header {
         }
     }
     $self->{'header_pairs'} = \@header_pairs;
-    return;
 }
 
 =method I<add_header()>
@@ -279,7 +274,6 @@ sub add_header {
     push @header_pairs, $header;
     push @header_pairs, $value;
     $self->{'header_pairs'} = \@header_pairs;
-    return;
 }
 
 =method I<load_mail()>
@@ -343,7 +337,6 @@ sub load_mail {
     my $message_object = Email::Simple->new( $mail_data );
     $self->{'message_object'} = $message_object;
     $self->{'header_pairs'}   = \@header_pairs;
-    return;
 }
 
 =method I<process()>
@@ -438,7 +431,6 @@ sub process {
     }
 
     $self->{'result'} =  $self->{'message_object'}->as_string();
-    return;
 }
 
 =method I<result()>

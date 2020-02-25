@@ -1,20 +1,13 @@
 package Mail::Milter::Authentication::Tester::HandlerTester;
-
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Class for testing handlers
 # VERSION
-
-use Carp;
-use Clone qw{ clone };
-use English qw{ -no_match_vars };
-use Mail::AuthenticationResults::Header;
-use Mail::AuthenticationResults::Header::AuthServID;
 use Mail::Milter::Authentication;
-use Mail::Milter::Authentication::Config qw{ set_config get_config default_config };
-use Mail::Milter::Authentication::Constants qw{ :all };
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
-use Module::Load;
 use Net::DNS::Resolver::Mock;
 use Net::IP;
 
@@ -182,7 +175,6 @@ sub snapshot {
     my ( $self, $name ) = @_;
     my $snapshot = clone( $self->{ 'authmilter' } );
     $self->{ 'snapshots' }->{ $name } = $snapshot;
-    return;
 }
 
 sub switch {
@@ -190,7 +182,6 @@ sub switch {
     croak 'unknown snapshot' if ! exists ( $self->{ 'snapshots' }->{ $name } );
     my $snapshot = clone( $self->{ 'snapshots' }->{ $name } );
     $self->{ 'authmilter' } = $snapshot;
-    return;
 }
 
 sub handler {
@@ -322,8 +313,6 @@ sub run {
 
     $self->addheader();
     #    $self->close();
-
-    return;
 }
 
 sub get_return {

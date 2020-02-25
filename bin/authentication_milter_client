@@ -1,17 +1,16 @@
 #!/usr/bin/env perl
-
+use 5.20.0;
 use strict;
 use warnings;
-
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: A Perl Mail Authentication Milter client
+# PODNAME: authentication_milter_client
+# VERSION
 use Email::Simple;
 use Getopt::Long;
 use Pod::Usage;
-
 use Mail::Milter::Authentication::Client;
 use Mail::Milter::Authentication::Config;
-# VERSION
-# ABSTRACT: A Perl Mail Authentication Milter client
-# PODNAME: authentication_milter_client
 
 # CONFIG
 my $help         = 0;
@@ -51,7 +50,6 @@ if ( $prefix ) {
 
 sub usage {
     pod2usage( -verbose => 2 );
-    return;
 }
 
 my $args = {

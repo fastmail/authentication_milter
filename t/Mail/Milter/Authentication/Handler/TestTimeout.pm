@@ -1,13 +1,11 @@
 package Mail::Milter::Authentication::Handler::TestTimeout;
-
+use 5.20.0;
 use strict;
 use warnings;
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Timeout Tester
+# VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use version; our $VERSION = version->declare('v1.1.5');
-
-use Data::Dumper;
-use English qw{ -no_match_vars };
-use Sys::Syslog qw{:standard :macros};
 
 sub _timeout {
     alarm ( 1 );

@@ -1,12 +1,11 @@
 package Mail::Milter::Authentication::Handler::Size;
+use 5.20.0;
 use strict;
 use warnings;
-use base 'Mail::Milter::Authentication::Handler';
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler class for message size metrics
 # VERSION
-
-use Data::Dumper;
-use English qw{ -no_match_vars };
-use Sys::Syslog qw{:standard :macros};
+use base 'Mail::Milter::Authentication::Handler';
 
 sub default_config {
     return {};
@@ -32,30 +31,23 @@ sub envfrom_callback {
     my ( $self, $env_from )  = @_;
     $self->{'headersize'} = 0;
     $self->{'bodysize'} = 0;
-    return;
 }
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
     $self->{ 'headersize' } = $self->{ 'headersize' } + length( $header . ': ' . $value ) + 2;
-
-    return;
 }
 
 sub body_callback {
     my ( $self, $body_chunk ) = @_;
     $self->{ 'bodysize' } = $self->{ 'bodysize' } + length ( $body_chunk );
-    return;
 }
 
 sub eom_callback {
     my ($self) = @_;
-
     $self->metric_count( 'size_total', {}, 1 );
     $self->metric_count( 'size_header_bytes_total', {}, $self->{ 'headersize' } );
     $self->metric_count( 'size_body_bytes_total', {}, $self->{ 'bodysize' } );
-
-    return;
 }
 
 sub close_callback {
@@ -77,7 +69,6 @@ sub close_callback {
 
     delete $self->{'bodysize'};
     delete $self->{'headersize'};
-    return;
 }
 
 1;

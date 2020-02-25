@@ -1,15 +1,13 @@
 package Mail::Milter::Authentication::Handler::IPRev;
+use 5.20.0;
 use strict;
 use warnings;
-use base 'Mail::Milter::Authentication::Handler';
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler class for IPRev
 # VERSION
-
+use base 'Mail::Milter::Authentication::Handler';
 use Net::DNS;
 use Net::IP;
-use Sys::Syslog qw{:standard :macros};
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
-use Mail::AuthenticationResults::Header::Comment;
 
 sub default_config {
     return {};
@@ -44,7 +42,6 @@ sub _dns_error {
           . ' with '
           . $error );
     }
-    return;
 }
 
 sub connect_requires {
@@ -225,8 +222,6 @@ sub connect_callback {
         $self->add_c_auth_header($header);
         $self->metric_count( 'iprev_total', { 'result' => 'pass'} );
     }
-
-    return;
 }
 
 sub _address_for_domain {
@@ -268,7 +263,6 @@ sub _address_for_domain {
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'verified_ptr'};
-    return;
 }
 
 1;

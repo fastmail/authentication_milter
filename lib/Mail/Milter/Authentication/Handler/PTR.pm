@@ -1,13 +1,11 @@
 package Mail::Milter::Authentication::Handler::PTR;
+use 5.20.0;
 use strict;
 use warnings;
-use base 'Mail::Milter::Authentication::Handler';
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler class for PTR checking
 # VERSION
-
-use Sys::Syslog qw{:standard :macros};
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
-use Mail::AuthenticationResults::Header::Comment;
+use base 'Mail::Milter::Authentication::Handler';
 
 sub default_config {
     return {};
@@ -60,8 +58,6 @@ sub helo_callback {
     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.ptr' )->safe_set_value( $domains ) );
     $self->add_c_auth_header( $header );
     $self->metric_count( 'ptr_total', { 'result' => $result} );
-
-    return;
 }
 
 1;

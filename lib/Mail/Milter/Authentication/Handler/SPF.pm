@@ -1,14 +1,11 @@
 package Mail::Milter::Authentication::Handler::SPF;
+use 5.20.0;
 use strict;
 use warnings;
-use base 'Mail::Milter::Authentication::Handler';
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler class for SPF
 # VERSION
-
-use Sys::Syslog qw{:standard :macros};
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
-use Mail::AuthenticationResults::Header::Comment;
-
+use base 'Mail::Milter::Authentication::Handler';
 use Mail::SPF;
 
 sub default_config {
@@ -50,7 +47,6 @@ sub setup_callback {
             'destroy' => 0,
         };
     });
-    return;
 }
 
 sub register_metrics {
@@ -71,7 +67,6 @@ sub helo_callback {
     my ( $self, $helo_host ) = @_;
     $self->{'failmode'} = 0;
     $self->{'helo_name'} = $helo_host;
-    return;
 }
 
 sub envfrom_callback {
@@ -194,8 +189,6 @@ sub envfrom_callback {
         $self->add_auth_header($header);
         $self->metric_count( 'spf_total', { 'result' => 'error' } );
     }
-
-    return;
 }
 
 sub close_callback {
@@ -205,7 +198,6 @@ sub close_callback {
     delete $self->{'dmarc_result'};
     delete $self->{'failmode'};
     delete $self->{'helo_name'};
-    return;
 }
 
 1;

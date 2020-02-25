@@ -1,0 +1,27 @@
+[connect_test_null]
+callback = "connect"
+value = "192\.168\.0\.1"
+with = "451 4.7.28 flood policy violation (HOTtest)"
+percent = 100
+
+[connect_test_past]
+callback = "connect"
+value = "192\.168\.0\.2"
+with = "451 4.7.28 flood policy violation (HOTtest)"
+percent = 100
+until = 10
+
+[connect_test_future]
+callback = "connect"
+value = "192\.168\.0\.3"
+with = "451 4.7.28 flood policy violation (HOTtest)"
+percent = 100
+until = 3000000000
+
+[connect_test_zero]
+callback = "connect"
+value = "192\.168\.0\.4"
+with = "451 4.7.28 flood policy violation (HOTtest)"
+percent = 100
+until = 0
+

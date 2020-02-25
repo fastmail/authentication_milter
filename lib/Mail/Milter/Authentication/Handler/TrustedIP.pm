@@ -1,14 +1,12 @@
 package Mail::Milter::Authentication::Handler::TrustedIP;
+use 5.20.0;
 use strict;
 use warnings;
-use base 'Mail::Milter::Authentication::Handler';
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler class for Trusted IP addresses
 # VERSION
-
+use base 'Mail::Milter::Authentication::Handler';
 use Net::IP;
-use Sys::Syslog qw{:standard :macros};
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
-use Mail::AuthenticationResults::Header::Comment;
 
 sub default_config {
     return {
@@ -60,13 +58,11 @@ sub connect_callback {
         $self->{'is_trusted_ip_address'} = 1;
         $self->metric_count( 'trustedip_connect_total' );
     }
-    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'is_trusted_ip_address'};
-    return;
 }
 
 1;

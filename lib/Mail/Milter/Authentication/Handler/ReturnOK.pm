@@ -1,14 +1,12 @@
 package Mail::Milter::Authentication::Handler::ReturnOK;
+use 5.20.0;
 use strict;
 use warnings;
-use base 'Mail::Milter::Authentication::Handler';
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Handler class for Checking Return address validity
 # VERSION
-
+use base 'Mail::Milter::Authentication::Handler';
 use Net::DNS;
-use Sys::Syslog qw{:standard :macros};
-use Mail::AuthenticationResults::Header::Entry;
-use Mail::AuthenticationResults::Header::SubEntry;
-use Mail::AuthenticationResults::Header::Comment;
 
 sub default_config {
     return {};
@@ -39,8 +37,6 @@ sub _check_address {
     my $domain = lc $self->get_domain_from( $email );
 
     $self->_check_domain ( $domain, $type );
-
-    return;
 }
 
 sub _check_domain_rr {
@@ -254,7 +250,6 @@ sub _check_domain {
     $self->add_auth_header($header);
 
     push @{ $self->{ 'metrics' } }, $metrics;
-    return;
 }
 
 sub envfrom_callback {
@@ -268,8 +263,6 @@ sub envfrom_callback {
     foreach my $address ( @$addresses ) {
         $self->_check_address( $address, 'smtp' );
     }
-
-    return;
 }
 
 sub header_callback {
@@ -281,15 +274,12 @@ sub header_callback {
             $self->_check_address( $address, 'header' );
         }
     }
-
-    return;
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{ 'done' };
     delete $self->{ 'metrics' };
-    return;
 }
 
 sub eom_callback {
@@ -300,8 +290,6 @@ sub eom_callback {
     foreach my $metric ( @$metrics ) {
         $self->metric_count( 'returnok_total', $metric );
     }
-
-    return;
 }
 
 1;
