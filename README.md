@@ -1,5 +1,5 @@
 Authentication Milter
-ot---------------------
+---------------------
 
 A Perl implementation of email authentication standards rolled up into a single easy to use milter.
 
