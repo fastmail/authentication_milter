@@ -65,6 +65,7 @@ Setup version metrics
 
 sub set_versions {
     my ( $self, $server ) = @_;
+    return if ( ! $self->{ 'enabled' } );
     $self->{'prom'}->set( 'authmilter_version', 1, { version => $Mail::Milter::Authentication::VERSION, module => 'core', ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
     foreach my $Handler ( sort keys %{ $server->{ 'handler' } } ) {
         next if $Handler eq '_Handler';
