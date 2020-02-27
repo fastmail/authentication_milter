@@ -29,28 +29,30 @@ This object is used to store, modify, and report metrics.
 sub new {
     my ( $class ) = @_;
     my $self = {};
-    $self->{'counter'}    = {};
-    $self->{'help'}       = {};
-    $self->{'start_time'} = time;
-    $self->{'queue'}      = [];
+    $self->{counter}    = {};
+    $self->{help}       = {};
+    $self->{start_time} = time;
+    $self->{queue}      = [];
 
     my $config = get_config();
 
-    $self->{'enabled'} = defined( $config->{'metric_port'} ) ? 1
-                       : defined( $config->{'metric_connection'} ) ? 1
-                       : 0;
+    $self->{enabled} = defined( $config->{metric_port} ) ? 1
+                     : defined( $config->{metric_connection} ) ? 1
+                     : 0;
 
-    if ( $self->{'enabled'} ) {
+    if ( $self->{enabled} ) {
         my $cache_args = {};
-        $cache_args->{'init_file'} = 1;
-        if ( defined( $config->{'metric_tempfile'} ) ) {
-            $cache_args->{'share_file'} = $config->{'metric_tempfile'};
+        $cache_args->{init_file} = 1;
+        if ( defined( $config->{metric_tempfile} ) ) {
+            $cache_args->{share_file} = $config->{metric_tempfile};
         }
-        $self->{'prom'} = Prometheus::Tiny::Shared->new( cache_args => $cache_args );
-        $self->{'prom'}->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
-        $self->{'prom'}->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
-        $self->{'prom'}->declare( 'authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
-        $self->{'prom'}->declare( 'authmilter_version', help => 'Running versions', type => 'gauge' );
+        $self->{prom} = eval{ Prometheus::Tiny::Shared->new( cache_args => $cache_args ) };
+        if ( $self->{prom} ) {
+            $self->{prom}->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
+            $self->{prom}->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
+            $self->{prom}->declare( 'authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
+            $self->{prom}->declare( 'authmilter_version', help => 'Running versions', type => 'gauge' );
+        }
     }
 
     bless $self, $class;
@@ -65,11 +67,12 @@ Setup version metrics
 
 sub set_versions {
     my ( $self, $server ) = @_;
-    return if ( ! $self->{ 'enabled' } );
-    $self->{'prom'}->set( 'authmilter_version', 1, { version => $Mail::Milter::Authentication::VERSION, module => 'core', ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
-    foreach my $Handler ( sort keys %{ $server->{ 'handler' } } ) {
+    return if ! $self->{enabled};
+    return if ! $self->{prom};
+    $self->{prom}->set( 'authmilter_version', 1, { version => $Mail::Milter::Authentication::VERSION, module => 'core', ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+    foreach my $Handler ( sort keys %{ $server->{handler} } ) {
         next if $Handler eq '_Handler';
-        $self->{'prom'}->set( 'authmilter_version', 1, { version => $server->{ 'handler' }->{ $Handler }->get_version(), module => $Handler, ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+        $self->{prom}->set( 'authmilter_version', 1, { version => $server->{handler}->{ $Handler }->get_version(), module => $Handler, ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
     }
 }
 
@@ -83,7 +86,7 @@ Returns the current value of timeout for metrics operations.
 sub get_timeout {
     my ( $self ) = @_;
     my $config = get_config();
-    return $config->{ 'metric_timeout' } || 5;
+    return $config->{metric_timeout} || 5;
 }
 
 =method I<clean_label($text)>
@@ -120,12 +123,13 @@ $server is the current handler object
 
 sub count {
     my ( $self, $args ) = @_;
-    return if ( ! $self->{ 'enabled' } );
+    return if ! $self->{enabled};
+    return if ! $self->{prom};
 
-    my $count_id = $args->{ 'count_id' };
-    my $labels   = $args->{ 'labels' };
-    my $server   = $args->{ 'server' };
-    my $count    = $args->{ 'count' };
+    my $count_id = $args->{count_id};
+    my $labels   = $args->{labels};
+    my $server   = $args->{server};
+    my $count    = $args->{count};
 
     $count = 1 if ! defined $count;
 
@@ -162,12 +166,13 @@ $server is the current handler object
 
 sub set {
     my ( $self, $args ) = @_;
-    return if ( ! $self->{ 'enabled' } );
+    return if ! $self->{enabled};
+    return if ! $self->{prom};
 
-    my $gauge_id = $args->{ 'gauge_id' };
-    my $labels   = $args->{ 'labels' };
-    my $server   = $args->{ 'server' };
-    my $value    = $args->{ 'value' };
+    my $gauge_id = $args->{gauge_id};
+    my $labels   = $args->{labels};
+    my $server   = $args->{server};
+    my $value    = $args->{value};
 
     die 'metric set must define value' if ! defined $value;
 
@@ -207,7 +212,8 @@ Expects a hashref of metric description, keyed on metric name.
 
 sub register_metrics {
     my ( $self, $hash ) = @_;
-    return if ( ! $self->{ 'enabled' } );
+    return if ! $self->{enabled};
+    return if ! $self->{prom};
 
     foreach my $metric ( keys %$hash ) {
         my $data = $hash->{ $metric };
@@ -233,11 +239,12 @@ Called in the master process to periodically update some metrics
 
 sub master_metric_update {
     my ( $self, $server ) = @_;
-    return if ( ! $self->{ 'enabled' } );
+    return if ! $self->{enabled};
+    return if ! $self->{prom};
 
     eval {
         foreach my $type ( qw { waiting processing } ) {
-            $self->{prom}->set('authmilter_processes_' . $type, $server->{'server'}->{'tally'}->{ $type }, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+            $self->{prom}->set('authmilter_processes_' . $type, $server->{server}->{tally}->{$type}, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
         }
     };
 }
@@ -250,15 +257,15 @@ Handle a metrics or http request in the child process.
 
 sub child_handler {
     my ( $self, $server ) = @_;
-    return if ( ! $self->{ 'enabled' } );
+    return if ! $self->{enabled};
 
     my $config = get_config();
 
     eval {
-        local $SIG{'ALRM'} = sub{ die "Timeout\n" };
+        local $SIG{ALRM} = sub{ die "Timeout\n" };
         alarm( $self->get_timeout() );
 
-        my $socket = $server->{'server'}->{'client'};
+        my $socket = $server->{server}->{client};
         my $req;
 
         $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':metrics';
@@ -291,13 +298,20 @@ sub child_handler {
         }
 
         if ( $request_uri eq '/metrics' ) {
-            $server->{'handler'}->{'_Handler'}->top_metrics_callback();
-            $self->{prom}->set( 'authmilter_uptime_seconds_total', time - $self->{'start_time'}, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+            if ( $self->{prom} ) {
+                $server->{handler}->{_Handler}->top_metrics_callback();
+                $self->{prom}->set( 'authmilter_uptime_seconds_total', time - $self->{start_time}, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+            }
 
             print $socket "HTTP/1.0 200 OK\n";
             print $socket "Content-Type: text/plain\n";
             print $socket "\n";
-            print $socket $self->{prom}->format();
+            if ( $self->{prom} ) {
+                print $socket $self->{prom}->format();
+            }
+            else {
+                print $socket '# Metrics unavailable';
+            }
 
         }
         elsif ( $request_uri eq '/' ){
@@ -324,9 +338,9 @@ sub child_handler {
     <h2>Installed Handlers</h2>
     <div class="spaceAfter">};
 
-    foreach my $Handler ( sort keys %{ $server->{ 'handler' } } ) {
+    foreach my $Handler ( sort keys %{ $server->{handler} } ) {
         next if $Handler eq '_Handler';
-        print $socket ' <span class="handler">' . $Handler . ' (' . $server->{ 'handler' }->{ $Handler }->get_version(). ')</span> ';
+        print $socket ' <span class="handler">' . $Handler . ' (' . $server->{handler}->{ $Handler }->get_version(). ')</span> ';
     }
 
     print $socket qq{
@@ -336,7 +350,7 @@ sub child_handler {
     <table class="callbacksTable">};
 
     foreach my $stage ( qw{ setup connect helo envfrom envrcpt header eoh body eom abort close addheader } ) {
-        my $callbacks = $server->{ 'handler' }->{ '_Handler' }->get_callbacks( $stage );
+        my $callbacks = $server->{handler}->{_Handler}->get_callbacks( $stage );
         print $socket "<tr><td>$stage</td><td>" . join( ' ', map{ "<span class=\"handler\">$_</span>" } @$callbacks ) . "</td></tr>";
     }
 
@@ -344,11 +358,11 @@ sub child_handler {
 
     <h2>Connection/Config Details</h2>
     <ul>};
-    print $socket '<li>Protocol: ' . $config->{'protocol'} . '</li>';
-    my $connections = $config->{'connections'};
-    $connections->{'default'} = { 'connection' => $config->{'connection'} };
+    print $socket '<li>Protocol: ' . $config->{protocol} . '</li>';
+    my $connections = $config->{connections};
+    $connections->{default} = { connection => $config->{connection} };
     foreach my $connection ( sort keys %$connections ) {
-        print $socket '<li>' . $connection . ': ' . $connections->{ $connection }->{ 'connection' } . '</li>'
+        print $socket '<li>' . $connection . ': ' . $connections->{ $connection }->{connection} . '</li>'
     }
     print $socket qq{
         <li>Effective config (<a href="/config/toml">toml</a>/<a href="/config/json">json</a>)</li>
