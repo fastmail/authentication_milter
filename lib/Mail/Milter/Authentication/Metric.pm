@@ -7,7 +7,8 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use Mail::Milter::Authentication::HTDocs;
 use Mail::Milter::Authentication::Metric::Grafana;
-use Prometheus::Tiny::Shared;
+use File::Temp;
+use Prometheus::Tiny::Shared 0.010;
 use TOML;
 
 =head1 DESCRIPTION
@@ -41,12 +42,17 @@ sub new {
                      : 0;
 
     if ( $self->{enabled} ) {
-        my $cache_args = {};
-        $cache_args->{init_file} = 1;
+        my $metric_tempfile;
         if ( defined( $config->{metric_tempfile} ) ) {
-            $cache_args->{share_file} = $config->{metric_tempfile};
+            $metric_tempfile = $config->{metric_tempfile};
+            unlink $metric_tempfile if -e $metric_tempfile;
         }
-        $self->{prom} = eval{ Prometheus::Tiny::Shared->new( cache_args => $cache_args ) };
+        if ( ! $metric_tempfile ) {
+            my $file_temp = File::Temp->new( UNLINK => 0, SUFFIX => '.sqlite' );
+            $metric_tempfile = $file_temp->filename;
+        }
+
+        $self->{prom} = eval{ Prometheus::Tiny::Shared->new(filename => $metric_tempfile) };
         if ( $self->{prom} ) {
             $self->{prom}->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
             $self->{prom}->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
