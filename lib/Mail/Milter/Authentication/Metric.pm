@@ -8,7 +8,7 @@ use Mail::Milter::Authentication::Pragmas;
 use Mail::Milter::Authentication::HTDocs;
 use Mail::Milter::Authentication::Metric::Grafana;
 use File::Temp;
-use Prometheus::Tiny::Shared 0.010;
+use Prometheus::Tiny::Shared 0.011;
 use TOML;
 
 =head1 DESCRIPTION
