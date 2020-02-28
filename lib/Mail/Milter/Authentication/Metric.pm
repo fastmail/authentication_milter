@@ -323,7 +323,7 @@ sub re_register_metrics {
     return if ! $self->{enabled};
     return if ! $self->prom;
     foreach my $metric ( @{$self->{registered_metrics}} ) {
-        $self->_register_metrics( $metric ); # Will recurse into $self->prom
+        $self->_register_metrics( $metric );
     }
 }
 
@@ -344,7 +344,7 @@ sub _register_metrics {
             $help = $data;
         }
         $self->prom->declare( 'authmilter_' . $metric, help => $help, type => $type);
-        $self->prom->set( 'authmilter_' . $metric,0, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+        $self->prom->add( 'authmilter_' . $metric,0, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
     }
 }
 

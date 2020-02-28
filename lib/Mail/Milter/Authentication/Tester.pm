@@ -128,19 +128,19 @@ sub test_metrics {
 
             foreach my $key ( sort keys %$data ) {
                 if ( $key =~ /seconds_total/ ) {
-                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $key" );
+                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $expected $key" );
                 }
                 elsif ( $key =~ /microseconds_sum/ ) {
-                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $key" );
+                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $expected $key" );
                 }
                 elsif ( $key =~ /authmilter_forked_children_total/ ) {
-                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $key" );
+                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $expected $key" );
                 }
                 elsif ( $key =~ /authmilter_processes_/) {
-                    is( $metrics->{ $key } > -1, $data->{ $key } > -1, "Metrics $key" );
+                    is( $metrics->{ $key } > -1, $data->{ $key } > -1, "Metrics $expected $key" );
                 }
                 else {
-                    is( $metrics->{ $key }, $data->{ $key }, "Metrics $key" );
+                    is( $metrics->{ $key }, $data->{ $key }, "Metrics $expected $key" );
                 }
             }
 
