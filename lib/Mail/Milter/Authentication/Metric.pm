@@ -28,12 +28,16 @@ This object is used to store, modify, and report metrics.
 =cut
 
 sub new {
-    my ( $class ) = @_;
+    my ( $class, $thischild ) = @_;
     my $self = {};
-    $self->{counter}    = {};
-    $self->{help}       = {};
-    $self->{start_time} = time;
-    $self->{queue}      = [];
+    $self->{counter}            = {};
+    $self->{help}               = {};
+    $self->{start_time}         = time;
+    $self->{registered_metrics} = [];
+    $self->{thischild}          = $thischild;
+    bless $self, $class;
+
+    $self->set_handler( undef );
 
     my $config = get_config();
 
@@ -41,28 +45,105 @@ sub new {
                      : defined( $config->{metric_connection} ) ? 1
                      : 0;
 
-    if ( $self->{enabled} ) {
-        my $metric_tempfile;
+    return $self;
+}
+
+=method I<set_handler($handler)>
+
+Set a reference to the current handler
+
+=cut
+
+sub set_handler {
+    my ( $self, $handler ) = @_;
+    $self->{handler} = $handler;
+}
+
+=method I<handle_exception($exception)>
+
+If we have a handler, then pass any exception to that handlers exception handling
+
+=cut
+
+sub handle_exception {
+    my ( $self, $exception ) = @_;
+    return if ! defined $exception;
+    return if ! defined $self->{handler};
+    $self->{handler}->handle_exception($exception);
+}
+
+=log_method I<dbgout( $key, $value, $priority )>
+
+Pass arguments along to the dbgout method of the handler if we have one
+or log via the Mail::Milter::Authentication object if we do not.
+
+=cut
+
+sub dbgout {
+    my ( $self, $key, $value, $priority ) = @_;
+    if ( defined ( $self->{handler} ) ) {
+        $self->{handler}->dbgout($key,$value,$priority);
+    }
+    elsif ( $priority == LOG_DEBUG ) {
+        $self->{thischild}->logdebug( "$key: $value" );
+    }
+    elsif ( $priority == LOG_INFO || $priority == LOG_NOTICE ) {
+        $self->{thischild}->loginfo( "$key: $value" );
+    }
+    else {
+        $self->{thischild}->logerror( "$key: $value" );
+    }
+}
+
+=method I<prom()>
+
+Return the prom object if available
+
+=cut
+
+sub prom {
+    my ( $self ) = @_;
+    my $config = get_config();
+
+    my $metric_tempfile;
+    if ( exists( $self->{metric_tempfile} ) ) {
+        $metric_tempfile = $self->{metric_tempfile};
+    }
+    else {
         if ( defined( $config->{metric_tempfile} ) ) {
             $metric_tempfile = $config->{metric_tempfile};
-            unlink $metric_tempfile if -e $metric_tempfile;
         }
         if ( ! $metric_tempfile ) {
             my $file_temp = File::Temp->new( UNLINK => 0, SUFFIX => '.sqlite' );
             $metric_tempfile = $file_temp->filename;
         }
-
-        $self->{prom} = eval{ Prometheus::Tiny::Shared->new(filename => $metric_tempfile) };
-        if ( $self->{prom} ) {
-            $self->{prom}->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
-            $self->{prom}->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
-            $self->{prom}->declare( 'authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
-            $self->{prom}->declare( 'authmilter_version', help => 'Running versions', type => 'gauge' );
-        }
+        $self->{metric_tempfile} = $metric_tempfile;
     }
 
-    bless $self, $class;
-    return $self;
+    my $prom = $self->{prom};
+    # Invalidate if the file does not exist!
+    if ( ! -e $metric_tempfile ) {
+        $prom = undef;
+    }
+
+    if ( ! $prom ) {
+        $self->dbgout( 'Metrics', "Setup new metrics file $metric_tempfile", LOG_DEBUG );
+        $prom = eval{ Prometheus::Tiny::Shared->new(filename => $metric_tempfile, init_file => 1) };
+        $self->handle_exception($@);
+        if ( $prom ) {
+            $self->{metric_tempfile} = $metric_tempfile;
+            $prom->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
+            $prom->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
+            $prom->declare( 'authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
+            $prom->declare( 'authmilter_version', help => 'Running versions', type => 'gauge' );
+        }
+        else {
+            $self->dbgout( 'Metrics', "Failed to setup new metrics file $metric_tempfile", LOG_ERR );
+        }
+    }
+    $self->{prom} = $prom;
+
+    return $prom;
 }
 
 =method I<set_versions( $server )>
@@ -74,11 +155,13 @@ Setup version metrics
 sub set_versions {
     my ( $self, $server ) = @_;
     return if ! $self->{enabled};
-    return if ! $self->{prom};
-    $self->{prom}->set( 'authmilter_version', 1, { version => $Mail::Milter::Authentication::VERSION, module => 'core', ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+    return if ! $self->prom;
+    $self->dbgout( 'Metrics', "Setting up versioning metrics", LOG_DEBUG );
+    $self->prom->set( 'authmilter_version', 1, { version => $Mail::Milter::Authentication::VERSION, module => 'core', ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
     foreach my $Handler ( sort keys %{ $server->{handler} } ) {
         next if $Handler eq '_Handler';
-        $self->{prom}->set( 'authmilter_version', 1, { version => $server->{handler}->{ $Handler }->get_version(), module => $Handler, ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+        eval{ $self->prom->set( 'authmilter_version', 1, { version => $server->{handler}->{ $Handler }->get_version(), module => $Handler, ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) }) };
+        $self->handle_exception($@);
     }
 }
 
@@ -130,7 +213,7 @@ $server is the current handler object
 sub count {
     my ( $self, $args ) = @_;
     return if ! $self->{enabled};
-    return if ! $self->{prom};
+    return if ! $self->prom;
 
     my $count_id = $args->{count_id};
     my $labels   = $args->{labels};
@@ -150,8 +233,10 @@ sub count {
 
     $clean_labels->{ident} = $self->clean_label( $Mail::Milter::Authentication::Config::IDENT );
 
-    eval{ $self->{prom}->add( 'authmilter_' . $count_id, $count, $clean_labels ); };
-    ## TODO catch and re-throw timeouts
+    $self->dbgout( 'Metrics', "Counting $count_id:$count:".join(',',map {"$_=".$clean_labels->{$_}} (sort keys %$clean_labels) ), LOG_DEBUG );
+
+    eval{ $self->prom->add( 'authmilter_' . $count_id, $count, $clean_labels ); };
+    $self->handle_exception($@);
 }
 
 =method I<set($args)>
@@ -173,7 +258,7 @@ $server is the current handler object
 sub set {
     my ( $self, $args ) = @_;
     return if ! $self->{enabled};
-    return if ! $self->{prom};
+    return if ! $self->prom;
 
     my $gauge_id = $args->{gauge_id};
     my $labels   = $args->{labels};
@@ -193,8 +278,10 @@ sub set {
 
     $clean_labels->{ident} = $self->clean_label( $Mail::Milter::Authentication::Config::IDENT );
 
-    eval{ $self->{prom}->set( 'authmilter_' . $gauge_id, $value, $clean_labels ); };
-    ## TODO catch and re-throw timeouts
+    $self->dbgout( 'Metrics', "Setting $gauge_id:$value:".join(',',map {"$_=".$clean_labels->{$_}} (sort keys %$clean_labels) ), LOG_DEBUG );
+
+    eval{ $self->prom->set( 'authmilter_' . $gauge_id, $value, $clean_labels ); };
+    $self->handle_exception($@);
 }
 
 =method I<send( $server )>
@@ -219,7 +306,31 @@ Expects a hashref of metric description, keyed on metric name.
 sub register_metrics {
     my ( $self, $hash ) = @_;
     return if ! $self->{enabled};
-    return if ! $self->{prom};
+    return if ! $self->prom;
+    push @{$self->{registered_metrics}}, $hash;
+    $self->_register_metrics( $hash );
+}
+
+=method I<re_register_metric()>
+
+Re-register currently registered metrics to ensure backend
+metadata is correct
+
+=cut
+
+sub re_register_metrics {
+    my ( $self ) = @_;
+    return if ! $self->{enabled};
+    return if ! $self->prom;
+    foreach my $metric ( @{$self->{registered_metrics}} ) {
+        $self->_register_metrics( $metric ); # Will recurse into $self->prom
+    }
+}
+
+sub _register_metrics {
+    my ( $self, $hash ) = @_;
+    return if ! $self->{enabled};
+    return if ! $self->prom;
 
     foreach my $metric ( keys %$hash ) {
         my $data = $hash->{ $metric };
@@ -232,8 +343,8 @@ sub register_metrics {
         else {
             $help = $data;
         }
-        $self->{prom}->declare( 'authmilter_' . $metric, help => $help, type => $type);
-        $self->{prom}->set( 'authmilter_' . $metric,0, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+        $self->prom->declare( 'authmilter_' . $metric, help => $help, type => $type);
+        $self->prom->set( 'authmilter_' . $metric,0, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
     }
 }
 
@@ -246,11 +357,11 @@ Called in the master process to periodically update some metrics
 sub master_metric_update {
     my ( $self, $server ) = @_;
     return if ! $self->{enabled};
-    return if ! $self->{prom};
+    return if ! $self->prom;
 
     eval {
         foreach my $type ( qw { waiting processing } ) {
-            $self->{prom}->set('authmilter_processes_' . $type, $server->{server}->{tally}->{$type}, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+            $self->prom->set('authmilter_processes_' . $type, $server->{server}->{tally}->{$type}, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
         }
     };
 }
@@ -304,16 +415,16 @@ sub child_handler {
         }
 
         if ( $request_uri eq '/metrics' ) {
-            if ( $self->{prom} ) {
+            if ( $self->prom ) {
                 $server->{handler}->{_Handler}->top_metrics_callback();
-                $self->{prom}->set( 'authmilter_uptime_seconds_total', time - $self->{start_time}, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
+                $self->prom->set( 'authmilter_uptime_seconds_total', time - $self->{start_time}, { ident => $self->clean_label( $Mail::Milter::Authentication::Config::IDENT ) });
             }
 
             print $socket "HTTP/1.0 200 OK\n";
             print $socket "Content-Type: text/plain\n";
             print $socket "\n";
-            if ( $self->{prom} ) {
-                print $socket $self->{prom}->format();
+            if ( $self->prom ) {
+                print $socket $self->prom->format();
             }
             else {
                 print $socket '# Metrics unavailable';

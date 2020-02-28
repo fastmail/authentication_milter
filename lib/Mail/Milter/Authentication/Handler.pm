@@ -98,12 +98,14 @@ sub metric_count {
     $count = 1 if ! defined $count;
 
     my $metric = $self->{'thischild'}->{'metric'};
+    $metric->set_handler( $self );
     $metric->count({
         'count_id' => $count_id,
         'labels'   => $labels,
         'server'   => $self->{'thischild'},
         'count'    => $count,
     });
+    $metric->set_handler( undef );
 }
 
 =metric_method I<metric_set( $id, $labels, $count )>
@@ -118,12 +120,14 @@ sub metric_set {
     die 'Must set value in metric_set call' if ! defined $value;
 
     my $metric = $self->{'thischild'}->{'metric'};
+    $metric->set_handler( $self );
     $metric->set({
         'gauge_id' => $gauge_id,
         'labels'   => $labels,
         'server'   => $self->{'thischild'},
         'value'    => $value,
     });
+    $metric->set_handler( undef );
 }
 
 =metric_method I<metric_send()>
@@ -283,6 +287,7 @@ higher level timeout exceptions are properly handled.
 
 sub handle_exception {
     my ( $self, $exception ) = @_;
+    return if ! defined $exception;
     my $Type = $self->is_exception_type( $exception );
     return if ! $Type;
     die $exception if $Type eq 'Timeout';

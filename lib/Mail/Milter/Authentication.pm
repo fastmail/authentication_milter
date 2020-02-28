@@ -155,7 +155,7 @@ sub pre_loop_hook($self,@) {
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':master';
 
     $self->preload_modules( 'Net::DNS', 'Net::DNS::RR' );
-    $self->{'metric'} = Mail::Milter::Authentication::Metric->new();
+    $self->{'metric'} = Mail::Milter::Authentication::Metric->new($self);
 
     # Load handlers
     my $config = get_config();
@@ -205,6 +205,7 @@ Hook which runs in parent before it forks children.
 sub run_n_children_hook($self,@) {
     # Load handlers
     my $config = get_config();
+    $self->{metric}->re_register_metrics;
     foreach my $name ( @{$config->{'load_handlers'}} ) {
 
         my $package = "Mail::Milter::Authentication::Handler::$name";
