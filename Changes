@@ -12,6 +12,7 @@ Revision history for Mail-Milter-Authentication
   - ARC: Use x-arc- prefix for derived Authentication Results
   - Core: Better reporting on errors
   - Core: Ability to email errors to admin address
+  - BIMI: Add SPF policy checks to BIMI handler
 
 2.20200206 2020-02-06 01:15:45+00:00 UTC
   - Size: Add metrics for added header bytes
