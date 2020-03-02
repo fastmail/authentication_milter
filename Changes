@@ -10,6 +10,8 @@ Revision history for Mail-Milter-Authentication
   - Core: Set a default version for metrics where one does not exist
   - Core: Milter protocol quarantine fixes
   - ARC: Use x-arc- prefix for derived Authentication Results
+  - Core: Better reporting on errors
+  - Core: Ability to email errors to admin address
 
 2.20200206 2020-02-06 01:15:45+00:00 UTC
   - Size: Add metrics for added header bytes
