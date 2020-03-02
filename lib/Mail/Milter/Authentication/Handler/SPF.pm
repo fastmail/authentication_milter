@@ -120,6 +120,10 @@ sub envfrom_callback {
         );
 
         my $spf_result = $spf_server->process($spf_request);
+        my $spf_results = $self->get_object('spf_results');
+        $spf_results = [] if ! $spf_results;
+        push @$spf_results, $spf_result;
+        $self->set_object('spf_results',$spf_results,1);
 
         my $result_code = $spf_result->code();
 
@@ -145,6 +149,10 @@ sub envfrom_callback {
                                 'helo_identity'    => $self->{'helo_name'},
                             );
                             $spf_result = $spf_server->process($spf_request);
+                            my $spf_results = $self->get_object('spf_results');
+                            $spf_results = [] if ! $spf_results;
+                            push @$spf_results, $spf_result;
+                            $self->set_object('spf_results',$spf_results,1);
                             $result_code = $spf_result->code();
                         }
                     }
@@ -198,6 +206,7 @@ sub close_callback {
     delete $self->{'dmarc_result'};
     delete $self->{'failmode'};
     delete $self->{'helo_name'};
+    $self->destroy_object('spf_results');
 }
 
 1;
