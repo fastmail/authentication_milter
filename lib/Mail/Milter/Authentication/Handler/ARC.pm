@@ -182,49 +182,12 @@ sub inherit_trusted_spf_results {
                 next RESULT if ! $smtp_mailfrom;
                 $smtp_mailfrom = lc $smtp_mailfrom;
 
-                # Do we have an existing entry for this spf record with the same smtp.mailfrom?
-                my $top_handler = $self->get_top_handler();
-                my $existing_auth_headers = $top_handler->{'auth_headers'};
-                my $found_passing = 0;
-
-                HEADER:
-                foreach my $header ( @$existing_auth_headers ) {
-                    next if $header->key() ne 'spf';
-
-                    my $quoted = quotemeta($smtp_mailfrom);
-                    my $regex = qr{$quoted}i;
-                    my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $regex })->children()->[0]->value() };
-                    $self->handle_exception( $@ );
-                    next HEADER if ! $this_mailfrom;
-
-                    # We already have a pass, leave it alone
-                    $found_passing = 1 if $header->value() eq 'pass';
-
-                }
-
-                # We found a passing result for this mailfrom, leave it alone
-                next RESULT if $found_passing;
-
-                # We didn't find a passing result, so rename the existing ones.....
-                HEADER:
-                foreach my $header ( @$existing_auth_headers ) {
-                    next if $header->key() ne 'spf';
-
-                    my $quoted = quotemeta($smtp_mailfrom);
-                    my $regex = qr{$quoted}i;
-                    my $this_mailfrom = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom', 'value' => $regex })->children()->[0]->value() };
-                    $self->handle_exception( $@ );
-                    next HEADER if ! $this_mailfrom;
-
-                    # Rename the existing header
-                    $header->set_key( 'x-local-spf' );
-                }
-
                 # And add the new one
                 $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
                 $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
                 $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
                 $result->orphan();
+                $result->key( 'x-arc-spf' );
                 $self->add_auth_header( $result );
 
             }
@@ -268,49 +231,12 @@ sub inherit_trusted_dkim_results {
                 next RESULT if ! $entry_domain;
                 $entry_domain = lc $entry_domain;
 
-                # Do we have an existing entry for this spf record with the same domain?
-                my $top_handler = $self->get_top_handler();
-                my $existing_auth_headers = $top_handler->{'auth_headers'};
-                my $found_passing = 0;
-
-                HEADER:
-                foreach my $header ( @$existing_auth_headers ) {
-                    next if $header->key() ne 'dkim';
-
-                    my $quoted = quotemeta($entry_domain);
-                    my $regex = qr{$quoted}i;
-                    my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $regex })->children()->[0]->value() };
-                    $self->handle_exception( $@ );
-                    next HEADER if ! $this_domain;
-
-                    # We already have a pass, leave it alone
-                    $found_passing = 1 if $header->value() eq 'pass';
-
-                }
-
-                # We found a passing result for this mailfrom, leave it alone
-                next RESULT if $found_passing;
-
-                # We didn't find a passing result, so rename the existing ones.....
-                HEADER:
-                foreach my $header ( @$existing_auth_headers ) {
-                    next if $header->key() ne 'dkim';
-
-                    my $quoted = quotemeta($entry_domain);
-                    my $regex = qr{$quoted}i;
-                    my $this_domain = eval{ $header->search({ 'isa' => 'subentry', 'key' => 'header.d', 'value' => $regex })->children()->[0]->value() };
-                    $self->handle_exception( $@ );
-                    next HEADER if ! $this_domain;
-
-                    # Rename the existing header
-                    $header->set_key( 'x-local-dkim' );
-                }
-
                 # And add the new one
                 $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
                 $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
                 $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
                 $result->orphan();
+                $result->key( 'x-arc-dkim' );
                 $self->add_auth_header( $result );
 
             }
@@ -340,6 +266,7 @@ sub inherit_trusted_ip_results {
                 $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
                 $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
                 $result->orphan();
+                $result->set_key( 'x-arc-'.$thing );
                 $self->add_auth_header( $result );
             }
         };
