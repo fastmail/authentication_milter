@@ -211,6 +211,11 @@ __END__
     "dryrun"    : 0,                                    | Dryrun (do not alter or reject mail)
     "logtoerr"  : 0,                                    | Also write logs to STDERR
     "error_log" : "/var/log/authentication_milter.err", | Capture STDERR to logfile
+
+    "errors_to"   : "John Smith <john@example.com>",    | If set, send exception emails when authmilter encounters
+    "errors_from" : "AuthMilter <system@example.com>",  | an unexpected error or timeout
+    "errors_headers" : {}                               | optional headers for error emails
+
     "log_dispatchouli" : {},                            | Optional args to pass directly into Log::Dispatchouli->new()
 
     "connection"             : "inet:12345@localhost",  | The connection to use
