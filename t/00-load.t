@@ -36,12 +36,10 @@ Mail::Milter::Authentication::Handler::Size
 Mail::Milter::Authentication::Handler::PTR
 Mail::Milter::Authentication::Handler::BIMI
 Mail::Milter::Authentication::Handler::TrustedIP
-Mail::Milter::Authentication::Handler::Received
 Mail::Milter::Authentication::Metric
 Mail::Milter::Authentication::Metric::Grafana
 Mail::Milter::Authentication::Config
 Mail::Milter::Authentication::Constants
-Mail::Milter::Authentication::Utils
 Mail::Milter::Authentication::Protocol::SMTP
 Mail::Milter::Authentication::Protocol::Milter
 Mail::Milter::Authentication::Tester::HandlerTester
