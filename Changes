@@ -9,7 +9,7 @@ Revision history for Mail-Milter-Authentication
   - Core: Modernise and tind some code
   - Core: Set a default version for metrics where one does not exist
   - Core: Milter protocol quarantine fixes
-  - ARC: Use x-arc-dkim for trusted DKIM results
+  - ARC: Use x-arc- prefix for derived Authentication Results
 
 2.20200206 2020-02-06 01:15:45+00:00 UTC
   - Size: Add metrics for added header bytes
