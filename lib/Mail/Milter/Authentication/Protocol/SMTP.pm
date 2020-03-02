@@ -359,8 +359,15 @@ sub smtp_command_rset {
     $self->smtp_init();
 
     my $smtp_conf = $self->get_smtp_config();
+
     my $handler = $self->{'handler'}->{'_Handler'};
-        if ( $smtp_conf->{'pipeline_limit'} ) {
+    if ( $handler->{'exit_on_close'} ) {
+            $smtp->{'last_command'} = 1;
+            $handler->dbgout( 'EXIT ON CLOSE REQUESTED', 'closing on RSET', LOG_INFO );
+            print $socket "421 4.3.2 Pipeline limit reached\r\n";
+            return;
+    }
+    if ( $smtp_conf->{'pipeline_limit'} ) {
         my $count = $smtp->{'count'};
         my $limit = $smtp_conf->{'pipeline_limit'};
         if ( $count > $limit ) {
@@ -770,6 +777,11 @@ sub smtp_command_data {
     $smtp->{'string'}           = q{};
     $self->{'handler'}->{'_Handler'}->top_close_callback();
     $smtp->{'init_required'}    = 1;
+
+    if ( $handler->{'exit_on_close'} ) {
+            $smtp->{'last_command'} = 1;
+            $handler->dbgout( 'EXIT ON CLOSE REQUESTED', 'NO MORE SMTP', LOG_INFO );
+    }
 }
 
 sub smtp_insert_received_header {

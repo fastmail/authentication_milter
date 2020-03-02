@@ -7,6 +7,7 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use Mail::Milter::Authentication::Exception;
 use Mail::Milter::Authentication::Resolver;
+use Date::Format qw{ time2str };
 use Digest::MD5 qw{ md5_hex };
 use MIME::Base64;
 use Mail::SPF;
@@ -572,8 +573,7 @@ sub top_connect_callback {
             eval{ $self->get_handler($handler)->connect_callback( $hostname, $ip ); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
-                $self->log_error( 'Connect callback error ' . $error );
-                $self->exit_on_close();
+                $self->exit_on_close( 'Connect callback error ' . $error );
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'connect', 'handler' => $handler } );
             }
@@ -584,14 +584,13 @@ sub top_connect_callback {
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'Connect callback error ' . $type . ' - ' . $error->{ 'Text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'connect', 'type' => $type } );
+            $self->exit_on_close( 'Connect callback error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
-            $self->log_error( 'Connect callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'connect' } );
+            $self->exit_on_close( 'Connect callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
     $self->status('postconnect');
@@ -657,8 +656,7 @@ sub top_helo_callback {
                 eval{ $self->get_handler($handler)->helo_callback($helo_host); };
                 if ( my $error = $@ ) {
                     $self->handle_exception( $error );
-                    $self->log_error( 'HELO callback error ' . $error );
-                    $self->exit_on_close();
+                    $self->exit_on_close( 'HELO callback error ' . $error );
                     $self->tempfail_on_error();
                     $self->metric_count( 'callback_error_total', { 'stage' => 'helo', 'handler' => $handler } );
                 }
@@ -674,14 +672,13 @@ sub top_helo_callback {
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'HELO error ' . $type . ' - ' . $error->{ 'Text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'helo', 'type' => $type } );
+            $self->exit_on_close( 'HELO error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
-            $self->log_error( 'HELO callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'helo' } );
+            $self->exit_on_close( 'HELO callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
     $self->status('posthelo');
@@ -714,6 +711,7 @@ sub top_envfrom_callback {
         delete $self->{'auth_headers'};
         delete $self->{'pre_headers'};
         delete $self->{'add_headers'};
+        delete $self->{'suppress_error_emails'};
 
         my $callbacks = $self->get_callbacks( 'envfrom' );
         foreach my $handler ( @$callbacks ) {
@@ -722,8 +720,7 @@ sub top_envfrom_callback {
             eval { $self->get_handler($handler)->envfrom_callback($env_from); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
-                $self->log_error( 'Env From callback error ' . $error );
-                $self->exit_on_close();
+                $self->exit_on_close( 'Env From callback error ' . $error );
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom', 'handler' => $handler } );
             }
@@ -734,14 +731,13 @@ sub top_envfrom_callback {
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'EnvFrom error ' . $type . ' - ' . $error->{ 'Text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom', 'type' => $type } );
+            $self->exit_on_close( 'Env From error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
-            $self->log_error( 'EnvFrom callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom' } );
+            $self->exit_on_close( 'Env From callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
     $self->status('postenvfrom');
@@ -777,8 +773,7 @@ sub top_envrcpt_callback {
             eval{ $self->get_handler($handler)->envrcpt_callback($env_to); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
-                $self->log_error( 'Rcpt To callback error ' . $error );
-                $self->exit_on_close();
+                $self->exit_on_close( 'Env Rcpt callback error ' . $error );
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto', 'handler' => $handler } );
             }
@@ -789,14 +784,13 @@ sub top_envrcpt_callback {
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'EnvRcpt error ' . $type . ' - ' . $error->{ 'Text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto', 'type' => $type } );
+            $self->exit_on_close( 'Env Rcpt callback error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
-            $self->log_error( 'EnvRcpt callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto' } );
+            $self->exit_on_close( 'Env Rcpt callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
     $self->status('postenvrcpt');
@@ -818,6 +812,11 @@ sub top_header_callback {
     $self->set_return( $self->smfis_continue() );
     $value = q{} if ! defined $value;
     my $config = $self->config();
+
+    if ( $header eq 'X-Authentication-Milter-Error' && $value eq 'Generated Error Report' ) {
+        $self->{'suppress_error_emails'} = 1;
+    }
+
     eval {
         local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Header callback timeout' }) };
         if ( my $timeout = $self->get_type_timeout( 'content' ) ) {
@@ -834,8 +833,7 @@ sub top_header_callback {
             eval{ $self->get_handler($handler)->header_callback( $header, $value, $original ); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
-                $self->log_error( 'Header callback error ' . $error );
-                $self->exit_on_close();
+                $self->exit_on_close( 'Header callback error ' . $error );
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'header', 'handler' => $handler } );
             }
@@ -846,14 +844,13 @@ sub top_header_callback {
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'Header error ' . $type . ' - ' . $error->{ 'text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'header', 'type' => $type } );
+            $self->exit_on_close( 'Header error ' . $type . ' - ' . $error->{ 'text' } );
         }
         else {
-            $self->log_error( 'Header callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'header' } );
+            $self->exit_on_close( 'Header callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
     $self->status('postheader');
@@ -887,8 +884,7 @@ sub top_eoh_callback {
             eval{ $self->get_handler($handler)->eoh_callback(); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
-                $self->log_error( 'EOH callback error ' . $error );
-                $self->exit_on_close();
+                $self->exit_on_close( 'EOH callback error ' . $error );
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'eoh', 'handler' => $handler } );
             }
@@ -899,14 +895,13 @@ sub top_eoh_callback {
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'EOH error ' . $type . ' - ' . $error->{ 'text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'eoh', 'type' => $type } );
+            $self->exit_on_close( 'EOH error ' . $type . ' - ' . $error->{ 'text' } );
         }
         else {
-            $self->log_error( 'EOH callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'eoh' } );
+            $self->exit_on_close( 'EOH callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
@@ -941,8 +936,7 @@ sub top_body_callback {
             eval{ $self->get_handler($handler)->body_callback( $body_chunk ); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
-                $self->log_error( 'Body callback error ' . $error );
-                $self->exit_on_close();
+                $self->exit_on_close( 'Body callback error ' . $error );
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'body', 'handler' => $handler } );
             }
@@ -953,14 +947,13 @@ sub top_body_callback {
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'Body error ' . $type . ' - ' . $error->{ 'text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'body', 'type' => $type } );
+            $self->exit_on_close( 'Body error ' . $type . ' - ' . $error->{ 'text' } );
         }
         else {
-            $self->log_error( 'Body callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'body' } );
+            $self->exit_on_close( 'Body callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
     $self->dbgoutwrite();
@@ -995,8 +988,7 @@ sub top_eom_callback {
             eval{ $self->get_handler($handler)->eom_callback(); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
-                $self->log_error( 'EOM callback error ' . $error );
-                $self->exit_on_close();
+                $self->exit_on_close( 'EOM callback error ' . $error );
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'eom', 'handler' => $handler } );
             }
@@ -1007,14 +999,13 @@ sub top_eom_callback {
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'EOM error ' . $type . ' - ' . $error->{ 'text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'eom', 'type' => $type } );
+            $self->exit_on_close( 'EOM error ' . $type . ' - ' . $error->{ 'text' } );
         }
         else {
-            $self->log_error( 'EOM callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'eom' } );
+            $self->exit_on_close( 'EOM callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
     $self->apply_policy();
@@ -1075,8 +1066,7 @@ sub top_abort_callback {
             eval{ $self->get_handler($handler)->abort_callback(); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
-                $self->log_error( 'Abort callback error ' . $error );
-                $self->exit_on_close();
+                $self->exit_on_close( 'Abort callback error ' . $error );
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'abort', 'handler' => $handler } );
             }
@@ -1087,14 +1077,13 @@ sub top_abort_callback {
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'Abort error ' . $type . ' - ' . $error->{ 'text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'abort', 'type' => $type } );
+            $self->exit_on_close( 'Abort error ' . $type . ' - ' . $error->{ 'text' } );
         }
         else {
-            $self->log_error( 'Abort callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'abort' } );
+            $self->exit_on_close( 'Abort callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
     $self->status('postabort');
@@ -1131,26 +1120,30 @@ sub top_close_callback {
             eval{ $self->get_handler($handler)->close_callback(); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
-                $self->log_error( 'Close callback error ' . $error );
-                $self->exit_on_close();
+                $self->exit_on_close( 'Close callback error ' . $error );
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'close', 'handler' => $handler } );
             }
             $self->metric_count( 'time_microseconds_total', { 'callback' => 'close', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
+
+            my $handler_object = $self->get_handler($handler);
+            foreach my $key ( sort keys $handler_object->%* ) {
+                next if $key eq 'thischild';
+                $self->exit_on_close( 'Handler '.$handler.' did not clean up data for key '.$key.' in close callback' );
+            }
         }
         $self->set_alarm(0);
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'Close error ' . $type . ' - ' . $error->{ 'text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'close', 'type' => $type } );
+            $self->exit_on_close( 'Close error ' . $type . ' - ' . $error->{ 'text' } );
         }
         else {
-            $self->log_error( 'Close callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'close' } );
+            $self->exit_on_close( 'Close callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
     delete $self->{'helo_name'};
@@ -1197,14 +1190,13 @@ sub top_addheader_callback {
     };
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
-            $self->log_error( 'AddHeader error ' . $type . ' - ' . $error->{ 'text' } );
             $self->metric_count( 'callback_error_total', { 'stage' => 'addheader', 'type' => $type } );
+            $self->exit_on_close( 'AddHeader error ' . $type . ' - ' . $error->{ 'text' } );
         }
         else {
-            $self->log_error( 'AddHeader callback error ' . $error );
             $self->metric_count( 'callback_error_total', { 'stage' => 'addheader' } );
+            $self->exit_on_close( 'AddHeader callback error ' . $error );
         }
-        $self->exit_on_close();
         $self->tempfail_on_error();
     }
 }
@@ -1581,16 +1573,20 @@ sub destroy_all_objects {
     }
 }
 
-=method I<exit_on_close()>
+=method I<exit_on_close( $error )>
 
 Exit this child once it has completed, do not process further requests with this child.
 
 =cut
 
 sub exit_on_close {
-    my ( $self ) = @_;
+    my ( $self, $error ) = @_;
+    $error = 'Generic exit_on_close requested' if ! $error;
+    $self->log_error( $error );
     my $top_handler = $self->get_top_handler();
     $top_handler->{'exit_on_close'} = 1;
+    $top_handler->{'exit_on_close_error'} = 'Exit on close requested' if ! exists $top_handler->{'exit_on_close_error'};
+    $top_handler->{'exit_on_close_error'} .= "\n$error";
 }
 
 =method I<reject_mail( $reason )>
@@ -2160,6 +2156,11 @@ sub dbgout {
     my $queue_id = $self->get_symbol('i') || q{--};
     $key   = q{--} if ! defined $key;
     $value = q{--} if ! defined $value;
+
+    my $thischild = $self->{'thischild'};
+    if ( exists $thischild->{'tracelog'} ) {
+        push $thischild->{'tracelog'}->@*, time2str('%Y:%m:%d %X %z',time) . " $queue_id: $key: $value";
+    }
 
     my $config = $self->config();
     if (

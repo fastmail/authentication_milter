@@ -935,7 +935,7 @@ sub close_callback {
     delete $self->{'skip_report'};
     delete $self->{'is_list'};
     delete $self->{'from_header'};
-    delete $self->{'from_heades'};
+    delete $self->{'from_headers'};
     delete $self->{'report_queue'};
     $self->destroy_object('dmarc');
     $self->destroy_object('dmarc_result');
