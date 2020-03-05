@@ -916,6 +916,11 @@ sub start($args) {
         $error = 'unknown error' if ! $error;
         _warn "Server failed: $error";
 
+        # We exited abnormally, try and clean up
+        eval{ $self->close_children };
+        eval{ $self->post_child_cleanup_hook };
+        eval{ $self->shutdown_sockets };
+
         if ( scalar @start_times >= 4 ) {
             if ( $start_times[3] > ( time() - 120 ) ) {
                 _warn "Abandoning automatic restart: too many restarts in a short time";
@@ -924,7 +929,7 @@ sub start($args) {
         }
 
         _warn "Attempting automatic restart";
-        sleep 10;
+        sleep 20;
     }
     _warn "Server exiting abnormally";
     die;
