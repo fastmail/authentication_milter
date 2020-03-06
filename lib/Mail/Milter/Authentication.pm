@@ -917,9 +917,9 @@ sub start($args) {
         _warn "Server failed: $error";
 
         # We exited abnormally, try and clean up
-        eval{ $self->close_children };
-        eval{ $self->post_child_cleanup_hook };
-        eval{ $self->shutdown_sockets };
+        eval{ __PACKAGE__->close_children };
+        eval{ __PACKAGE__->post_child_cleanup_hook };
+        eval{ __PACKAGE__->shutdown_sockets };
 
         if ( scalar @start_times >= 4 ) {
             if ( $start_times[3] > ( time() - 120 ) ) {
