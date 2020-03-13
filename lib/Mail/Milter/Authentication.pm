@@ -547,6 +547,57 @@ sub send_exception_email {
 
 }
 
+=func I<send_panic_email()>
+
+Send an email to the administrator with details of a problem.
+
+Called from the parent process if the server exits.
+
+=cut
+
+sub send_panic_email {
+    my ( $error ) = @_;
+
+    my $config         = get_config();
+    my $errors_to      = $config->{'errors_to'} || return;
+    my $errors_from    = $config->{'errors_from'} || return;
+    my $errors_headers = $config->{'errors_headers'} || {};
+
+    my $email = "Authentication Milter " . $Mail::Milter::Authentication::Config::IDENT . " Error\n\n";
+    $email .= "$error\n\n";
+
+    $email .= "PID: $PID\n\n";
+
+    $email .= "Processes Running\n";
+    my $process_table = Proc::ProcessTable->new;
+    foreach my $process ( $process_table->table->@* ) {
+        next if ! ( $process->pid == $PID || $process->ppid == $PID );
+        my $pid = eval{ $process->pid } // '';
+        my $cmndline = eval{ $process->cmndline } // '';
+        my $size   = eval{ $process->size } // '';
+        my $rss    = eval{ $process->rss } // '';
+        my $pctmem = eval{ $process->pctmem } // '';
+        my $pctcpu = eval{ $process->pctcpu } // '';
+        $email .= "pid:$pid, $cmndline, size:$size, mem:$rss ($pctmem%), cpu: $pctcpu%\n";
+    }
+
+    my @headers;
+    foreach my $key ( sort keys $errors_headers->%* ) {
+        push @headers, $key => $errors_headers->{$key};
+    }
+    push @headers, to => $errors_to;
+    push @headers, From => $errors_from;
+    push @headers, Subject => 'Authentication Milter Error';
+    push @headers, 'X-Authentication-Milter-Error' => 'Generated Error Report';
+
+    my $emailer = Email::Simple->create(
+        header => \@headers,
+        body => $email,
+    );
+    try_to_sendmail($emailer);
+
+}
+
 =func I<get_valid_pid($pid_file)>
 
 Given a pid file, check for a valid process ID and return if valid.
@@ -916,13 +967,21 @@ sub start($args) {
         $error = 'unknown error' if ! $error;
         _warn "Server failed: $error";
 
+        # We exited abnormally, try and clean up
+        eval{ __PACKAGE__->close_children };
+        eval{ __PACKAGE__->post_child_cleanup_hook };
+        eval{ __PACKAGE__->shutdown_sockets };
+        sleep 10;
+
         if ( scalar @start_times >= 4 ) {
             if ( $start_times[3] > ( time() - 120 ) ) {
+                eval{ send_panic_email("Error: $error - Abandoning") };
                 _warn "Abandoning automatic restart: too many restarts in a short time";
                 last;
             }
         }
 
+        eval{ send_panic_email("Error: $error - Attempting automatic restart") };
         _warn "Attempting automatic restart";
         sleep 10;
     }

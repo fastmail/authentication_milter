@@ -3,7 +3,7 @@ use 5.20.0;
 use strict;
 use warnings;
 use Mail::Milter::Authentication::Pragmas;
-# ABSTRACT: Handler class for ARCx
+# ABSTRACT: Handler class for ARC
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
 use Mail::DKIM 0.50;
