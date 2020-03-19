@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Fix problem loading external modules
 
 2.20200313 2020-03-13 04:03:59+00:00 UTC
   - Try and clean-up state on an unexpected exit/restart

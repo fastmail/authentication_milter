@@ -9,6 +9,8 @@ use warnings;
 use English;
 use JSON;
 use TOML;
+use Module::Load;
+use Module::Loaded;
 
 use Exporter qw{ import };
 our @EXPORT_OK = qw{
