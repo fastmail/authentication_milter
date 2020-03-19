@@ -8,7 +8,7 @@ use Mail::Milter::Authentication::Pragmas;
 use Mail::Milter::Authentication::HTDocs;
 use Mail::Milter::Authentication::Metric::Grafana;
 use File::Temp;
-use Prometheus::Tiny::Shared 0.011;
+use Prometheus::Tiny::Shared::FastMmap;
 use TOML;
 
 =head1 DESCRIPTION
@@ -114,7 +114,7 @@ sub prom {
             $metric_tempfile = $config->{metric_tempfile};
         }
         if ( ! $metric_tempfile ) {
-            my $file_temp = File::Temp->new( UNLINK => 0, SUFFIX => '.sqlite' );
+            my $file_temp = File::Temp->new( UNLINK => 0, SUFFIX => '.mmap' );
             $metric_tempfile = $file_temp->filename;
         }
         $self->{metric_tempfile} = $metric_tempfile;
@@ -127,8 +127,14 @@ sub prom {
     }
 
     if ( ! $prom ) {
+        my $cache_args = {};
+        $cache_args->{init_file} = 1;
+         if ( defined( $config->{metric_tempfile} ) ) {
+            $cache_args->{share_file} = $config->{metric_tempfile};
+         }
+
         $self->dbgout( 'Metrics', "Setup new metrics file $metric_tempfile", LOG_DEBUG );
-        $prom = eval{ Prometheus::Tiny::Shared->new(filename => $metric_tempfile, init_file => 1) };
+        $prom = eval{ Prometheus::Tiny::Shared::FastMmap->new( cache_args => $cache_args ) };
         $self->handle_exception($@);
         if ( $prom ) {
             $self->{metric_tempfile} = $metric_tempfile;

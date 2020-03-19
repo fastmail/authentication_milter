@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Unreleased - Revert to a Fast::Mmap metrics engine to avoid throughput issues
 
 2.20200319 2020-03-19 03:51:02+00:00 UTC
   - Fix problem loading external modules
