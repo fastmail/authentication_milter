@@ -8,7 +8,7 @@ use Mail::Milter::Authentication::Pragmas;
 use Mail::Milter::Authentication::HTDocs;
 use Mail::Milter::Authentication::Metric::Grafana;
 use File::Temp;
-use Prometheus::Tiny::Shared 0.011;
+use Prometheus::Tiny::Shared 0.020;
 use TOML;
 
 =head1 DESCRIPTION
@@ -114,7 +114,7 @@ sub prom {
             $metric_tempfile = $config->{metric_tempfile};
         }
         if ( ! $metric_tempfile ) {
-            my $file_temp = File::Temp->new( UNLINK => 0, SUFFIX => '.sqlite' );
+            my $file_temp = File::Temp->new( UNLINK => 0, SUFFIX => '.metrics' );
             $metric_tempfile = $file_temp->filename;
         }
         $self->{metric_tempfile} = $metric_tempfile;
@@ -125,10 +125,21 @@ sub prom {
     if ( ! -e $metric_tempfile ) {
         $prom = undef;
     }
+    if ( ! -d $metric_tempfile ) {
+        # If metric_tempfile is a regular file then we need to re-init with a directory
+        # this is likely a restart after upgrade.
+        $prom = undef;
+    }
 
     if ( ! $prom ) {
+        if ( -f $metric_tempfile ) {
+            unlink $metric_tempfile;
+        }
+        if ( ! -d $metric_tempfile ) {
+            mkdir $metric_tempfile, 0700;
+        }
         $self->dbgout( 'Metrics', "Setup new metrics file $metric_tempfile", LOG_DEBUG );
-        $prom = eval{ Prometheus::Tiny::Shared->new(filename => $metric_tempfile, init_file => 1) };
+        $prom = eval{ Prometheus::Tiny::Shared->new(filename => $metric_tempfile.'/authmilter_metrics', init_file => 1) };
         $self->handle_exception($@);
         if ( $prom ) {
             $self->{metric_tempfile} = $metric_tempfile;
