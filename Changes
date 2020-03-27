@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Metrics: Upgrade to Prometheus::Tiny::Shared 0.020
+    backed by Hash::SharedMem
 
 2.20200319 2020-03-19 03:51:02+00:00 UTC
   - Fix problem loading external modules
