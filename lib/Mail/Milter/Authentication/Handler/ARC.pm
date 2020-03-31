@@ -187,7 +187,7 @@ sub inherit_trusted_spf_results {
                 $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
                 $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
                 $result->orphan();
-                $result->key( 'x-arc-spf' );
+                $result->set_key( 'x-arc-spf' );
                 $self->add_auth_header( $result );
 
             }
@@ -236,7 +236,7 @@ sub inherit_trusted_dkim_results {
                 $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
                 $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
                 $result->orphan();
-                $result->key( 'x-arc-dkim' );
+                $result->set_key( 'x-arc-dkim' );
                 $self->add_auth_header( $result );
 
             }
