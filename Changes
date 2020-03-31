@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - ARC: x-arc should use set_key not key
 
 2.20200329.1 2020-03-29 23:55:13+00:00 UTC
   - Metrics: Upgrade to Prometheus::Tiny::Shared 0.020
