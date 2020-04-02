@@ -10,7 +10,6 @@ use Mail::Milter::Authentication::Tester::HandlerTester;
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Test::Exception;
 use Test::More;
-use JSON;
 
 my $basedir = q{};
 

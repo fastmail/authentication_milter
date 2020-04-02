@@ -112,7 +112,7 @@ sub modules_installed {
 
 sub show_default_config {
     my $default_config = default_config();
-    my $json = JSON->new();
+    my $json = JSON::XS->new();
     $json->pretty();
     $json->canonical( 1 );
     print $json->encode( $default_config );

@@ -115,7 +115,7 @@ sub test_metrics {
     subtest $expected => sub {
 
         my $metrics =  get_metrics( 'tmp/authentication_milter_test_metrics.sock' );
-        my $j = JSON->new();
+        my $j = JSON::XS->new();
 
         if ( -e $expected ) {
 

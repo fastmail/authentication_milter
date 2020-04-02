@@ -14,7 +14,7 @@ use Mail::Milter::Authentication::Config;
 use Carp;
 use Clone;
 use English;
-use JSON;
+use JSON::XS;
 use Module::Load;
 use Module::Loaded;
 use Mail::AuthenticationResults 1.20200108;
@@ -37,7 +37,7 @@ sub import {
   Carp->import::into(scalar caller);
   Clone->import::into(scalar caller,qw{ clone });
   English->import::into(scalar caller);
-  JSON->import::into(scalar caller);
+  JSON::XS->import::into(scalar caller);
   Module::Load->import::into(scalar caller);
   Module::Loaded->import::into(scalar caller);
 }
