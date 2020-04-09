@@ -26,6 +26,9 @@ sub default_config {
         'config_file'    => '/etc/mail-dmarc.ini',
         'no_reject_disposition' => 'quarantine',
         'no_list_reject_disposition' => 'none',
+        'reject_on_multifrom' => 30,
+        'quarantine_on_multifrom' => 20,
+        'skip_on_multifrom' => 10,
     };
 }
 
@@ -293,6 +296,43 @@ sub _process_dmarc_for {
     my ( $self, $env_domain_from, $header_domain ) = @_;
 
     my $config = $self->handler_config();
+
+    if ( exists $self->{'processed'}->{ "$env_domain_from $header_domain" } ) {
+        $self->log_error( "DMARC already processed for $env_domain_from $header_domain" );
+        return;
+    }
+    $self->{'processed'}->{ "$env_domain_from $header_domain" } = 1;
+
+    if ( $config->{'reject_on_multifrom'} ) {
+        if ( scalar keys $self->{'processed'}->%* == $config->{'reject_on_multifrom'} ) {
+            $self->log_error( 'DMARC limit reached, rejecting' );
+            $self->reject_mail( '550 5.7.0 DMARC policy violation' );
+            $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
+            return;
+        }
+        elsif ( scalar keys $self->{'processed'}->%* > $config->{'reject_on_multifrom'} ) {
+            $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
+            return;
+        }
+    }
+    if ( $config->{'quarantine_on_multifrom'} ) {
+        if ( scalar keys $self->{'processed'}->%* == $config->{'quarantine_on_multifrom'} ) {
+            $self->log_error( 'DMARC limit reached, quarantining' );
+            $self->quarantine_mail( 'Quarantined due to DMARC policy' );
+            $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
+            return;
+        }
+        elsif ( scalar keys $self->{'processed'}->%* > $config->{'quarantine_on_multifrom'} ) {
+            $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
+            return;
+        }
+    }
+    if ( $config->{'skip_on_multifrom'} ) {
+        if ( scalar keys $self->{'processed'}->%* >= $config->{'skip_on_multifrom'} ) {
+            $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
+            return;
+        }
+    }
 
     # Get a fresh DMARC object each time.
     $self->destroy_object('dmarc');
@@ -662,6 +702,7 @@ sub envfrom_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
     delete $self->{'from_header'};
+    $self->{'processed'}    = {};
     $self->{'is_list'}      = 0;
     $self->{'skip_report'}  = 0;
     $self->{'failmode'}     = 0;
@@ -937,6 +978,7 @@ sub close_callback {
     delete $self->{'from_header'};
     delete $self->{'from_headers'};
     delete $self->{'report_queue'};
+    delete $self->{'processed'};
     $self->destroy_object('dmarc');
     $self->destroy_object('dmarc_result');
     $self->destroy_object('dmarc_results');
@@ -961,6 +1003,9 @@ This handler requires the SPF and DKIM handlers to be installed and active.
             "no_list_reject"        : 0,                   | Do not reject mail detected as mailing list
             "arc_before_list"       : 0,                   | Don't apply above list detection if we have trusted arc
             "no_list_reject_disposition" : "none",         | Disposition to use for mail detected as mailing list (defaults none)
+            "reject_on_multifrom"     : 20,                | Reject mail if we detect more than X DMARC entities to process
+            "quarantine_on_multifrom" : 15,                | Quarantine mail if we detect more than X DMARC entities to process
+            "skip_on_multifrom"       : 10,                | Skip further processing if we detect more than X DMARC entities to process
             "whitelisted"           : [                    | A list of ip addresses or CIDR ranges, or dkim domains
                 "10.20.30.40",                             | for which we do not want to hard reject mail on fail p=reject
                 "dkim:bad.forwarder.com",                  | (valid) DKIM signing domains can also be whitelisted by
