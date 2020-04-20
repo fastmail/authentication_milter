@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20200420.1 2020-04-20 04:31:22+00:00 UTC
   - DMARC: Allow limiting of DMARC processing in a single message
   - Core: use JSON::XS instead of JSON
 
