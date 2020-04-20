@@ -10,7 +10,7 @@ use Mail::Milter::Authentication::Tester::HandlerTester;
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Test::Exception;
 use Test::More;
-use JSON;
+use JSON::XS;
 
 my $basedir = q{};
 
@@ -40,7 +40,7 @@ subtest 'config' => sub {
 subtest 'metrics' => sub {
     my $grafana_rows = $tester->{ 'authmilter' }->{ 'handler' }->{ 'TrustedIP' }->grafana_rows();
     is( scalar @$grafana_rows, 1, '1 Grafana row returned' );
-    lives_ok( sub{ JSON->new()->decode( $grafana_rows->[0] ); }, 'Metrics returns valid JSON' );
+    lives_ok( sub{ JSON::XS->new()->decode( $grafana_rows->[0] ); }, 'Metrics returns valid JSON' );
 };
 
 subtest 'Trusted IP Ranges' => sub{

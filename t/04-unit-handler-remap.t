@@ -11,7 +11,6 @@ use Mail::Milter::Authentication::Constants qw{ :all };
 use Test::Exception;
 use Test::More;
 use Net::IP;
-use JSON;
 use Clone qw{ clone };
 
 my $basedir = q{};

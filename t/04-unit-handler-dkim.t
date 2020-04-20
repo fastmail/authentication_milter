@@ -13,6 +13,7 @@ use Crypt::OpenSSL::RSA;
 use Mail::DKIM::Signer;
 use Mail::DKIM::TextWrap;
 use Mail::DKIM::PrivateKey;
+use JSON::XS;
 
 my $basedir = q{};
 
@@ -89,7 +90,7 @@ subtest 'metrics' => sub {
     my $tester = $testers->{ 'basic' };
     my $grafana_rows = $tester->{ 'authmilter' }->{ 'handler' }->{ 'DKIM' }->grafana_rows();
     is( scalar @$grafana_rows, 1, '1 Grafana row returned' );
-    lives_ok( sub{ JSON->new()->decode( $grafana_rows->[0] ); }, 'Metrics returns valid JSON' );
+    lives_ok( sub{ JSON::XS->new()->decode( $grafana_rows->[0] ); }, 'Metrics returns valid JSON' );
 };
 
 subtest 'none hidden' => sub {

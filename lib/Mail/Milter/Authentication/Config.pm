@@ -7,7 +7,7 @@ use warnings;
 # ABSTRACT: Common configuration handling
 # VERSION
 use English;
-use JSON;
+use JSON::XS;
 use TOML;
 use Module::Load;
 use Module::Loaded;
@@ -142,7 +142,7 @@ sub load_file {
           || die "Error parsing config file $file";
     }
     else {
-        my $json = JSON->new();
+        my $json = JSON::XS->new();
         $json->relaxed(1);
         $data = $json->decode($text)
           || die "Error parsing config file $file";

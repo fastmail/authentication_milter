@@ -2,6 +2,7 @@ Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
   - DMARC: Allow limiting of DMARC processing in a single message
+  - Core: use JSON::XS instead of JSON
 
 2.20200331.1 2020-03-31 23:54:13+00:00 UTC
   - ARC: x-arc should use set_key not key

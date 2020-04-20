@@ -48,7 +48,7 @@ sub get_dashboard {
         }
     }
 
-    my $J = JSON->new();
+    my $J = JSON::XS->new();
     $J->pretty();
     $J->canonical();
 

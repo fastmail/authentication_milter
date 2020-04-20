@@ -512,7 +512,7 @@ sub child_handler {
             print $socket "HTTP/1.0 200 OK\n";
             print $socket "Content-Type: text/plain\n";
             print $socket "\n";
-            my $json = JSON->new();
+            my $json = JSON::XS->new();
             $json->canonical();
             $json->pretty();
             print $socket $json->encode( $config );;
