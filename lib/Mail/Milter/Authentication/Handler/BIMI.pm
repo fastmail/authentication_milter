@@ -246,7 +246,7 @@ sub eom_callback {
                 $self->{ 'header_added' } = 1;
                 my $Record = $BIMI->record();
 
-                if ( $BIMI->can('location') ) {
+                if ( $Record->can('location') ) {
                     my $URL = $Record->location->location;
                     if ( $Result->result() eq 'pass' ) {
                         $self->prepend_header( 'BIMI-Location', join( "\n",
@@ -254,7 +254,7 @@ sub eom_callback {
                             '    l=' . $URL ) );
                     }
                 }
-                elsif ( $BIMI->can('locations') ) {
+                elsif ( $Record->can('locations') ) {
                     my $URLList = $Record->locations->location;
                     if ( $Result->result() eq 'pass' ) {
                         $self->prepend_header( 'BIMI-Location', join( "\n",
