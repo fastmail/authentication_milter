@@ -6,7 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for BIMI
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::BIMI 1.20200214;
+use Mail::BIMI 2;
 
 sub default_config {
     return {
@@ -16,17 +16,20 @@ sub default_config {
 sub register_metrics {
     return {
         'bimi_total' => 'The number of emails processed for BIMI',
-        'bimi_removed_total' => 'The number BIMI-Location headers removed',
+        'bimi_removed_total' => 'The number BIM  headers removed',
     };
 }
 
 sub remove_bimi_header {
-    my ( $self, $value ) = @_;
+    my ( $self, $header, $value ) = @_;
     $self->metric_count( 'bimi_remove_total' );
     if ( !exists( $self->{'remove_bimi_headers'} ) ) {
-        $self->{'remove_bimi_headers'} = [];
+        $self->{'remove_bimi_headers'} = {};
     }
-    push @{ $self->{'remove_bimi_headers'} }, $value;
+    if ( !exists( $self->{'remove_bimi_headers'}->{$header} ) ) {
+        $self->{'remove_bimi_headers'}->{$header} = [];
+    }
+    push @{ $self->{'remove_bimi_headers'}->{$header} }, $value;
 }
 
 sub envfrom_callback {
@@ -41,21 +44,27 @@ sub header_callback {
 
     # Not sure where this should go in the flow, so it's going here!
     # Which is clearly, or at least probably the wrong place.
-    if ( lc $header eq 'bimi-location' ) {
-        if ( !exists $self->{'bimi_header_index'} ) {
-            $self->{'bimi_header_index'} = 0;
+    #
+    foreach my $header_type ( qw{ BIMI-Location BIMI-Ientifier } ) {
+        if ( lc $header eq lc $header_type ) {
+            if ( !exists $self->{'bimi_header_index'} ) {
+                $self->{'bimi_header_index'} = {};
+            }
+            if ( !exists $self->{'bimi_header_index'}->{lc $header_type} ) {
+                $self->{'bimi_header_index'}->{lc $header_type} = 0;
+            }
+            $self->{'bimi_header_index'}->{lc $header_type} =
+            $self->{'bimi_header_index'}->{lc $header_type} + 1;
+            $self->remove_bimi_header( $header_type, $self->{'bimi_header_index'}->{lc $header_type} );
+            my $forged_header =
+              "(Received $header_type header removed by "
+              . $self->get_my_hostname()
+              . ')' . "\n"
+              . '    '
+              . $value;
+            $self->append_header( 'X-Received-'.$header_type,
+                $forged_header );
         }
-        $self->{'bimi_header_index'} =
-        $self->{'bimi_header_index'} + 1;
-        $self->remove_bimi_header( $self->{'bimi_header_index'} );
-        my $forged_header =
-          '(Received BIMI-Location header removed by '
-          . $self->get_my_hostname()
-          . ')' . "\n"
-          . '    '
-          . $value;
-        $self->append_header( 'X-Received-BIMI-Location',
-            $forged_header );
     }
 
     return if ( $self->is_local_ip_address() );
@@ -104,9 +113,11 @@ sub eom_callback {
 
     # Again, not sure where this should go, so it's going here.
     if ( exists( $self->{'remove_bimi_headers'} ) ) {
-        foreach my $header ( reverse @{ $self->{'remove_bimi_headers'} } ) {
-            $self->dbgout( 'RemoveBIMILocationHeader', $header, LOG_DEBUG );
-            $self->change_header( 'BIMI-Location', $header, q{} );
+        foreach my $header_type ( sort keys %{ $self->{'remove_bimi_headers'} } ) {
+            foreach my $header ( reverse @{ $self->{'remove_bimi_headers'} } ) {
+                $self->dbgout( 'RemoveBIMIHeader', "$header_type $header", LOG_DEBUG );
+                $self->change_header( $header_type, $header, q{} );
+            }
         }
     }
 
@@ -245,11 +256,12 @@ sub eom_callback {
                 $self->add_auth_header( $AuthResults );
                 $self->{ 'header_added' } = 1;
                 my $Record = $BIMI->record();
-                my $URLList = $Record->locations->location;
                 if ( $Result->result() eq 'pass' ) {
                     $self->prepend_header( 'BIMI-Location', join( "\n",
                         'v=BIMI1;',
-                        '    l=' . join( ',', @$URLList ) ) );
+                        '    l=' . $Record->location->location,
+                    ) );
+                    $self->prepend_header( 'BIMI-Indicator', $Record->location->identifier->header );
                 }
 
                 $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
