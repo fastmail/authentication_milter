@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - BIMI: Prepare for breaking changes in Mail::BIMI 2
 
 2.20200420.1 2020-04-20 04:31:22+00:00 UTC
   - DMARC: Allow limiting of DMARC processing in a single message
