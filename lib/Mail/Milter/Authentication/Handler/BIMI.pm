@@ -16,13 +16,13 @@ sub default_config {
 sub register_metrics {
     return {
         'bimi_total' => 'The number of emails processed for BIMI',
-        'bimi_removed_total' => 'The number BIM  headers removed',
+        'bimi_removed_total' => 'The number BIMI headers removed',
     };
 }
 
 sub remove_bimi_header {
     my ( $self, $header, $value ) = @_;
-    $self->metric_count( 'bimi_remove_total' );
+    $self->metric_count( 'bimi_removed_total' );
     if ( !exists( $self->{'remove_bimi_headers'} ) ) {
         $self->{'remove_bimi_headers'} = {};
     }
