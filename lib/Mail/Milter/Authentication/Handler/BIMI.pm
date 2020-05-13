@@ -45,7 +45,7 @@ sub header_callback {
     # Not sure where this should go in the flow, so it's going here!
     # Which is clearly, or at least probably the wrong place.
     #
-    foreach my $header_type ( qw{ BIMI-Location BIMI-Ientifier } ) {
+    foreach my $header_type ( qw{ BIMI-Location BIMI-Indicator} ) {
         if ( lc $header eq lc $header_type ) {
             if ( !exists $self->{'bimi_header_index'} ) {
                 $self->{'bimi_header_index'} = {};
@@ -261,7 +261,7 @@ sub eom_callback {
                         'v=BIMI1;',
                         '    l=' . $Record->location->location,
                     ) );
-                    $self->prepend_header( 'BIMI-Indicator', $Record->location->identifier->header );
+                    $self->prepend_header( 'BIMI-Indicator', $Record->location->indicator->header );
                 }
 
                 $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
