@@ -245,11 +245,22 @@ sub eom_callback {
                 $self->add_auth_header( $AuthResults );
                 $self->{ 'header_added' } = 1;
                 my $Record = $BIMI->record();
-                my $URLList = $Record->locations->location;
-                if ( $Result->result() eq 'pass' ) {
-                    $self->prepend_header( 'BIMI-Location', join( "\n",
-                        'v=BIMI1;',
-                        '    l=' . join( ',', @$URLList ) ) );
+
+                if ( $BIMI->can('location') ) {
+                    my $URL = $Record->location->location;
+                    if ( $Result->result() eq 'pass' ) {
+                        $self->prepend_header( 'BIMI-Location', join( "\n",
+                            'v=BIMI1;',
+                            '    l=' . $URL ) );
+                    }
+                }
+                elsif ( $BIMI->can('locations') ) {
+                    my $URLList = $Record->locations->location;
+                    if ( $Result->result() eq 'pass' ) {
+                        $self->prepend_header( 'BIMI-Location', join( "\n",
+                            'v=BIMI1;',
+                            '    l=' . join( ',', @$URLList ) ) );
+                    }
                 }
 
                 $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
