@@ -257,11 +257,11 @@ sub eom_callback {
                 $self->{ 'header_added' } = 1;
                 my $Record = $BIMI->record();
                 if ( $Result->result() eq 'pass' ) {
-                    $self->prepend_header( 'BIMI-Location', join( "\n",
-                        'v=BIMI1;',
-                        '    l=' . $Record->location->location,
-                    ) );
-                    $self->prepend_header( 'BIMI-Indicator', $Record->location->indicator->header );
+                    my $Headers = $Result->headers;
+                    if ( $Headers ) {
+                        $self->prepend_header( 'BIMI-Location', $Headers->{'BIMI-Location'} ) if exists $Headers->{'BIMI-Location'} ;
+                        $self->prepend_header( 'BIMI-Indicator', $Headers->{'BIMI-Indicator'} ) if exists $Headers->{'BIMI-Indicator'} ;
+                    }
                 }
 
                 $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
