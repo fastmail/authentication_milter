@@ -8,9 +8,13 @@ use Mail::Milter::Authentication::Tester::HandlerTester;
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Test::Exception;
 use Test::More;
+use Mail::BIMI;
 use Mail::DKIM::Signer;
 use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::PrivateKey;
+use version;
+
+plan skip_all => "Mail::BIMI $Mail::BIMI::VERSION detected, newer authmilter recommended for new functionality" if ( version->parse($Mail::BIMI::VERSION) >= 2.0 );
 
 my $private_key = Mail::DKIM::PrivateKey->load(Data=>'MIICXQIBAAKBgQDErv0qLGKJ933gdhx2MUBqb/XhTloMjJhH0kdQsxkVuhRFzINgDzMGOq83xEwNEk4jC/J+E49fNQ+TSVymq+XGvrkeW7/7llEOTFosY6OGlwdeUZyyUCEM6SIYIBeHuIQn4Ohwhq7P0nZFfXNAG7Wrlxx1O+E881wTRhFOBxAjdQIDAQABAoGAP4cF3olXipiV39pGdyaRV8+x64QTMdp3lTsmLbqrb4ka4zCbfntqT6jEz45nwhEXi9pgCLjopifNUBVyB6OeI3KdaGQzfYVBCgTyvwMp+68rTnYtDeByrhXm+yccMpvFNA1BHxYiByucCGy8cc8jTfAvSKPTRpJ5TZM4S59ZkEECQQDkHOJ/Uzt5mm5Yq34HF78FzkY8w8TKRhVcsI0ZWS+Y1EBJTKZOoOS08d6Zetk0TNd52e6Gb0zxt325l5msKH3TAkEA3Lp67CXopC43Y8H7sJwMJiIYpN2F1lgt0XYsnyHhBnANS4Ap6d32j3MhtIEHwWv1vbRkCOSOm0h6Tq2Tj6rklwJBAOHQylN7JLxbqXLzyZ3h3wMzUQqkTjJjMJCCYhu+00R6kW0+iL/7vIx3h4HuQAjrLL/+gobotYXvvHE2ZzUrHGsCQQDAvmZQh9naZDEh/2ZVFi7VrbhvXrFcNqvr2JGmc+MXyAkUANqYyaZgJV0tTe8Dy85O1ZL04QBWQLfstE3CiqwJAkBJz/qjnUlfbyuTU1PHaWbkcTCZH48VE6nvsoHOKlyvxTUtRlfTILBPcQ5G5U3TePQMdzXInQASs0oncbz51NQ3');
 
