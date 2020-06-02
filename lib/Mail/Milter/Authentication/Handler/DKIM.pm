@@ -6,10 +6,10 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for DKIM
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::DKIM 0.39;
+use Mail::DKIM 0.54;
 use Mail::DKIM::DNS;
 use Mail::DKIM::KeyValueList;
-use Mail::DKIM::Verifier 0.39;
+use Mail::DKIM::Verifier;
 
 sub default_config {
     return {
@@ -113,11 +113,8 @@ sub eoh_callback {
                 $UseStrict = 0;
             }
             $dkim = Mail::DKIM::Verifier->new( 'Strict' => $UseStrict );
-            # The following requires Mail::DKIM > 0.4
-            if ( $Mail::DKIM::VERSION >= 0.4 ) {
-                my $resolver = $self->get_object('resolver');
-                Mail::DKIM::DNS::resolver($resolver);
-            }
+            my $resolver = $self->get_object('resolver');
+            Mail::DKIM::DNS::resolver($resolver);
             $self->set_object('dkim', $dkim, 1);
         };
         if ( my $error = $@ ) {
