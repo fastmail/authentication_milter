@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - DKIM: Require a more modern Mail::DKIM
 
 2.20200513.1 2020-05-13 04:13:58+00:00 UTC
   - BIMI: Prepare for breaking changes in Mail::BIMI 2
