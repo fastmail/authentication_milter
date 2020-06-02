@@ -243,7 +243,7 @@ sub eom_callback {
                     }
                 }
 
-                my %Options = $config->{'bimi_options'}->%*;
+                my %Options = $config->{'bimi_options'} ? $config->{'bimi_options'}->%* : ();
                 $Options{resolver} = $self->get_object( 'resolver' );
                 $Options{dmarc_object} = $DMARCResult;
                 $Options{spf_object} = $RelevantSPFResult if $RelevantSPFResult;
