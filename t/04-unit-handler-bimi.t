@@ -4,6 +4,9 @@ use strict;
 use warnings;
 use lib 't';
 
+$ENV{MAIL_BIMI_SVG_FROM_FILE} = 't/data/FM_BIMI.svg';
+$ENV{MAIL_BIMI_CACHE_BACKEND} = 'Null';
+
 use Mail::Milter::Authentication::Tester::HandlerTester;
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Test::Exception;
@@ -97,7 +100,7 @@ Subject: This is a test
 Testing',
     });
 
-    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com selector=default', 'Default BIMI pass' );
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com header.selector=default', 'Default BIMI pass' );
 
     $tester->switch( 'new' );
     $tester->run({
@@ -134,7 +137,7 @@ BIMI-Selector: V=BIMI1; s=testsel;
 Testing',
     });
 
-    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com selector=default', 'Unsigned Selector BIMI pass' );
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com header.selector=default', 'Unsigned Selector BIMI pass' );
 
 };
 
@@ -159,7 +162,7 @@ Testing
         ),
     });
 
-    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com selector=testsel', 'Domain Signed Selector BIMI pass' );
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com header.selector=testsel', 'Domain Signed Selector BIMI pass' );
 
 };
 
@@ -184,7 +187,7 @@ Testing
         ),
     });
 
-    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com selector=default', 'Domain Signed Selector BIMI pass' );
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com header.selector=default', 'Domain Signed Selector BIMI pass' );
 
 };
 
@@ -209,7 +212,7 @@ Testing
         ),
     });
 
-    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=one.example.com selector=testselone', 'Org Signed Selector BIMI pass' );
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=one.example.com header.selector=testselone', 'Org Signed Selector BIMI pass' );
 
 };
 
@@ -234,7 +237,7 @@ Testing
         ),
     });
 
-    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com selector=default', 'Third Party Signed Selector BIMI pass' );
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com header.selector=default', 'Third Party Signed Selector BIMI pass' );
 
 };
 
@@ -255,7 +258,7 @@ BIMI-Selector: V=BIMI1; s=foobar;
 Testing',
     });
 
-    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com selector=default', 'Fallback BIMI pass' );
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com header.selector=default', 'Fallback BIMI pass' );
 
 };
 
@@ -305,7 +308,7 @@ Testing
         ),
     });
 
-    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com selector=testsel', 'Domain Signed Selector BIMI pass' );
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=pass header.d=example.com header.selector=testsel', 'Domain Signed Selector BIMI pass' );
 
 };
 
