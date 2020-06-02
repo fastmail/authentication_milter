@@ -74,7 +74,7 @@ $tester->snapshot( 'new' );
 
 subtest 'config' => sub {
     my $config = $tester->{ 'authmilter' }->{ 'handler' }->{ 'BIMI' }->default_config();
-    is_deeply( $config, {}, 'Returns correct config' );
+    is_deeply( $config, {'bimi_options' => {}}, 'Returns correct config' );
 };
 
 #subtest 'metrics' => sub {
