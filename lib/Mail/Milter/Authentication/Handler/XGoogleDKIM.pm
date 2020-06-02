@@ -6,9 +6,9 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for Google specific DKIM
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
+use Mail::DKIM 0.54;
 use Mail::DKIM::DNS;
 use Mail::DKIM::Verifier;
-use Mail::DKIM;
 
 sub default_config {
     return {
@@ -92,11 +92,8 @@ sub eoh_callback {
         my $dkim;
         eval {
             $dkim = Mail::DKIM::Verifier->new();
-            # The following requires Mail::DKIM > 0.4
-            if ( $Mail::DKIM::VERSION >= 0.4 ) {
-                my $resolver = $self->get_object('resolver');
-                Mail::DKIM::DNS::resolver($resolver);
-            }
+            my $resolver = $self->get_object('resolver');
+            Mail::DKIM::DNS::resolver($resolver);
             $self->set_object('xgdkim', $dkim, 1);
         };
         if ( my $error = $@ ) {

@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - XGoogleDKIM: Require a more modern Mail::DKIM
+  - ARC: Require a more modern Mail::DKIM
 
 2.20200602.1 2020-06-02 06:18:01+00:00 UTC
   - DKIM: Require a more modern Mail::DKIM

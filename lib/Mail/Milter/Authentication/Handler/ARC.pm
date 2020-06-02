@@ -6,7 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for ARC
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::DKIM 0.50;
+use Mail::DKIM 0.54;
 use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::ARC::Verifier;
 use Mail::DKIM::DNS;
@@ -424,7 +424,6 @@ sub eoh_callback {
             $UseStrict = 0;
         }
         $arc = Mail::DKIM::ARC::Verifier->new( 'Strict' => $UseStrict );
-        # The following requires Mail::DKIM > 0.4
         my $resolver = $self->get_object('resolver');
         Mail::DKIM::DNS::resolver($resolver);
         $self->set_object('arc', $arc, 1);
