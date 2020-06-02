@@ -10,6 +10,7 @@ use Mail::BIMI 2;
 
 sub default_config {
     return {
+        'bimi_options' => {},
     };
 }
 
@@ -242,13 +243,13 @@ sub eom_callback {
                     }
                 }
 
-                my $BIMI = Mail::BIMI->new(
-                    resolver => $self->get_object( 'resolver' ),
-                    dmarc_object => $DMARCResult,
-                    $RelevantSPFResult ? ( spf_object => $RelevantSPFResult ) : (),
-                    domain => $Domain,
-                    selector => $Selector,
-                );
+                my $Options = $config->{'bimi_options'}->%*;
+                $Options{resolver} = $self->get_object( 'resolver' );
+                $Options{dmarc_object} = $DMARCResult;
+                $Options{spf_object} = $RelevantSPFResult if $RelevantSPFResult;
+                $Options{domain} = $Domain;
+                $Options{selector} = $Selector;
+                my $BIMI = Mail::BIMI->new(%Options);
                 $self->{'bimi_object'} = $BIMI; # For testing!
 
                 my $Result = $BIMI->result();
@@ -288,7 +289,7 @@ sub close_callback {
     delete $self->{'remove_bimi_headers'};
     delete $self->{'bimi_object'};
     delete $self->{'bimi_header_index'};
-    delete $self->{ 'header_added' };
+    delete $self->{'header_added'};
 }
 
 1;
@@ -309,6 +310,7 @@ This handler requires the DMARC handler and its dependencies to be installed and
 
         "BIMI" : {                                      | Config for the BIMI Module
                                                         | Requires DMARC
+            "bimi_options" : {},                        | Options to pass into Mail::BIMI->new
         },
 
 =head1 SYNOPSIS
