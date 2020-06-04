@@ -152,7 +152,6 @@ sub eom_callback {
                 return;
             }
             else {
-                # If Multiple DMARC results is OK then... foreach my $DMARCResult ( @$DMARCResults ) {
                 my $DMARCResult = clone $DMARCResults->[0]; # Clone so we can modify without breaking reporting data
 
                 ## Consider ARC
@@ -245,7 +244,7 @@ sub eom_callback {
 
                 my %Options = $config->{'bimi_options'} ? $config->{'bimi_options'}->%* : ();
                 $Options{resolver} = $self->get_object( 'resolver' );
-                $Options{dmarc_object} = $DMARCResult;
+                $Options{dmarc_object} = $self->get_object('dmarc');
                 $Options{spf_object} = $RelevantSPFResult if $RelevantSPFResult;
                 $Options{domain} = $Domain;
                 $Options{selector} = $Selector;
