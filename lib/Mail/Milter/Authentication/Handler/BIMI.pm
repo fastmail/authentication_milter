@@ -11,6 +11,8 @@ use Mail::BIMI 2;
 sub default_config {
     return {
         'bimi_options' => {},
+        'rbl_allowlist' => '',
+        'rbl_blocklist' => '',
     };
 }
 
@@ -111,6 +113,11 @@ sub eom_requires {
 sub eom_callback {
     my ($self) = @_;
     my $config = $self->handler_config();
+
+    if ( $config->{rbl_allowlist} && $config->{rbl_blocklist} ) {
+        $self->dbgout( 'BIMI Error', 'Cannot specify both rbl_allowlist and rbl_blocklist', LOG_DEBUG );
+        return;
+    }
 
     # Again, not sure where this should go, so it's going here.
     if ( exists( $self->{'remove_bimi_headers'} ) ) {
@@ -242,6 +249,20 @@ sub eom_callback {
                     }
                 }
 
+                my $Skip = 0;
+                if ( $config->{rbl_allowlist} ) {
+                    my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
+                    unless ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_allowlist'} ) ) {
+                        $Skip = 1;
+                    }
+                }
+                elsif ( $config->{rbl_blocklist} ) {
+                    my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
+                    if ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_blocklist'} ) ) {
+                        $Skip = 1;
+                    }
+                }
+
                 my %Options = $config->{'bimi_options'} ? $config->{'bimi_options'}->%* : ();
                 $Options{resolver} = $self->get_object( 'resolver' );
                 $Options{dmarc_object} = $self->get_object('dmarc');
@@ -251,20 +272,30 @@ sub eom_callback {
                 my $BIMI = Mail::BIMI->new(%Options);
                 $self->{'bimi_object'} = $BIMI; # For testing!
 
-                my $Result = $BIMI->result();
-                my $AuthResults = $Result->get_authentication_results_object();
-                $self->add_auth_header( $AuthResults );
-                $self->{ 'header_added' } = 1;
-                my $Record = $BIMI->record();
-                if ( $Result->result() eq 'pass' ) {
-                    my $Headers = $Result->headers;
-                    if ( $Headers ) {
-                        $self->prepend_header( 'BIMI-Location', $Headers->{'BIMI-Location'} ) if exists $Headers->{'BIMI-Location'} ;
-                        $self->prepend_header( 'BIMI-Indicator', $Headers->{'BIMI-Indicator'} ) if exists $Headers->{'BIMI-Indicator'} ;
-                    }
+                if ( $Skip ) {
+                    $self->log_error( 'BIMI Skipped due to RBL');
+                    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'skipped' );
+                    $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Local Policy' ) );
+                    $self->add_auth_header( $header );
+                    $self->{ 'header_added' } = 1;
+                    $self->metric_count( 'bimi_total', { 'result' => 'skipped', 'reason' => 'rbl' } );
                 }
+                else {
+                    my $Result = $BIMI->result();
+                    my $AuthResults = $Result->get_authentication_results_object();
+                    $self->add_auth_header( $AuthResults );
+                    $self->{ 'header_added' } = 1;
+                    my $Record = $BIMI->record();
+                    if ( $Result->result() eq 'pass' ) {
+                        my $Headers = $Result->headers;
+                        if ( $Headers ) {
+                            $self->prepend_header( 'BIMI-Location', $Headers->{'BIMI-Location'} ) if exists $Headers->{'BIMI-Location'} ;
+                            $self->prepend_header( 'BIMI-Indicator', $Headers->{'BIMI-Indicator'} ) if exists $Headers->{'BIMI-Indicator'} ;
+                        }
+                    }
 
-                $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
+                    $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
+                }
             }
         }
 
@@ -310,6 +341,9 @@ This handler requires the DMARC handler and its dependencies to be installed and
         "BIMI" : {                                      | Config for the BIMI Module
                                                         | Requires DMARC
             "bimi_options" : {},                        | Options to pass into Mail::BIMI->new
+            "rbl_allowlist" : "",                       | Optional RBL Allow list of allowed org domains
+            "rbl_blocklist" : "",                       | Optional RBL Block list of disallowed org domains
+                                                        | Allow and Block list cannot both be present
         },
 
 =head1 SYNOPSIS
