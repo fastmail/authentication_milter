@@ -1498,7 +1498,7 @@ sub get_object {
                 $args{udp_timeout} = $config->{'dns_timeout'}   || 8;
                 $args{tcp_timeout} = $config->{'dns_timeout'}   || 8;
                 $args{retry}       = $config->{'dns_retry'}     || 2;
-                $args{nameservers} = $config->{'dns_resolvers'} if $config->{'dns_resolvers'};
+                $args{nameservers} = $config->{'dns_resolvers'} if $config->{'dns_resolvers'} && $config->{'dns_resolvers'}->@*;
                 $object = Mail::Milter::Authentication::Resolver->new(%args);
                 $object->udppacketsize(1240);
                 $object->persistent_udp(1);
