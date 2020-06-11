@@ -1486,23 +1486,20 @@ sub get_object {
 
         elsif ( $name eq 'resolver' ) {
             $self->dbgout( 'Object created', $name, LOG_DEBUG );
-            my $config = $self->config();
-            my $timeout           = $config->{'dns_timeout'}           || 8;
-            my $dns_retry         = $config->{'dns_retry'}             || 2;
-            my $resolvers         = $config->{'dns_resolvers'}         || [];
             if ( defined $TestResolver ) {
                 $object = $TestResolver;
                 warn "Using FAKE TEST DNS Resolver - I Hope this isn't production!";
                 # If it is you better know what you're doing!
             }
             else {
-                $object = Mail::Milter::Authentication::Resolver->new(
-                    '_handler'          => $self,
-                    'udp_timeout'       => $timeout,
-                    'tcp_timeout'       => $timeout,
-                    'retry'             => $dns_retry,
-                    'nameservers'       => $resolvers,
-                );
+                my $config = $self->config();
+                my %args;
+                $args{_handler}    = $self;
+                $args{udp_timeout} = $config->{'dns_timeout'}   || 8;
+                $args{tcp_timeout} = $config->{'dns_timeout'}   || 8;
+                $args{retry}       = $config->{'dns_retry'}     || 2;
+                $args{nameservers} = $config->{'dns_resolvers'} if $config->{'dns_resolvers'} && $config->{'dns_resolvers'}->@*;
+                $object = Mail::Milter::Authentication::Resolver->new(%args);
                 $object->udppacketsize(1240);
                 $object->persistent_udp(1);
             }

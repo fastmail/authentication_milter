@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Only set Nameservers when given
+    Prevents issue with newer Net::DNS::Resolver
 
 2.20200602.2 2020-06-02 09:11:51+00:00 UTC
   - XGoogleDKIM: Require a more modern Mail::DKIM
