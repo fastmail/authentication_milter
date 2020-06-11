@@ -296,6 +296,7 @@ sub eom_callback {
 
                     $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
                 }
+                $BIMI->finish;
             }
         }
 
