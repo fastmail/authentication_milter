@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20200612.2 2020-06-12 00:14:00+00:00 UTC
   - Core: Only set Nameservers when given
     Prevents issue with newer Net::DNS::Resolver
 
