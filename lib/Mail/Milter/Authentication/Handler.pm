@@ -236,6 +236,28 @@ sub register_metrics {
     };
 }
 
+=callback_method I<top_dequeue_callback()>
+
+Top level handler for dequeue.
+
+=cut
+
+sub top_dequeue_callback {
+
+    my ( $self ) = @_;
+    $self->status('dequeue');
+    $self->dbgout( 'CALLBACK', 'Dequeue', LOG_DEBUG );
+
+    my $callbacks = $self->get_callbacks( 'dequeue' );
+    foreach my $handler ( @$callbacks ) {
+        $self->dbgout( 'CALLBACK', 'Dequeue ' . $handler, LOG_DEBUG );
+        my $start_time = $self->get_microseconds();
+        $self->get_handler($handler)->dequeue_callback();
+        $self->metric_count( 'time_microseconds_total', { 'callback' => 'dequeue', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
+    }
+    $self->status('postdequeue');
+}
+
 =callback_method I<top_setup_callback()>
 
 Top level handler for handler setup.

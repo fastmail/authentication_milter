@@ -229,6 +229,8 @@ Hook which runs after forking, sets up per process items.
 sub child_init_hook($self,@) {
     srand();
 
+    my ($arg) = @_;
+
     my $config = get_config();
     $self->{'config'} = $config;
 
@@ -242,8 +244,14 @@ sub child_init_hook($self,@) {
         }
     }
 
-    $self->loginfo( "Child process $PID starting up" );
-    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':starting';
+    if ( $arg eq 'dequeue' ) {
+        $self->loginfo( "Dequeue process $PID starting up" );
+        $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':dequeue';
+    }
+    else {
+        $self->loginfo( "Child process $PID starting up" );
+        $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':starting';
+    }
 
     my $base;
     if ( $config->{'protocol'} eq 'milter' ) {
@@ -299,8 +307,14 @@ Hook which runs when the child is about to finish.
 =cut
 
 sub child_finish_hook($self,@) {
+    my ($arg) = @_;
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':exiting';
-    $self->loginfo( "Child process $PID shutting down" );
+    if ( $arg eq 'dequeue' ) {
+        $self->loginfo( "Dequeue process $PID shutting down" );
+    }
+    else {
+        $self->loginfo( "Child process $PID shutting down" );
+    }
     eval {
         $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
     };
@@ -315,6 +329,16 @@ Hook which runs before the server closes.
 
 sub pre_server_close_hook($self,@) {
     $self->loginfo( 'Server closing down' );
+}
+
+=method I<dequeue()>
+
+Call the dequeue handlers
+
+=cut
+
+sub dequeue($self,@) {
+    $self{server}->{handler}->{_Handler}->top_dequeue_callback();
 }
 
 =method I<get_client_proto()>
@@ -946,6 +970,9 @@ sub start($args) {
     $srvargs{'listen'} = $listen_backlog;
     $srvargs{'leave_children_open_on_hup'} = 1;
 
+    $srvargs{'max_dequeue'} = 1;
+    $srvargs{'check_for_dequeue'} = 60;
+
     _warn "==========";
     _warn "Starting server";
     _warn "Running with perl $PERL_VERSION";
@@ -1074,7 +1101,7 @@ sub setup_handler($self,$name) {
     my $object = $package->new( $self );
     $self->{'handler'}->{$name} = $object;
 
-    foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
+    foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close dequeue } ) {
         if ( $object->can( $callback . '_callback' ) ) {
             $self->register_callback( $name, $callback );
         }
@@ -1117,7 +1144,7 @@ Sort the callbacks into the order in which they must be called
 =cut
 
 sub sort_all_callbacks($self) {
-    foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
+    foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close dequeue } ) {
         $self->sort_callbacks( $callback );
     }
 }
