@@ -13,6 +13,7 @@ use MIME::Base64;
 use Mail::SPF;
 use Net::DNS::Resolver;
 use Net::IP;
+use Sereal qw{encode_sereal decode_sereal};
 use Sys::Hostname;
 use Time::HiRes qw{ ualarm gettimeofday };
 
@@ -243,18 +244,19 @@ Top level handler for dequeue.
 =cut
 
 sub top_dequeue_callback {
-
     my ( $self ) = @_;
+
     $self->status('dequeue');
     $self->dbgout( 'CALLBACK', 'Dequeue', LOG_DEBUG );
-
     my $callbacks = $self->get_callbacks( 'dequeue' );
     foreach my $handler ( @$callbacks ) {
         $self->dbgout( 'CALLBACK', 'Dequeue ' . $handler, LOG_DEBUG );
         my $start_time = $self->get_microseconds();
         $self->get_handler($handler)->dequeue_callback();
+        $self->dbgoutwrite();
         $self->metric_count( 'time_microseconds_total', { 'callback' => 'dequeue', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
     }
+    $self->dbgoutwrite();
     $self->status('postdequeue');
 }
 
@@ -1776,6 +1778,54 @@ sub tempfail_on_error {
 
 
 # Common calls into other Handlers
+
+=helper_method I<add_dequeue($key,$data)>
+
+Write serialized $data into the queue for later dequeueing
+
+=cut
+
+sub _dequeue_dir($self) {
+    my $dir = '/tmp/authmilter_dequeue'; ## TODO CONFIG THIS
+    mkdir $dir if ! -d $dir;
+    return $dir;
+}
+
+sub add_dequeue($self,$key,$data) {
+    my $dir = $self->_dequeue_dir;
+    my $fullpath;
+    my $queue_index = 1;
+    do {
+        my $filename = join( '.',$key,$PID,$queue_index++,'dequeue');
+        $fullpath = "$dir/$filename";
+        if ($queue_index > 100) {
+            $self->log_error("Failed to write dequeue file for $key");
+            ## TODO should this be fatal?
+            return;
+        }
+    } while ( -e $fullpath );
+    my $serialised_data = encode_sereal($data);
+    write_file($fullpath,{atomic=>1},$serialised_data);
+}
+
+=helper_method I<get_dequeue_list($key)>
+
+Return an ArrayRef of all queued items for $key
+
+Used in get_dequeue_object and delete_dequeue_object
+
+=cut
+
+sub get_dequeue_list($self,$key) {
+    my @dequeue_list;
+    my $dir = $self->_dequeue_dir;
+    opendir(my $dh, $dir) || die "Failed to open dequeue directory: $!";
+    while (my $file = readdir $dh) {
+        push @dequeue_list, $file if $file =~ /^$key\./;
+    }
+    closedir $dh;
+    return \@dequeue_list;
+}
 
 =helper_method I<is_local_ip_address()>
 

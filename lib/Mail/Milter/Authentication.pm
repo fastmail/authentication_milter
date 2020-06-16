@@ -226,8 +226,8 @@ Hook which runs after forking, sets up per process items.
 
 =cut
 
-sub child_init_hook($self,@) {
-    my ($arg) = @_;
+sub child_init_hook {
+    my ( $self,$arg ) = @_;
     srand();
 
     my $config = get_config();
@@ -305,8 +305,8 @@ Hook which runs when the child is about to finish.
 
 =cut
 
-sub child_finish_hook($self,@) {
-    my ($arg) = @_;
+sub child_finish_hook {
+    my ( $self,$arg ) = @_;
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':exiting';
     if ( $arg eq 'dequeue' ) {
         $self->loginfo( "Dequeue process $PID shutting down" );
@@ -337,7 +337,7 @@ Call the dequeue handlers
 =cut
 
 sub dequeue($self,@) {
-    $self->{server}->{handler}->{_Handler}->top_dequeue_callback();
+    $self->{handler}->{_Handler}->top_dequeue_callback();
 }
 
 =method I<get_client_proto()>
@@ -969,8 +969,9 @@ sub start($args) {
     $srvargs{'listen'} = $listen_backlog;
     $srvargs{'leave_children_open_on_hup'} = 1;
 
+    ## TODO Config these
     $srvargs{'max_dequeue'} = 1;
-    $srvargs{'check_for_dequeue'} = 60;
+    $srvargs{'check_for_dequeue'} = 5;
 
     _warn "==========";
     _warn "Starting server";
