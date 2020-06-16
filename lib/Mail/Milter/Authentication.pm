@@ -338,7 +338,7 @@ Call the dequeue handlers
 =cut
 
 sub dequeue($self,@) {
-    $self{server}->{handler}->{_Handler}->top_dequeue_callback();
+    $self->{server}->{handler}->{_Handler}->top_dequeue_callback();
 }
 
 =method I<get_client_proto()>
