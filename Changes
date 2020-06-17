@@ -1,6 +1,9 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Add dequeue handling
+  - Core: Setup cache, lib, and spool directories
+  - DMARC: Use dequeue for report saving
 
 2.20200612.2 2020-06-12 00:14:00+00:00 UTC
   - Core: Only set Nameservers when given
