@@ -22,19 +22,42 @@ sub helo_callback {
     $self->{'helo_name'} = $helo_host;
 }
 
+sub dequeue_callback {
+    my ($self) = @_;
+    my $config = $self->handler_config();
+    my $dequeue_list = $self->get_dequeue_list('abusix_datafeed');
+    foreach my $id ( $dequeue_list->@* ) {
+        eval {
+            my $feed = $self->get_dequeue($id);
+            if ( $feed ) {
+                my $api = Mail::DataFeed::Abusix->new( $feed->%* );
+                $api->send;
+                $self->delete_dequeue($id);
+            }
+            else {
+                $self->log_error("AbusixDataFeed Report dequeue failed for $id");
+            }
+        };
+        if ( my $Error = $@ ) {
+            $self->handle_exception( $Error );
+            $self->log_error( 'AbusixDataFeed Sending Error ' . $Error );
+        }
+    }
+}
+
 sub envfrom_callback {
     my ($self, $from) = @_;
     my $config = $self->handler_config();
 
-    $self->{ 'abusix_feed' } = Mail::DataFeed::Abusix->new(
-        'feed_name' => $config->{ 'feed_name' },
-        'feed_dest' => $config->{ 'feed_dest' },
-        'feed_key'  => $config->{ 'feed_key' },
-    );
-    $self->{ 'abusix_feed' }->mail_from_domain( $self->get_domain_from( $from ) );
-    $self->{ 'abusix_feed' }->helo( $self->{ 'helo_name' } );
-    $self->{ 'abusix_feed' }->port( $config->{ 'listening_port' } );
-    $self->{ 'abusix_feed' }->ip_address( $self->ip_address() );
+    $self->{ 'abusix_feed' } = {
+        feed_name => $config->{ 'feed_name' },
+        feed_dest => $config->{ 'feed_dest' },
+        feed_key => $config->{ 'feed_key' },
+        mail_from_domain => $self->get_domain_from( $from ),
+        helo => $self->{ 'helo_name' },
+        port => $config->{ 'listening_port' },
+        ip_address => $self->ip_address(),
+    };
 
     delete $self->{ 'first_received' };
 
@@ -52,7 +75,8 @@ sub envfrom_callback {
             }
         }
     }
-    $self->{ 'abusix_feed' }->reverse_dns( join( ',', @rdns ) );
+
+    $self->{ 'abusix_feed' }->{'reverse_dns'} = join( ',', @rdns );
 }
 
 sub header_callback {
@@ -68,19 +92,20 @@ sub header_callback {
 sub eoh_callback {
     my ( $self ) = @_;
     if ( $self->is_handler_loaded('TLS') ) {
-        $self->{ 'abusix_feed' }->used_tls( $self->is_encrypted() || 0 ); # Explicit 0 over undef if TLS handler is loaded
+        $self->{ 'abusix_feed' }->{'used_tls'} = $self->is_encrypted() || 0; # Explicit 0 over undef if TLS handler is loaded
     }
-    $self->{ 'abusix_feed' }->used_auth( $self->is_authenticated() );
+    $self->{ 'abusix_feed' }->{'used_auth'} = $self->is_authenticated();
     if ( defined $self->{ 'first_received' } ) {
         my $used_smtp  = $self->{ 'first_received' } =~ / with SMTP/;
         my $used_esmtp = $self->{ 'first_received' } =~ / with ESMTP/;
         if ( $used_smtp xor $used_esmtp ) {
             # Filters line noise!
-            $self->{ 'abusix_feed' }->used_esmtp( 1 ) if $used_esmtp;
-            $self->{ 'abusix_feed' }->used_esmtp( 0 ) if $used_smtp;
+            $self->{ 'abusix_feed' }->{'used_esmtp'} = 1 if $used_esmtp;
+            $self->{ 'abusix_feed' }->{'used_esmtp'} = 0 if $used_smtp;
         }
     }
-    $self->{ 'abusix_feed' }->send();
+    $self->add_dequeue('abusix_datafeed',$self->{'abusix_feed'});
+    delete $self->{'abusix_feed'};
 }
 
 
