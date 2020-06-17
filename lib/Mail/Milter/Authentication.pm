@@ -243,6 +243,7 @@ sub child_init_hook {
         }
     }
 
+    $arg = '' if !defined $arg;
     if ( $arg eq 'dequeue' ) {
         $self->loginfo( "Dequeue process $PID starting up" );
         $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':dequeue';
@@ -308,6 +309,7 @@ Hook which runs when the child is about to finish.
 sub child_finish_hook {
     my ( $self,$arg ) = @_;
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':exiting';
+    $arg = '' if !defined $arg;
     if ( $arg eq 'dequeue' ) {
         $self->loginfo( "Dequeue process $PID shutting down" );
     }
