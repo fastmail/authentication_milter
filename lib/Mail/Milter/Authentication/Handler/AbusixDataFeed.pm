@@ -6,7 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for sending data to Abusix
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::DataFeed::Abusix;
+use Mail::DataFeed::Abusix 1.20200617.1;
 
 sub default_config {
     return {
@@ -57,6 +57,7 @@ sub envfrom_callback {
         helo => $self->{ 'helo_name' },
         port => $config->{ 'listening_port' },
         ip_address => $self->ip_address(),
+        time => time(),
     };
 
     delete $self->{ 'first_received' };
@@ -105,7 +106,6 @@ sub eoh_callback {
         }
     }
     $self->add_dequeue('abusix_datafeed',$self->{'abusix_feed'});
-    delete $self->{'abusix_feed'};
 }
 
 
