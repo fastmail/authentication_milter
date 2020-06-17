@@ -944,6 +944,10 @@ sub dequeue_callback {
 
             eval {
                 $self->set_handler_alarm( 5 * 1000000 ); # Allow no longer than 5 seconds for this!
+                if ( $report->can('set_resolver') ) {
+                    my $resolver = $self->get_object('resolver');
+                    $report->set_resolver($resolver);
+                }
                 $report->save_aggregate();
                 $self->dbgout( 'Queued DMARC Report saved for', $report->result()->published()->rua(), LOG_INFO );
                 $self->delete_dequeue($id);
@@ -981,6 +985,9 @@ sub _save_aggregate_reports {
     eval {
         $self->set_handler_alarm( 2 * 1000000 ); # Allow no longer than 2 seconds for this!
         while ( my $report = shift @{ $self->{'report_queue'} } ) {
+            if ( $report->can('set_resolver') ) {
+                $report->set_resolver(undef);
+            }
             $self->add_dequeue('dmarc_report',$report);
             $self->dbgout( 'DMARC Report queued for', $report->result()->published()->rua(), LOG_INFO );
         }
