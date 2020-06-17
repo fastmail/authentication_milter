@@ -7,7 +7,6 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use Digest::MD5 qw{ md5_hex };
 use Email::Date::Format qw{ email_date };
-use File::Temp;
 use IO::Socket::INET;
 use IO::Socket::UNIX;
 use IO::Socket;
@@ -604,6 +603,9 @@ sub smtp_command_data {
 
     my $temp_file;
     if ( exists ( $smtp_conf->{ 'temp_dir' } ) ) {
+        # TODO use spool_dir to create this
+        # add config option to en/disable this
+        # allow dir to be overridden
         $temp_file = File::Temp->new( DIR => $smtp_conf->{ 'temp_dir' } );
     }
 

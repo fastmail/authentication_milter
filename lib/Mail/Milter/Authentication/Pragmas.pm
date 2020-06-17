@@ -32,7 +32,7 @@ sub import {
   feature->import($_)               for ( qw{ postderef signatures } );
   warnings->unimport($_)            for ( qw{ experimental::postderef experimental::signatures } );
 
-  Mail::Milter::Authentication::Config->import::into(scalar caller,qw{ set_config get_config });
+  Mail::Milter::Authentication::Config->import::into(scalar caller,qw{ set_config get_config setup_config });
   Mail::Milter::Authentication::Constants->import::into(scalar caller);
 
   Carp->import::into(scalar caller);

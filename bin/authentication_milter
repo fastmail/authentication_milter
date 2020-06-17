@@ -248,7 +248,11 @@ __END__
 
     "metric_connection" : "inet:12346@localhost",       | Optional connection on which to expose metrics interface
     "metric_timeout" : 10,                              | Timeout for metrics IPC (default 5)
-    "metric_tempfile" : "/tmpfs/authmilter_metrics",    | Shared MMap file in which to store metrics, best on a ram disk
+    "metric_tempfile" : "/tmpfs/authmilter_metrics",    | Path to shared metrics data, defaults to <lib_path>/metrics
+
+    "cache_path"       : "/var/cache/auth_milter",      | Path to the shared cache directory
+    "spool_path"       : "/var/spool/auth_milter",      | Path to the shared spool directory
+    "lib_path"         : "/var/lib/auth_milter",        | Path to the shared lib directory
 
     # metric_port and metric_host are deprecated.
     # please use metric_connection instead
@@ -304,7 +308,10 @@ __END__
                                                         | Timeouts are ignored if missing.
     "connect_timeout"       : 30,                       | Timeout for Connect callbacks
     "command_timeout"       : 30,                       | Timeout for Helo,Mail,Rcpt,Data and Unknown callbacks
-    "content_timeout"       : 300,                      | Timeout for Header,Eoh, Body and Eom callbacksa
+    "content_timeout"       : 300,                      | Timeout for Header,Eoh, Body and Eom callbacks
+    "dequeue_timeout"       : 300,                      | Timeout for Dequeue callbacks
+
+    "check_for_dequeue"     : 60,                       | How ofetn (in seconds) should a dequeue process be spawned
 
     "dns_resolvers"         : [                         | Explicit list of DNS resolvers to use
         "8.8.8.8",

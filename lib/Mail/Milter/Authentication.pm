@@ -337,7 +337,11 @@ Call the dequeue handlers
 =cut
 
 sub dequeue($self,@) {
+    my $config = $self->{ 'config' };
+    my $seconds = $config->{'dequeue_timeout'} // 300;
+    $self->{handler}->{_Handler}->set_overall_timeout( $seconds * 1000000 );
     $self->{handler}->{_Handler}->top_dequeue_callback();
+    $self->{handler}->{_Handler}->clear_overall_timeout();
 }
 
 =method I<get_client_proto()>
@@ -773,6 +777,8 @@ sub start($args) {
     my $max_spare_children     = $config->{'max_spare_children'}     || 20;
     my $min_spare_children     = $config->{'min_spare_children'}     || 10;
 
+    setup_config();
+
     my %srvargs;
 
     $srvargs{'no_client_stdout'} = 1;
@@ -969,9 +975,8 @@ sub start($args) {
     $srvargs{'listen'} = $listen_backlog;
     $srvargs{'leave_children_open_on_hup'} = 1;
 
-    ## TODO Config these
     $srvargs{'max_dequeue'} = 1;
-    $srvargs{'check_for_dequeue'} = 5;
+    $srvargs{'check_for_dequeue'} = $config->{'check_for_dequeue'} // 60;
 
     _warn "==========";
     _warn "Starting server";

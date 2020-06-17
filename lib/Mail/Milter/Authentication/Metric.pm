@@ -114,8 +114,7 @@ sub prom {
             $metric_tempfile = $config->{metric_tempfile};
         }
         if ( ! $metric_tempfile ) {
-            my $file_temp = File::Temp->new( UNLINK => 0, SUFFIX => '.metrics' );
-            $metric_tempfile = $file_temp->filename;
+            $metric_tempfile = $config->{lib_dir}.'/metrics';
         }
         $self->{metric_tempfile} = $metric_tempfile;
     }

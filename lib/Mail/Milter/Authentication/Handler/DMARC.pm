@@ -938,8 +938,39 @@ sub addheader_callback {
 sub dequeue_callback {
     my ($self) = @_;
     my $dequeue_list = $self->get_dequeue_list('dmarc_report');
-    foreach my $report ( $dequeue_list->@* ) {
-$self->log_error('DMARC Report dequeued for '. $report);
+    foreach my $id ( $dequeue_list->@* ) {
+        my $report = $self->get_dequeue($id);
+        if ( $report ) {
+
+            eval {
+                $self->set_handler_alarm( 5 * 1000000 ); # Allow no longer than 5 seconds for this!
+                $report->save_aggregate();
+                $self->dbgout( 'Queued DMARC Report saved for', $report->result()->published()->rua(), LOG_INFO );
+                $self->delete_dequeue($id);
+                $self->reset_alarm();
+            };
+            if ( my $Error = $@ ) {
+                $self->reset_alarm();
+                my $Type = $self->is_exception_type( $Error );
+                if ( $Type ) {
+                    if ( $Type eq 'Timeout' ) {
+                        # We have a timeout, is it global or is it ours?
+                        if ( $self->get_time_remaining() > 0 ) {
+                            # We have time left, but this aggregate save timed out
+                            # Log this and move on!
+                            $self->log_error("DMARC timeout saving reports for $id");
+                        }
+                    }
+                }
+                $self->handle_exception( $Error );
+                $self->log_error("DMARC Report save failed for $id: $Error");
+            }
+
+        }
+        else {
+            $self->log_error("DMARC Report dequeue failed for $id");
+            #$self->delete_dequeue($id);
+        }
     }
 }
 
@@ -950,8 +981,6 @@ sub _save_aggregate_reports {
     eval {
         $self->set_handler_alarm( 2 * 1000000 ); # Allow no longer than 2 seconds for this!
         while ( my $report = shift @{ $self->{'report_queue'} } ) {
-            #$report->save_aggregate();
-            #$self->dbgout( 'DMARC Report saved for', $report->result()->published()->rua(), LOG_INFO );
             $self->add_dequeue('dmarc_report',$report);
             $self->dbgout( 'DMARC Report queued for', $report->result()->published()->rua(), LOG_INFO );
         }

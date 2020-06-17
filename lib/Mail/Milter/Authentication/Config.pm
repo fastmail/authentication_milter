@@ -17,6 +17,7 @@ our @EXPORT_OK = qw{
   get_config
   set_config
   default_config
+  setup_config
 };
 
 =head1 DESCRIPTION
@@ -57,6 +58,7 @@ sub default_config {
         'runas'                           => 'nobody',
         'rungroup'                        => 'nogroup',
         'listen_backlog'                  => 20,
+        'check_for_dequeue'               => 60,
         'min_children'                    => 20,
         'max_children'                    => 200,
         'min_spare_children'              => 10,
@@ -66,6 +68,7 @@ sub default_config {
         'connect_timeout'                 => 30,
         'command_timeout'                 => 30,
         'content_timeout'                 => 300,
+        'dequeue_timeout'                 => 300,
         'addheader_timeout'               => 30,
         'dns_timeout'                     => 10,
         'dns_retry'                       => 2,
@@ -75,7 +78,10 @@ sub default_config {
         'tempfail_on_error_trusted'       => '0',
         'milter_quarantine'               => '0',
         'ip_map'                          => {},
-        'handlers'                        => {}
+        'handlers'                        => {},
+        'cache_path'                      => '/var/cache/authentication_milter',
+        'spool_path'                      => '/var/spool/authentication_milter',
+        'lib_path'                        => '/var/lib/authentication_milter',
     };
 
     require Mail::Milter::Authentication;
@@ -93,6 +99,58 @@ sub default_config {
 
     return $config;
 
+}
+
+=func I<setup_config()>
+
+Called during startup, setup some config options.
+
+=cut
+
+sub setup_config {
+    my $config = get_config();
+
+    my $safe_ident = $IDENT;
+    $safe_ident =~ s/[^a-z0-9]/_/g;
+
+    # Setup some directories
+    foreach my $type ( qw{ cache lib spool } ) {
+        my $dir = $config->{$type.'_dir'};
+        if ( $dir ) {
+            # Value supplied, MUST already be setup
+            # Check that we can use the given directory
+            die $type.'_dir does not exist' if ! -e $dir;
+            die $type.'_dir is not a directory' if ! -d $dir;
+            die $type.'_dir is not a writable' if ! -w $dir;
+        }
+        else {
+            if ( $EUID == 0 ) {
+                # We are root, create in global space
+                $dir = '/var/'.$type.'/authentication_milter';
+                mkdir $dir if ! -e $dir;
+                # Create the subdir for this IDENT
+                $dir .= '/'.$safe_ident;
+                mkdir $dir if ! -e $dir;
+                # Chown if relevant
+                my $user  = $config->{'runas'};
+                if ($user) {
+                    my ($login,$pass,$uid,$gid) = getpwnam($user);
+                    chown $uid, $gid, $dir;
+                }
+            }
+            else {
+                # We are a user! Create something in a temporary space
+                $dir = join( '_',
+                  '/tmp/authentication_milter',
+                  $type,
+                  $EUID,
+                  $safe_ident,
+                );
+                mkdir $dir if ! -e $dir;
+            }
+        }
+        $config->{$type.'_dir'} = $dir;
+    }
 }
 
 =func I<set_config( $config )>
