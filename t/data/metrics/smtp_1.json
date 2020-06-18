@@ -28,7 +28,7 @@
    "authmilter_ptr_total{ident=\"test_authentication_milter_test\",result=\"fail\"}" : "14",
    "authmilter_ptr_total{ident=\"test_authentication_milter_test\",result=\"pass\"}" : "9",
    "authmilter_ptr_total{ident=\"test_authentication_milter_test\"}" : "0",
-   "authmilter_reaped_children_total{ident=\"test_authentication_milter_test\"}" : "1",
+   "authmilter_reaped_children_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_sanitize_remove_total{header=\"authentication_results\",ident=\"test_authentication_milter_test\"}" : "4",
    "authmilter_sanitize_remove_total{header=\"x_disposition_quarantine\",ident=\"test_authentication_milter_test\"}" : "2",
    "authmilter_sanitize_remove_total{ident=\"test_authentication_milter_test\"}" : "0",

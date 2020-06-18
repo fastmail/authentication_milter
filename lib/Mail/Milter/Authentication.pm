@@ -297,6 +297,8 @@ sub child_init_hook {
     $self->setup_handlers();
     $self->{'metric'}->set_versions( $self );
 
+    $self->{'handler'}->{'_Handler'}->metric_count( 'forked_children_total', {}, 1 ) unless $arg eq 'dequeue';
+
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(0)';
 }
 
@@ -315,10 +317,10 @@ sub child_finish_hook {
     }
     else {
         $self->loginfo( "Child process $PID shutting down" );
+        eval {
+            $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
+        };
     }
-    eval {
-        $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
-    };
     $self->destroy_objects();
 }
 
@@ -1064,8 +1066,6 @@ sub setup_handlers($self) {
     $self->logdebug( 'setup objects' );
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'}->{'_Handler'} = $handler;
-
-    $handler->metric_count( 'forked_children_total', {}, 1 );
 
     my $config = $self->{'config'};
     foreach my $name ( $config->{'load_handlers'}->@* ) {
