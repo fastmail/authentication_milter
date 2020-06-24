@@ -23,6 +23,7 @@ sub default_config {
         'detect_list_id' => 1,
         'report_skip_to' => [ 'my_report_from_address@example.com' ],
         'no_report'      => 0,
+        'hide_report_to' => 0,
         'config_file'    => '/etc/mail-dmarc.ini',
         'no_reject_disposition' => 'quarantine',
         'no_list_reject_disposition' => 'none',
@@ -213,11 +214,13 @@ sub _process_arc_dmarc_for {
     }
 
     # Add the Envelope To
-    eval {
-        $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
-    };
-    if ( my $error = $@ ) {
-        $self->handle_exception( $error );
+    unless ( $config->{'hide_report_to'} ) {
+        eval {
+            $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+        }
     }
 
     # Add the From Header
@@ -367,12 +370,14 @@ sub _process_dmarc_for {
     }
 
     # Add the Envelope To
-    eval {
-        $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
-    };
-    if ( my $error = $@ ) {
-        $self->handle_exception( $error );
-        $self->log_error( 'DMARC Rcpt To Error ' . $error );
+    unless ( $config->{'hide_report_to'} ) {
+        eval {
+            $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'DMARC Rcpt To Error ' . $error );
+        }
     }
 
     # Add the From Header
@@ -1021,6 +1026,7 @@ This handler requires the SPF and DKIM handlers to be installed and active.
                 "dmarc@example.com"                        | your report from addresses.
             ],
             "no_report"          : "1",                    | If set then we will not attempt to store DMARC reports.
+            "hide_report_to"     : "1",                    | If set, remove envelope_to from DMARC reports
             "config_file"        : "/etc/mail-dmarc.ini"   | Optional path to dmarc config file
         },
 
