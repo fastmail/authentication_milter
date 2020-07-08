@@ -1,4 +1,4 @@
-Authentication-Results: test.module;
+Authentication-Results: mx.example.net;
     dmarc=pass policy.published-domain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,d=none,d.eval=none) policy.policy-from=p header.from=marcbradshaw.net;
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com
 Received-SPF: pass

@@ -2261,6 +2261,21 @@ sub get_my_hostname {
     return $hostname;
 }
 
+=helper_method I<get_my_authserv_id()>
+
+Return the effective authserv-id. Defaults to hostname if not explicitly set.
+
+=cut
+
+sub get_my_authserv_id {
+    my ($self) = @_;
+    my $config = $self->config();
+    if ( exists( $config->{'authserv_id'} ) && $config->{'authserv_id'} ) {
+	return $config->{'authserv_id'};
+    }
+    return $self->get_my_hostname();
+}
+
 
 
 # Logging
@@ -2461,7 +2476,7 @@ sub add_headers {
 
     my $config = $self->config();
 
-    my $header = $self->get_my_hostname();
+    my $header = $self->get_my_authserv_id();
     my $top_handler = $self->get_top_handler();
 
     my @auth_headers;
@@ -2492,7 +2507,7 @@ sub add_headers {
             $header .= join( ";\n    ", map { $self->_stringify_header( $_ ) } @auth_headers );
         }
         else {
-            $header_obj->set_value( Mail::AuthenticationResults::Header::AuthServID->new()->safe_set_value( $self->get_my_hostname() ) );
+            $header_obj->set_value( Mail::AuthenticationResults::Header::AuthServID->new()->safe_set_value( $self->get_my_authserv_id() ) );
             $header_obj->set_eol( "\n" );
             if ( exists( $config->{'header_indent_style'} ) ) {
                 $header_obj->set_indent_style( $config->{'header_indent_style'} );

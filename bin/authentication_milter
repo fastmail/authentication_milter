@@ -322,6 +322,7 @@ __END__
     "dns_servfail_timeout"  : 1000000,                  | How long (microseconds) a SERVFAIL can take before being considered a timeout
                                                         |     by the internal resolver
 
+    "authserv_id"           : "mx.example.com",         | The authserv-id value to use in Authentication-Results headers
     "hide_none"             : 0,                        | Do not add the Authentication-Results header if the result is 'none'
 
     "header_indent_style"   : "entry",                  | Optional style to indent/fold Authentication-Results header by.

@@ -46,6 +46,12 @@ sub is_hostname_mine {
     if ( $check_hostname =~ m/^(.*\.)?\Q${check_for}\E$/i ) {
         return 1;
     }
+
+    my $authserv_id = $self->get_my_authserv_id();
+    if ( fc( $check_hostname ) eq fc( $authserv_id ) ) {
+        return 1;
+    }
+
     return 0;
 }
 

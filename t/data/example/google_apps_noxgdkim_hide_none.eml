@@ -1,4 +1,4 @@
-Authentication-Results: test.module;
+Authentication-Results: mx.example.net;
     dkim-adsp=pass (ADSP policy from marcbradshaw.net);
     dkim=pass (1024-bit rsa key sha256) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3 header.a=rsa-sha256 header.s=google;
     dmarc=pass policy.published-domain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,d=none,d.eval=none) policy.policy-from=p header.from=marcbradshaw.net;

@@ -487,6 +487,17 @@ sub run_milter_processing {
         'to'     => '<marc@fastmail.com>',
     });
 
+    milter_process({
+        'desc'   => 'Sanitize Headers authserv_id',
+        'prefix' => 'config/hide_none',
+        'source' => 'google_apps_good_sanitize.eml',
+        'dest'   => 'google_apps_good_sanitize_authserv_id.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => '<marc@marcbradshaw.net>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
     test_metrics( 'data/metrics/milter_5.json' );
 
     stop_milter();
@@ -918,6 +929,17 @@ sub run_smtp_processing {
         'ip'     => '123.123.123.123',
         'name'   => 'mail.example.org',
         'from'   => '<marc@example.org>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    smtp_process({
+        'desc'   => 'Sanitize Headers authserv_id',
+        'prefix' => 'config/hide_none.smtp',
+        'source' => 'google_apps_good_sanitize.eml',
+        'dest'   => 'google_apps_good_sanitize_authserv_id.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => '<marc@marcbradshaw.net>',
         'to'     => '<marc@fastmail.com>',
     });
 

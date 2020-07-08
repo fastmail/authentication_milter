@@ -659,7 +659,7 @@ sub addheader_callback {
         my $arcseal = Mail::DKIM::ARC::Signer->new(
             Algorithm => $config->{arcseal_algorithm},
             Domain => $config->{arcseal_domain},
-            SrvId => $self->get_my_hostname(),
+            SrvId => $self->get_my_authserv_id(),
             Selector =>  $config->{arcseal_selector},
             Headers => $config->{arcseal_headers},
             # chain value is arc_result from previous seal validation
