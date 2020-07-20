@@ -140,22 +140,22 @@ sub write_to_log_hook($self,$priority,$line,@) {
 
 =method I<idle_loop_hook()>
 
-Hook which runs in the master periodically.
+Hook which runs in the parent periodically.
 
 =cut
 
 sub idle_loop_hook($self,@) {
-    $self->{'metric'}->master_metric_update( $self );
+    $self->{'metric'}->parent_metric_update( $self );
 }
 
 =method I<pre_loop_hook()>
 
-Hook which runs in the master before looping.
+Hook which runs in the parent before looping.
 
 =cut
 
 sub pre_loop_hook($self,@) {
-    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':master';
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':parent';
 
     $self->preload_modules( 'Net::DNS', 'Net::DNS::RR' );
     $self->{'metric'} = Mail::Milter::Authentication::Metric->new($self);
@@ -629,7 +629,7 @@ sub get_valid_pid($pid_file) {
         }
         if ( $process->pid == $pid ) {
             $found_pid = 1;
-            if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':master' ) {
+            if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':parent' ) {
                 return $pid;
             }
         }
@@ -649,14 +649,17 @@ sub get_valid_pid($pid_file) {
 
 =func I<find_process()>
 
-Search the process table for an authentication_milter master process
+Search the process table for an authentication_milter parent process
 
 =cut
 
 sub find_process {
     my $process_table = Proc::ProcessTable->new();
     foreach my $process ( $process_table->table->@* ) {
-        if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':master' ) {
+        if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':master' ) { ## Legacy naming, will be removed in later version
+            return $process->pid;
+        }
+        if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':parent' ) {
             return $process->pid;
         }
     }
