@@ -101,7 +101,10 @@ sub _do { ## no critic
     # when we encounter them, don't lookup this org domain again.
     if ( ( $self->errorstring =~ /timeout/i ) || ( $self->errorstring eq 'query timed out' ) || ( $self->errorstring eq 'SERVFAIL' && $time_taken > $servfail_timeout ) ) {
         $self->{ _timedout }->{ $org_domain } = 1;
-    }
+        my $domain = $_[0];
+        my $query = $_[1];
+        $handler->log_error( "DNS Lookup $query $domain error, hold set on $org_domain : ".$self->errorstring );
+      }
 
     return $return;
 }
