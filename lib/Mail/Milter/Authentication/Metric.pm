@@ -308,7 +308,7 @@ sub send { ## no critic
 =method I<register_metrics( $hash )>
 
 Register a new set of metric types and help texts.
-Called from the master process in the setup phase.
+Called from the parent process in the setup phase.
 
 Expects a hashref of metric description, keyed on metric name.
 
@@ -359,13 +359,13 @@ sub _register_metrics {
     }
 }
 
-=method I<master_metric_update( $server )>
+=method I<parent_metric_update( $server )>
 
-Called in the master process to periodically update some metrics
+Called in the parent process to periodically update some metrics
 
 =cut
 
-sub master_metric_update {
+sub parent_metric_update {
     my ( $self, $server ) = @_;
     return if ! $self->{enabled};
     return if ! $self->prom;

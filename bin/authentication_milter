@@ -148,7 +148,7 @@ __END__
 
   Control implies --daemon, and takes account of --pidfile
   If no valid data is found in the pidfile then control will
-  search the process list for a master process.
+  search the process list for a parent process.
 
   If you are running multiple distinct instances of authentication
   milter on a single host, each with differing configurations then you
