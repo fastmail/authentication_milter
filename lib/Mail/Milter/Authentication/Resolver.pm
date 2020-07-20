@@ -95,7 +95,7 @@ sub _do { ## no critic
     }
 
     my $time_taken = $self->_get_microseconds - $start_time;
-    my $servfail_timeout = 1000000; # Consider a servfail as a timeout after 1 second
+    my $servfail_timeout = exists $config->{'dns_servfail_timeout'} ? $config->{'dns_servfail_timeout'} : 1000000; # Consider a servfail as a timeout after (default) 1 second;
 
     # Timeouts or SERVFAIL are unlikely to recover within the lifetime of this transaction,
     # when we encounter them, don't lookup this org domain again.

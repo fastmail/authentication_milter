@@ -310,8 +310,10 @@ __END__
         "8.8.8.8",
         "127.0.0.1"
     ],
-    "dns_timeout"           : 10,                       | Timeout for DNS lookups
+    "dns_timeout"           : 10,                       | Timeout (seconds) for DNS lookups
     "dns_retry"             : 2,                        | Number of times a lookup will retry per call
+    "dns_servfail_timeout"  : 1000000,                  | How long (microseconds) a SERVFAIL can take before being considered a timeout
+                                                        |     by the internal resolver
 
     "header_indent_style"   : "entry",                  | Optional style to indent/fold Authentication-Results header by.
     "header_fold_at"        : 77,                       | Optional line length to attempt folding of Authentication-Results header at.
