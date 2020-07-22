@@ -122,7 +122,7 @@ sub eom_callback {
     # Again, not sure where this should go, so it's going here.
     if ( exists( $self->{'remove_bimi_headers'} ) ) {
         foreach my $header_type ( sort keys %{ $self->{'remove_bimi_headers'} } ) {
-            foreach my $header ( reverse @{ $self->{'remove_bimi_headers'} } ) {
+            foreach my $header ( reverse @{ $self->{'remove_bimi_headers'}->{$header_type} } ) {
                 $self->dbgout( 'RemoveBIMIHeader', "$header_type $header", LOG_DEBUG );
                 $self->change_header( $header_type, $header, q{} );
             }
