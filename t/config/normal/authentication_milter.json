@@ -63,7 +63,7 @@
         "!ReturnOK" : {},
         "Sanitize" : {
             "hosts_to_remove" : [
-                "test.module"
+                "example.com"
             ],
             "remove_headers" : "yes"
         }

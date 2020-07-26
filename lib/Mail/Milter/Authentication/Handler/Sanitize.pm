@@ -33,24 +33,17 @@ sub is_hostname_mine {
 
     return 0 if ! defined $check_hostname;
 
-    my $hostname = $self->get_my_hostname();
-    my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
-
     if ( exists( $config->{'hosts_to_remove'} ) ) {
         foreach my $remove_hostname ( @{ $config->{'hosts_to_remove'} } ) {
-            if (
-                substr( lc $check_hostname, ( 0 - length($remove_hostname) ) ) eq
-                lc $remove_hostname )
-            {
+            if ( $check_hostname =~ m/^(.*\.)?\Q${remove_hostname}\E$/i ) {
                 return 1;
             }
         }
     }
 
-    if (
-        substr( lc $check_hostname, ( 0 - length($check_for) ) ) eq
-        lc $check_for )
-    {
+    my $hostname = $self->get_my_hostname();
+    my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
+    if ( $check_hostname =~ m/^(.*\.)?\Q${check_for}\E$/i ) {
         return 1;
     }
     return 0;
