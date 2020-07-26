@@ -86,7 +86,7 @@ sub milter_process_command {
     elsif ( $command eq SMFIC_HEADER ) {
         my $header = $self->milter_split_buffer( $buffer );
         if ( @$header == 1 ) { push @$header , q{}; };
-        my $original = join( ':', @$header );
+        my $original = join( $self->{'headers_include_space'} ? ':': ': ', @$header );
         push @$header, $original;
         $header->[1] =~ s/^\s+//;
         $header->[0] =~ s/^\s+//;
@@ -110,6 +110,7 @@ sub milter_process_command {
             pack('NNN', 2, $actions_reply, $protocol_reply)
         );
         undef $returncode;
+        $self->{'headers_include_space'} = ($protocol_reply & SMFIP_HDR_LEADSPC) != 0;
     }
     elsif ( $command eq SMFIC_RCPT ) {
         my $envrcpt = $self->milter_split_buffer( $buffer );
@@ -289,6 +290,7 @@ sub add_header {
     $self->write_packet( SMFIR_ADDHEADER,
         $header
         . "\0"
+        . ($self->{'headers_include_space'} ? ' ' : '')
         . $value
         . "\0"
     );
@@ -301,6 +303,7 @@ sub change_header {
         pack('N', $index)
         . $header
         . "\0"
+        . ($self->{'headers_include_space'} ? ' ' : '')
         . $value
         . "\0"
     );
@@ -312,6 +315,7 @@ sub insert_header {
         pack( 'N', $index )
         . $key
         . "\0"
+        . ($self->{'headers_include_space'} ? ' ' : '')
         . $value
         . "\0"
     );
