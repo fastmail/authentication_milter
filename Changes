@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Improve language used internally
+  - Core: Configurable SERVFAIL timeout with default
 
 2.20200625.2 2020-06-25 04:34:45+00:00 UTC
   - DMARC: Option to redact some Reporting fields
