@@ -2517,7 +2517,9 @@ sub add_headers {
         $header .= '; none';
     }
 
-    $self->prepend_header( 'Authentication-Results', $header );
+    if ( @auth_headers || !$config->{'hide_none'} ) {
+        $self->prepend_header( 'Authentication-Results', $header );
+    }
 
     if ( my $reason = $self->get_quarantine_mail() ) {
         $self->prepend_header( 'X-Disposition-Quarantine', $reason );
