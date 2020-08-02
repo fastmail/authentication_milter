@@ -741,7 +741,7 @@ sub top_envfrom_callback {
 
     # On MAILFROM
     #...
-    my ( $self, $env_from ) = @_;
+    my ( $self, $env_from, @params ) = @_;
     $self->status('envfrom');
     $self->dbgout( 'CALLBACK', 'EnvFrom', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
@@ -763,7 +763,7 @@ sub top_envfrom_callback {
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'EnvFrom ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
-            eval { $self->get_handler($handler)->envfrom_callback($env_from); };
+            eval { $self->get_handler($handler)->envfrom_callback($env_from, @params); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'Env From callback error ' . $error );
@@ -800,7 +800,7 @@ sub top_envrcpt_callback {
 
     # On RCPTTO
     #...
-    my ( $self, $env_to ) = @_;
+    my ( $self, $env_to, @params ) = @_;
     $self->status('envrcpt');
     $self->dbgout( 'CALLBACK', 'EnvRcpt', LOG_DEBUG );
     $self->set_return( $self->smfis_continue() );
@@ -816,7 +816,7 @@ sub top_envrcpt_callback {
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'EnvRcpt ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
-            eval{ $self->get_handler($handler)->envrcpt_callback($env_to); };
+            eval{ $self->get_handler($handler)->envrcpt_callback($env_to, @params); };
             if ( my $error = $@ ) {
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'Env Rcpt callback error ' . $error );
