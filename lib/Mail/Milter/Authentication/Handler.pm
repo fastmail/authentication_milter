@@ -13,6 +13,7 @@ use MIME::Base64;
 use Mail::SPF;
 use Net::DNS::Resolver;
 use Net::IP;
+use Sereal qw{encode_sereal decode_sereal};
 use Sys::Hostname;
 use Time::HiRes qw{ ualarm gettimeofday };
 
@@ -236,6 +237,46 @@ sub register_metrics {
     };
 }
 
+=callback_method I<top_dequeue_callback()>
+
+Top level handler for dequeue.
+
+=cut
+
+sub top_dequeue_callback {
+    my ( $self ) = @_;
+
+    $self->status('dequeue');
+    $self->set_symbol('C','i','DEQUEUE.'.substr( uc md5_hex( "Authentication Milter Client $PID " . time() . rand(100) ) , -11 ));
+    $self->dbgout( 'CALLBACK', 'Dequeue', LOG_DEBUG );
+    my $config = $self->config();
+    eval {
+        local $SIG{'ALRM'} = sub{ die Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'Dequeue callback timeout' }) };
+        if ( my $timeout = $self->get_type_timeout( 'dequeue' ) ) {
+            $self->set_alarm( $timeout );
+        }
+        my $callbacks = $self->get_callbacks( 'dequeue' );
+        foreach my $handler ( @$callbacks ) {
+            $self->dbgout( 'CALLBACK', 'Dequeue ' . $handler, LOG_DEBUG );
+            my $start_time = $self->get_microseconds();
+            $self->get_handler($handler)->dequeue_callback();
+            $self->dbgoutwrite();
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'dequeue', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
+        }
+        $self->set_alarm(0);
+    };
+    if ( my $error = $@ ) {
+        if ( my $type = $self->is_exception_type( $error ) ) {
+            $self->metric_count( 'callback_error_total', { 'stage' => 'dequeue', 'type' => $type } );
+        }
+        else {
+            $self->metric_count( 'callback_error_total', { 'stage' => 'dequeue' } );
+        }
+    }
+    $self->dbgoutwrite();
+    $self->status('postdequeue');
+}
+
 =callback_method I<top_setup_callback()>
 
 Top level handler for handler setup.
@@ -347,11 +388,11 @@ sub set_handler_alarm {
     my $remaining = $self->get_time_remaining();
     if ( $remaining < $microseconds ) {
         # This should already be set of course, but for clarity...
-        $self->dbgout( 'Handler tmeout set (remaining used)', $remaining, LOG_DEBUG );
+        $self->dbgout( 'Handler timeout set (remaining used)', $remaining, LOG_DEBUG );
         ualarm( $remaining );
     }
     else {
-        $self->dbgout( 'Handler tmeout set', $microseconds, LOG_DEBUG );
+        $self->dbgout( 'Handler timeout set', $microseconds, LOG_DEBUG );
         ualarm( $microseconds );
     }
 }
@@ -1754,6 +1795,85 @@ sub tempfail_on_error {
 
 
 # Common calls into other Handlers
+
+sub _dequeue_dir($self) {
+    my $config = $self->config();
+    my $dir = $config->{spool_dir}.'/dequeue';
+    mkdir $dir if ! -d $dir;
+    return $dir;
+}
+
+=helper_method I<add_dequeue($key,$data)>
+
+Write serialized $data into the queue for later dequeueing
+
+=cut
+
+{
+    my $queue_index = 1;
+    sub add_dequeue($self,$key,$data) {
+        my $dir = $self->_dequeue_dir;
+        my $fullpath;
+        my $timestamp = join( '.',gettimeofday);
+        my $filename = join( '.',$key,$PID,$timestamp,$queue_index++,'dequeue');
+        $fullpath = "$dir/$filename";
+        my $serialised_data = encode_sereal($data);
+        write_file($fullpath,{atomic=>1},$serialised_data);
+    }
+}
+
+=helper_method I<get_dequeue_list($key)>
+
+Return an ArrayRef of all queued items for $key
+
+This may be a list of filenames, or may be a list of some
+other ID, it should not be assumed that this value is
+useful outside of the dequeue methods.
+
+Used in get_dequeue_object and delete_dequeue_object
+
+=cut
+
+sub get_dequeue_list($self,$key) {
+    my @dequeue_list;
+    my $dir = $self->_dequeue_dir;
+    opendir(my $dh, $dir) || die "Failed to open dequeue directory: $!";
+    while (my $file = readdir $dh) {
+        push @dequeue_list, $file if $file =~ /^$key\..*\.dequeue$/;
+    }
+    closedir $dh;
+    return \@dequeue_list;
+}
+
+=helper_method I<get_dequeue($id)>
+
+Return a previously queued item
+
+=cut
+
+sub get_dequeue($self,$id) {
+    my $dir = $self->_dequeue_dir;
+    my $filepath = join('/',$dir,$id);
+    return if ! -e $filepath;
+    return if ! -f $filepath;
+    my $serialized = scalar read_file($filepath);
+    my $data = decode_sereal($serialized);
+    return $data;
+}
+
+=helper_method I<delete_dequeue($id)>
+
+Delete a previously queued item
+
+=cut
+
+sub delete_dequeue($self,$id) {
+    my $dir = $self->_dequeue_dir;
+    my $filepath = join('/',$dir,$id);
+    return if ! -e $filepath;
+    return if ! -f $filepath;
+    unlink $filepath;
+}
 
 =helper_method I<is_local_ip_address()>
 
