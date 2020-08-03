@@ -901,7 +901,6 @@ sub start($args) {
                 'ipv'   => '*',
                 'proto' => 'tcp',
             };
-            $srvargs{'child_communication'} = 1;
         }
         elsif ( $type eq 'unix' ) {
             _warn(
@@ -915,7 +914,6 @@ sub start($args) {
                 'port'  => $path,
                 'proto' => 'unix',
             };
-            $srvargs{'child_communication'} = 0;
 
             if ($umask) {
                 umask ( oct( $umask ) );
@@ -940,7 +938,6 @@ sub start($args) {
             'ipv'   => '*',
             'proto' => 'tcp',
         };
-        $srvargs{'child_communication'} = 1;
         _warn( 'Metrics available on ' . $metric_host . ':' . $config->{'metric_port'} );
         _warn( 'metric_host/metric_port are depricated, please use metric_connection/metric_umask instead' );
     }
