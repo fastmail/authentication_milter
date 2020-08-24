@@ -568,49 +568,47 @@ sub _process_dmarc_for {
     }
 
     # Add the AR Header
+    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( $dmarc_code );
+
+    # What comments can we add?
     my @comments;
-    if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( $dmarc_code );
-
-        # What comments can we add?
-        if ( $dmarc_policy ) {
-            push @comments, $self->format_header_entry( 'p', $dmarc_policy );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-domain-policy' )->safe_set_value( $dmarc_policy ) );
-        }
-        if ( $dmarc_sub_policy ne 'default' ) {
-            push @comments, $self->format_header_entry( 'sp', $dmarc_sub_policy );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-subdomain-policy' )->safe_set_value( $dmarc_sub_policy ) );
-        }
-        if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
-            push @comments, 'has-list-id=yes';
-        }
-        if ( $dmarc_disposition ) {
-            push @comments, $self->format_header_entry( 'd', $dmarc_disposition );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.applied-disposition' )->safe_set_value( $dmarc_disposition ) );
-        }
-        if ( $dmarc_disposition_evaluated ) {
-            push @comments, $self->format_header_entry( 'd.eval', $dmarc_disposition_evaluated );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.evaluated-disposition' )->safe_set_value( $dmarc_disposition_evaluated ) );
-        }
-        if ( $policy_override ) {
-            push @comments, $self->format_header_entry( 'override', $policy_override );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.override-reason' )->safe_set_value( $policy_override ) );
-        }
-        if ( $arc_aware_result ) {
-            push @comments, $self->format_header_entry( 'arc_aware_result', $arc_aware_result );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.arc-aware-result' )->safe_set_value( $arc_aware_result ) );
-        }
-
-        if ( @comments ) {
-            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( join( ',', @comments ) ) );
-        }
-
-        my $policy_used = ( $is_subdomain && $dmarc_sub_policy ne 'default' ) ? 'sp' : 'p';
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.policy-from' )->safe_set_value( $policy_used ) );
-
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
-        $self->_add_dmarc_header( $header );
+    if ( $dmarc_policy ) {
+        push @comments, $self->format_header_entry( 'p', $dmarc_policy );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-domain-policy' )->safe_set_value( $dmarc_policy ) );
     }
+    if ( $dmarc_sub_policy ne 'default' ) {
+        push @comments, $self->format_header_entry( 'sp', $dmarc_sub_policy );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-subdomain-policy' )->safe_set_value( $dmarc_sub_policy ) );
+    }
+    if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
+        push @comments, 'has-list-id=yes';
+    }
+    if ( $dmarc_disposition ) {
+        push @comments, $self->format_header_entry( 'd', $dmarc_disposition );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.applied-disposition' )->safe_set_value( $dmarc_disposition ) );
+    }
+    if ( $dmarc_disposition_evaluated ) {
+        push @comments, $self->format_header_entry( 'd.eval', $dmarc_disposition_evaluated );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.evaluated-disposition' )->safe_set_value( $dmarc_disposition_evaluated ) );
+    }
+    if ( $policy_override ) {
+        push @comments, $self->format_header_entry( 'override', $policy_override );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.override-reason' )->safe_set_value( $policy_override ) );
+    }
+    if ( $arc_aware_result ) {
+        push @comments, $self->format_header_entry( 'arc_aware_result', $arc_aware_result );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.arc-aware-result' )->safe_set_value( $arc_aware_result ) );
+    }
+
+    if ( @comments ) {
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( join( ',', @comments ) ) );
+    }
+
+    my $policy_used = ( $is_subdomain && $dmarc_sub_policy ne 'default' ) ? 'sp' : 'p';
+    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.policy-from' )->safe_set_value( $policy_used ) );
+
+    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
+    $self->_add_dmarc_header( $header );
 
     # Write Metrics
     my $metric_data = {
@@ -868,7 +866,9 @@ sub eom_callback {
 
     if ( @{ $self->{ 'dmarc_ar_headers' } } ) {
         foreach my $dmarc_header ( @{ $self->_get_unique_dmarc_headers() } ) {
-            $self->add_auth_header( $dmarc_header );
+            if ( !( $config->{'hide_none'} && $dmarc_header->value() eq 'none' ) ) {
+                $self->add_auth_header( $dmarc_header );
+            }
         }
     }
     else {
