@@ -45,6 +45,22 @@ X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
          Gb0MegXHP92U3iGZeZsEO1Gq9P6P44tp/v+09h9usq4OhBunjXojilYiB461BoBBYkGx
          MC7vok22L8D9ssU+z0H6VzSbD/B0tzPuLFQOKmoCVnim22SUpZHzNo05Ui3Bro43J3T0
          x9EA==
+Authentication-Results: notexample.com;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
+authentication-results: notmodule;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
 X-Gm-Message-State: ALoCoQk+WCmS7pcgC26VeCszzOVzmv40XekPP1BxHJ4oY6p8UbjDcdVNr8WFuchigs3toyPgqHDU
 MIME-Version: 1.0
 X-Received: by 10.194.175.39 with SMTP id bx7mr30495438wjc.22.1422156919049;
@@ -57,7 +73,16 @@ From: Marc Bradshaw <marc@marcbradshaw.net>
 To: marc@fastmail.com
 Content-Type: multipart/alternative; boundary=089e01493adaf9a7a9050d71b56f
 X-Received-Authentication-Results: (Received Authentication-Results header removed by server.example.com)
-    test.module;
+    example.com;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
+X-Received-Authentication-Results: (Received Authentication-Results header removed by server.example.com)
+    sub.example.com;
     dkim-adsp=fail;
     dkim=fail;
     dkim=fail;
@@ -75,16 +100,7 @@ X-Received-Authentication-Results: (Received Authentication-Results header remov
     spf=fail;
     x-ptr=fail
 X-Received-Authentication-Results: (Received Authentication-Results header removed by server.example.com)
-    test.module;
-    dkim-adsp=fail;
-    dkim=fail;
-    dkim=fail;
-    dmarc=fail;
-    iprev=fail;
-    spf=fail;
-    x-ptr=fail
-X-Received-Authentication-Results: (Received Authentication-Results header removed by server.example.com)
-    test.module;
+    module;
     dkim-adsp=fail;
     dkim=fail;
     dkim=fail;
