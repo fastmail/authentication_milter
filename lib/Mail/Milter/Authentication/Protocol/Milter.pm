@@ -286,6 +286,7 @@ sub milter_split_buffer {
 
 sub add_header {
     my ( $self, $header, $value ) = @_;
+    $value =~ s/\015\012/\012/g;
     $self->write_packet( SMFIR_ADDHEADER,
         $header
         . "\0"
@@ -297,6 +298,7 @@ sub add_header {
 sub change_header {
     my ( $self, $header, $index, $value ) = @_;
     $value = '' unless defined($value);
+    $value =~ s/\015\012/\012/g;
     $self->write_packet( SMFIR_CHGHEADER,
         pack('N', $index)
         . $header
@@ -308,6 +310,7 @@ sub change_header {
 
 sub insert_header {
     my ( $self, $index, $key, $value ) = @_;
+    $value =~ s/\015\012/\012/g;
     $self->write_packet( SMFIR_INSHEADER,
         pack( 'N', $index )
         . $key
