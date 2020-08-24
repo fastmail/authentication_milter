@@ -8,6 +8,7 @@ Revision history for Mail-Milter-Authentication
   - Core: Setup cache, lib, and spool directories
   - DMARC: Use dequeue for report saving
   - AbusixDataFeed: Defer feed sending into dequeue handler
+  - Sanitize: Fix domain/subdomain checking. @dev-aaront-org
 
 2.20200625.2 2020-06-25 04:34:45+00:00 UTC
   - DMARC: Option to redact some Reporting fields
