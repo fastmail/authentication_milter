@@ -300,8 +300,7 @@ sub load_mail {
     my @header_split;
 
     HEADERS:
-    foreach my $dataline ( split ( "\n", $mail_data ) ) {
-        $dataline =~ s/\r?\n$//;
+    foreach my $dataline ( split ( /\r?\n/, $mail_data ) ) {
         # Handle transparency
         if ( $dataline =~ /^\./ ) {
             $dataline = substr( $dataline, 1 );
