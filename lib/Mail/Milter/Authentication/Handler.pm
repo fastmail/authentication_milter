@@ -2512,13 +2512,13 @@ sub add_headers {
             $header = $header_obj->as_string();
         }
 
-    }
-    else {
-        $header .= '; none';
-    }
-
-    if ( @auth_headers || !$config->{'hide_none'} ) {
         $self->prepend_header( 'Authentication-Results', $header );
+    }
+    elsif ( !$config->{'hide_none'} ) {
+        $header .= '; none';
+        $self->prepend_header( 'Authentication-Results', $header );
+    } else {
+        # the result is none and hide_none is set, so we do not add an AR header
     }
 
     if ( my $reason = $self->get_quarantine_mail() ) {
