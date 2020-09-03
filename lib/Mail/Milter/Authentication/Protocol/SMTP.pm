@@ -222,6 +222,44 @@ sub command_param {
     return $p;
 }
 
+# Splits the given command parameter line into a list of separate
+# path (<foo@example.com>) and esmtp-param (KEYWORD=VALUE) strings.
+sub split_command_params {
+    my ( $line ) = @_;
+    $line =~ s/^\s+//;
+    my $path_end = find_path_end( $line ) || length( $line );
+    my $path = substr( $line, 0, $path_end );
+    $line = substr( $line, $path_end );
+    $line =~ s/^\s+//;
+    return ( $path, split( /\s+/, $line ) );
+}
+
+sub find_path_end {
+    my ( $input ) = @_;
+    my $len = length( $input );
+    my @qstack;
+    for ( my $i = 0; $i < $len; $i++ ) {
+        my $c = substr( $input, $i, 1 );
+        if ( @qstack && $c eq $qstack[-1] ) {
+            # end of a quoted string
+            pop @qstack;
+        } elsif ( $c eq '"' ) {
+            # start of a "" quoted string
+            push @qstack, '"';
+        } elsif ( $c eq '<' && ( !@qstack || $qstack[-1] eq '>' ) ) {
+            # start of a <> quoted string (possibly inside of another <>)
+            push @qstack, '>';
+        } elsif ( $c eq '\\' && @qstack ) {
+            # escaped character within a quoted string
+            $i++;
+        } elsif ( $c eq ' ' && !@qstack ) {
+            # found the end
+            return $i;
+        }
+    }
+    return ( @qstack ? undef : $len );
+}
+
 sub smtp_command_lhlo {
     my ( $self, $command ) = @_;
     my $smtp = $self->{'smtp'};
@@ -418,8 +456,7 @@ sub smtp_command_mailfrom {
         if ( $returncode == SMFIS_CONTINUE ) {
             my $envfrom = command_param( $command,10 );
             $smtp->{'mail_from'} = $envfrom;
-            $envfrom =~ s/ BODY=8BITMIME$//;
-            $returncode = $handler->top_envfrom_callback( $envfrom );
+            $returncode = $handler->top_envfrom_callback( split_command_params( $envfrom ) );
             if ( $returncode == SMFIS_CONTINUE ) {
                 $smtp->{'has_mail_from'} = 1;
                 print $socket "250 2.0.0 Ok\r\n";
@@ -481,7 +518,7 @@ sub smtp_command_rcptto {
     }
     my $envrcpt = command_param( $command,8 );
     push @{ $smtp->{'rcpt_to'} }, $envrcpt;
-    my $returncode = $handler->top_envrcpt_callback( $envrcpt );
+    my $returncode = $handler->top_envrcpt_callback( split_command_params( $envrcpt ) );
     if ( $returncode == SMFIS_CONTINUE ) {
         push @{ $smtp->{'lmtp_rcpt'} }, $envrcpt;
         print $socket "250 2.0.0 Ok\r\n";

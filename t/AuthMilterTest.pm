@@ -683,7 +683,7 @@ sub run_smtp_processing {
         'dest'   => 'google_apps_bad_space.smtp.eml',
         'ip'     => '74.125.82.171',
         'name'   => 'mail-we0-f171.google.com',
-        'from'   => 'marc@ marcbradshaw.net',
+        'from'   => '<marc@ marcbradshaw.net>',
         'to'     => 'marc@fastmail.com',
     });
     smtp_process({
