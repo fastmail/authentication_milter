@@ -13,6 +13,8 @@ Revision history for Mail-Milter-Authentication
   - Milter: Set SMFIP_HDR_LEADSPC to get exact whitespace from MTA - Thanks to @dev-aaront-org
   - DMARC: Fix hide_none result - Thanks to @dev-aaront-org
   - Milter: Replace CRLF with LF in headers sent to MTA - Thanks to @dev-aaront-org
+  - Milter: Set SMFIP_HDR_LEADSPC to get exact whitespace from MTA - Thanks to @dev-aaront-org
+  - Core: Add hide_none option for an empty AR header - Thanks to @dev-aaront-org
 
 2.20200625.2 2020-06-25 04:34:45+00:00 UTC
   - DMARC: Option to redact some Reporting fields
