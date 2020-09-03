@@ -322,6 +322,8 @@ __END__
     "dns_servfail_timeout"  : 1000000,                  | How long (microseconds) a SERVFAIL can take before being considered a timeout
                                                         |     by the internal resolver
 
+    "hide_none"             : 0,                        | Do not add the Authentication-Results header if the result is 'none'
+
     "header_indent_style"   : "entry",                  | Optional style to indent/fold Authentication-Results header by.
     "header_fold_at"        : 77,                       | Optional line length to attempt folding of Authentication-Results header at.
                                                         | Header lines over this size will be folded at token boundaries where possible.

@@ -18,7 +18,7 @@ if ( ! -e 't/00-load.t' ) {
 
 chdir 't';
 
-plan tests => 31;
+plan tests => 38;
 
 {
 #    system 'rm -rf tmp';
