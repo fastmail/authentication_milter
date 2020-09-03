@@ -6,7 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for ARC
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::DKIM 1.20200513.1;
+use Mail::DKIM 1.20200824;
 use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::ARC::Verifier;
 use Mail::DKIM::DNS;
