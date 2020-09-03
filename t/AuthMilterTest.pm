@@ -419,6 +419,78 @@ sub run_milter_processing {
 
     stop_milter();
 
+    start_milter( 'config/hide_none' );
+
+    milter_process({
+        'desc'   => 'Good message hide_none',
+        'prefix' => 'config/hide_none',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_hide_none.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => '<marc@marcbradshaw.net>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    milter_process({
+        'desc'   => 'No DKIM hide_none',
+        'prefix' => 'config/hide_none',
+        'source' => 'google_apps_nodkim.eml',
+        'dest'   => 'google_apps_nodkim_hide_none.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => '<marc@marcbradshaw.net>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    milter_process({
+        'desc'   => 'No X-Google-DKIM hide_none',
+        'prefix' => 'config/hide_none',
+        'source' => 'google_apps_noxgdkim.eml',
+        'dest'   => 'google_apps_noxgdkim_hide_none.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => '<marc@marcbradshaw.net>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    milter_process({
+        'desc'   => 'No SPF hide_none',
+        'prefix' => 'config/hide_none',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_nospf_hide_none.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'mail.example.org',
+        'from'   => '<marc@example.org>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    milter_process({
+        'desc'   => 'Only SPF hide_none',
+        'prefix' => 'config/hide_none',
+        'source' => 'spam_headers.eml',
+        'dest'   => 'spam_headers_spf_hide_none.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => '<marc@marcbradshaw.net>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    milter_process({
+        'desc'   => 'AR none hide_none',
+        'prefix' => 'config/hide_none',
+        'source' => 'spam_headers.eml',
+        'dest'   => 'spam_headers_hide_none.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'mail.example.org',
+        'from'   => '<marc@example.org>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    test_metrics( 'data/metrics/milter_5.json' );
+
+    stop_milter();
+
     return;
 }
 
@@ -778,6 +850,78 @@ sub run_smtp_processing {
     });
 
     test_metrics( 'data/metrics/smtp_4.json' );
+
+    stop_milter();
+
+    start_milter( 'config/hide_none.smtp' );
+
+    smtp_process({
+        'desc'   => 'Good message hide_none',
+        'prefix' => 'config/hide_none.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_good_hide_none.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => '<marc@marcbradshaw.net>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    smtp_process({
+        'desc'   => 'No DKIM hide_none',
+        'prefix' => 'config/hide_none.smtp',
+        'source' => 'google_apps_nodkim.eml',
+        'dest'   => 'google_apps_nodkim_hide_none.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => '<marc@marcbradshaw.net>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    smtp_process({
+        'desc'   => 'No X-Google-DKIM hide_none',
+        'prefix' => 'config/hide_none.smtp',
+        'source' => 'google_apps_noxgdkim.eml',
+        'dest'   => 'google_apps_noxgdkim_hide_none.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => '<marc@marcbradshaw.net>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    smtp_process({
+        'desc'   => 'No SPF hide_none',
+        'prefix' => 'config/hide_none.smtp',
+        'source' => 'google_apps_good.eml',
+        'dest'   => 'google_apps_nospf_hide_none.smtp.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'mail.example.org',
+        'from'   => '<marc@example.org>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    smtp_process({
+        'desc'   => 'Only SPF hide_none',
+        'prefix' => 'config/hide_none.smtp',
+        'source' => 'spam_headers.eml',
+        'dest'   => 'spam_headers_spf_hide_none.smtp.eml',
+        'ip'     => '74.125.82.171',
+        'name'   => 'mail-we0-f171.google.com',
+        'from'   => '<marc@marcbradshaw.net>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    smtp_process({
+        'desc'   => 'AR none hide_none',
+        'prefix' => 'config/hide_none.smtp',
+        'source' => 'spam_headers.eml',
+        'dest'   => 'spam_headers_hide_none.smtp.eml',
+        'ip'     => '123.123.123.123',
+        'name'   => 'mail.example.org',
+        'from'   => '<marc@example.org>',
+        'to'     => '<marc@fastmail.com>',
+    });
+
+    test_metrics( 'data/metrics/smtp_5.json' );
 
     stop_milter();
 

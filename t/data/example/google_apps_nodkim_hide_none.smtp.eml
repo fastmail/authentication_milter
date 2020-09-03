@@ -1,0 +1,59 @@
+EHLO server.example.com
+XFORWARD HELO=mail-we0-f171.google.com
+XFORWARD ADDR=74.125.82.171
+XFORWARD NAME=mail-we0-f171.google.com
+MAIL FROM:<marc@marcbradshaw.net>
+RCPT TO:<marc@fastmail.com>
+DATA
+Received: from test.module (localhost [127.0.0.1])
+    by server.example.com (Authentication Milter) with ESMTP
+############
+############
+Authentication-Results: server.example.com;
+    dmarc=pass policy.published-domain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,d=none,d.eval=none) policy.policy-from=p header.from=marcbradshaw.net;
+    spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com
+Received-SPF: pass
+    (marcbradshaw.net: Sender is authorized to use 'marc@marcbradshaw.net' in 'mfrom' identity (mechanism 'include:_spf.google.com' matched))
+    receiver=server.example.com;
+    identity=mailfrom;
+    envelope-from="marc@marcbradshaw.net";
+    helo=mail-we0-f171.google.com;
+    client-ip=74.125.82.171
+Return-Path: <marc@marcbradshaw.net>
+Received: by mail-we0-f171.google.com with SMTP id k11so1456187wes.2
+        for <marc@fastmail.com>; Sat, 24 Jan 2015 19:35:19 -0800 (PST)
+X-Gm-Message-State: ALoCoQk+WCmS7pcgC26VeCszzOVzmv40XekPP1BxHJ4oY6p8UbjDcdVNr8WFuchigs3toyPgqHDU
+MIME-Version: 1.0
+X-Received: by 10.194.175.39 with SMTP id bx7mr30495438wjc.22.1422156919049;
+ Sat, 24 Jan 2015 19:35:19 -0800 (PST)
+Received: by 10.217.143.139 with HTTP; Sat, 24 Jan 2015 19:35:19 -0800 (PST)
+Date: Sun, 25 Jan 2015 14:35:19 +1100
+Message-ID: <CAF298RVOajnkzvO0j_DjBwWbCQBwi1a1Z4FAx_tHLFWfA9CJ8w@mail.gmail.com>
+Subject: Authentication Milter Test
+From: Marc Bradshaw <marc@marcbradshaw.net>
+To: marc@fastmail.com
+Content-Type: multipart/alternative; boundary=089e01493adaf9a7a9050d71b56f
+
+--089e01493adaf9a7a9050d71b56f
+Content-Type: text/plain; charset=UTF-8
+
+This is a test email from Google Apps
+
+-- 
+*Marc Bradshaw*
+ http://marcbradshaw.net/
+
+--089e01493adaf9a7a9050d71b56f
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">This is a test email from Google Apps<br clear=3D"all"><di=
+v><br></div>-- <br><div class=3D"gmail_signature"><div dir=3D"ltr"><b>Marc =
+Bradshaw</b><br>=C2=A0<a href=3D"http://marcbradshaw.net/" target=3D"_blank=
+">http://marcbradshaw.net/</a><br></div></div>
+</div>
+
+--089e01493adaf9a7a9050d71b56f--
+
+.
+QUIT
