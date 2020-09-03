@@ -273,7 +273,9 @@ sub child_init_hook {
            $protocol &= ~SMFIP_NOBODY;
            $protocol &= ~SMFIP_NOHDRS;
            $protocol &= ~SMFIP_NOEOH;
+           $protocol |= SMFIP_HDR_LEADSPC;
         $self->{'protocol'} = $protocol;
+        $self->{'headers_include_space'} = 0;
 
         my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
         $self->{'callback_flags'} = $callback_flags;
