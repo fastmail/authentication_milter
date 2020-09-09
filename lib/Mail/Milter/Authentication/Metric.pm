@@ -483,7 +483,7 @@ sub child_handler {
 
     print $socket qq{</table>
 
-    <h2>Connection/Config Details</h2>
+    <h2>Details</h2>
     <ul>};
     print $socket '<li>Protocol: ' . $config->{protocol} . '</li>';
     my $connections = $config->{connections};
@@ -491,46 +491,66 @@ sub child_handler {
     foreach my $connection ( sort keys %$connections ) {
         print $socket '<li>' . $connection . ': ' . $connections->{ $connection }->{connection} . '</li>'
     }
+    print $socket qq{<li>Effective config (<a href="/config/toml">toml</a>/<a href="/config/json">json</a>)</li>} if !$config->{'metric_basic_http'};
     print $socket qq{
-        <li>Effective config (<a href="/config/toml">toml</a>/<a href="/config/json">json</a>)</li>
     </ul>
 
     <h2>Metrics</h2>
     <ul>
         <li><a href="/metrics">Prometheus metrics endpoint</a></li>
-        <li>Example <a href="/grafana">Grafana dashboard</a> for this setup</li>
+    };
+    print $socket qq{li>Example <a href="/grafana">Grafana dashboard</a> for this setup</li>} if !$config->{'metric_basic_http'};
+    print $socket qq{
     </ul>
 
     <hr />
 
  </div>
 </body>
-};
+    };
         }
         elsif ( $request_uri eq '/config/json' || $request_uri eq '/config' ) {
-            print $socket "HTTP/1.0 200 OK\n";
-            print $socket "Content-Type: text/plain\n";
-            print $socket "\n";
-            my $json = JSON::XS->new();
-            $json->canonical();
-            $json->pretty();
-            print $socket $json->encode( $config );;
+            if ( $config->{'metric_basic_http'} ) {
+                print $socket "HTTP/1.0 403 Denied\n";
+                print $socket "Content-Type: text/plain\n\nDenied by config\n\n";
+            }
+            else {
+                print $socket "HTTP/1.0 200 OK\n";
+                print $socket "Content-Type: text/plain\n";
+                print $socket "\n";
+                my $json = JSON::XS->new();
+                $json->canonical();
+                $json->pretty();
+                print $socket $json->encode( $config );
+            }
         }
         elsif ( $request_uri eq '/config/toml' ) {
-            print $socket "HTTP/1.0 200 OK\n";
-            print $socket "Content-Type: text/plain\n";
-            print $socket "\n";
-            my $toml = TOML::to_toml( $config );
-            $toml =~ s/\n\[/\n\n\[/g;
-            print $socket $toml;
+            if ( $config->{'metric_basic_http'} ) {
+                print $socket "HTTP/1.0 403 Denied\n";
+                print $socket "Content-Type: text/plain\n\nDenied by config\n\n";
+            }
+            else {
+                print $socket "HTTP/1.0 200 OK\n";
+                print $socket "Content-Type: text/plain\n";
+                print $socket "\n";
+                my $toml = TOML::to_toml( $config );
+                $toml =~ s/\n\[/\n\n\[/g;
+                print $socket $toml;
+            }
         }
         elsif ( $request_uri eq '/grafana' ) {
-            print $socket "HTTP/1.0 200 OK\n";
-            print $socket "Content-Type: application/json\n";
-            print $socket "\n";
+            if ( $config->{'metric_basic_http'} ) {
+                print $socket "HTTP/1.0 403 Denied\n";
+                print $socket "Content-Type: text/plain\n\nDenied by config\n\n";
+            }
+            else {
+                print $socket "HTTP/1.0 200 OK\n";
+                print $socket "Content-Type: application/json\n";
+                print $socket "\n";
 
-            my $Grafana = Mail::Milter::Authentication::Metric::Grafana->new();
-            print $socket $Grafana->get_dashboard( $server );
+                my $Grafana = Mail::Milter::Authentication::Metric::Grafana->new();
+                print $socket $Grafana->get_dashboard( $server );
+            }
         }
         else {
             my $htdocs = Mail::Milter::Authentication::HTDocs->new();

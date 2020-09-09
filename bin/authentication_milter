@@ -247,8 +247,9 @@ __END__
     "max_requests_per_child" : 200,                     | Max number of requests per child process (prefork)
 
     "metric_connection" : "inet:12346@localhost",       | Optional connection on which to expose metrics interface
-    "metric_timeout" : 10,                              | Timeout for metrics IPC (default 5)
-    "metric_tempfile" : "/tmpfs/authmilter_metrics",    | Path to shared metrics data, defaults to <lib_path>/metrics
+    "metric_timeout"    : 10,                           | Timeout for metrics IPC (default 5)
+    "metric_tempfile"   : "/tmpfs/authmilter_metrics",  | Path to shared metrics data, defaults to <lib_path>/metrics
+    "metric_basic_http" : 1,                            | Disable extended http services such as config and grafana json pages
 
     "cache_path"       : "/var/cache/auth_milter",      | Path to the shared cache directory
     "spool_path"       : "/var/spool/auth_milter",      | Path to the shared spool directory
