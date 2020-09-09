@@ -79,9 +79,9 @@ sub default_config {
         'milter_quarantine'               => '0',
         'ip_map'                          => {},
         'handlers'                        => {},
-        'cache_path'                      => '/var/cache/authentication_milter',
-        'spool_path'                      => '/var/spool/authentication_milter',
-        'lib_path'                        => '/var/lib/authentication_milter',
+        'cache_dir'                       => '/var/cache/authentication_milter',
+        'spool_dir'                       => '/var/spool/authentication_milter',
+        'lib_dir'                         => '/var/lib/authentication_milter',
     };
 
     require Mail::Milter::Authentication;

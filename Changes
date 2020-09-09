@@ -18,6 +18,16 @@ Revision history for Mail-Milter-Authentication
   - SMTP: Pass ESMTP parameters to MAIL and RCPT callbacks - Thanks to @dev-aaront-org
   - Core: Allow certain HTTP pages to be disabled using the metric_basic_http option
 
+  [New Config Items]
+    metric_basic_http     -  Disable extended http services such as config and grafana json pages
+    cache_dir             -  Path to the shared cache directory
+    spool_dir             -  Path to the shared spool directory
+    lib_dir               -  Path to the shared lib directory
+    dequeue_timeout       -  Timeout for Dequeue callbacks
+    check_for_dequeue     -  How often in seconds should a dequeue process be spawned
+    dns_servfail_timeout  -  How long in microseconds a SERVFAIL can take before being considered a timeout
+    hide_none             -  Do not add the Authentication-Results header if the result is 'none'
+
 2.20200625.2 2020-06-25 04:34:45+00:00 UTC
   - DMARC: Option to redact some Reporting fields
 
