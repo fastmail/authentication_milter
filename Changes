@@ -31,6 +31,9 @@ Revision history for Mail-Milter-Authentication
 2.20200625.2 2020-06-25 04:34:45+00:00 UTC
   - DMARC: Option to redact some Reporting fields
 
+  [New Config Items]
+    handlers DMARC hide_report_to  - If set, remove envelope_to from DMARC reports
+
 2.20200612.2 2020-06-12 00:14:00+00:00 UTC
   - Core: Only set Nameservers when given
     Prevents issue with newer Net::DNS::Resolver
