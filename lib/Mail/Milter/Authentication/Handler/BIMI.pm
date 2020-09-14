@@ -140,8 +140,24 @@ sub eom_callback {
         my $DMARCResults = $self->get_object( 'dmarc_results' );
         if ( ! $DMARCResults ) {
 
+            my $failure_type = 'temperror';
+            my $top_handler = $self->get_top_handler();
+            my @auth_headers;
+            if ( exists( $top_handler->{'auth_headers'} ) ) {
+                @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
+            }
+            if (@auth_headers) {
+                foreach my $auth_header (@auth_headers) {
+                    next unless $auth_header->key eq 'dmarc';
+                    if ( $auth_header->value eq 'permerror' ) {
+                        $failure_type = 'permerror';
+                        last;
+                    }
+                }
+            }
+
             $self->log_error( 'BIMI Error No DMARC Results object');
-            my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'temperror' );
+            my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( $failure_type );
             $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Internal DMARC error' ) );
             $self->add_auth_header( $header );
             $self->{ 'header_added' } = 1;
