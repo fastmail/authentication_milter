@@ -1,4 +1,9 @@
 Return-Path: <marc@marcbradshaw.net>
+Received: from mail-ua0-f173.google.com (mail-ua0-f173.google.com [209.85.217.173])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mx5.messagingengine.com (Postfix) with ESMTPS
+        for <marc@fastmail.com>; Thu,  1 Dec 2016 22:35:06 -0500 (EST)
 Received: by mail-we0-f171.google.com with SMTP id k11so1456187wes.2
         for <marc@fastmail.com>; Sat, 24 Jan 2015 19:35:19 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
@@ -8,75 +13,14 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         b=DU/QdEi3GUUK1jz9pbH4A5UaeGhbPPzrPPTDAbqrn4EABY8kSBqxOVhl8xyIC08Chh
          44rMiMlO8RigLW9cBoQybRnKSzviGwP+QuS4xTdVzemM/1Pdat9FteJPsz8MpbHlRrQ7
          EpwcaQdYRJRlnrGaQhn9dkPU7xcfN0w+nsabU=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20130820;
-        h=x-gm-message-state:mime-version:date:message-id:subject:from:to
-         :content-type;
-        bh=7gvdmshMrcJRxJis+zHrBpu6zyqotJf8vROJvE5OcmA=;
-        b=aIL04w54Mcpr7cMQUdQrqpI4aUs4gV0Ww5+iyWnf0nMNUlsITzqPY2+5TBL2/l/ob1
-         nYRBLo+B01xb6HGTx1vATg/O/hrMPqK2pxICsTlIDvMBRpFsSDJbQpu0hQWpJXxF4cuQ
-         9QRyp3vYB0EWbn8Dxs9gm9V8G+b7nCRVG+X9YGFolXq00PPDRTIIB7adXmwDnHIdPx+u
-         Gb0MegXHP92U3iGZeZsEO1Gq9P6P44tp/v+09h9usq4OhBunjXojilYiB461BoBBYkGx
-         MC7vok22L8D9ssU+z0H6VzSbD/B0tzPuLFQOKmoCVnim22SUpZHzNo05Ui3Bro43J3T0
-         x9EA==
-Authentication-Results: example.com;
-    dkim-adsp=fail;
-    dkim=fail;
-    dkim=fail;
-    dmarc=fail;
-    iprev=fail;
-    spf=fail;
-    x-ptr=fail
-Authentication-Results: notexample.com;
-    dkim-adsp=fail;
-    dkim=fail;
-    dkim=fail;
-    dmarc=fail;
-    iprev=fail;
-    spf=fail;
-    x-ptr=fail
-Authentication-results: sub.example.com;
-    dkim-adsp=fail;
-    dkim=fail;
-    dkim=fail;
-    dmarc=fail;
-    iprev=fail;
-    spf=fail;
-    x-ptr=fail
-authentication-results: notmodule;
-    dkim-adsp=fail;
-    dkim=fail;
-    dkim=fail;
-    dmarc=fail;
-    iprev=fail;
-    spf=fail;
-    x-ptr=fail
-authentication-results: test.module;
-    dkim-adsp=fail;
-    dkim=fail;
-    dkim=fail;
-    dmarc=fail;
-    iprev=fail;
-    spf=fail;
-    x-ptr=fail
-Authentication-Results: module;
-    dkim-adsp=fail;
-    dkim=fail;
-    dkim=fail;
-    dmarc=fail;
-    iprev=fail;
-    spf=fail;
-    x-ptr=fail
 X-Gm-Message-State: ALoCoQk+WCmS7pcgC26VeCszzOVzmv40XekPP1BxHJ4oY6p8UbjDcdVNr8WFuchigs3toyPgqHDU
 MIME-Version: 1.0
 X-Received: by 10.194.175.39 with SMTP id bx7mr30495438wjc.22.1422156919049;
  Sat, 24 Jan 2015 19:35:19 -0800 (PST)
 Received: by 10.217.143.139 with HTTP; Sat, 24 Jan 2015 19:35:19 -0800 (PST)
-X-Disposition-Quarantine: Testing foo bar
 Date: Sun, 25 Jan 2015 14:35:19 +1100
 Message-ID: <CAF298RVOajnkzvO0j_DjBwWbCQBwi1a1Z4FAx_tHLFWfA9CJ8w@mail.gmail.com>
 Subject: Authentication Milter Test
-X-disposition-quarAntine: Testing 1 2 3
 From: Marc Bradshaw <marc@marcbradshaw.net>
 To: marc@fastmail.com
 Content-Type: multipart/alternative; boundary=089e01493adaf9a7a9050d71b56f

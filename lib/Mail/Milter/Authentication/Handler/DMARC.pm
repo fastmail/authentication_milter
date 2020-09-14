@@ -23,6 +23,7 @@ sub default_config {
         'detect_list_id' => 1,
         'report_skip_to' => [ 'my_report_from_address@example.com' ],
         'no_report'      => 0,
+        'hide_report_to' => 0,
         'config_file'    => '/etc/mail-dmarc.ini',
         'no_reject_disposition' => 'quarantine',
         'no_list_reject_disposition' => 'none',
@@ -213,11 +214,13 @@ sub _process_arc_dmarc_for {
     }
 
     # Add the Envelope To
-    eval {
-        $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
-    };
-    if ( my $error = $@ ) {
-        $self->handle_exception( $error );
+    unless ( $config->{'hide_report_to'} ) {
+        eval {
+            $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+        }
     }
 
     # Add the From Header
@@ -367,12 +370,14 @@ sub _process_dmarc_for {
     }
 
     # Add the Envelope To
-    eval {
-        $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
-    };
-    if ( my $error = $@ ) {
-        $self->handle_exception( $error );
-        $self->log_error( 'DMARC Rcpt To Error ' . $error );
+    unless ( $config->{'hide_report_to'} ) {
+        eval {
+            $dmarc->envelope_to( lc $self->get_domain_from( $self->{'env_to'} ) );
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'DMARC Rcpt To Error ' . $error );
+        }
     }
 
     # Add the From Header
@@ -563,49 +568,47 @@ sub _process_dmarc_for {
     }
 
     # Add the AR Header
+    my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( $dmarc_code );
+
+    # What comments can we add?
     my @comments;
-    if ( !( $config->{'hide_none'} && $dmarc_code eq 'none' ) ) {
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( $dmarc_code );
-
-        # What comments can we add?
-        if ( $dmarc_policy ) {
-            push @comments, $self->format_header_entry( 'p', $dmarc_policy );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-domain-policy' )->safe_set_value( $dmarc_policy ) );
-        }
-        if ( $dmarc_sub_policy ne 'default' ) {
-            push @comments, $self->format_header_entry( 'sp', $dmarc_sub_policy );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-subdomain-policy' )->safe_set_value( $dmarc_sub_policy ) );
-        }
-        if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
-            push @comments, 'has-list-id=yes';
-        }
-        if ( $dmarc_disposition ) {
-            push @comments, $self->format_header_entry( 'd', $dmarc_disposition );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.applied-disposition' )->safe_set_value( $dmarc_disposition ) );
-        }
-        if ( $dmarc_disposition_evaluated ) {
-            push @comments, $self->format_header_entry( 'd.eval', $dmarc_disposition_evaluated );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.evaluated-disposition' )->safe_set_value( $dmarc_disposition_evaluated ) );
-        }
-        if ( $policy_override ) {
-            push @comments, $self->format_header_entry( 'override', $policy_override );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.override-reason' )->safe_set_value( $policy_override ) );
-        }
-        if ( $arc_aware_result ) {
-            push @comments, $self->format_header_entry( 'arc_aware_result', $arc_aware_result );
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.arc-aware-result' )->safe_set_value( $arc_aware_result ) );
-        }
-
-        if ( @comments ) {
-            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( join( ',', @comments ) ) );
-        }
-
-        my $policy_used = ( $is_subdomain && $dmarc_sub_policy ne 'default' ) ? 'sp' : 'p';
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.policy-from' )->safe_set_value( $policy_used ) );
-
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
-        $self->_add_dmarc_header( $header );
+    if ( $dmarc_policy ) {
+        push @comments, $self->format_header_entry( 'p', $dmarc_policy );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-domain-policy' )->safe_set_value( $dmarc_policy ) );
     }
+    if ( $dmarc_sub_policy ne 'default' ) {
+        push @comments, $self->format_header_entry( 'sp', $dmarc_sub_policy );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.published-subdomain-policy' )->safe_set_value( $dmarc_sub_policy ) );
+    }
+    if ( $config->{'detect_list_id'} && $self->{'is_list'} ) {
+        push @comments, 'has-list-id=yes';
+    }
+    if ( $dmarc_disposition ) {
+        push @comments, $self->format_header_entry( 'd', $dmarc_disposition );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.applied-disposition' )->safe_set_value( $dmarc_disposition ) );
+    }
+    if ( $dmarc_disposition_evaluated ) {
+        push @comments, $self->format_header_entry( 'd.eval', $dmarc_disposition_evaluated );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.evaluated-disposition' )->safe_set_value( $dmarc_disposition_evaluated ) );
+    }
+    if ( $policy_override ) {
+        push @comments, $self->format_header_entry( 'override', $policy_override );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.override-reason' )->safe_set_value( $policy_override ) );
+    }
+    if ( $arc_aware_result ) {
+        push @comments, $self->format_header_entry( 'arc_aware_result', $arc_aware_result );
+        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.arc-aware-result' )->safe_set_value( $arc_aware_result ) );
+    }
+
+    if ( @comments ) {
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( join( ',', @comments ) ) );
+    }
+
+    my $policy_used = ( $is_subdomain && $dmarc_sub_policy ne 'default' ) ? 'sp' : 'p';
+    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.policy-from' )->safe_set_value( $policy_used ) );
+
+    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
+    $self->_add_dmarc_header( $header );
 
     # Write Metrics
     my $metric_data = {
@@ -863,7 +866,9 @@ sub eom_callback {
 
     if ( @{ $self->{ 'dmarc_ar_headers' } } ) {
         foreach my $dmarc_header ( @{ $self->_get_unique_dmarc_headers() } ) {
-            $self->add_auth_header( $dmarc_header );
+            if ( !( $config->{'hide_none'} && $dmarc_header->value() eq 'none' ) ) {
+                $self->add_auth_header( $dmarc_header );
+            }
         }
     }
     else {
@@ -935,6 +940,49 @@ sub addheader_callback {
     my $handler = shift;
 }
 
+sub dequeue_callback {
+    my ($self) = @_;
+    my $dequeue_list = $self->get_dequeue_list('dmarc_report');
+    foreach my $id ( $dequeue_list->@* ) {
+        my $report = $self->get_dequeue($id);
+        if ( $report ) {
+
+            eval {
+                $self->set_handler_alarm( 5 * 1000000 ); # Allow no longer than 5 seconds for this!
+                if ( $report->can('set_resolver') ) {
+                    my $resolver = $self->get_object('resolver');
+                    $report->set_resolver($resolver);
+                }
+                $report->save_aggregate();
+                $self->dbgout( 'Queued DMARC Report saved for', $report->result()->published()->rua(), LOG_INFO );
+                $self->delete_dequeue($id);
+                $self->reset_alarm();
+            };
+            if ( my $Error = $@ ) {
+                $self->reset_alarm();
+                my $Type = $self->is_exception_type( $Error );
+                if ( $Type ) {
+                    if ( $Type eq 'Timeout' ) {
+                        # We have a timeout, is it global or is it ours?
+                        if ( $self->get_time_remaining() > 0 ) {
+                            # We have time left, but this aggregate save timed out
+                            # Log this and move on!
+                            $self->log_error("DMARC timeout saving reports for $id");
+                        }
+                    }
+                }
+                $self->handle_exception( $Error );
+                $self->log_error("DMARC Report save failed for $id: $Error");
+            }
+
+        }
+        else {
+            $self->log_error("DMARC Report dequeue failed for $id");
+            #$self->delete_dequeue($id);
+        }
+    }
+}
+
 sub _save_aggregate_reports {
     my ( $self ) = @_;
     return if ! $self->{'report_queue'};
@@ -942,8 +990,11 @@ sub _save_aggregate_reports {
     eval {
         $self->set_handler_alarm( 2 * 1000000 ); # Allow no longer than 2 seconds for this!
         while ( my $report = shift @{ $self->{'report_queue'} } ) {
-            $report->save_aggregate();
-            $self->dbgout( 'DMARC Report saved for', $report->result()->published()->rua(), LOG_INFO );
+            if ( $report->can('set_resolver') ) {
+                $report->set_resolver(undef);
+            }
+            $self->add_dequeue('dmarc_report',$report);
+            $self->dbgout( 'DMARC Report queued for', $report->result()->published()->rua(), LOG_INFO );
         }
         $self->reset_alarm();
     };
@@ -1021,6 +1072,7 @@ This handler requires the SPF and DKIM handlers to be installed and active.
                 "dmarc@example.com"                        | your report from addresses.
             ],
             "no_report"          : "1",                    | If set then we will not attempt to store DMARC reports.
+            "hide_report_to"     : "1",                    | If set, remove envelope_to from DMARC reports
             "config_file"        : "/etc/mail-dmarc.ini"   | Optional path to dmarc config file
         },
 

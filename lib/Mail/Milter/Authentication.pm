@@ -140,22 +140,22 @@ sub write_to_log_hook($self,$priority,$line,@) {
 
 =method I<idle_loop_hook()>
 
-Hook which runs in the master periodically.
+Hook which runs in the parent periodically.
 
 =cut
 
 sub idle_loop_hook($self,@) {
-    $self->{'metric'}->master_metric_update( $self );
+    $self->{'metric'}->parent_metric_update( $self );
 }
 
 =method I<pre_loop_hook()>
 
-Hook which runs in the master before looping.
+Hook which runs in the parent before looping.
 
 =cut
 
 sub pre_loop_hook($self,@) {
-    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':master';
+    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':parent';
 
     $self->preload_modules( 'Net::DNS', 'Net::DNS::RR' );
     $self->{'metric'} = Mail::Milter::Authentication::Metric->new($self);
@@ -226,7 +226,8 @@ Hook which runs after forking, sets up per process items.
 
 =cut
 
-sub child_init_hook($self,@) {
+sub child_init_hook {
+    my ( $self,$arg ) = @_;
     srand();
 
     my $config = get_config();
@@ -242,8 +243,15 @@ sub child_init_hook($self,@) {
         }
     }
 
-    $self->loginfo( "Child process $PID starting up" );
-    $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':starting';
+    $arg = '' if !defined $arg;
+    if ( $arg eq 'dequeue' ) {
+        $self->loginfo( "Dequeue process $PID starting up" );
+        $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':dequeue';
+    }
+    else {
+        $self->loginfo( "Child process $PID starting up" );
+        $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':starting';
+    }
 
     my $base;
     if ( $config->{'protocol'} eq 'milter' ) {
@@ -265,7 +273,9 @@ sub child_init_hook($self,@) {
            $protocol &= ~SMFIP_NOBODY;
            $protocol &= ~SMFIP_NOHDRS;
            $protocol &= ~SMFIP_NOEOH;
+           $protocol |= SMFIP_HDR_LEADSPC;
         $self->{'protocol'} = $protocol;
+        $self->{'headers_include_space'} = 0;
 
         my $callback_flags = SMFI_CURR_ACTS|SMFIF_CHGBODY|SMFIF_QUARANTINE|SMFIF_SETSENDER;
         $self->{'callback_flags'} = $callback_flags;
@@ -289,6 +299,8 @@ sub child_init_hook($self,@) {
     $self->setup_handlers();
     $self->{'metric'}->set_versions( $self );
 
+    $self->{'handler'}->{'_Handler'}->metric_count( 'forked_children_total', {}, 1 ) unless $arg eq 'dequeue';
+
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':waiting(0)';
 }
 
@@ -298,12 +310,19 @@ Hook which runs when the child is about to finish.
 
 =cut
 
-sub child_finish_hook($self,@) {
+sub child_finish_hook {
+    my ( $self,$arg ) = @_;
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':exiting';
-    $self->loginfo( "Child process $PID shutting down" );
-    eval {
-        $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
-    };
+    $arg = '' if !defined $arg;
+    if ( $arg eq 'dequeue' ) {
+        $self->loginfo( "Dequeue process $PID shutting down" );
+    }
+    else {
+        $self->loginfo( "Child process $PID shutting down" );
+        eval {
+            $self->{'handler'}->{'_Handler'}->metric_count( 'reaped_children_total', {}, 1 );
+        };
+    }
     $self->destroy_objects();
 }
 
@@ -315,6 +334,20 @@ Hook which runs before the server closes.
 
 sub pre_server_close_hook($self,@) {
     $self->loginfo( 'Server closing down' );
+}
+
+=method I<dequeue()>
+
+Call the dequeue handlers
+
+=cut
+
+sub dequeue($self,@) {
+    my $config = $self->{ 'config' };
+    my $seconds = $config->{'dequeue_timeout'} // 300;
+    $self->{handler}->{_Handler}->set_overall_timeout( $seconds * 1000000 );
+    $self->{handler}->{_Handler}->top_dequeue_callback();
+    $self->{handler}->{_Handler}->clear_overall_timeout();
 }
 
 =method I<get_client_proto()>
@@ -629,7 +662,7 @@ sub get_valid_pid($pid_file) {
         }
         if ( $process->pid == $pid ) {
             $found_pid = 1;
-            if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':master' ) {
+            if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':parent' ) {
                 return $pid;
             }
         }
@@ -649,14 +682,17 @@ sub get_valid_pid($pid_file) {
 
 =func I<find_process()>
 
-Search the process table for an authentication_milter master process
+Search the process table for an authentication_milter parent process
 
 =cut
 
 sub find_process {
     my $process_table = Proc::ProcessTable->new();
     foreach my $process ( $process_table->table->@* ) {
-        if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':master' ) {
+        if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':master' ) { ## Legacy naming, will be removed in later version
+            return $process->pid;
+        }
+        if ( $process->cmndline eq $Mail::Milter::Authentication::Config::IDENT . ':parent' ) {
             return $process->pid;
         }
     }
@@ -749,6 +785,8 @@ sub start($args) {
     my $min_children           = $config->{'min_children'}           || 20;
     my $max_spare_children     = $config->{'max_spare_children'}     || 20;
     my $min_spare_children     = $config->{'min_spare_children'}     || 10;
+
+    setup_config();
 
     my %srvargs;
 
@@ -898,7 +936,6 @@ sub start($args) {
                 'ipv'   => '*',
                 'proto' => 'tcp',
             };
-            $srvargs{'child_communication'} = 1;
         }
         elsif ( $type eq 'unix' ) {
             _warn(
@@ -912,7 +949,6 @@ sub start($args) {
                 'port'  => $path,
                 'proto' => 'unix',
             };
-            $srvargs{'child_communication'} = 0;
 
             if ($umask) {
                 umask ( oct( $umask ) );
@@ -937,7 +973,6 @@ sub start($args) {
             'ipv'   => '*',
             'proto' => 'tcp',
         };
-        $srvargs{'child_communication'} = 1;
         _warn( 'Metrics available on ' . $metric_host . ':' . $config->{'metric_port'} );
         _warn( 'metric_host/metric_port are depricated, please use metric_connection/metric_umask instead' );
     }
@@ -945,6 +980,9 @@ sub start($args) {
     $srvargs{'port'} = \@ports;
     $srvargs{'listen'} = $listen_backlog;
     $srvargs{'leave_children_open_on_hup'} = 1;
+
+    $srvargs{'max_dequeue'} = 1;
+    $srvargs{'check_for_dequeue'} = $config->{'check_for_dequeue'} // 60;
 
     _warn "==========";
     _warn "Starting server";
@@ -1031,8 +1069,6 @@ sub setup_handlers($self) {
     my $handler = Mail::Milter::Authentication::Handler->new( $self );
     $self->{'handler'}->{'_Handler'} = $handler;
 
-    $handler->metric_count( 'forked_children_total', {}, 1 );
-
     my $config = $self->{'config'};
     foreach my $name ( $config->{'load_handlers'}->@* ) {
         $self->setup_handler( $name );
@@ -1074,7 +1110,7 @@ sub setup_handler($self,$name) {
     my $object = $package->new( $self );
     $self->{'handler'}->{$name} = $object;
 
-    foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
+    foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close dequeue } ) {
         if ( $object->can( $callback . '_callback' ) ) {
             $self->register_callback( $name, $callback );
         }
@@ -1117,7 +1153,7 @@ Sort the callbacks into the order in which they must be called
 =cut
 
 sub sort_all_callbacks($self) {
-    foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close } ) {
+    foreach my $callback ( qw { metrics setup connect helo envfrom envrcpt header eoh body eom addheader abort close dequeue } ) {
         $self->sort_callbacks( $callback );
     }
 }

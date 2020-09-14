@@ -78,6 +78,7 @@ use constant SMFIP_NOBODY       => 0x10;
 use constant SMFIP_NOHDRS       => 0x20;
 use constant SMFIP_NOEOH        => 0x40;
 use constant SMFIP_NONE         => 0x7F;
+use constant SMFIP_HDR_LEADSPC  => 0x100000;
 
 use constant SMFIS_CONTINUE     => 100;
 use constant SMFIS_REJECT       => 101;
@@ -149,6 +150,7 @@ our @EXPORT = qw(
     SMFIP_NOHDRS
     SMFIP_NOEOH
     SMFIP_NONE
+    SMFIP_HDR_LEADSPC
     SMFIS_CONTINUE
     SMFIS_REJECT
     SMFIS_DISCARD

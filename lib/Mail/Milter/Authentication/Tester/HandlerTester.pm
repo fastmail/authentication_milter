@@ -107,6 +107,8 @@ sub new {
     }
 
     $Mail::Milter::Authentication::Config::PREFIX = $self->{ 'prefix' };
+    Mail::Milter::Authentication::Config::setup_config;
+
     my $config = get_config();
 
     my $Resolver = Net::DNS::Resolver::Mock->new();

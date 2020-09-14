@@ -7,6 +7,7 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use base 'Net::DNS::Resolver';
 use Scalar::Util qw{ weaken };
+use Time::HiRes qw{ ualarm gettimeofday };
 
 =head1 DESCRIPTION
 
@@ -32,6 +33,12 @@ to Net::DNS::Resolver
 sub clear_error_cache {
     my $self = shift;
     $self->{ _timedout } = {};
+}
+
+sub _get_microseconds {
+    my ( $self ) = @_;
+    my ($seconds, $microseconds) = gettimeofday;
+    return ( ( $seconds * 1000000 ) + $microseconds );
 }
 
 sub _do { ## no critic
@@ -60,6 +67,8 @@ sub _do { ## no critic
         return;
     }
 
+    my $start_time = $self->_get_microseconds;
+
     eval {
         $handler->set_handler_alarm( ( $timeout + 0.1 ) * 1000000 ); # 0.1 seconds over that passed to Net::DNS::Resolver
         $return = $self->SUPER::send( @_ )   if $what eq 'send';
@@ -85,11 +94,17 @@ sub _do { ## no critic
         $handler->handle_exception( $error );
     }
 
+    my $time_taken = $self->_get_microseconds - $start_time;
+    my $servfail_timeout = exists $config->{'dns_servfail_timeout'} ? $config->{'dns_servfail_timeout'} : 1000000; # Consider a servfail as a timeout after (default) 1 second;
+
     # Timeouts or SERVFAIL are unlikely to recover within the lifetime of this transaction,
     # when we encounter them, don't lookup this org domain again.
-    if ( ( $self->errorstring =~ /timeout/i ) || ( $self->errorstring eq 'query timed out' ) || ( $self->errorstring eq 'SERVFAIL' ) ) {
+    if ( ( $self->errorstring =~ /timeout/i ) || ( $self->errorstring eq 'query timed out' ) || ( $self->errorstring eq 'SERVFAIL' && $time_taken > $servfail_timeout ) ) {
         $self->{ _timedout }->{ $org_domain } = 1;
-    }
+        my $domain = $_[0];
+        my $query = $_[1];
+        $handler->log_error( "DNS Lookup $query $domain error, hold set on $org_domain : ".$self->errorstring );
+      }
 
     return $return;
 }

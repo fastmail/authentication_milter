@@ -1,10 +1,10 @@
-# Test configuration for auth milter smtp
+# Test configuration for auth milter hide_none
 {
 
     "debug"                           : 1,
     "dryrun"                          : 0,
     "logtoerr"                        : 1,
-    "error_log"                       : "tmp/smtp.err",
+    "error_log"                       : "tmp/milter.err",
     "connection"                      : "unix:tmp/authentication_milter_test.sock",
     "umask"                           : "0000",
     "connect_timeout"                 : 55,
@@ -18,13 +18,6 @@
     "metric_connection"               : "unix:tmp/authentication_milter_test_metrics.sock",
     "metric_umask"                    : "0000",
 
-    "protocol" : "smtp",
-    "smtp" : {
-        "sock_type" : "unix",
-        "sock_path" : "tmp/authentication_milter_smtp_out.sock",
-        "pipeline_limit" : "4",
-    },
-
     "ip_map" : {
         "4.3.2.1" : { "ip" : "74.125.82.171" , "helo" : "mail-we0-f171.google.com" },
         "5.4.3.0/24" : { "ip" : "74.125.82.171", "helo" : "mail-we0-f171.google.com" }
@@ -37,43 +30,42 @@
     "max_spare_children"     : 1,
     "max_requests_per_child" : 1000,
 
-    "dns_resolvers" : [ "127.0.0.1" ],
+    "hide_none"              : 1,
 
     "handlers" : {
         "SPF" : {
-            "hide_none" : 0
+            "hide_none" : 1
         },
         "DMARC" : {
-            "hide_none" : 0,
+            "hide_none" : 1,
             "detect_list_id" : 1
         },
         "XGoogleDKIM" : {
-            "hide_none" : 0
+            "hide_none" : 1
         },
         "DKIM" : {
-            "hide_none" : 0,
+            "hide_none" : 1,
             "show_default_adsp" : 0,
             "check_adsp" : 1,
-            "adsp_hide_none" : 0
+            "adsp_hide_none" : 1
         },
-        "PTR" : {},
+        "!PTR" : {},
         "SenderID" : {
             "hide_none" : 1
         },
-        "IPRev" : {},
-        "Auth" : {},
-        "LocalIP" : {},
-        "TrustedIP" : {
+        "!IPRev" : {},
+        "!Auth" : {},
+        "!LocalIP" : {},
+        "!TrustedIP" : {
             "trusted_ip_list" : [
                 "123.123.12.3"
             ]
         },
-        "TLS" : {},
         "!AddID" : {},
         "!ReturnOK" : {},
         "Sanitize" : {
             "hosts_to_remove" : [
-                "module"
+                "example.com"
             ],
             "remove_headers" : "yes"
         }
