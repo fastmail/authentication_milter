@@ -65,8 +65,8 @@ my %WriteMakefileArgs = (
     "Mail::AuthenticationResults::Header::Comment" => 0,
     "Mail::AuthenticationResults::Header::Entry" => 0,
     "Mail::AuthenticationResults::Header::SubEntry" => 0,
-    "Mail::BIMI" => "1.20200214",
-    "Mail::DKIM" => "0.54",
+    "Mail::BIMI" => 2,
+    "Mail::DKIM" => "1.20200824",
     "Mail::DKIM::ARC::Signer" => 0,
     "Mail::DKIM::ARC::Verifier" => 0,
     "Mail::DKIM::DNS" => 0,
@@ -109,10 +109,9 @@ my %WriteMakefileArgs = (
     "Mail::DKIM::Signer" => 0,
     "Test::Exception" => 0,
     "Test::Perl::Critic" => 0,
-    "lib" => 0,
-    "version" => 0
+    "lib" => 0
   },
-  "VERSION" => "2.20200909.2",
+  "VERSION" => "2.20200930.2",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -157,8 +156,8 @@ my %FallbackPrereqs = (
   "Mail::AuthenticationResults::Header::Comment" => 0,
   "Mail::AuthenticationResults::Header::Entry" => 0,
   "Mail::AuthenticationResults::Header::SubEntry" => 0,
-  "Mail::BIMI" => "1.20200214",
-  "Mail::DKIM" => "0.54",
+  "Mail::BIMI" => 2,
+  "Mail::DKIM" => "1.20200824",
   "Mail::DKIM::ARC::Signer" => 0,
   "Mail::DKIM::ARC::Verifier" => 0,
   "Mail::DKIM::DNS" => 0,
@@ -198,7 +197,6 @@ my %FallbackPrereqs = (
   "open" => 0,
   "strict" => 0,
   "vars" => 0,
-  "version" => 0,
   "warnings" => 0
 );
 
