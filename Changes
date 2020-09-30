@@ -29,7 +29,7 @@ Revision history for Mail-Milter-Authentication
     dns_servfail_timeout  -  How long in microseconds a SERVFAIL can take before being considered a timeout
     hide_none             -  Do not add the Authentication-Results header if the result is 'none'
   [New Config Items for BIMI]
-    handlers BIMI bimi_options - Options to pass into Mail::BIMI->new
+    handlers BIMI bimi_options  - Options to pass into Mail::BIMI->new
     handlers BIMI rbl_allowlist - Optional RBL Allow list of allowed org domains
     handlers BIMI rbl_blocklist - Optional RBL Block list of disallowed org domains
 
