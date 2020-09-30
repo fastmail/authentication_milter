@@ -116,7 +116,7 @@ Subject: This is a test
 Testing',
     });
 
-    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=skipped (DMARC fail)', 'Default BIMI no auth' );
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=skipped (DMARC did not pass)', 'Default BIMI no auth' );
 
 };
 
@@ -282,7 +282,7 @@ Testing
         ),
     });
 
-    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=none (Domain is not BIMI enabled)', 'Does Not Have BIMI' );
+    is( $tester->{authmilter}->{handler}->{BIMI}->{bimi_object}->result->get_authentication_results, 'bimi=none (No BIMI records found)', 'Does Not Have BIMI' );
 
 };
 
