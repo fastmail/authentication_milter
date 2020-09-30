@@ -251,9 +251,9 @@ __END__
     "metric_tempfile"   : "/tmpfs/authmilter_metrics",  | Path to shared metrics data, defaults to <lib_path>/metrics
     "metric_basic_http" : 1,                            | Disable extended http services such as config and grafana json pages
 
-    "cache_path"       : "/var/cache/auth_milter",      | Path to the shared cache directory
-    "spool_path"       : "/var/spool/auth_milter",      | Path to the shared spool directory
-    "lib_path"         : "/var/lib/auth_milter",        | Path to the shared lib directory
+    "cache_dir"        : "/var/cache/auth_milter",      | Path to the shared cache directory
+    "spool_dir"        : "/var/spool/auth_milter",      | Path to the shared spool directory
+    "lib_dir"          : "/var/lib/auth_milter",        | Path to the shared lib directory
 
     # metric_port and metric_host are deprecated.
     # please use metric_connection instead
@@ -307,20 +307,20 @@ __END__
                                                         | Timeouts for callbacks, should be slightly lower
                                                         | than the corresponding timeouts in Postfix
                                                         | Timeouts are ignored if missing.
-    "connect_timeout"       : 30,                       | Timeout for Connect callbacks
-    "command_timeout"       : 30,                       | Timeout for Helo,Mail,Rcpt,Data and Unknown callbacks
-    "content_timeout"       : 300,                      | Timeout for Header,Eoh, Body and Eom callbacks
-    "dequeue_timeout"       : 300,                      | Timeout for Dequeue callbacks
+    "connect_timeout"       : 30,                       | Timeout in seconds for Connect callbacks
+    "command_timeout"       : 30,                       | Timeout in seconds for Helo,Mail,Rcpt,Data and Unknown callbacks
+    "content_timeout"       : 300,                      | Timeout in seconds Header,Eoh, Body and Eom callbacks
+    "dequeue_timeout"       : 300,                      | Timeout in seconds for Dequeue callbacks
 
-    "check_for_dequeue"     : 60,                       | How ofetn (in seconds) should a dequeue process be spawned
+    "check_for_dequeue"     : 60,                       | How often in seconds should a dequeue process be spawned
 
     "dns_resolvers"         : [                         | Explicit list of DNS resolvers to use
         "8.8.8.8",
         "127.0.0.1"
     ],
-    "dns_timeout"           : 10,                       | Timeout (seconds) for DNS lookups
+    "dns_timeout"           : 10,                       | Timeout in seconds for DNS lookups
     "dns_retry"             : 2,                        | Number of times a lookup will retry per call
-    "dns_servfail_timeout"  : 1000000,                  | How long (microseconds) a SERVFAIL can take before being considered a timeout
+    "dns_servfail_timeout"  : 1000000,                  | How long microseconds a SERVFAIL can take before being considered a timeout
                                                         |     by the internal resolver
 
     "hide_none"             : 0,                        | Do not add the Authentication-Results header if the result is 'none'

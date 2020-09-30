@@ -6,7 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for DKIM
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::DKIM 0.54;
+use Mail::DKIM 1.20200824;
 use Mail::DKIM::DNS;
 use Mail::DKIM::KeyValueList;
 use Mail::DKIM::Verifier;
