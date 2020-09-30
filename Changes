@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20200930.2 2020-09-30 08:51:35+00:00 UTC
   - Improve language used internally
   - Core: Configurable SERVFAIL timeout with default
   - Core: Avoid opening unnecessary sockets
