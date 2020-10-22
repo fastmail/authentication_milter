@@ -111,16 +111,21 @@ sub is_whitelisted {
         }
         else {
             my $whitelisted_obj = Net::IP->new($entry);
-            my $is_overlap = $ip_obj->overlaps($whitelisted_obj) || 0;
-            if (
-                   $is_overlap == $IP_A_IN_B_OVERLAP
-                || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
-                || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
-                || $is_overlap == $IP_IDENTICAL
-              )
-            {
-                $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
-                $whitelisted = 1;
+            if ( !$whitelisted_obj ) {
+                $self->log_error( 'DMARC: Could not parse whitelist IP '.$entry );
+            }
+            else {
+                my $is_overlap = $ip_obj->overlaps($whitelisted_obj) || 0;
+                if (
+                       $is_overlap == $IP_A_IN_B_OVERLAP
+                    || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
+                    || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
+                    || $is_overlap == $IP_IDENTICAL
+                  )
+                {
+                    $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                    $whitelisted = 1;
+                }
             }
         }
         return $whitelisted if $whitelisted;
