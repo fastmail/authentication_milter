@@ -324,6 +324,11 @@ __END__
                                                         |     by the internal resolver
 
     "authserv_id"           : "mx.example.com",         | The authserv-id value to use in Authentication-Results headers
+                                                        | This value is optional, and overrides the authserv id set by the
+                                                        | MTA in milter mode, and the server_name config option for SMTP
+                                                        | mode connections. It is recommended to omit this value unless you
+                                                        | have a specific need and understand the implications.
+
     "hide_none"             : 0,                        | Do not add the Authentication-Results header if the result is 'none'
 
     "header_indent_style"   : "entry",                  | Optional style to indent/fold Authentication-Results header by.
