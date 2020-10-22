@@ -37,6 +37,7 @@
     "max_spare_children"     : 1,
     "max_requests_per_child" : 1000,
 
+    "authserv_id"            : "mx.example.net",
     "hide_none"              : 1,
 
     "handlers" : {

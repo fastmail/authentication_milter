@@ -78,6 +78,7 @@ sub default_config {
         'tempfail_on_error_trusted'       => '0',
         'milter_quarantine'               => '0',
         'ip_map'                          => {},
+        'authserv_id'                     => '',
         'handlers'                        => {},
         'cache_dir'                       => '/var/cache/authentication_milter',
         'spool_dir'                       => '/var/spool/authentication_milter',

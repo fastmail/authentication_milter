@@ -42,7 +42,23 @@ Authentication-Results: notexample.com;
     iprev=fail;
     spf=fail;
     x-ptr=fail
+Authentication-Results: mx.example.net;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
 authentication-results: notmodule;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
+Authentication-Results: server.example.net;
     dkim-adsp=fail;
     dkim=fail;
     dkim=fail;

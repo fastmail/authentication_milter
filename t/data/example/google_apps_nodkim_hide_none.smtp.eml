@@ -9,7 +9,7 @@ Received: from test.module (localhost [127.0.0.1])
     by server.example.com (Authentication Milter) with ESMTP
 ############
 ############
-Authentication-Results: server.example.com;
+Authentication-Results: mx.example.net;
     dmarc=pass policy.published-domain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,d=none,d.eval=none) policy.policy-from=p header.from=marcbradshaw.net;
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com
 Received-SPF: pass

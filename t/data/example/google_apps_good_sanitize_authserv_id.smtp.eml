@@ -1,3 +1,14 @@
+EHLO server.example.com
+XFORWARD HELO=mail-we0-f171.google.com
+XFORWARD ADDR=74.125.82.171
+XFORWARD NAME=mail-we0-f171.google.com
+MAIL FROM:<marc@marcbradshaw.net>
+RCPT TO:<marc@fastmail.com>
+DATA
+Received: from test.module (localhost [127.0.0.1])
+    by server.example.com (Authentication Milter) with ESMTP
+############
+############
 Authentication-Results: mx.example.net;
     dkim-adsp=pass (ADSP policy from marcbradshaw.net);
     dkim=pass (1024-bit rsa key sha256) header.d=marcbradshaw.net header.i=@marcbradshaw.net header.b=DU/QdEi3 header.a=rsa-sha256 header.s=google;
@@ -6,17 +17,12 @@ Authentication-Results: mx.example.net;
     x-google-dkim=pass (2048-bit rsa key) header.d=1e100.net header.i=@1e100.net header.b=aIL04w54
 Received-SPF: pass
     (marcbradshaw.net: Sender is authorized to use 'marc@marcbradshaw.net' in 'mfrom' identity (mechanism 'include:_spf.google.com' matched))
-    receiver=test.module;
+    receiver=server.example.com;
     identity=mailfrom;
     envelope-from="marc@marcbradshaw.net";
     helo=mail-we0-f171.google.com;
     client-ip=74.125.82.171
 Return-Path: <marc@marcbradshaw.net>
-Received: from mail-ua0-f173.google.com (mail-ua0-f173.google.com [209.85.217.173])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mx5.messagingengine.com (Postfix) with ESMTPS
-        for <marc@fastmail.com>; Thu,  1 Dec 2016 22:35:06 -0500 (EST)
 Received: by mail-we0-f171.google.com with SMTP id k11so1456187wes.2
         for <marc@fastmail.com>; Sat, 24 Jan 2015 19:35:19 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
@@ -37,6 +43,30 @@ X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
          Gb0MegXHP92U3iGZeZsEO1Gq9P6P44tp/v+09h9usq4OhBunjXojilYiB461BoBBYkGx
          MC7vok22L8D9ssU+z0H6VzSbD/B0tzPuLFQOKmoCVnim22SUpZHzNo05Ui3Bro43J3T0
          x9EA==
+Authentication-Results: notexample.com;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
+authentication-results: notmodule;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
+Authentication-Results: server.example.net;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
 X-Gm-Message-State: ALoCoQk+WCmS7pcgC26VeCszzOVzmv40XekPP1BxHJ4oY6p8UbjDcdVNr8WFuchigs3toyPgqHDU
 MIME-Version: 1.0
 X-Received: by 10.194.175.39 with SMTP id bx7mr30495438wjc.22.1422156919049;
@@ -48,6 +78,51 @@ Subject: Authentication Milter Test
 From: Marc Bradshaw <marc@marcbradshaw.net>
 To: marc@fastmail.com
 Content-Type: multipart/alternative; boundary=089e01493adaf9a7a9050d71b56f
+X-Received-Authentication-Results: (Received Authentication-Results header removed by server.example.com)
+    example.com;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
+X-Received-Authentication-Results: (Received Authentication-Results header removed by server.example.com)
+    mx.example.net;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
+X-Received-Authentication-Results: (Received Authentication-Results header removed by server.example.com)
+    sub.example.com;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
+X-Received-Authentication-Results: (Received Authentication-Results header removed by server.example.com)
+    test.module;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
+X-Received-Authentication-Results: (Received Authentication-Results header removed by server.example.com)
+    module;
+    dkim-adsp=fail;
+    dkim=fail;
+    dkim=fail;
+    dmarc=fail;
+    iprev=fail;
+    spf=fail;
+    x-ptr=fail
 
 --089e01493adaf9a7a9050d71b56f
 Content-Type: text/plain; charset=UTF-8
@@ -69,3 +144,6 @@ Bradshaw</b><br>=C2=A0<a href=3D"http://marcbradshaw.net/" target=3D"_blank=
 </div>
 
 --089e01493adaf9a7a9050d71b56f--
+
+.
+QUIT
