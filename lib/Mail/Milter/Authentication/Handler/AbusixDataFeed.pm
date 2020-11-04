@@ -32,7 +32,6 @@ sub dequeue_callback {
             if ( $feed ) {
                 my $api = Mail::DataFeed::Abusix->new( $feed->%* );
                 $api->send;
-                $self->delete_dequeue($id);
             }
             else {
                 $self->log_error("AbusixDataFeed Report dequeue failed for $id");
@@ -42,6 +41,7 @@ sub dequeue_callback {
             $self->handle_exception( $Error );
             $self->log_error( 'AbusixDataFeed Sending Error ' . $Error );
         }
+        $self->delete_dequeue($id);
     }
 }
 
