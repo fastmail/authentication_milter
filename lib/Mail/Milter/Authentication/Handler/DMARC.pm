@@ -978,7 +978,7 @@ sub dequeue_callback {
         }
         else {
             $self->log_error("DMARC Report dequeue failed for $id");
-            #$self->delete_dequeue($id);
+            $self->error_dequeue($id);
         }
     }
 }
