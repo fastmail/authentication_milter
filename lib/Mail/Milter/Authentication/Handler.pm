@@ -1875,6 +1875,20 @@ sub delete_dequeue($self,$id) {
     unlink $filepath;
 }
 
+=helper_method I<error_dequeue($id)>
+
+Mark a previously queued item as errored
+
+=cut
+
+sub error_dequeue($self,$id) {
+    my $dir = $self->_dequeue_dir;
+    my $filepath = join('/',$dir,$id);
+    return if ! -e $filepath;
+    return if ! -f $filepath;
+    rename $filepath, $filepath . '.err';
+}
+
 =helper_method I<is_local_ip_address()>
 
 Is the current connection from a local ip address?
