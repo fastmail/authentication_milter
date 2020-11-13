@@ -86,6 +86,7 @@ my %WriteMakefileArgs = (
     "Scalar::Util" => 0,
     "Sereal" => 0,
     "Sys::Hostname" => 0,
+    "Sys::Syslog" => 0,
     "TOML" => 0,
     "Test::File::Contents" => 0,
     "Test::More" => 0,
@@ -108,7 +109,7 @@ my %WriteMakefileArgs = (
     "Test::Perl::Critic" => 0,
     "lib" => 0
   },
-  "VERSION" => "2.20200930.2",
+  "VERSION" => "2.20201113.2",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -177,6 +178,7 @@ my %FallbackPrereqs = (
   "Scalar::Util" => 0,
   "Sereal" => 0,
   "Sys::Hostname" => 0,
+  "Sys::Syslog" => 0,
   "TOML" => 0,
   "Test::Exception" => 0,
   "Test::File::Contents" => 0,
