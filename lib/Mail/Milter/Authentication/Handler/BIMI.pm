@@ -269,12 +269,14 @@ sub eom_callback {
                 if ( $config->{rbl_allowlist} ) {
                     my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
                     unless ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_allowlist'} ) ) {
+                        $self->dbgout( 'BIMISkip', 'Not on Allowlist', LOG_INFO );
                         $Skip = 1;
                     }
                 }
                 elsif ( $config->{rbl_blocklist} ) {
                     my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
                     if ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_blocklist'} ) ) {
+                        $self->dbgout( 'BIMISkip', 'On Blocklist', LOG_INFO );
                         $Skip = 1;
                     }
                 }
