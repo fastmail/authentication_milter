@@ -265,19 +265,19 @@ sub eom_callback {
                     }
                 }
 
-                my $Skip = 0;
+                my $Skip;
                 if ( $config->{rbl_allowlist} ) {
                     my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
                     unless ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_allowlist'} ) ) {
-                        $self->dbgout( 'BIMISkip', 'Not on Allowlist', LOG_INFO );
-                        $Skip = 1;
+                        $self->dbgout( 'BIMISkip', 'Not on allowlist', LOG_INFO );
+                        $Skip = 'Local policy; not allowed';
                     }
                 }
                 elsif ( $config->{rbl_blocklist} ) {
                     my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
                     if ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_blocklist'} ) ) {
-                        $self->dbgout( 'BIMISkip', 'On Blocklist', LOG_INFO );
-                        $Skip = 1;
+                        $self->dbgout( 'BIMISkip', 'On blocklist', LOG_INFO );
+                        $Skip = 'Local policy; blocked';
                     }
                 }
 
@@ -291,16 +291,33 @@ sub eom_callback {
                 my $BIMI = Mail::BIMI->new(%Options);
                 $self->{'bimi_object'} = $BIMI; # For testing!
 
+                my $Result;
+                $Result = $BIMI->result() if ! $Skip;
+
+                if ( !$Skip
+                     && $config->{rbl_no_evidence_allowlist}
+                     && $Result->result eq 'pass'
+                     && (
+                       ! $BIMI->record->authority
+                       || ! $BIMI->record->authority->is_valid
+                     )
+                ) {
+                    my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
+                    unless ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_no_evidence_allowlist'} ) ) {
+                        $self->dbgout( 'BIMISkip', 'Not on No Evidence Allowlist', LOG_INFO );
+                        $Skip = 'Local policy; not allowed without evidence';
+                    }
+                }
+
+
                 if ( $Skip ) {
-                    $self->log_error( 'BIMI Skipped due to RBL');
                     my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'skipped' );
-                    $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Local Policy' ) );
+                    $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( $Skip ) );
                     $self->add_auth_header( $header );
                     $self->{ 'header_added' } = 1;
                     $self->metric_count( 'bimi_total', { 'result' => 'skipped', 'reason' => 'rbl' } );
                 }
                 else {
-                    my $Result = $BIMI->result();
                     my $AuthResults = $Result->get_authentication_results_object();
                     $self->add_auth_header( $AuthResults );
                     $self->{ 'header_added' } = 1;
