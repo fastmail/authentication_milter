@@ -366,16 +366,3 @@ This handler requires the DMARC handler and its dependencies to be installed and
                                                         | Allow and Block list cannot both be present
         },
 
-=head1 SYNOPSIS
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2018
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
-
