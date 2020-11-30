@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - BIMI: Optional RBL allow list for domains that will not require evidence documents
 
 2.20201113.2 2020-11-13 04:45:42+00:00 UTC
   - Logger: Added a handler to add additional logging detail

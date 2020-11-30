@@ -13,7 +13,8 @@ sub default_config {
         'bimi_options' => {},
         'rbl_allowlist' => '',
         'rbl_blocklist' => '',
-    };
+        'rbl_no_evidence_allowlist' => '',
+      };
 }
 
 sub register_metrics {
@@ -298,8 +299,9 @@ sub eom_callback {
                      && $config->{rbl_no_evidence_allowlist}
                      && $Result->result eq 'pass'
                      && (
-                       ! $BIMI->record->authority
-                       || ! $BIMI->record->authority->is_valid
+                       !$BIMI->record->authority
+                       || !$BIMI->record->authority->vmc
+                       || !$BIMI->record->authority->vmc->is_valid
                      )
                 ) {
                     my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
@@ -381,5 +383,7 @@ This handler requires the DMARC handler and its dependencies to be installed and
             "rbl_allowlist" : "",                       | Optional RBL Allow list of allowed org domains
             "rbl_blocklist" : "",                       | Optional RBL Block list of disallowed org domains
                                                         | Allow and Block list cannot both be present
+            "rbl_no_evidence_allowlist" : "",           | Optonal RBL Allow list of allowed org domains that do NOT require evidence documents
+                                                        | When set, domains not on this list which do not have evidence documents will be 'skipped'
         },
 
