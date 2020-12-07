@@ -521,29 +521,34 @@ sub _remap_ip_and_helo {
         my $helo_host = $self->{'raw_helo_name'};
         foreach my $ip_map ( sort keys %{ $config->{ 'ip_map' } } ) {
             my $map_obj = Net::IP->new( $ip_map );
-            my $is_overlap = $ip_object->overlaps($map_obj) || 0;
-            if (
-                   $is_overlap == $IP_A_IN_B_OVERLAP
-                || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
-                || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
-                || $is_overlap == $IP_IDENTICAL
-              )
-            {
-                my $mapped_to = $config->{ 'ip_map' }->{ $ip_map };
-                if ( $helo_host && exists $mapped_to->{helo_map} && exists $mapped_to->{helo_map}->{ $helo_host } ) {
-                    # We have a specific HELO mapping for this!
-                    $mapped_to = $mapped_to->{helo_map}->{ $helo_host };
-                    return {
-                        ip => Net::IP->new( $mapped_to->{ip} ),
-                        helo => $mapped_to->{helo},
-                    };
-                }
-                else {
-                    # Remap based on IP Only
-                    return {
-                        ip => Net::IP->new( $mapped_to->{ip} ),
-                        helo => $mapped_to->{helo},
-                    };
+            if ( !$map_obj ) {
+                $self->log_error( 'Core: Could not parse IP '.$ip_map );
+            }
+            else {
+                my $is_overlap = $ip_object->overlaps($map_obj) || 0;
+                if (
+                       $is_overlap == $IP_A_IN_B_OVERLAP
+                    || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
+                    || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
+                    || $is_overlap == $IP_IDENTICAL
+                  )
+                {
+                    my $mapped_to = $config->{ 'ip_map' }->{ $ip_map };
+                    if ( $helo_host && exists $mapped_to->{helo_map} && exists $mapped_to->{helo_map}->{ $helo_host } ) {
+                        # We have a specific HELO mapping for this!
+                        $mapped_to = $mapped_to->{helo_map}->{ $helo_host };
+                        return {
+                            ip => Net::IP->new( $mapped_to->{ip} ),
+                            helo => $mapped_to->{helo},
+                        };
+                    }
+                    else {
+                        # Remap based on IP Only
+                        return {
+                            ip => Net::IP->new( $mapped_to->{ip} ),
+                            helo => $mapped_to->{helo},
+                        };
+                    }
                 }
             }
         }
@@ -561,8 +566,13 @@ sub remap_connect_callback {
     $self->{'raw_ip_object'} = $ip;
     my $ip_remap = $self->_remap_ip_and_helo();
     if ( $ip_remap ) {
-        $ip = $ip_remap->{ip};
-        $self->dbgout( 'RemappedConnect', $self->{'raw_ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
+        if ( !$ip_remap->{ip} ) {
+            $self->log_error( 'Core: Ignored bad IP in remapping' );
+        }
+        else {
+            $ip = $ip_remap->{ip};
+            $self->dbgout( 'RemappedConnect', $self->{'raw_ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
+       }
     }
     $self->{'ip_object'} = $ip;
 }

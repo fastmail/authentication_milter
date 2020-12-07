@@ -1053,7 +1053,7 @@ sub fatal_global($self,$error) {
     }
     else {
         $self->logerror( "Child process $PID signalling global shut down due to fatal error: $error" );
-        kill 'Term', $ppid;
+        kill 'TERM', $ppid;
     }
     die "$error\n";
 }

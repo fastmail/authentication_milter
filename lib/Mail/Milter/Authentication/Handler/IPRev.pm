@@ -46,7 +46,7 @@ sub _dns_error {
 
 sub connect_requires {
     my ($self) = @_;
-    my @requires = qw{ LocalIP TrustedIP Auth };
+    my @requires = qw{ LocalIP TrustedIP };
     return \@requires;
 }
 
@@ -54,7 +54,6 @@ sub connect_callback {
     my ( $self, $hostname, $ip ) = @_;
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
-    return if ( $self->is_authenticated() );
     my $ip_address = $self->ip_address();
     my $i1         = $ip;
     my $resolver = $self->get_object('resolver');
@@ -193,10 +192,15 @@ sub connect_callback {
     foreach my $domain ( sort keys %$ptr_list ) {
         foreach my $address ( sort @{ $ptr_list->{ $domain } } ) {
             my $i2 = Net::IP->new($address);
-            my $is_overlap = $i1->overlaps($i2) || 0;
-            if ( $is_overlap == $IP_IDENTICAL ) {
-                $domain =~ s/\.$//;
-                push @match_list, $domain;
+            if ( !$i2 ) {
+                $self->log_error( 'IPRev: Could not parse IP '.$address );
+            }
+            else {
+                my $is_overlap = $i1->overlaps($i2) || 0;
+                if ( $is_overlap == $IP_IDENTICAL ) {
+                    $domain =~ s/\.$//;
+                    push @match_list, $domain;
+                }
             }
         }
     }
