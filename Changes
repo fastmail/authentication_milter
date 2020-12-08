@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20201208.2 2020-12-08 04:25:22+00:00 UTC
   - Apply some patches to Net::Server
   - Core: Misc fixes to some error states
 
