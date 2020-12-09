@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20201209.2 2020-12-09 10:40:10+00:00 UTC
   - Revert Net::Server patches
     These were causing issues in some cases where the server was only
     listening on a single port.
