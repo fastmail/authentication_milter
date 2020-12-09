@@ -5,7 +5,7 @@ use warnings;
 use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: A Perl Mail Authentication Milter
 # VERSION
-use base 'Mail::Milter::Authentication::Net::ServerPatches';
+use base 'Net::Server::PreFork';
 use Mail::Milter::Authentication::Handler;
 use Mail::Milter::Authentication::Metric;
 use Mail::Milter::Authentication::Protocol::Milter;
