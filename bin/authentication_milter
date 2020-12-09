@@ -266,6 +266,8 @@ __END__
     "milter_quarantine" : "0",                          | Allow Milter protocol quarantine when running in milter mode
                                                         | (experimental)
 
+    "patch_net_server"  : "1",                          | If true, try and patch some Net::Server issues
+
     "smtp" : {                                          | Parameters for use when protocol is smtp
         "server_name"    : "scan.example.com",          | The server name to use for the server
         "sock_type"      : "inet",                      | Socket type (inet or unix)
