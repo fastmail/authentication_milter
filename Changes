@@ -1,6 +1,11 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - DMARC: Option to lookup DMARC domains on an RBL and
+    add configurable policy entries to the DMARC result.
+
+  [New Config Items for DMARC]
+    policy_rbl_lookup - set of RBLs to check the from domain against for policy entries
 
 2.20201208.2 2020-12-08 04:25:22+00:00 UTC
   - Apply some patches to Net::Server
