@@ -85,6 +85,7 @@ subtest 'config' => sub {
             'no_list_reject' => 1,
             'arc_before_list' => 0,
             'whitelisted'    => [],
+            'policy_rbl_lookup' => {},
             'detect_list_id' => 1,
             'report_skip_to' => [ 'my_report_from_address@example.com' ],
             'no_report'      => 0,
@@ -95,7 +96,7 @@ subtest 'config' => sub {
             'reject_on_multifrom' => 30,
             'quarantine_on_multifrom' => 20,
             'skip_on_multifrom' => 10,
-        },               
+        },
         'Returns correct config' );
 };
 
