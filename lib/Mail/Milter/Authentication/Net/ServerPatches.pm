@@ -7,6 +7,7 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use base 'Net::Server::PreFork';
 use POSIX qw(EINTR);
+use SUPER;
 use Socket qw(AF_INET AF_UNIX SOCK_DGRAM SOCK_STREAM);
 
 =method I<run_child()>
@@ -17,6 +18,10 @@ Patches to the Net::Server run_child method
 
 sub run_child {
     my $self = shift;
+
+    my $config = $self->{config} || get_config();
+    return $self->SUPER unless $config->{'patch_net_server'};
+
     my $prop = $self->{'server'};
 
     $SIG{'INT'} = $SIG{'TERM'} = $SIG{'QUIT'} = sub {
@@ -80,6 +85,10 @@ Patches to the Net::Server accept method
 
 sub accept { ## no critic
     my $self = shift;
+
+    my $config = $self->{config} || get_config();
+    return $self->SUPER unless $config->{'patch_net_server'};
+
     my $prop = $self->{'server'};
 
     if ($prop->{'serialize'} eq 'flock') {
@@ -163,6 +172,10 @@ Patches to the Net::Server accept_multi_port method
 
 sub accept_multi_port {
     my $self = shift;
+
+    my $config = $self->{config} || get_config();
+    return $self->SUPER unless $config->{'patch_net_server'};
+
     my $prop = $self->{'server'};
     while (1) {
       my @waiting = $prop->{'select'}->can_read();

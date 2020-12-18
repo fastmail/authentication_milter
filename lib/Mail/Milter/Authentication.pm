@@ -17,8 +17,7 @@ use Log::Dispatchouli;
 use Net::DNS::Resolver;
 use Net::IP;
 use Proc::ProcessTable;
-use Net::Server::PreFork;
-use Mail::Milter::Authentication::Net::ServerPatches;
+use base 'Mail::Milter::Authentication::Net::ServerPatches';
 use vars qw(@ISA);
 
 =head1 DESCRIPTION
@@ -982,15 +981,9 @@ sub start($args) {
     $srvargs{'listen'} = $listen_backlog;
     $srvargs{'leave_children_open_on_hup'} = 1;
 
-    if ( $config->{'patch_net_server'} ) {
-        if ( scalar @ports == 1 ) {
-            _warn( 'Net::Server not patched when listening on a single port' );
-            push @ISA, 'Net::Server::PreFork';
-        }
-        else {
-            _warn( 'Net::Server patches applied' );
-            push @ISA, 'Mail::Milter::Authentication::Net::ServerPatches';
-        }
+    if ( $config->{'patch_net_server'} && scalar @ports == 1 ) {
+        _warn( 'Net::Server patches should not be applied when listening on a single port' );
+        die;
     }
 
     $srvargs{'max_dequeue'} = 1;
