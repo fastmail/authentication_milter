@@ -826,7 +826,7 @@ sub start($args) {
         my $user  = $config->{'runas'};
         my $group = $config->{'rungroup'};
         if ( $user && $group ) {
-        _warn("run as user=$user group=$group");
+            _warn("run as user=$user group=$group");
             $srvargs{'user'}  = $user;
             $srvargs{'group'} = $group;
         }
@@ -982,7 +982,8 @@ sub start($args) {
     $srvargs{'leave_children_open_on_hup'} = 1;
 
     if ( $config->{'patch_net_server'} && scalar @ports == 1 ) {
-        _warn( 'Net::Server patches should not be applied when listening on a single port' );
+        my $error = 'Net::Server patches can not be applied when listening on a single port';
+        _warn $error;
         die;
     }
 
