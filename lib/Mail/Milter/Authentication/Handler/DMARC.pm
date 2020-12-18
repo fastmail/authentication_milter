@@ -577,7 +577,7 @@ sub _process_dmarc_for {
     my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( $dmarc_code );
 
     # Do any RBL lookups
-    if ( $config->{'policy_rbl_lookup'} ) {
+    if ( $config->{'policy_rbl_lookup'} && ( $dmarc_code eq 'pass' || $arc_aware_result eq 'pass' )) {
         foreach my $rbl ( sort keys $config->{'policy_rbl_lookup'}->%* ) {
             my $rbl_data = $config->{'policy_rbl_lookup'}->{$rbl};
             my $rbl_domain = $rbl_data->{'rbl'};
