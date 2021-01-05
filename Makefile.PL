@@ -84,6 +84,7 @@ my %WriteMakefileArgs = (
     "Pod::Usage" => 0,
     "Proc::ProcessTable" => 0,
     "Prometheus::Tiny::Shared" => "0.020",
+    "SUPER" => 0,
     "Scalar::Util" => 0,
     "Sereal" => 0,
     "Socket" => 0,
@@ -111,7 +112,7 @@ my %WriteMakefileArgs = (
     "Test::Perl::Critic" => 0,
     "lib" => 0
   },
-  "VERSION" => "2.20201209.2",
+  "VERSION" => "2.20210105.2",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -178,6 +179,7 @@ my %FallbackPrereqs = (
   "Pod::Usage" => 0,
   "Proc::ProcessTable" => 0,
   "Prometheus::Tiny::Shared" => "0.020",
+  "SUPER" => 0,
   "Scalar::Util" => 0,
   "Sereal" => 0,
   "Socket" => 0,
