@@ -13,7 +13,8 @@ sub default_config {
         'bimi_options' => {},
         'rbl_allowlist' => '',
         'rbl_blocklist' => '',
-    };
+        'rbl_no_evidence_allowlist' => '',
+      };
 }
 
 sub register_metrics {
@@ -265,17 +266,19 @@ sub eom_callback {
                     }
                 }
 
-                my $Skip = 0;
+                my $Skip;
                 if ( $config->{rbl_allowlist} ) {
                     my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
                     unless ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_allowlist'} ) ) {
-                        $Skip = 1;
+                        $self->dbgout( 'BIMISkip', 'Not on allowlist', LOG_INFO );
+                        $Skip = 'Local policy; not allowed';
                     }
                 }
                 elsif ( $config->{rbl_blocklist} ) {
                     my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
                     if ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_blocklist'} ) ) {
-                        $Skip = 1;
+                        $self->dbgout( 'BIMISkip', 'On blocklist', LOG_INFO );
+                        $Skip = 'Local policy; blocked';
                     }
                 }
 
@@ -289,16 +292,34 @@ sub eom_callback {
                 my $BIMI = Mail::BIMI->new(%Options);
                 $self->{'bimi_object'} = $BIMI; # For testing!
 
+                my $Result;
+                $Result = $BIMI->result() if ! $Skip;
+
+                if ( !$Skip
+                     && $config->{rbl_no_evidence_allowlist}
+                     && $Result->result eq 'pass'
+                     && (
+                       !$BIMI->record->authority
+                       || !$BIMI->record->authority->vmc
+                       || !$BIMI->record->authority->vmc->is_valid
+                     )
+                ) {
+                    my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
+                    unless ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_no_evidence_allowlist'} ) ) {
+                        $self->dbgout( 'BIMISkip', 'Not on No Evidence Allowlist', LOG_INFO );
+                        $Skip = 'Local policy; not allowed without evidence';
+                    }
+                }
+
+
                 if ( $Skip ) {
-                    $self->log_error( 'BIMI Skipped due to RBL');
                     my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'skipped' );
-                    $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Local Policy' ) );
+                    $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( $Skip ) );
                     $self->add_auth_header( $header );
                     $self->{ 'header_added' } = 1;
                     $self->metric_count( 'bimi_total', { 'result' => 'skipped', 'reason' => 'rbl' } );
                 }
                 else {
-                    my $Result = $BIMI->result();
                     my $AuthResults = $Result->get_authentication_results_object();
                     $self->add_auth_header( $AuthResults );
                     $self->{ 'header_added' } = 1;
@@ -362,18 +383,7 @@ This handler requires the DMARC handler and its dependencies to be installed and
             "rbl_allowlist" : "",                       | Optional RBL Allow list of allowed org domains
             "rbl_blocklist" : "",                       | Optional RBL Block list of disallowed org domains
                                                         | Allow and Block list cannot both be present
+            "rbl_no_evidence_allowlist" : "",           | Optonal RBL Allow list of allowed org domains that do NOT require evidence documents
+                                                        | When set, domains not on this list which do not have evidence documents will be 'skipped'
         },
-
-=head1 SYNOPSIS
-
-=head1 AUTHORS
-
-Marc Bradshaw E<lt>marc@marcbradshaw.netE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2018
-
-This library is free software; you may redistribute it and/or
-modify it under the same terms as Perl itself.
 

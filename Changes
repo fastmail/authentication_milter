@@ -4,7 +4,7 @@ Revision history for Mail-Milter-Authentication
   - Make Net::Server patches optional
     These were causing issues in some cases where the server was only
     listening on a single port.
-
+  - BIMI: Optional RBL allow list for domains that will not require evidence documents
   - DMARC: Option to lookup DMARC domains on an RBL and
     add configurable policy entries to the DMARC result.
 
@@ -13,6 +13,9 @@ Revision history for Mail-Milter-Authentication
 
   [New Config Items for DMARC]
     policy_rbl_lookup - set of RBLs to check the from domain against for policy entries
+
+  [New Config Items for BIMI]
+    rbl_no_evidence_allowlist - Optonal RBL Allow list of org domains that do NOT require evidence documents
 
 2.20201209.2 2020-12-09 10:40:10+00:00 UTC
   - Revert Net::Server patches
