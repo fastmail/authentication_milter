@@ -77,7 +77,7 @@ $tester->snapshot( 'new' );
 
 subtest 'config' => sub {
     my $config = $tester->{ 'authmilter' }->{ 'handler' }->{ 'BIMI' }->default_config();
-    is_deeply( $config, {'bimi_options' => {}, rbl_blocklist => '', rbl_allowlist => ''}, 'Returns correct config' );
+    is_deeply( $config, {'bimi_options' => {}, rbl_blocklist => '', rbl_allowlist => '', rbl_no_evidence_allowlist => ''}, 'Returns correct config' );
 };
 
 #subtest 'metrics' => sub {
