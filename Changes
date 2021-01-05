@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+2.20210105.2 2021-01-05 06:02:43+00:00 UTC
   - Make Net::Server patches optional
     These were causing issues in some cases where the server was only
     listening on a single port.
