@@ -5,7 +5,6 @@ use warnings;
 use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: A Perl Mail Authentication Milter
 # VERSION
-use base 'Net::Server::PreFork';
 use Mail::Milter::Authentication::Handler;
 use Mail::Milter::Authentication::Metric;
 use Mail::Milter::Authentication::Protocol::Milter;
@@ -18,6 +17,7 @@ use Log::Dispatchouli;
 use Net::DNS::Resolver;
 use Net::IP;
 use Proc::ProcessTable;
+use base 'Mail::Milter::Authentication::Net::ServerPatches';
 use vars qw(@ISA);
 
 =head1 DESCRIPTION
@@ -826,7 +826,7 @@ sub start($args) {
         my $user  = $config->{'runas'};
         my $group = $config->{'rungroup'};
         if ( $user && $group ) {
-        _warn("run as user=$user group=$group");
+            _warn("run as user=$user group=$group");
             $srvargs{'user'}  = $user;
             $srvargs{'group'} = $group;
         }
@@ -980,6 +980,12 @@ sub start($args) {
     $srvargs{'port'} = \@ports;
     $srvargs{'listen'} = $listen_backlog;
     $srvargs{'leave_children_open_on_hup'} = 1;
+
+    if ( $config->{'patch_net_server'} && scalar @ports == 1 ) {
+        my $error = 'Net::Server patches can not be applied when listening on a single port';
+        _warn $error;
+        die;
+    }
 
     $srvargs{'max_dequeue'} = 1;
     $srvargs{'check_for_dequeue'} = $config->{'check_for_dequeue'} // 60;
