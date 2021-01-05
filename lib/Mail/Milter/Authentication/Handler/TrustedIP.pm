@@ -28,15 +28,20 @@ sub is_trusted_ip_address {
     my $trusted = 0;
     foreach my $trusted_ip ( @{ $config->{'trusted_ip_list'} } ) {
         my $trusted_obj = Net::IP->new($trusted_ip);
-        my $is_overlap = $ip_obj->overlaps($trusted_obj) || 0;
-        if (
-               $is_overlap == $IP_A_IN_B_OVERLAP
-            || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
-            || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
-            || $is_overlap == $IP_IDENTICAL
-          )
-        {
-            $trusted = 1;
+        if ( !$trusted_obj ) {
+            $self->log_error( 'TrustedIP: Could not parse Trusted IP '.$trusted_ip );
+        }
+        else {
+            my $is_overlap = $ip_obj->overlaps($trusted_obj) || 0;
+            if (
+                   $is_overlap == $IP_A_IN_B_OVERLAP
+                || $is_overlap == $IP_B_IN_A_OVERLAP     # Should never happen
+                || $is_overlap == $IP_PARTIAL_OVERLAP    # Should never happen
+                || $is_overlap == $IP_IDENTICAL
+              )
+            {
+                $trusted = 1;
+            }
         }
     }
     return $trusted;
