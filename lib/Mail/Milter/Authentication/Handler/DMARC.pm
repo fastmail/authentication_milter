@@ -20,6 +20,7 @@ sub default_config {
         'no_list_reject' => 1,
         'arc_before_list' => 0,
         'whitelisted'    => [],
+        'policy_rbl_lookup' => {},
         'detect_list_id' => 1,
         'report_skip_to' => [ 'my_report_from_address@example.com' ],
         'no_report'      => 0,
@@ -575,6 +576,22 @@ sub _process_dmarc_for {
     # Add the AR Header
     my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( $dmarc_code );
 
+    # Do any RBL lookups
+    if ( $config->{'policy_rbl_lookup'} && ( $dmarc_code eq 'pass' || $arc_aware_result eq 'pass' )) {
+        foreach my $rbl ( sort keys $config->{'policy_rbl_lookup'}->%* ) {
+            my $rbl_data = $config->{'policy_rbl_lookup'}->{$rbl};
+            my $rbl_domain = $rbl_data->{'rbl'};
+            my $rbl_result = $self->rbl_check_domain( $header_domain, $rbl_domain );
+            if ( $rbl_result ) {
+                my $txt_result
+                    = exists( $rbl_data->{'results'}->{$rbl_result} ) ? $rbl_data->{'results'}->{$rbl_result}
+                    : exists( $rbl_data->{'results'}->{'*'} )         ? $rbl_data->{'results'}->{'*'}
+                    : 'pass';
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.'.$rbl )->safe_set_value( $txt_result ) );
+            }
+        }
+    }
+
     # What comments can we add?
     my @comments;
     if ( $dmarc_policy ) {
@@ -1067,6 +1084,17 @@ This handler requires the SPF and DKIM handlers to be installed and active.
                 "dkim:bad.forwarder.com",                  | (valid) DKIM signing domains can also be whitelisted by
                 "20.30.40.0/24"                            | having an entry such as "dkim:domain.com"
             ],
+            "policy_rbl_lookup"     : {                    | Optionally lookup the from domain in a rbl and add a policy entry
+              "foo" : {                                    | the policy to add, this will translate to policy.foo 
+                "rbl" : "foo.rbl.example.com",             | The RBL to use for this lookup
+                "results" : {                              | Mapping of rbl results to policy entries
+                  "127.0.0.1" : "one",                     | A result of IP will give a corresponding policy entry
+                  "127.0.0.2" : "two",
+                  "*" : "star"                             | Fallback to the '*' entry if not found.
+                                                           |   defaults to 'pass' if no entries and no fallback found
+                }
+              }
+            },
             "use_arc"             : 1,                     | Use trusted ARC results if available
             "hide_none"           : 0,                     | Hide auth line if the result is 'none'
             "detect_list_id"      : "1",                   | Detect a list ID and modify the DMARC authentication header
