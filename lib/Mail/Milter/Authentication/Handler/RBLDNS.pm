@@ -58,7 +58,7 @@ sub connect_callback {
         my $state = 'unknown';
         my $rbl_check = $self->rbl_check_ip( $ip, $rbl_config->{base_url} );
 
-        if ( ! Srbl_check ) {
+        if ( ! $rbl_check ) {
             $state = $rbl_config->{default_state};
         }
         elsif ( exists( $rbl_config->{states}->{$rbl_check} ) ) {
@@ -74,7 +74,7 @@ sub connect_callback {
             $self->add_c_auth_header( $header );
         }
         if ( $rbl_config->{add_header} ) {
-            push @states, ($rbl_config->{add_header},$state);
+            push @states, [ $rbl_config->{add_header}, $state ];
         }
         $self->metric_count( 'rbldns_total', { rbl => $rbl, result => $state } );
     }
@@ -99,6 +99,7 @@ sub envfrom_callback {
     my ($self, $from) = @_;
     delete $self->{'remove_headers'};
     delete $self->{'header_index'};
+    delete $self->{'lines'};
     return;
 }
 
@@ -151,6 +152,7 @@ sub close_callback {
     delete $self->{'remove_headers'};
     delete $self->{'states'};
     delete $self->{'header_index'};
+    delete $self->{'lines'};
     return;
 }
 
@@ -165,4 +167,23 @@ __END__
 =head1 DESCRIPTION
 
 Check email using RBL Lookup.
+
+=head1 CONFIGURATION
+
+        "RBLDNS" : {                                    | Config for the RBLDNS Module
+            "key1" : {                                  | Name of lookup, will be used as Authentication-Results: key
+                "base_url" : "foo.rbldns.com",          | RBLDNS to lookup against
+                "default_state" : "bar",                | State to use when not listed
+                "add_authresults" : 1,                  | Boolean, add authresults header for this lookup
+                "add_header" : "X-RBLFoo",              | Header to be added for this lookup
+                "states" : {                            | Mapping of dns results to states
+                    "127.0.0.1" : "pass",               | Result to add for IP...
+                    "127.0.0.2" : "maybe",              | Result to add for IP...
+                    "*" : "baz"                         | Wildcard result to add for any other IP results
+                }
+            },
+            "key2" : {                                  | Any additional lookups
+                ...
+            }
+        },
 
