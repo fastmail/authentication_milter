@@ -147,6 +147,19 @@ sub eoh_callback {
     return;
 }
 
+sub eom_callback {
+    my ($self) = @_;
+    my $config = $self->handler_config();
+    if ( exists( $self->{'remove_headers'} ) ) {
+        foreach my $header_type ( sort keys %{ $self->{'remove_headers'} } ) {
+            foreach my $header ( reverse @{ $self->{'remove_headers'}->{$header_type} } ) {
+                $self->dbgout( 'RemoveRBLDNSHeader', "$header_type $header", LOG_DEBUG );
+                $self->change_header( $header_type, $header, q{} );
+            }
+        }
+    }
+}
+
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'remove_headers'};
