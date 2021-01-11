@@ -89,7 +89,7 @@ sub remove_header {
         $self->{'remove_headers'} = {};
     }
     if ( !exists( $self->{'remove_headers'}->{ lc $key } ) ) {
-        $self->{'remove_headers'}->{ $key } = [];
+        $self->{'remove_headers'}->{ lc $key } = [];
     }
     push @{ $self->{'remove_headers'}->{ lc $key } }, $value;
     return;
