@@ -124,7 +124,6 @@ sub header_callback {
             $self->{'header_index'}->{ lc $header_type } =
             $self->{'header_index'}->{ lc $header_type } + 1;
             $self->remove_header( $header_type, $self->{'header_index'}->{ lc $header_type } );
-            $self->{ 'metrics_data' }->{ 'header_removed' } = 'yes';
             my $forged_header =
               '(Received ' . $header_type . ' header removed by '
               . $self->get_my_hostname()
