@@ -2,6 +2,7 @@ Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
   - RBLDNS: Add module to lookup connecting IP with RBLDNS
+  - Switch to a purely numeric version string
 
   [New Handler]
     RBLDNS - Lookup connecting IP with RBLDNS
