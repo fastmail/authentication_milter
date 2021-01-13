@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20210113 2021-01-13 04:54:40+00:00 UTC
   - RBLDNS: Add module to lookup connecting IP with RBLDNS
   - Switch to a purely numeric version string
 
