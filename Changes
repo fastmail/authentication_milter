@@ -1,6 +1,10 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - DMARC: Added report suppression list
+
+  [New Config Items for DMARC]
+    report_suppression_list - RBL used to look Org domains for which we want to suppress reporting
 
 3.20210113 2021-01-13 04:54:40+00:00 UTC
   - RBLDNS: Add module to lookup connecting IP with RBLDNS

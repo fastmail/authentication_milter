@@ -23,6 +23,7 @@ sub default_config {
         'policy_rbl_lookup' => {},
         'detect_list_id' => 1,
         'report_skip_to' => [ 'my_report_from_address@example.com' ],
+        'report_suppression_list' => 'rbl.example.com',
         'no_report'      => 0,
         'hide_report_to' => 0,
         'config_file'    => '/etc/mail-dmarc.ini',
@@ -965,6 +966,7 @@ sub addheader_callback {
 sub dequeue_callback {
     my ($self) = @_;
     my $dequeue_list = $self->get_dequeue_list('dmarc_report');
+    REPORT:
     foreach my $id ( $dequeue_list->@* ) {
         my $report = $self->get_dequeue($id);
         if ( $report ) {
@@ -975,8 +977,22 @@ sub dequeue_callback {
                     my $resolver = $self->get_object('resolver');
                     $report->set_resolver($resolver);
                 }
+
+                my $domain = $report->{ 'header_from' };
+                my $org_domain = eval{ $report->get_organizational_domain( $domain ) };
+                my $rua = $report->result()->published()->rua();
+
+                my $config = $self->handler_config();
+                if ( exists ( $config->{ 'report_suppression_list' } ) ) {
+                    if ( $self->rbl_check_domain( $org_domain, $config->{ 'report_suppression_list' } ) ) {
+                        $self->dbgout( 'Queued DMARC Report suppressed for', "$domain, $rua", LOG_INFO );
+                        $self->delete_dequeue($id);
+                        $self->reset_alarm();
+                        next REPORT;
+                    }
+                }
                 $report->save_aggregate();
-                $self->dbgout( 'Queued DMARC Report saved for', $report->result()->published()->rua(), LOG_INFO );
+                $self->dbgout( 'Queued DMARC Report saved for', "$domain, $rua", LOG_INFO );
                 $self->delete_dequeue($id);
                 $self->reset_alarm();
             };
@@ -1104,6 +1120,7 @@ This handler requires the SPF and DKIM handlers to be installed and active.
                 "dmarc@yourdomain.com",                    | This can be used to avoid report loops for email sent to
                 "dmarc@example.com"                        | your report from addresses.
             ],
+            "report_suppression_list" : "rbl.example.com", | RBL used to look Org domains for which we want to suppress reporting
             "no_report"          : "1",                    | If set then we will not attempt to store DMARC reports.
             "hide_report_to"     : "1",                    | If set, remove envelope_to from DMARC reports
             "config_file"        : "/etc/mail-dmarc.ini"   | Optional path to dmarc config file
