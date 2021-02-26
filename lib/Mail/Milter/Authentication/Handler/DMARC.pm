@@ -991,9 +991,11 @@ sub dequeue_callback {
                             # Log this and move on!
                             $self->log_error("DMARC timeout saving reports for $id");
                         }
+                        else {
+                            $self->handle_exception( $Error );
+                        }
                     }
                 }
-                $self->handle_exception( $Error );
                 $self->log_error("DMARC Report save failed for $id: $Error");
             }
 
