@@ -1891,7 +1891,7 @@ sub get_dequeue_list($self,$key) {
     # Remove deleted files from the dequeue index
     foreach my $id ( sort keys $dequeue_index->%* ) {
         my $filepath = join('/',$dir,$id);
-        delete $dequeue_index->{$key} unless -e $filepath;
+        delete $dequeue_index->{$id} unless -e $filepath;
     }
     write_file($dequeue_index_file,{atomic=>1},$j->encode($dequeue_index));
 
