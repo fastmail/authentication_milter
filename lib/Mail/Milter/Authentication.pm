@@ -987,7 +987,7 @@ sub start($args) {
         die;
     }
 
-    $srvargs{'max_dequeue'} = 1;
+    $srvargs{'max_dequeue'} = $config->{'max_dequeue'} // 5;
     $srvargs{'check_for_dequeue'} = $config->{'check_for_dequeue'} // 60;
 
     _warn "==========";

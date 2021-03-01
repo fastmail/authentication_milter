@@ -314,6 +314,7 @@ __END__
     "content_timeout"       : 300,                      | Timeout in seconds Header,Eoh, Body and Eom callbacks
     "dequeue_timeout"       : 300,                      | Timeout in seconds for Dequeue callbacks
 
+    "max_dequeue"           : 5,                        | How many dequeue processes can we run at once
     "check_for_dequeue"     : 60,                       | How often in seconds should a dequeue process be spawned
 
     "dns_resolvers"         : [                         | Explicit list of DNS resolvers to use

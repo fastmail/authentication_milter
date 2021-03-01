@@ -9,10 +9,12 @@ use Mail::Milter::Authentication::Exception;
 use Mail::Milter::Authentication::Resolver;
 use Date::Format qw{ time2str };
 use Digest::MD5 qw{ md5_hex };
+use Lock::File;
 use MIME::Base64;
 use Mail::SPF;
 use Net::DNS::Resolver;
 use Net::IP;
+use Proc::ProcessTable;
 use Sereal qw{encode_sereal decode_sereal};
 use Sys::Hostname;
 use Time::HiRes qw{ ualarm gettimeofday };
@@ -1845,13 +1847,56 @@ Used in get_dequeue_object and delete_dequeue_object
 =cut
 
 sub get_dequeue_list($self,$key) {
-    my @dequeue_list;
     my $dir = $self->_dequeue_dir;
+    my $dequeue_index_file = $dir.'/dequeue.index';
+    my $dequeue_lock_file = $dir.'/dequeue.lock';
+
+    my $lock = Lock::File->new( $dequeue_lock_file, {} );
+
+    my $dequeue_index = {};
+    my $j = JSON->new->pretty->canonical->utf8;
+
+    # Build a list of Process IDs
+    my $process_ids = {};
+    my $process_table = Proc::ProcessTable->new();
+    foreach my $process ( @{$process_table->table} ) {
+        $process_ids->{$process->pid} = 1;
+    }
+
+    # Read the last state from the index file
+    if ( -e $dequeue_index_file ) {
+        eval {
+            my $body = scalar read_file($dequeue_index_file);
+            $dequeue_index = $j->decode($body);
+        };
+    }
+
+    my @dequeue_list;
     opendir(my $dh, $dir) || die "Failed to open dequeue directory: $!";
+    FILE:
     while (my $file = readdir $dh) {
-        push @dequeue_list, $file if $file =~ /^$key\..*\.dequeue$/;
+        if ( $file =~ /^$key\..*\.dequeue$/ ) {
+            if ( exists ( $dequeue_index->{ $file } ) &&  exists $pid_list->{ $dequeue_index->{$file}->{pid} } ) {
+                # File exists in the index, and is associated with a currently valid PID
+                next FILE;
+            }
+            $dequeue_index->{$file} = {
+                pid => $PID,
+            };
+            push @dequeue_list, $file;
+        }
     }
     closedir $dh;
+
+    # Remove deleted files from the dequeue index
+    foreach my $id ( sort keys $dequeue_index->%* ) {
+        my $filepath = join('/',$dir,$id);
+        delete $dequeue_index->{$key} unless -e $filepath;
+    }
+    write_file($dequeue_index_file,{atomic=>1},$j->encode($dequeue_index));
+
+    $lock->unlock;
+
     return \@dequeue_list;
 }
 
