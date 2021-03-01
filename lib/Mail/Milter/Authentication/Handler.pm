@@ -1852,6 +1852,9 @@ sub get_dequeue_list($self,$key) {
     my $dequeue_lock_file = $dir.'/dequeue.lock';
 
     my $lock = Lock::File->new( $dequeue_lock_file, {} );
+    my $count_new = 0;
+    my $count_allocated = 0;
+    my $count_stale = 0;
 
     my $dequeue_index = {};
     my $j = JSON->new->pretty->canonical->utf8;
@@ -1876,13 +1879,20 @@ sub get_dequeue_list($self,$key) {
     FILE:
     while (my $file = readdir $dh) {
         if ( $file =~ /^$key\..*\.dequeue$/ ) {
-            if ( exists ( $dequeue_index->{ $file } ) &&  exists $process_ids->{ $dequeue_index->{$file}->{pid} } ) {
-                # File exists in the index, and is associated with a currently valid PID
-                next FILE;
+            if ( exists ( $dequeue_index->{ $file } ) ) {
+                if ( exists $process_ids->{ $dequeue_index->{$file}->{pid} } ) {
+                    # File exists in the index, and is associated with a currently valid PID
+                    $count_allocated++;
+                    next FILE;
+                }
+                else {
+                    $count_stale++;
+                }
             }
             $dequeue_index->{$file} = {
                 pid => $PID,
             };
+            $count_new++;
             push @dequeue_list, $file;
         }
     }
@@ -1896,6 +1906,10 @@ sub get_dequeue_list($self,$key) {
     write_file($dequeue_index_file,{atomic=>1},$j->encode($dequeue_index));
 
     $lock->unlock;
+
+    $self->metric_set( 'dequeue_files_total', { 'key' => $key, 'state' => 'new' }, $count_new - $count_stale );
+    $self->metric_set( 'dequeue_files_total', { 'key' => $key, 'state' => 'allocated' }, $count_allocated );
+    $self->metric_set( 'dequeue_files_total', { 'key' => $key, 'state' => 'stale' }, $count_stale );
 
     return \@dequeue_list;
 }
