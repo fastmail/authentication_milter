@@ -1876,7 +1876,7 @@ sub get_dequeue_list($self,$key) {
     FILE:
     while (my $file = readdir $dh) {
         if ( $file =~ /^$key\..*\.dequeue$/ ) {
-            if ( exists ( $dequeue_index->{ $file } ) &&  exists $pid_list->{ $dequeue_index->{$file}->{pid} } ) {
+            if ( exists ( $dequeue_index->{ $file } ) &&  exists $process_ids->{ $dequeue_index->{$file}->{pid} } ) {
                 # File exists in the index, and is associated with a currently valid PID
                 next FILE;
             }
