@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20210308 2021-03-08 22:55:12+00:00 UTC
   - Better handling of timeouts in DMARC dequeue stage
   - Allow more than 1 dequeue process to run at a time
   - DMARC: Added report suppression list
