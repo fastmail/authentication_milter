@@ -96,6 +96,7 @@ subtest 'config' => sub {
             'reject_on_multifrom' => 30,
             'quarantine_on_multifrom' => 20,
             'skip_on_multifrom' => 10,
+            'report_suppression_list' => 'rbl.example.com',
         },
         'Returns correct config' );
 };
