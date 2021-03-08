@@ -179,6 +179,7 @@ sub pre_loop_hook($self,@) {
     $self->{'metric'}->register_metrics( {
         'forked_children_total' => 'Total number of child processes forked',
         'reaped_children_total' => 'Total number of child processes reaped',
+        'dequeue_files_total' => { help => 'The number of dequeue files queued', type => 'gauge' },
     } );
 
     $self->{'metric'}->register_metrics( Mail::Milter::Authentication::Handler->register_metrics() );
@@ -987,7 +988,7 @@ sub start($args) {
         die;
     }
 
-    $srvargs{'max_dequeue'} = 1;
+    $srvargs{'max_dequeue'} = $config->{'max_dequeue'} // 5;
     $srvargs{'check_for_dequeue'} = $config->{'check_for_dequeue'} // 60;
 
     _warn "==========";
