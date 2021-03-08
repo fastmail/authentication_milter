@@ -54,6 +54,7 @@ my %WriteMakefileArgs = (
     "Import::Into" => 0,
     "JSON::XS" => 0,
     "List::MoreUtils" => 0,
+    "Lock::File" => 0,
     "Log::Dispatchouli" => 0,
     "MIME::Base64" => 0,
     "Mail::AuthenticationResults" => "1.20200108",
@@ -112,7 +113,7 @@ my %WriteMakefileArgs = (
     "Test::Perl::Critic" => 0,
     "lib" => 0
   },
-  "VERSION" => "3.20210113",
+  "VERSION" => "3.20210308",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -147,6 +148,7 @@ my %FallbackPrereqs = (
   "Import::Into" => 0,
   "JSON::XS" => 0,
   "List::MoreUtils" => 0,
+  "Lock::File" => 0,
   "Log::Dispatchouli" => 0,
   "MIME::Base64" => 0,
   "Mail::AuthenticationResults" => "1.20200108",
