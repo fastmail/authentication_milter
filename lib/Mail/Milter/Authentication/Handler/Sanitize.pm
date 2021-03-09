@@ -64,10 +64,21 @@ sub remove_auth_header {
     push @{ $self->{'remove_auth_headers'} }, $index;
 }
 
-sub get_headers_to_remove {
-    my ( $self ) = @_;
-    my @headers = qw{ X-Disposition-Quarantine };
-    return \@headers;
+{
+    my $headers_to_remove = {
+        'x-disposition-quarantine' => 1
+    };
+
+    sub add_header_to_sanitize_list {
+        my ( $self, $header ) = @_;
+        $headers_to_remove->{lc $header} = 1;
+    }
+
+    sub get_headers_to_remove {
+        my ( $self ) = @_;
+        my @headers = sort keys $headers_to_remove->%*;
+        return \@headers;
+    }
 }
 
 sub envfrom_callback {
