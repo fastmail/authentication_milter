@@ -12,9 +12,7 @@ sub default_config {
 }
 
 sub eom_callback {
-
-    # On HELO
-    my ( $self, $helo_host ) = @_;
+    my ($self) = @_;
     $self->append_header('X-Authentication-Milter','Header added by Authentication Milter');
 }
 
