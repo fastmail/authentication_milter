@@ -111,7 +111,7 @@ sub header_callback {
     # Sanitize Authentication-Results headers
     if ( lc $header eq 'authentication-results' ) {
         if ( !exists $self->{'auth_result_header_index'} ) {
-            $self->{'result_header_index'} = 0;
+            $self->{'auth_result_header_index'} = 0;
         }
         $self->{'auth_result_header_index'} =
           $self->{'auth_result_header_index'} + 1;
