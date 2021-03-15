@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - DMARC: When a report fails to save move it to error state
 
 3.20210308 2021-03-08 22:55:12+00:00 UTC
   - Better handling of timeouts in DMARC dequeue stage
