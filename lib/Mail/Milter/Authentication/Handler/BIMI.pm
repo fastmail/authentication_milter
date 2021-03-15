@@ -293,7 +293,26 @@ sub eom_callback {
                 $self->{'bimi_object'} = $BIMI; # For testing!
 
                 my $Result;
-                $Result = $BIMI->result() if ! $Skip;
+                eval {
+                    $self->set_handler_alarm( 5 * 1000000 ); # Allow no longer than 5 seconds for this!
+                    $Result = $BIMI->result() if ! $Skip;
+                };
+                if ( my $Error = $@ ) {
+                    $self->reset_alarm();
+                    my $Type = $self->is_exception_type( $Error );
+                    if ( $Type ) {
+                        if ( $Type eq 'Timeout' ) {
+                            # We have a timeout, is it global or is it ours?
+                            if ( $self->get_time_remaining() > 0 ) {
+                                # We have time left, but this operation save timed out
+                                $Skip = 'Timeout';
+                            }
+                            else {
+                                $self->handle_exception( $Error );
+                            }
+                        }
+                    }
+                }
 
                 if ( !$Skip
                      && $config->{rbl_no_evidence_allowlist}
