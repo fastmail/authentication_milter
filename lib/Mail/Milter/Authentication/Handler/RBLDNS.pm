@@ -50,7 +50,8 @@ sub setup_callback {
     my ($self) = @_;
     my $config = $self->handler_config();
     foreach my $rbl ( sort keys $config->%* ) {
-        $self->add_header_to_sanitize_list(lc $config->{$rbl}->{add_header}) if $config->{$rbl}->{add_header};
+        my $sanitize_header = $config->{$rbl}->{sanitize_header} // 'yes';
+        $self->add_header_to_sanitize_list(lc $config->{$rbl}->{add_header}, $sanitize_header eq 'silent') if $config->{$rbl}->{add_header} && $sanitize_header ne 'no';
     }
     return;
 }
@@ -126,6 +127,7 @@ Check email using RBL Lookup.
                 "default_state" : "bar",                | State to use when not listed
                 "add_authresults" : 1,                  | Boolean, add authresults header for this lookup
                 "add_header" : "X-RBLFoo",              | Header to be added for this lookup
+                "sanitize_header" : "yes",              | Remove existing header? yes|no|silent (default yes)
                 "states" : {                            | Mapping of dns results to states
                     "127.0.0.1" : "pass",               | Result to add for IP...
                     "127.0.0.2" : "maybe",              | Result to add for IP...

@@ -66,18 +66,23 @@ sub remove_auth_header {
 
 {
     my $headers_to_remove = {
-        'x-disposition-quarantine' => 1
+        'x-disposition-quarantine' => { silent => 1 },
     };
 
     sub add_header_to_sanitize_list {
-        my ( $self, $header ) = @_;
-        $headers_to_remove->{lc $header} = 1;
+        my ( $self, $header, $silent ) = @_;
+        $headers_to_remove->{lc $header} = { silent => $silent };
     }
 
     sub get_headers_to_remove {
         my ( $self ) = @_;
         my @headers = sort keys $headers_to_remove->%*;
         return \@headers;
+    }
+
+    sub get_remove_header_settings {
+        my ($self, $key) = @_;
+        return $headers_to_remove->{lc $key};
     }
 }
 
@@ -90,7 +95,7 @@ sub envfrom_callback {
     foreach my $header ( sort @{ $self->get_headers_to_remove() } ) {
         $headers->{ lc $header } = {
             'index'  => 0,
-            'silent' => 1,
+            'silent' => $self->get_remove_header_settings($header)->{silent},
         };
     }
     $self->{'header_hash'} = $headers;
@@ -106,7 +111,7 @@ sub header_callback {
     # Sanitize Authentication-Results headers
     if ( lc $header eq 'authentication-results' ) {
         if ( !exists $self->{'auth_result_header_index'} ) {
-            $self->{'auth_result_header_index'} = 0;
+            $self->{'result_header_index'} = 0;
         }
         $self->{'auth_result_header_index'} =
           $self->{'auth_result_header_index'} + 1;

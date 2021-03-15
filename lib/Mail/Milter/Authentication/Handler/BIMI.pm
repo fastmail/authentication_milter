@@ -25,8 +25,11 @@ sub register_metrics {
 
 sub setup_callback {
     my ($self) = @_;
-    $self->add_header_to_sanitize_list('bimi-location');
-    $self->add_header_to_sanitize_list('bimi-indicator');
+    my $config = $self->handler_config();
+    my $sanitize_location_header = $config->{sanitize_location_header} // 'yes';
+    my $sanitize_indicator_header = $config->{sanitize_indicator_header} // 'silent';
+    $self->add_header_to_sanitize_list('bimi-location', $sanitize_location_header eq 'silent') unless $sanitize_location_header eq 'no';
+    $self->add_header_to_sanitize_list('bimi-indicator', $sanitize_indicator_header eq 'silent') unless $sanitize_indicator_header eq 'no';
     return;
 }
 
@@ -339,5 +342,7 @@ This handler requires the DMARC handler and its dependencies to be installed and
                                                         | Allow and Block list cannot both be present
             "rbl_no_evidence_allowlist" : "",           | Optonal RBL Allow list of allowed org domains that do NOT require evidence documents
                                                         | When set, domains not on this list which do not have evidence documents will be 'skipped'
+            "sanitize_location_header" : "yes",         | Remove existing BIMI-Location header? yes|no|silent (default yes)
+            "sanitize_indicator_header" : "yes",        | Remove existing BIMI-Location header? yes|no|silent (default silent)
         },
 

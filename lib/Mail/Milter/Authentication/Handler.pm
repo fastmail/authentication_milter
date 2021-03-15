@@ -1958,16 +1958,16 @@ sub error_dequeue($self,$id) {
     rename $filepath, $filepath . '.err';
 }
 
-=helper_method I<add_header_to_sanitize_list($header)>
+=helper_method I<add_header_to_sanitize_list($header,$silent)>
 
 Add the given to the list of headers removed by the Sanitize handler if loaded
 
 =cut
 
 sub add_header_to_sanitize_list {
-    my($self,$header) = @_;
+    my($self,$header,$silent) = @_;
     return 0 if ! $self->is_handler_loaded('Sanitize');
-    return $self->get_handler('Sanitize')->add_header_to_sanitize_list($header);
+    return $self->get_handler('Sanitize')->add_header_to_sanitize_list($header,$silent);
 }
 
 =helper_method I<is_local_ip_address()>
