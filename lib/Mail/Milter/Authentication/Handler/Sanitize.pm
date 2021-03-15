@@ -115,11 +115,32 @@ sub header_callback {
         }
         $self->{'auth_result_header_index'} =
           $self->{'auth_result_header_index'} + 1;
-        my ($domain_part) = $value =~ /^([^;]*);/;
-        $domain_part =~ s/ +//g;
-        if ( $self->is_hostname_mine($domain_part) ) {
+
+        my $authserv_id = '';
+        eval {
+            my $parsed = Mail::AuthenticationResults::Parser->new()->parse($value);
+            $authserv_id = $parsed->value()->value();
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception($error);
+            $self->log_error("Error parsing existing Authentication-Results header: $error");
+        }
+
+        my $remove = 0;
+        my $silent = lc $config->{'remove_headers'} eq 'silent';
+        if ( $authserv_id ) {
+            $remove = $self->is_hostname_mine($authserv_id);
+        }
+        else {
+            # We couldn't parse the authserv_id, removing this header is the safest option
+            # Add to X-Received headers for analysis later
+            $remove = 1;
+            $silent = 0;
+        }
+
+        if ( $remove ) {
             $self->remove_auth_header( $self->{'auth_result_header_index'} );
-            if ( lc $config->{'remove_headers'} ne 'silent' ) {
+            if ( ! $silent ) {
                 my $forged_header =
                   '(Received Authentication-Results header removed by '
                   . $self->get_my_hostname()
