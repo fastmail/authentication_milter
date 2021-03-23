@@ -1013,6 +1013,7 @@ sub dequeue_callback {
                     }
                 }
                 $self->log_error("DMARC Report save failed for $id: $Error");
+                $self->error_dequeue($id);
             }
 
         }
