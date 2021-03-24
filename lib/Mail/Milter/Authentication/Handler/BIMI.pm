@@ -254,7 +254,7 @@ sub eom_callback {
                 my $Result;
                 my $timeout = $config->{'timeout'} // 5000000;
                 eval {
-                    $self->set_handler_alarm( $timeout ); # Allow no longer than 5 seconds for this!
+                    $self->set_handler_alarm( $timeout );
                     $Result = $BIMI->result() if ! $Skip;
                 };
                 if ( my $Error = $@ ) {
