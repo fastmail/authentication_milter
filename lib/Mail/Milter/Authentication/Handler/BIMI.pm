@@ -293,8 +293,9 @@ sub eom_callback {
                 $self->{'bimi_object'} = $BIMI; # For testing!
 
                 my $Result;
+                my $timeout = $config->{'timeout'} // 5000000;
                 eval {
-                    $self->set_handler_alarm( 5 * 1000000 ); # Allow no longer than 5 seconds for this!
+                    $self->set_handler_alarm( $timeout ); # Allow no longer than 5 seconds for this!
                     $Result = $BIMI->result() if ! $Skip;
                 };
                 if ( my $Error = $@ ) {
@@ -404,5 +405,6 @@ This handler requires the DMARC handler and its dependencies to be installed and
                                                         | Allow and Block list cannot both be present
             "rbl_no_evidence_allowlist" : "",           | Optonal RBL Allow list of allowed org domains that do NOT require evidence documents
                                                         | When set, domains not on this list which do not have evidence documents will be 'skipped'
+            "timeout" : 5000000,                        | Timeout, in microseconds, to apply to a BIMI record check/fetch, detault 5000000 (5s)
         },
 
