@@ -419,8 +419,8 @@ sub send_smtp_packet {
         return 1;
     }
     else {
-        chomp $recv;
-        chomp $send;
+        $recv =~ s/\r?\n?$//;
+        $send =~ s/\r?\n?$//;
         warn "SMTP Send expected \"$expect\" received \"$recv\" when sending \"$send\"\n";
         return 0;
     }
