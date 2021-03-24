@@ -20,56 +20,26 @@ sub default_config {
 sub register_metrics {
     return {
         'bimi_total' => 'The number of emails processed for BIMI',
-        'bimi_removed_total' => 'The number BIMI headers removed',
     };
 }
 
-sub remove_bimi_header {
-    my ( $self, $header, $value ) = @_;
-    $self->metric_count( 'bimi_removed_total' );
-    if ( !exists( $self->{'remove_bimi_headers'} ) ) {
-        $self->{'remove_bimi_headers'} = {};
-    }
-    if ( !exists( $self->{'remove_bimi_headers'}->{$header} ) ) {
-        $self->{'remove_bimi_headers'}->{$header} = [];
-    }
-    push @{ $self->{'remove_bimi_headers'}->{$header} }, $value;
+sub setup_callback {
+    my ($self) = @_;
+    my $config = $self->handler_config();
+    my $sanitize_location_header = $config->{sanitize_location_header} // 'yes';
+    my $sanitize_indicator_header = $config->{sanitize_indicator_header} // 'silent';
+    $self->add_header_to_sanitize_list('bimi-location', $sanitize_location_header eq 'silent') unless $sanitize_location_header eq 'no';
+    $self->add_header_to_sanitize_list('bimi-indicator', $sanitize_indicator_header eq 'silent') unless $sanitize_indicator_header eq 'no';
+    return;
 }
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    delete $self->{'bimi_header_index'};
-    delete $self->{'remove_bimi_headers'};
     $self->{ 'header_added' } = 0;
 }
 
 sub header_callback {
     my ( $self, $header, $value ) = @_;
-
-    # Not sure where this should go in the flow, so it's going here!
-    # Which is clearly, or at least probably the wrong place.
-    #
-    foreach my $header_type ( qw{ BIMI-Location BIMI-Indicator} ) {
-        if ( lc $header eq lc $header_type ) {
-            if ( !exists $self->{'bimi_header_index'} ) {
-                $self->{'bimi_header_index'} = {};
-            }
-            if ( !exists $self->{'bimi_header_index'}->{lc $header_type} ) {
-                $self->{'bimi_header_index'}->{lc $header_type} = 0;
-            }
-            $self->{'bimi_header_index'}->{lc $header_type} =
-            $self->{'bimi_header_index'}->{lc $header_type} + 1;
-            $self->remove_bimi_header( $header_type, $self->{'bimi_header_index'}->{lc $header_type} );
-            my $forged_header =
-              "(Received $header_type header removed by "
-              . $self->get_my_hostname()
-              . ')' . "\n"
-              . '    '
-              . $value;
-            $self->append_header( 'X-Received-'.$header_type,
-                $forged_header );
-        }
-    }
 
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
@@ -102,7 +72,6 @@ sub header_callback {
         }
         $self->{'from_header'} = $value;
     }
-    ## ToDo remove/rename existing headers here
 }
 
 sub eom_requires {
@@ -118,16 +87,6 @@ sub eom_callback {
     if ( $config->{rbl_allowlist} && $config->{rbl_blocklist} ) {
         $self->dbgout( 'BIMI Error', 'Cannot specify both rbl_allowlist and rbl_blocklist', LOG_DEBUG );
         return;
-    }
-
-    # Again, not sure where this should go, so it's going here.
-    if ( exists( $self->{'remove_bimi_headers'} ) ) {
-        foreach my $header_type ( sort keys %{ $self->{'remove_bimi_headers'} } ) {
-            foreach my $header ( reverse @{ $self->{'remove_bimi_headers'}->{$header_type} } ) {
-                $self->dbgout( 'RemoveBIMIHeader', "$header_type $header", LOG_DEBUG );
-                $self->change_header( $header_type, $header, q{} );
-            }
-        }
     }
 
     return if ( $self->{ 'header_added' } );
@@ -355,9 +314,7 @@ sub close_callback {
     delete $self->{'selector'};
     delete $self->{'from_header'};
     delete $self->{'failmode'};
-    delete $self->{'remove_bimi_headers'};
     delete $self->{'bimi_object'};
-    delete $self->{'bimi_header_index'};
     delete $self->{'header_added'};
 }
 
@@ -385,5 +342,7 @@ This handler requires the DMARC handler and its dependencies to be installed and
                                                         | Allow and Block list cannot both be present
             "rbl_no_evidence_allowlist" : "",           | Optonal RBL Allow list of allowed org domains that do NOT require evidence documents
                                                         | When set, domains not on this list which do not have evidence documents will be 'skipped'
+            "sanitize_location_header" : "yes",         | Remove existing BIMI-Location header? yes|no|silent (default yes)
+            "sanitize_indicator_header" : "yes",        | Remove existing BIMI-Location header? yes|no|silent (default silent)
         },
 

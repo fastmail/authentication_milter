@@ -2,6 +2,17 @@ Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
   - DMARC: When a report fails to save move it to error state
+  - Sanitize: Allow the Sanitize handler to be used by
+    other handlers to remove headers.
+  - BIMI: Use the Sanitize handler to remove existing headers
+  - RBLDNS: Use the Sanitize handler to remove existing headers
+
+  [New Config Items for BIMI]
+    sanitize_location_header - Remove existing BIMI-Location header? yes|no|silent (default yes)
+    sanitize_indicator_header - Remove existing BIMI-Location header? yes|no|silent (default silent)
+
+  [New Config Items for RBLDNS]
+    $key sanitize_header - Remove existing header? yes|no|silent (default yes)
 
 3.20210308 2021-03-08 22:55:12+00:00 UTC
   - Better handling of timeouts in DMARC dequeue stage
