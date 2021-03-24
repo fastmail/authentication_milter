@@ -411,6 +411,7 @@ sub send_smtp_packet {
     my ( $socket, $send, $expect ) = @_;
     print $socket "$send\r\n";
     my $recv = <$socket>;
+    $recv = '' if !defined $recv;
     while ( $recv =~ /^\d\d\d\-/ ) {
         $recv = <$socket>;
     }
@@ -418,7 +419,9 @@ sub send_smtp_packet {
         return 1;
     }
     else {
-        warn "SMTP Send expected $expect received $recv when sending $send";
+        chomp $recv;
+        chomp $send;
+        warn "SMTP Send expected \"$expect\" received \"$recv\" when sending \"$send\"\n";
         return 0;
     }
 }

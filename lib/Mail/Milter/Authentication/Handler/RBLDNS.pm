@@ -46,6 +46,16 @@ sub register_metrics {
     };
 }
 
+sub setup_callback {
+    my ($self) = @_;
+    my $config = $self->handler_config();
+    foreach my $rbl ( sort keys $config->%* ) {
+        my $sanitize_header = $config->{$rbl}->{sanitize_header} // 'yes';
+        $self->add_header_to_sanitize_list(lc $config->{$rbl}->{add_header}, $sanitize_header eq 'silent') if $config->{$rbl}->{add_header} && $sanitize_header ne 'no';
+    }
+    return;
+}
+
 sub connect_callback {
     my ( $self, $hostname, $ip ) = @_;
     my $config = $self->handler_config();
@@ -83,61 +93,6 @@ sub connect_callback {
     return;
 }
 
-sub remove_header {
-    my ( $self, $key, $value ) = @_;
-    if ( !exists( $self->{'remove_headers'} ) ) {
-        $self->{'remove_headers'} = {};
-    }
-    if ( !exists( $self->{'remove_headers'}->{ lc $key } ) ) {
-        $self->{'remove_headers'}->{ lc $key } = [];
-    }
-    push @{ $self->{'remove_headers'}->{ lc $key } }, $value;
-    return;
-}
-
-sub envfrom_callback {
-    my ($self, $from) = @_;
-    delete $self->{'remove_headers'};
-    delete $self->{'header_index'};
-    delete $self->{'lines'};
-    return;
-}
-
-sub header_callback {
-    my ( $self, $header, $value ) = @_;
-    push @{$self->{'lines'}} ,$header . ': ' . $value . "\r\n";
-
-    my @remove_headers;
-    my $config = $self->handler_config();
-    foreach my $rbl ( sort keys $config->%* ) {
-        push @remove_headers, $config->{$rbl}->{add_header} if $config->{$rbl}->{add_header};
-    }
-
-    foreach my $header_type ( @remove_headers ) {
-        if ( lc $header eq lc $header_type ) {
-            if ( !exists $self->{'header_index'} ) {
-                $self->{'header_index'} = {};
-            }
-            if ( !exists $self->{'header_index'}->{ lc $header_type } ) {
-                $self->{'header_index'}->{ lc $header_type } = 0;
-            }
-            $self->{'header_index'}->{ lc $header_type } =
-            $self->{'header_index'}->{ lc $header_type } + 1;
-            $self->remove_header( $header_type, $self->{'header_index'}->{ lc $header_type } );
-            my $forged_header =
-              '(Received ' . $header_type . ' header removed by '
-              . $self->get_my_hostname()
-              . ')' . "\n"
-              . '    '
-              . $value;
-            $self->append_header( 'X-Received-' . $header_type,
-                $forged_header );
-        }
-    }
-
-    return;
-}
-
 sub eoh_callback {
     my ( $self ) = @_;
     foreach my $add_state ( $self->{states}->@* ) {
@@ -146,25 +101,9 @@ sub eoh_callback {
     return;
 }
 
-sub eom_callback {
-    my ($self) = @_;
-    my $config = $self->handler_config();
-    if ( exists( $self->{'remove_headers'} ) ) {
-        foreach my $header_type ( sort keys %{ $self->{'remove_headers'} } ) {
-            foreach my $header ( reverse @{ $self->{'remove_headers'}->{$header_type} } ) {
-                $self->dbgout( 'RemoveRBLDNSHeader', "$header_type $header", LOG_DEBUG );
-                $self->change_header( $header_type, $header, q{} );
-            }
-        }
-    }
-}
-
 sub close_callback {
     my ( $self ) = @_;
-    delete $self->{'remove_headers'};
     delete $self->{'states'};
-    delete $self->{'header_index'};
-    delete $self->{'lines'};
     return;
 }
 
@@ -188,6 +127,7 @@ Check email using RBL Lookup.
                 "default_state" : "bar",                | State to use when not listed
                 "add_authresults" : 1,                  | Boolean, add authresults header for this lookup
                 "add_header" : "X-RBLFoo",              | Header to be added for this lookup
+                "sanitize_header" : "yes",              | Remove existing header? yes|no|silent (default yes)
                 "states" : {                            | Mapping of dns results to states
                     "127.0.0.1" : "pass",               | Result to add for IP...
                     "127.0.0.2" : "maybe",              | Result to add for IP...
