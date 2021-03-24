@@ -252,7 +252,27 @@ sub eom_callback {
                 $self->{'bimi_object'} = $BIMI; # For testing!
 
                 my $Result;
-                $Result = $BIMI->result() if ! $Skip;
+                my $timeout = $config->{'timeout'} // 5000000;
+                eval {
+                    $self->set_handler_alarm( $timeout );
+                    $Result = $BIMI->result() if ! $Skip;
+                };
+                if ( my $Error = $@ ) {
+                    $self->reset_alarm();
+                    my $Type = $self->is_exception_type( $Error );
+                    if ( $Type ) {
+                        if ( $Type eq 'Timeout' ) {
+                            # We have a timeout, is it global or is it ours?
+                            if ( $self->get_time_remaining() > 0 ) {
+                                # We have time left, but this operation save timed out
+                                $Skip = 'Timeout';
+                            }
+                            else {
+                                $self->handle_exception( $Error );
+                            }
+                        }
+                    }
+                }
 
                 if ( !$Skip
                      && $config->{rbl_no_evidence_allowlist}
@@ -342,6 +362,7 @@ This handler requires the DMARC handler and its dependencies to be installed and
                                                         | Allow and Block list cannot both be present
             "rbl_no_evidence_allowlist" : "",           | Optonal RBL Allow list of allowed org domains that do NOT require evidence documents
                                                         | When set, domains not on this list which do not have evidence documents will be 'skipped'
+            "timeout" : 5000000,                        | Timeout, in microseconds, to apply to a BIMI record check/fetch, detault 5000000 (5s)
             "sanitize_location_header" : "yes",         | Remove existing BIMI-Location header? yes|no|silent (default yes)
             "sanitize_indicator_header" : "yes",        | Remove existing BIMI-Location header? yes|no|silent (default silent)
         },
