@@ -5,11 +5,13 @@ Revision history for Mail-Milter-Authentication
   - Sanitize: Allow the Sanitize handler to be used by
     other handlers to remove headers.
   - BIMI: Use the Sanitize handler to remove existing headers
+  - BIMI: Add an overall timeout to BIMI processing
   - RBLDNS: Use the Sanitize handler to remove existing headers
 
   [New Config Items for BIMI]
     sanitize_location_header - Remove existing BIMI-Location header? yes|no|silent (default yes)
     sanitize_indicator_header - Remove existing BIMI-Location header? yes|no|silent (default silent)
+    timeout - Timeout, in microseconds, to apply to a BIMI record check/fetch, detault 5000000 (5s)
 
   [New Config Items for RBLDNS]
     $key sanitize_header - Remove existing header? yes|no|silent (default yes)
