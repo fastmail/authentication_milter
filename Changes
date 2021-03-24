@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20210324 2021-03-24 06:00:40+00:00 UTC
   - DMARC: When a report fails to save move it to error state
   - Sanitize: Allow the Sanitize handler to be used by
     other handlers to remove headers.
