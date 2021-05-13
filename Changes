@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Fix an error when appending Connection scope authentication-results
+    header parts which would cause processing child processes to crash.
 
 3.20210324 2021-03-24 06:00:40+00:00 UTC
   - DMARC: When a report fails to save move it to error state
