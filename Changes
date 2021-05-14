@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20210514 2021-05-14 01:15:58+00:00 UTC
   - Core: Fix an error when appending Connection scope authentication-results
     header parts which would cause processing child processes to crash.
 
