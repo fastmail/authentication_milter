@@ -2593,6 +2593,7 @@ sub add_headers {
                 $are_string_headers = 1;
                 last;
             }
+            $header->orphan() if exists $header->{parent};
             $header_obj->add_child( $header );
         }
 
