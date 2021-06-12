@@ -2571,9 +2571,9 @@ sub add_headers {
     my ($self) = @_;
     my $config = $self->config();
     my $top_handler = $self->get_top_handler();
-
-    my @types = keys $top_handler->{'c_auth_headers'}->%*;
-    push @types,  keys $top_handler->{'auth_headers'}->%*;
+    my @types;
+    push @types, keys $top_handler->{'c_auth_headers'}->%* if exists $top_handler->{'c_auth_headers'};
+    push @types, keys $top_handler->{'auth_headers'}->%*   if exists $top_handler->{'auth_headers'};
     for my $type (uniq sort @types) {
         $self->add_auth_headers_of_type($type);
     }

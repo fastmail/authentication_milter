@@ -104,7 +104,9 @@ sub eom_callback {
             my $top_handler = $self->get_top_handler();
             my @auth_headers;
             if ( exists( $top_handler->{'auth_headers'} ) ) {
-                @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
+                for my $type ( sort keys $top_handler->{'auth_headers'}->%* ) {
+                    @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'}->{$type} } );
+                }
             }
             if (@auth_headers) {
                 foreach my $auth_header (@auth_headers) {
@@ -144,7 +146,9 @@ sub eom_callback {
                     my $top_handler = $self->get_top_handler();
                     my @auth_headers;
                     if ( exists( $top_handler->{'auth_headers'} ) ) {
-                        @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
+                        for my $type ( sort keys $top_handler->{'auth_headers'}->%* ) {
+                            @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'}->{$type} } );
+                        }
                     }
                     if (@auth_headers) {
                         foreach my $auth_header ( @auth_headers ) {

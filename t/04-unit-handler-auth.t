@@ -5,7 +5,6 @@ use warnings;
 use lib 't';
 
 use Data::Dumper;
-
 use Mail::Milter::Authentication::Tester::HandlerTester;
 use Mail::Milter::Authentication::Constants qw{ :all };
 use Test::Exception;
