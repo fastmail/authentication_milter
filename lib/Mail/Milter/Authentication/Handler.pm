@@ -2662,12 +2662,14 @@ sub add_auth_headers_of_type($self,$type) {
             $header_text = $header_obj->as_string();
         }
 
-        $self->prepend_header( $type, $header_text );
+        my ($header_type,$header_type_postfix) = split /:/, $type;
+        $self->prepend_header( $header_type, $header_text );
     }
     elsif ( !$config->{'hide_none'} ) {
         my $header_text = $self->get_my_authserv_id();
         $header_text .= '; none';
-        $self->prepend_header( $type, $header_text );
+        my ($header_type,$header_type_postfix) = split /:/, $type;
+        $self->prepend_header( $header_type, $header_text );
     } else {
         # the result is none and hide_none is set, so we do not add an AR header
     }
