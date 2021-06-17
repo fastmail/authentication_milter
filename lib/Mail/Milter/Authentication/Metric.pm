@@ -499,7 +499,7 @@ sub child_handler {
     <ul>
         <li><a href="/metrics">Prometheus metrics endpoint</a></li>
     };
-    print $socket qq{li>Example <a href="/grafana">Grafana dashboard</a> for this setup</li>} if !$config->{'metric_basic_http'};
+    print $socket qq{<li>Example <a href="/grafana">Grafana dashboard</a> for this setup</li>} if !$config->{'metric_basic_http'};
     print $socket qq{
     </ul>
 
