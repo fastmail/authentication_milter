@@ -6,6 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for Removing headers
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
+use List::MoreUtils qw{ uniq };
 
 sub default_config {
     return {
@@ -113,7 +114,7 @@ sub header_callback {
     if ( exists $config->{extra_auth_results_types} ) {
         push @types, $config->{extra_auth_results_types}->@*;
     }
-    for my $type (@types) {
+    for my $type (uniq sort @types) {
 
         # Sanitize Authentication-Results headers
         if ( lc $header eq lc $type ) {
