@@ -114,10 +114,9 @@ sub header_callback {
         push @types, $config->{extra_auth_results_types}->@*;
     }
     for my $type (@types) {
-        $type = lc $type;
 
         # Sanitize Authentication-Results headers
-        if ( lc $header eq $type ) {
+        if ( lc $header eq lc $type ) {
             if ( !exists $self->{'auth_result_header_index'}->{$type} ) {
                 $self->{'auth_result_header_index'}->{$type} = 0;
             }
@@ -150,12 +149,12 @@ sub header_callback {
                 $self->remove_auth_header( $self->{'auth_result_header_index'}->{$type}, $type );
                 if ( ! $silent ) {
                     my $forged_header =
-                      '(Received '.$header.' header removed by '
+                      '(Received '.$type.' header removed by '
                       . $self->get_my_hostname()
                       . ')' . "\n"
                       . '    '
                       . $value;
-                    $self->append_header( 'X-Received-'.$header,
+                    $self->append_header( 'X-Received-'.$type,
                         $forged_header );
                 }
             }
