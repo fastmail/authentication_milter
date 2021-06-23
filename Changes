@@ -2,6 +2,12 @@ Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
   - DNS: More consistent error logging on DNS lookup timeouts
+  - RBLDNS: Config structure change
+
+  [UPDATED Config Items for RBLDNS]
+    RBLDNS config items should be moved under a new rbls key
+    A future update will make this change mandatory, please update your
+    configs now.
 
 3.20210514 2021-05-14 01:15:58+00:00 UTC
   - Core: Fix an error when appending Connection scope authentication-results

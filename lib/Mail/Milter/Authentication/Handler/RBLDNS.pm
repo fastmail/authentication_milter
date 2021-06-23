@@ -9,27 +9,29 @@ use base 'Mail::Milter::Authentication::Handler';
 
 sub default_config {
     return {
-        'list1' => {
-            'base_url' => 'list1.example.com',
-            'default_state' => 'clean',
-            'add_authresults' => 1,
-            'add_header' => 'X-List1',
-            'states' => {
-                '127.0.0.2' => 'foo',
-                '127.0.0.3' => 'bar',
-                '*' => 'baz',
-            }
-        },
-        'list2' => {
-            'base_url' => 'list2.example.com',
-            'default_state' => 'clean',
-            'add_header' => 'X-List2',
-            'states' => {
-                '127.0.0.2' => 'foo',
-                '127.0.0.3' => 'bar',
-                '*' => 'baz',
-            }
-        },
+        'rbls' => {
+            'list1' => {
+                'base_url' => 'list1.example.com',
+                'default_state' => 'clean',
+                'add_authresults' => 1,
+                'add_header' => 'X-List1',
+                'states' => {
+                    '127.0.0.2' => 'foo',
+                    '127.0.0.3' => 'bar',
+                    '*' => 'baz',
+                }
+            },
+            'list2' => {
+                'base_url' => 'list2.example.com',
+                'default_state' => 'clean',
+                'add_header' => 'X-List2',
+                'states' => {
+                    '127.0.0.2' => 'foo',
+                    '127.0.0.3' => 'bar',
+                    '*' => 'baz',
+                }
+            },
+        }
     }
 }
 
@@ -49,6 +51,7 @@ sub register_metrics {
 sub setup_callback {
     my ($self) = @_;
     my $config = $self->handler_config();
+    $config = $config->{rbls} if exists $config->{rbls};
     foreach my $rbl ( sort keys $config->%* ) {
         my $sanitize_header = $config->{$rbl}->{sanitize_header} // 'yes';
         $self->add_header_to_sanitize_list(lc $config->{$rbl}->{add_header}, $sanitize_header eq 'silent') if $config->{$rbl}->{add_header} && $sanitize_header ne 'no';
@@ -59,6 +62,7 @@ sub setup_callback {
 sub connect_callback {
     my ( $self, $hostname, $ip ) = @_;
     my $config = $self->handler_config();
+    $config = $config->{rbls} if exists $config->{rbls};
 
     my @states;
 
@@ -122,20 +126,22 @@ Check email using RBL Lookup.
 =head1 CONFIGURATION
 
         "RBLDNS" : {                                    | Config for the RBLDNS Module
-            "key1" : {                                  | Name of lookup, will be used as Authentication-Results: key
-                "base_url" : "foo.rbldns.com",          | RBLDNS to lookup against
-                "default_state" : "bar",                | State to use when not listed
-                "add_authresults" : 1,                  | Boolean, add authresults header for this lookup
-                "add_header" : "X-RBLFoo",              | Header to be added for this lookup
-                "sanitize_header" : "yes",              | Remove existing header? yes|no|silent (default yes)
-                "states" : {                            | Mapping of dns results to states
-                    "127.0.0.1" : "pass",               | Result to add for IP...
-                    "127.0.0.2" : "maybe",              | Result to add for IP...
-                    "*" : "baz"                         | Wildcard result to add for any other IP results
+            "rbls" : {
+                "key1" : {                              | Name of lookup, will be used as Authentication-Results: key
+                    "base_url" : "foo.rbldns.com",      | RBLDNS to lookup against
+                    "default_state" : "bar",            | State to use when not listed
+                    "add_authresults" : 1,              | Boolean, add authresults header for this lookup
+                    "add_header" : "X-RBLFoo",          | Header to be added for this lookup
+                    "sanitize_header" : "yes",          | Remove existing header? yes|no|silent (default yes)
+                    "states" : {                        | Mapping of dns results to states
+                        "127.0.0.1" : "pass",           | Result to add for IP...
+                        "127.0.0.2" : "maybe",          | Result to add for IP...
+                        "*" : "baz"                     | Wildcard result to add for any other IP results
+                    }
+                },
+                "key2" : {                              | Any additional lookups
+                    ...
                 }
-            },
-            "key2" : {                                  | Any additional lookups
-                ...
             }
         },
 
