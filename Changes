@@ -1,5 +1,10 @@
 Revision history for Mail-Milter-Authentication
 
+  - RBLDNS: Config structure change is now mandatory
+
+  [UPDATED Config Items for RBLDNS]
+    RBLDNS config items MUST be moved under a new rbls key
+
 {{$NEXT}}
   - DNS: More consistent error logging on DNS lookup timeouts
   - RBLDNS: Config structure change
