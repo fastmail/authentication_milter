@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20210707 2021-07-07 00:29:17+00:00 UTC
   - DNS: More consistent error logging on DNS lookup timeouts
   - RBLDNS: Config structure change
 
