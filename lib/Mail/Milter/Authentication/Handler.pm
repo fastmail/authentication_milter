@@ -1092,7 +1092,7 @@ sub apply_policy {
     #    @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
     #}
 
-    #my $parsed_headers = Mail::AuthenticationResults::Parser->new( \@auth_headers );;
+    #my $parsed_headers = Mail::AuthenticationResults::Parser->new( \@auth_headers );
 
     #use Data::Dumper;
     #print Dumper \@structured_headers;
