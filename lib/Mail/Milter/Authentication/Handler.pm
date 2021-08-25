@@ -9,6 +9,7 @@ use Mail::Milter::Authentication::Exception;
 use Mail::Milter::Authentication::Resolver;
 use Date::Format qw{ time2str };
 use Digest::MD5 qw{ md5_hex };
+use List::MoreUtils qw{ uniq };
 use Lock::File;
 use MIME::Base64;
 use Mail::SPF;
@@ -1066,7 +1067,7 @@ sub top_eom_callback {
         }
         $self->tempfail_on_error();
     }
-    $self->apply_policy();
+    #$self->apply_policy();
     $self->add_headers();
     $self->dbgoutwrite();
     $self->status('posteom');
@@ -1080,18 +1081,18 @@ Apply policy to the message, currently a nop.
 =cut
 
 sub apply_policy {
-    my ($self) = @_;
+    #my ($self) = @_;
 
-    my @auth_headers;
-    my $top_handler = $self->get_top_handler();
-    if ( exists( $top_handler->{'c_auth_headers'} ) ) {
-        @auth_headers = @{ $top_handler->{'c_auth_headers'} };
-    }
-    if ( exists( $top_handler->{'auth_headers'} ) ) {
-        @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
-    }
+    #my @auth_headers;
+    #my $top_handler = $self->get_top_handler();
+    #if ( exists( $top_handler->{'c_auth_headers'} ) ) {
+    #    @auth_headers = @{ $top_handler->{'c_auth_headers'} };
+    #}
+    #if ( exists( $top_handler->{'auth_headers'} ) ) {
+    #    @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
+    #}
 
-    #my $parsed_headers = Mail::AuthenticationResults::Parser->new( \@auth_headers );;
+    #my $parsed_headers = Mail::AuthenticationResults::Parser->new( \@auth_headers );
 
     #use Data::Dumper;
     #print Dumper \@structured_headers;
@@ -2568,68 +2569,13 @@ Send the header changes to the MTA.
 
 sub add_headers {
     my ($self) = @_;
-
     my $config = $self->config();
-
-    my $header = $self->get_my_authserv_id();
     my $top_handler = $self->get_top_handler();
-
-    my @auth_headers;
-    if ( exists( $top_handler->{'c_auth_headers'} ) ) {
-        @auth_headers = @{ $top_handler->{'c_auth_headers'} };
-    }
-    if ( exists( $top_handler->{'auth_headers'} ) ) {
-        @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'} } );
-    }
-    if (@auth_headers) {
-
-        @auth_headers = sort { $self->header_sort( $a, $b ) } @auth_headers;
-
-        # Do we have any legacy type headers?
-        my $are_string_headers = 0;
-        my $header_obj = Mail::AuthenticationResults::Header->new();
-        foreach my $header ( @auth_headers ) {
-            if ( ref $header ne 'Mail::AuthenticationResults::Header::Entry' ) {
-                $are_string_headers = 1;
-                last;
-            }
-            $header->orphan() if exists $header->{parent};
-            $header_obj->add_child( $header );
-        }
-
-        if ( $are_string_headers ) {
-            # We have legacy headers, add in a legacy way
-            $header .= ";\n    ";
-            $header .= join( ";\n    ", map { $self->_stringify_header( $_ ) } @auth_headers );
-        }
-        else {
-            $header_obj->set_value( Mail::AuthenticationResults::Header::AuthServID->new()->safe_set_value( $self->get_my_authserv_id() ) );
-            $header_obj->set_eol( "\n" );
-            if ( exists( $config->{'header_indent_style'} ) ) {
-                $header_obj->set_indent_style( $config->{'header_indent_style'} );
-            }
-            else {
-                $header_obj->set_indent_style( 'entry' );
-            }
-            if ( exists( $config->{'header_indent_by'} ) ) {
-                $header_obj->set_indent_by( $config->{'header_indent_by'} );
-            }
-            else {
-                $header_obj->set_indent_by( 4 );
-            }
-            if ( exists( $config->{'header_fold_at'} ) ) {
-                $header_obj->set_fold_at( $config->{'header_fold_at'} );
-            }
-            $header = $header_obj->as_string();
-        }
-
-        $self->prepend_header( 'Authentication-Results', $header );
-    }
-    elsif ( !$config->{'hide_none'} ) {
-        $header .= '; none';
-        $self->prepend_header( 'Authentication-Results', $header );
-    } else {
-        # the result is none and hide_none is set, so we do not add an AR header
+    my @types;
+    push @types, keys $top_handler->{'c_auth_headers'}->%* if exists $top_handler->{'c_auth_headers'};
+    push @types, keys $top_handler->{'auth_headers'}->%*   if exists $top_handler->{'auth_headers'};
+    for my $type (uniq sort @types) {
+        $self->add_auth_headers_of_type($type);
     }
 
     if ( my $reason = $self->get_quarantine_mail() ) {
@@ -2652,6 +2598,80 @@ sub add_headers {
                 $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
             $self->add_header( $header->{'field'}, $header->{'value'} );
         }
+    }
+}
+
+=method I<add_headers_of_type( $type )>
+
+Find and add all Authentication-Results style headers of given type
+
+=cut
+
+sub add_auth_headers_of_type($self,$type) {
+    my $config = $self->config();
+    my $top_handler = $self->get_top_handler();
+
+    my @auth_headers;
+    if ( exists( $top_handler->{'c_auth_headers'}->{$type} ) ) {
+        @auth_headers = @{ $top_handler->{'c_auth_headers'}->{$type} };
+    }
+    if ( exists( $top_handler->{'auth_headers'}->{$type} ) ) {
+        @auth_headers = ( @auth_headers, @{ $top_handler->{'auth_headers'}->{$type} } );
+    }
+    if (@auth_headers) {
+
+        @auth_headers = sort { $self->header_sort( $a, $b ) } @auth_headers;
+
+        # Do we have any legacy type headers?
+        my $are_string_headers = 0;
+        my $header_obj = Mail::AuthenticationResults::Header->new();
+        foreach my $header ( @auth_headers ) {
+            if ( ref $header ne 'Mail::AuthenticationResults::Header::Entry' ) {
+                $are_string_headers = 1;
+                last;
+            }
+            $header->orphan() if exists $header->{parent};
+            $header_obj->add_child( $header );
+        }
+
+        my $header_text;
+        if ( $are_string_headers ) {
+            # We have legacy headers, add in a legacy way
+            $header_text = $self->get_my_authserv_id();
+            $header_text .= ";\n    ";
+            $header_text .= join( ";\n    ", map { $self->_stringify_header( $_ ) } @auth_headers );
+        }
+        else {
+            $header_obj->set_value( Mail::AuthenticationResults::Header::AuthServID->new()->safe_set_value( $self->get_my_authserv_id() ) );
+            $header_obj->set_eol( "\n" );
+            if ( exists( $config->{'header_indent_style'} ) ) {
+                $header_obj->set_indent_style( $config->{'header_indent_style'} );
+            }
+            else {
+                $header_obj->set_indent_style( 'entry' );
+            }
+            if ( exists( $config->{'header_indent_by'} ) ) {
+                $header_obj->set_indent_by( $config->{'header_indent_by'} );
+            }
+            else {
+                $header_obj->set_indent_by( 4 );
+            }
+            if ( exists( $config->{'header_fold_at'} ) ) {
+                $header_obj->set_fold_at( $config->{'header_fold_at'} );
+            }
+            $header_text = $header_obj->as_string();
+        }
+
+        my ($header_type,$header_type_postfix) = split /:/, $type;
+        $self->prepend_header( $header_type, $header_text );
+    }
+    elsif ( !$config->{'hide_none'} ) {
+        my $header_text = $self->get_my_authserv_id();
+        $header_text .= '; none';
+        my ($header_type,$header_type_postfix) = split /:/, $type;
+        $self->prepend_header( $header_type, $header_text );
+    } else {
+        # the result is none and hide_none is set, so we do not add an AR header
     }
 }
 
@@ -2680,13 +2700,13 @@ Add a section to the authentication header for this email.
 
 =cut
 
-sub add_auth_header {
-    my ( $self, $value ) = @_;
+sub add_auth_header($self,$value) {
+    my $config = $self->handler_config();
+    my $header_name = $config->{auth_header_name} // 'Authentication-Results';
     my $top_handler = $self->get_top_handler();
-    if ( !exists( $top_handler->{'auth_headers'} ) ) {
-        $top_handler->{'auth_headers'} = [];
-    }
-    push @{ $top_handler->{'auth_headers'} }, $value;
+    $top_handler->{auth_headers} = {} unless exists $top_handler->{auth_headers};
+    $top_handler->{auth_headers}->{$header_name} = [] unless exists $top_handler->{auth_headers}->{$header_name};
+    push $top_handler->{auth_headers}->{$header_name}->@*, $value;
 }
 
 =method I<add_c_auth_header( $value )>
@@ -2695,15 +2715,14 @@ Add a section to the authentication header for this email, and to any subsequent
 
 =cut
 
-sub add_c_auth_header {
-
+sub add_c_auth_header($self,$value) {
     # Connection wide auth headers
-    my ( $self, $value ) = @_;
+    my $config = $self->handler_config();
+    my $header_name = $config->{auth_header_name} // 'Authentication-Results';
     my $top_handler = $self->get_top_handler();
-    if ( !exists( $top_handler->{'c_auth_headers'} ) ) {
-        $top_handler->{'c_auth_headers'} = [];
-    }
-    push @{ $top_handler->{'c_auth_headers'} }, $value;
+    $top_handler->{c_auth_headers} = {} unless exists $top_handler->{c_auth_headers};
+    $top_handler->{c_auth_headers}->{$header_name} = [] unless exists $top_handler->{c_auth_headers}->{$header_name};
+    push $top_handler->{c_auth_headers}->{$header_name}->@*, $value;
 }
 
 =method I<append_header( $field, $value )>

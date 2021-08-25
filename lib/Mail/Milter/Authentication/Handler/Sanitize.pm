@@ -6,11 +6,13 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for Removing headers
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
+use List::MoreUtils qw{ uniq };
 
 sub default_config {
     return {
         'hosts_to_remove' => [ 'example.com', 'example.net' ],
         'remove_headers'  => 'yes',
+        'extra_auth_results_types' => ['X-Authentication-Results'],
     };
 }
 
@@ -56,12 +58,12 @@ sub is_hostname_mine {
 }
 
 sub remove_auth_header {
-    my ( $self, $index ) = @_;
-    $self->metric_count( 'sanitize_remove_total', {'header'=>'authentication-results'} );
-    if ( !exists( $self->{'remove_auth_headers'} ) ) {
-        $self->{'remove_auth_headers'} = [];
+    my ( $self, $index, $type ) = @_;
+    $self->metric_count( 'sanitize_remove_total', {'header'=>$type} );
+    if ( !exists( $self->{'remove_auth_headers'}->{$type} ) ) {
+        $self->{'remove_auth_headers'}->{$type} = [];
     }
-    push @{ $self->{'remove_auth_headers'} }, $index;
+    push @{ $self->{'remove_auth_headers'}->{$type} }, $index;
 }
 
 {
@@ -88,8 +90,8 @@ sub remove_auth_header {
 
 sub envfrom_callback {
     my ( $self, $env_from ) = @_;
-    delete $self->{'auth_result_header_index'};
-    delete $self->{'remove_auth_headers'};
+    $self->{'auth_result_header_index'} = {};
+    $self->{'remove_auth_headers'} = {};
 
     my $headers = {};
     foreach my $header ( sort @{ $self->get_headers_to_remove() } ) {
@@ -108,47 +110,54 @@ sub header_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( lc $config->{'remove_headers'} eq 'no' );
 
-    # Sanitize Authentication-Results headers
-    if ( lc $header eq 'authentication-results' ) {
-        if ( !exists $self->{'auth_result_header_index'} ) {
-            $self->{'auth_result_header_index'} = 0;
-        }
-        $self->{'auth_result_header_index'} =
-          $self->{'auth_result_header_index'} + 1;
+    my @types = ('Authentication-Results');
+    if ( exists $config->{extra_auth_results_types} ) {
+        push @types, $config->{extra_auth_results_types}->@*;
+    }
+    for my $type (uniq sort @types) {
 
-        my $authserv_id = '';
-        eval {
-            my $parsed = Mail::AuthenticationResults::Parser->new()->parse($value);
-            $authserv_id = $parsed->value()->value();
-        };
-        if ( my $error = $@ ) {
-            $self->handle_exception($error);
-            $self->log_error("Error parsing existing Authentication-Results header: $error");
-        }
+        # Sanitize Authentication-Results headers
+        if ( lc $header eq lc $type ) {
+            if ( !exists $self->{'auth_result_header_index'}->{$type} ) {
+                $self->{'auth_result_header_index'}->{$type} = 0;
+            }
+            $self->{'auth_result_header_index'}->{$type} =
+              $self->{'auth_result_header_index'}->{$type} + 1;
 
-        my $remove = 0;
-        my $silent = lc $config->{'remove_headers'} eq 'silent';
-        if ( $authserv_id ) {
-            $remove = $self->is_hostname_mine($authserv_id);
-        }
-        else {
-            # We couldn't parse the authserv_id, removing this header is the safest option
-            # Add to X-Received headers for analysis later
-            $remove = 1;
-            $silent = 0;
-        }
+            my $authserv_id = '';
+            eval {
+                my $parsed = Mail::AuthenticationResults::Parser->new()->parse($value);
+                $authserv_id = $parsed->value()->value();
+            };
+            if ( my $error = $@ ) {
+                $self->handle_exception($error);
+                $self->log_error("Error parsing existing Authentication-Results header: $error");
+            }
 
-        if ( $remove ) {
-            $self->remove_auth_header( $self->{'auth_result_header_index'} );
-            if ( ! $silent ) {
-                my $forged_header =
-                  '(Received Authentication-Results header removed by '
-                  . $self->get_my_hostname()
-                  . ')' . "\n"
-                  . '    '
-                  . $value;
-                $self->append_header( 'X-Received-Authentication-Results',
-                    $forged_header );
+            my $remove = 0;
+            my $silent = lc $config->{'remove_headers'} eq 'silent';
+            if ( $authserv_id ) {
+                $remove = $self->is_hostname_mine($authserv_id);
+            }
+            else {
+                # We couldn't parse the authserv_id, removing this header is the safest option
+                # Add to X-Received headers for analysis later
+                $remove = 1;
+                $silent = 0;
+            }
+
+            if ( $remove ) {
+                $self->remove_auth_header( $self->{'auth_result_header_index'}->{$type}, $type );
+                if ( ! $silent ) {
+                    my $forged_header =
+                      '(Received '.$type.' header removed by '
+                      . $self->get_my_hostname()
+                      . ')' . "\n"
+                      . '    '
+                      . $value;
+                    $self->append_header( 'X-Received-'.$type,
+                        $forged_header );
+                }
             }
         }
     }
@@ -178,10 +187,12 @@ sub eom_callback {
     return if ( lc $config->{'remove_headers'} eq 'no' );
 
     if ( exists( $self->{'remove_auth_headers'} ) ) {
-        foreach my $index ( reverse @{ $self->{'remove_auth_headers'} } ) {
-            $self->dbgout( 'RemoveAuthHeader', $index, LOG_DEBUG );
-            $self->change_header( 'Authentication-Results', $index, q{} );
-        }
+        foreach my $type ( sort keys $self->{'remove_auth_headers'}->%* ) {
+            foreach my $index ( reverse @{ $self->{'remove_auth_headers'}->{$type} } ) {
+                $self->dbgout( 'RemoveAuthHeader', "$type $index", LOG_DEBUG );
+                $self->change_header( $type, $index, q{} );
+            }
+       }
     }
 
     foreach my $remove_header ( sort @{ $self->get_headers_to_remove() } ) {
@@ -218,10 +229,14 @@ Remove unauthorized (forged) Authentication-Results headers from processed email
                 "example.com",                          | want to remove existing authentication results headers.
                 "example.net"
             ],
-            "remove_headers" : "yes"                    | Remove headers with conflicting host names (as defined above)
+            "remove_headers" : "yes",                   | Remove headers with conflicting host names (as defined above)
                                                         | "no" : do not remove
                                                         | "yes" : remove and add a header for each one
                                                         | "silent" : remove silently
                                                         | Does not run for trusted IP address connections
+
+            "extra_auth_results_types" : [              | List of extra Authentication-Results style headers which we
+                "X-Authentication-Results",             | want to treat as Authentication-Results and sanitize.
+            ],
         }
 

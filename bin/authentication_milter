@@ -372,7 +372,22 @@ __END__
                                                         | to disable that handler without having to remove
                                                         | its config.
 
-        "ActiveModule" : {
+          "ActiveModule" : {
+
+            "auth_header_name" :                        | Available to all handlers, the name of the Header
+                "Authentication-Results"                | for which an Authentication-Results will be added
+                                                        | for this handler.
+                                                        |
+                                                        | Defaults to "Authentication-Results"
+                                                        |
+                                                        | If you would like to add multiple Authentiction-Results
+                                                        | headers with a single header name then you may postfix
+                                                        | the header name with : followed by a unique string.
+                                                        |  eg "Authentication-Results:1"
+                                                        |     "Authentication-Results:experimental"
+                                                        | The : and anything following will be disregarded when
+                                                        | generating the header name.
+
             "foo" : "bar"
         },
         "!InactiveModule" : {},

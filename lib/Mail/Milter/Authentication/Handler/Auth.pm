@@ -51,9 +51,13 @@ sub envfrom_callback {
         # Clear the current auth headers ( iprev and helo may already be added )
         # ToDo is this a good idea?
         my $top_handler = $self->get_top_handler();
-        $top_handler->{'c_auth_headers'} = [];
-        $top_handler->{'auth_headers'}   = [];
-        $self->{'is_authenticated'}       = 1;
+        for my $type ( sort keys $top_handler->{'c_auth_headers'}->%* ) {
+            $top_handler->{'c_auth_headers'}->{$type} = [];
+        }
+        for my $type ( sort keys $top_handler->{'auth_headers'}->%* ) {
+            $top_handler->{'auth_headers'}->{$type} = [];
+        }
+        $self->{'is_authenticated'} = 1;
         $self->metric_count( 'authenticated_connect_total' );
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'auth' )->safe_set_value( 'pass' );
         $self->add_auth_header( $header );

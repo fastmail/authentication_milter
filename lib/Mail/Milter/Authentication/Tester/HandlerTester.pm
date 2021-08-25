@@ -335,8 +335,8 @@ sub servername {
 sub get_authresults_header {
     my ( $self ) = @_;
     # Build a Mail::AuthenticationReslts object
-    my $c_auth_headers = clone( $self->handler()->{ 'c_auth_headers'} ) // [];
-    my $auth_headers = clone( $self->handler()->{ 'auth_headers'} ) // [];
+    my $c_auth_headers = eval{ clone( $self->handler()->{ 'c_auth_headers'}->{'Authentication-Results'} ) } // [];
+    my $auth_headers = eval{ clone( $self->handler()->{ 'auth_headers'}->{'Authentication-Results'} ) } // [];
     my @added_ar_headers = ( @{ $c_auth_headers }, @{ $auth_headers } );
     my $header = Mail::AuthenticationResults::Header->new()->set_value( Mail::AuthenticationResults::Header::AuthServID->new()->set_value( $self->servername() ) );
     foreach my $ar_header ( @added_ar_headers ) {
