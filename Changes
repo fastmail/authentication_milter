@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20210825 2021-08-25 01:01:38+00:00 UTC
   - Core: Allow Authentication-Results header to be split or renamed per Handler
 
 3.20210707 2021-07-07 00:29:17+00:00 UTC
