@@ -406,8 +406,21 @@ sub process {
     $self->r( $milter->send_end_headers());
 
     my $body = $self->{'message_object'}->body();
-    $milter->send_macros( 'i' => $self->{'queue_id'} );
-    $self->r( $milter->send_body( $body ));
+
+    my $chunk_size = 50000;
+    while ($body) {
+        my $body_chunk;
+        if (length($body) > $chunk_size) {
+            $body_chunk = substr($body,0,$chunk_size);
+            $body = substr($body,$chunk_size);
+        }
+        else {
+            $body_chunk = $body;
+            $body = '';
+        }
+        $milter->send_macros( 'i' => $self->{'queue_id'} );
+        $self->r( $milter->send_body( $body_chunk ));
+    }
 
     $milter->send_macros( 'i' => $self->{'queue_id'} );
     $self->r( $milter->send_end_body());
