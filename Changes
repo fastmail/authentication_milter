@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Client: Chunk the body when sending with Mail::Milter::Authentication::Client
 
 3.20210825 2021-08-25 01:01:38+00:00 UTC
   - Core: Allow Authentication-Results header to be split or renamed per Handler
