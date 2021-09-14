@@ -63,7 +63,7 @@ sub header_callback {
         my ($domain) = $value =~ /d=([^;]*);/;
         my ($selector) = $value =~ /s=([^;]*);/;
         my $resolver = $self->get_object('resolver');
-        if ( $selector && $domain ) {
+        if ( defined $selector && defined $domain ) {
             my $lookup = $selector.'._domainkey.'.$domain;
             eval{ $resolver->bgsend( $lookup, 'TXT' ) };
             $self->handle_exception( $@ );

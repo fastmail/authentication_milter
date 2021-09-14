@@ -71,7 +71,7 @@ sub header_callback {
         if ( $parsed ) {
             my $domain = $parsed->get_tag('d');
             my $selector = $parsed->get_tag('s');
-            if ( $selector && $domain ) {
+            if ( defined $selector && defined $domain ) {
                 my $resolver = $self->get_object('resolver');
                 my $lookup = $selector.'._domainkey.'.$domain;
                 eval{ $resolver->bgsend( $lookup, 'TXT' ) };
@@ -254,7 +254,7 @@ sub eom_callback {
 
                 my $key_size = 0;
                 my $key_type = q{};
-                my $selector = eval{ $signature->selector } || q{};
+                my $selector = eval{ $signature->selector } // q{};
                 eval {
                     my $key = $signature->get_public_key();
                     $key_size = $key->size();
