@@ -129,13 +129,14 @@ sub get_trusted_dkim_results {
 
                 my $entry_selector = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'x-selector' })->children()->[0]->value() };
                 $self->handle_exception( $@ );
-                if ( ! $entry_selector ) {
+                if ( ! defined $entry_selector ) {
                     # Google are using header.s
                     $entry_selector = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.s' })->children()->[0]->value() };
                     $self->handle_exception( $@ );
                 }
                 # If we don't have a selector then we fake it.
-                $entry_selector = 'x-arc-chain' if ! $entry_selector;
+                $entry_selector = 'x-arc-chain' if ! defined $entry_selector;
+                $entry_selector = 'x-arc-chain' if $entry_selector eq '';
                 ## TODO If we can't find this in the ar header then we could
                 ## try looking for the Signature and pull it from there.
                 ## But let's not do that right now.

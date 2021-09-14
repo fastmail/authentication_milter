@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Bugfix: Properly report selectors that truthy evaluate to false
 
 3.20210907 2021-09-07 00:26:14+00:00 UTC
   - Client: Chunk the body when sending with Mail::Milter::Authentication::Client
