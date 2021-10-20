@@ -904,7 +904,7 @@ sub top_header_callback {
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
             $self->metric_count( 'callback_error_total', { 'stage' => 'header', 'type' => $type } );
-            $self->exit_on_close( 'Header error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->exit_on_close( 'Header error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
             $self->metric_count( 'callback_error_total', { 'stage' => 'header' } );
@@ -955,7 +955,7 @@ sub top_eoh_callback {
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
             $self->metric_count( 'callback_error_total', { 'stage' => 'eoh', 'type' => $type } );
-            $self->exit_on_close( 'EOH error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->exit_on_close( 'EOH error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
             $self->metric_count( 'callback_error_total', { 'stage' => 'eoh' } );
@@ -1007,7 +1007,7 @@ sub top_body_callback {
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
             $self->metric_count( 'callback_error_total', { 'stage' => 'body', 'type' => $type } );
-            $self->exit_on_close( 'Body error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->exit_on_close( 'Body error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
             $self->metric_count( 'callback_error_total', { 'stage' => 'body' } );
@@ -1059,7 +1059,7 @@ sub top_eom_callback {
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
             $self->metric_count( 'callback_error_total', { 'stage' => 'eom', 'type' => $type } );
-            $self->exit_on_close( 'EOM error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->exit_on_close( 'EOM error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
             $self->metric_count( 'callback_error_total', { 'stage' => 'eom' } );
@@ -1137,7 +1137,7 @@ sub top_abort_callback {
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
             $self->metric_count( 'callback_error_total', { 'stage' => 'abort', 'type' => $type } );
-            $self->exit_on_close( 'Abort error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->exit_on_close( 'Abort error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
             $self->metric_count( 'callback_error_total', { 'stage' => 'abort' } );
@@ -1197,7 +1197,7 @@ sub top_close_callback {
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
             $self->metric_count( 'callback_error_total', { 'stage' => 'close', 'type' => $type } );
-            $self->exit_on_close( 'Close error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->exit_on_close( 'Close error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
             $self->metric_count( 'callback_error_total', { 'stage' => 'close' } );
@@ -1250,7 +1250,7 @@ sub top_addheader_callback {
     if ( my $error = $@ ) {
         if ( my $type = $self->is_exception_type( $error ) ) {
             $self->metric_count( 'callback_error_total', { 'stage' => 'addheader', 'type' => $type } );
-            $self->exit_on_close( 'AddHeader error ' . $type . ' - ' . $error->{ 'text' } );
+            $self->exit_on_close( 'AddHeader error ' . $type . ' - ' . $error->{ 'Text' } );
         }
         else {
             $self->metric_count( 'callback_error_total', { 'stage' => 'addheader' } );
