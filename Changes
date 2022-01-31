@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20220131 2022-01-31 04:04:43+00:00 UTC
   - DMARC: When an invalid MAIL_FROM is encountered continue processing
            as if there were no MAIL_FROM domain.
   - DMARC: Catch and ignore bad ARC results
