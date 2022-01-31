@@ -470,7 +470,9 @@ sub _process_dmarc_for {
     # Re-evaluate non passes taking ARC into account if possible.
     if ( $have_arc && $dmarc_code eq 'fail' ) {
         my $arc_result = $self->_process_arc_dmarc_for( $env_domain_from, $header_domain );
-        $arc_aware_result = $arc_result->result;
+        $arc_aware_result = eval{$arc_result->result};
+        $self->handle_exception( $@ );
+        $arc_aware_result = '' if not defined $arc_aware_result;
     }
 
     my $is_whitelisted = $self->is_whitelisted();
