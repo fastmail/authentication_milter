@@ -206,6 +206,7 @@ sub _process_arc_dmarc_for {
     my ( $self, $env_domain_from, $header_domain ) = @_;
 
     my $config = $self->handler_config();
+    my $original_dmarc = $self->get_object('dmarc');
     my $dmarc = $self->new_dmarc_object();
     $dmarc->source_ip( $self->ip_address() );
 
@@ -216,6 +217,7 @@ sub _process_arc_dmarc_for {
         };
         if ( my $error = $@ ) {
             $self->handle_exception( $error );
+            $self->set_object('dmarc', $original_dmarc,1 ); # Restore original saved DMARC object
             return;
         }
     }
@@ -234,6 +236,7 @@ sub _process_arc_dmarc_for {
     eval { $dmarc->header_from( $header_domain ) };
     if ( my $error = $@ ) {
         $self->handle_exception( $error );
+        $self->set_object('dmarc', $original_dmarc,1 ); # Restore original saved DMARC object
         return;
     }
 
@@ -356,23 +359,7 @@ sub _process_dmarc_for {
         };
         if ( my $error = $@ ) {
             $self->handle_exception( $error );
-            if ( $error =~ /invalid envelope_from at / ) {
-                $self->log_error( 'DMARC Invalid envelope from <' . $env_domain_from . '>' );
-                $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
-                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
-                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'envelope from invalid' ) );
-                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
-                $self->_add_dmarc_header( $header );
-            }
-            else {
-                $self->log_error( 'DMARC Mail From Error for <' . $env_domain_from . '> ' . $error );
-                $self->metric_count( 'dmarc_total', { 'result' => 'temperror' } );
-                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'temperror' );
-                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'envelope from failed' ) );
-                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
-                $self->_add_dmarc_header( $header );
-            }
-            return;
+            $self->log_error( 'DMARC Mail From Error for <' . $env_domain_from . '> ' . $error );
         }
     }
 
@@ -486,7 +473,9 @@ sub _process_dmarc_for {
     # Re-evaluate non passes taking ARC into account if possible.
     if ( $have_arc && $dmarc_code eq 'fail' ) {
         my $arc_result = $self->_process_arc_dmarc_for( $env_domain_from, $header_domain );
-        $arc_aware_result = $arc_result->result;
+        $arc_aware_result = eval{$arc_result->result};
+        $self->handle_exception( $@ );
+        $arc_aware_result = '' if not defined $arc_aware_result;
     }
 
     my $is_whitelisted = $self->is_whitelisted();
