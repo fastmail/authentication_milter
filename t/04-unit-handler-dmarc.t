@@ -40,6 +40,18 @@ Subject: Test
 
 This is a test',
     },
+    'spf_invalid' => {
+        'connect_ip' => '1.2.3.4',
+        'connect_name' => 'mx.goestheweasel.com',
+        'helo' => 'mx.goestheweasel.com',
+        'mailfrom' => 'test@example.com(goestheweasel.com',
+        'rcptto' => [ 'test@goestheweasel.com' ],
+        'body' => 'From: test@goestheweasel.com
+To: test@goestheweasel.com
+Subject: Test
+
+This is a test',
+    },
     'spf_pass' => {
         'connect_ip' => '106.187.51.197',
         'connect_name' => 'mx.goestheweasel.com',
@@ -119,6 +131,13 @@ subtest 'none hidden' => sub {
     my $header = $tester->get_authresults_header()->search({ 'key' => 'dmarc' });
     is( scalar @{ $header->children() }, 0, 'No DMARC entry' );
 };
+
+while (my ($tester_name, $tester) = each %$testers) {
+    subtest "SPF invalid $tester_name" => sub {
+        $tester->run( $test_params->{ 'spf_invalid' } );
+        is_dmarc_result( $tester, 'fail' );
+    };
+}
 
 while (my ($tester_name, $tester) = each %$testers) {
     subtest "SPF fail $tester_name" => sub {
