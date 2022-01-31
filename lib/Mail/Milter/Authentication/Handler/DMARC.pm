@@ -206,6 +206,7 @@ sub _process_arc_dmarc_for {
     my ( $self, $env_domain_from, $header_domain ) = @_;
 
     my $config = $self->handler_config();
+    my $original_dmarc = $self->get_object('dmarc');
     my $dmarc = $self->new_dmarc_object();
     $dmarc->source_ip( $self->ip_address() );
 
@@ -216,6 +217,7 @@ sub _process_arc_dmarc_for {
         };
         if ( my $error = $@ ) {
             $self->handle_exception( $error );
+            $self->set_object('dmarc', $original_dmarc,1 ); # Restore original saved DMARC object
             return;
         }
     }
@@ -234,6 +236,7 @@ sub _process_arc_dmarc_for {
     eval { $dmarc->header_from( $header_domain ) };
     if ( my $error = $@ ) {
         $self->handle_exception( $error );
+        $self->set_object('dmarc', $original_dmarc,1 ); # Restore original saved DMARC object
         return;
     }
 
