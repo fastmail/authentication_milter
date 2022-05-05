@@ -203,7 +203,7 @@ sub milter_process_command {
                 }
                 else {
                     $handler->metric_count( 'mail_processed_total', { 'result' => 'deferred' } );
-                    $self->loginfo ( "SMTPDefer: $reject_reason" );
+                    $self->loginfo ( "SMTPDefer: $defer_reason" );
                     $self->write_packet( SMFIR_REPLYCODE,
                         $defer_reason
                         . "\0"
