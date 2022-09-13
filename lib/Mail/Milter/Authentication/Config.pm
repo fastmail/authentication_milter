@@ -83,6 +83,7 @@ sub default_config {
         'cache_dir'                       => '/var/cache/authentication_milter',
         'spool_dir'                       => '/var/spool/authentication_milter',
         'lib_dir'                         => '/var/lib/authentication_milter',
+        'lock_file'                       => '',
     };
 
     require Mail::Milter::Authentication;

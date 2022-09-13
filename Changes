@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Allow the location of the Net::Server lock file to be specified
 
 3.20220131 2022-01-31 04:04:43+00:00 UTC
   - DMARC: When an invalid MAIL_FROM is encountered continue processing
