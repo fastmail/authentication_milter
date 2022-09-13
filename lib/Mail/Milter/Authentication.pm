@@ -823,6 +823,8 @@ sub start($args) {
     $srvargs{'min_spare_servers'} = $min_spare_children;
     $srvargs{'max_spare_servers'} = $max_spare_children;
 
+    $srvargs{'lock_file'} = $config->{'lock_file'} if $config->{'lock_file'};
+
     if ( $EUID == 0 ) {
         my $user  = $config->{'runas'};
         my $group = $config->{'rungroup'};

@@ -254,6 +254,7 @@ __END__
     "cache_dir"        : "/var/cache/auth_milter",      | Path to the shared cache directory
     "spool_dir"        : "/var/spool/auth_milter",      | Path to the shared spool directory
     "lib_dir"          : "/var/lib/auth_milter",        | Path to the shared lib directory
+    "lock_file"        : "/var/run/authmilter.lock",    | Optionally specify the location of the Net::Server lock file
 
     # metric_port and metric_host are deprecated.
     # please use metric_connection instead
