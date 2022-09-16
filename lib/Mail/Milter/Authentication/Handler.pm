@@ -2854,6 +2854,48 @@ sub change_header {
     $thischild->change_header( $key, $index, $value );
 }
 
+=low_method I<add_envelope_recipient ( $recipient )>
+
+Write an Add envelope recipient(RCPT To) packet to the MTA (calls Protocol object)
+
+=cut
+
+sub add_envelope_recipient {
+    my ( $self, $recipient ) = @_;
+    my $thischild = $self->{'thischild'};
+    my $config = $self->config();
+    return if $config->{'dryrun'};
+    $thischild->add_envelope_recipient( $recipient );
+}
+
+=low_method I<remove_envelope_recipient ( $recipient )>
+
+Write a Remove envelope recipient(RCPT To) packet to the MTA (calls Protocol object)
+
+=cut
+
+sub remove_envelope_recipient {
+    my ( $self, $recipient ) = @_;
+    my $thischild = $self->{'thischild'};
+    my $config = $self->config();
+    return if $config->{'dryrun'};
+    $thischild->remove_envelope_recipient( $recipient );
+}
+
+=low_method I<change_envelope_sender ( $sender )>
+
+Write a Change envelope sender(MAIL From) packet to the MTA (calls Protocol object)
+
+=cut
+
+sub change_envelope_sender {
+    my ( $self, $sender ) = @_;
+    my $thischild = $self->{'thischild'};
+    my $config = $self->config();
+    return if $config->{'dryrun'};
+    $thischild->change_envelope_sender( $sender );
+}
+
 1;
 
 __END__

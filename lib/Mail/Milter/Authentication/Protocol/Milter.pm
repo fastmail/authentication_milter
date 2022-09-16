@@ -324,6 +324,30 @@ sub insert_header {
     );
 }
 
+sub add_envelope_recipient {
+    my ( $self, $recipient ) = @_;
+    $self->write_packet( SMFIR_ADDRCPT,
+        $recipient
+        . "\0"
+    );
+}
+
+sub remove_envelope_recipient {
+    my ( $self, $recipient ) = @_;
+    $self->write_packet( SMFIR_DELRCPT,
+        $recipient
+        . "\0"
+    );
+}
+
+sub change_envelope_sender {
+    my ( $self, $sender ) = @_;
+    $self->write_packet( SMFIR_CHGFROM,
+        $sender
+        . "\0"
+    );
+}
+
 sub write_packet {
     my ( $self, $code, $data ) = @_;
     $self->logdebug ( "send command $code" );
@@ -384,6 +408,18 @@ Write a change header packet
 =item I<insert_header( $index, $key, $value )>
 
 Writa an insert header packet
+
+=item I<add_envelope_recipient( $recipient )>
+
+Write an add envelope recipient packet
+
+=item I<remove_envelope_recipie( $recipient )>
+
+Write a remove envelope recipient packet
+
+=item I<change_envelope_sender( $sender )>
+
+Writa an change envelope sender packet
 
 =item I<write_packet( $code, $data )>
 

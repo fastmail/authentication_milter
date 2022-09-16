@@ -19,7 +19,7 @@ sub new
 
 # define the various negotiation options
 # we'll put them here and not touch them so we can loop through and do bit wise checks later
-   $self->{action_types} = ['SMFIF_ADDHDRS', 'SMFIF_CHGBODY', 'SMFIF_ADDRCPT', 'SMFIF_DELRCPT', 'SMFIF_CHGHDRS', 'SMFIF_QUARANTINE'];
+   $self->{action_types} = ['SMFIF_ADDHDRS', 'SMFIF_CHGBODY', 'SMFIF_ADDRCPT', 'SMFIF_DELRCPT', 'SMFIF_CHGHDRS', 'SMFIF_QUARANTINE', 'SMFIF_CHGFROM'];
    $self->{content_types} = ['SMFIP_NOCONNECT', 'SMFIP_NOHELO', 'SMFIP_NOMAIL', 'SMFIP_NORCPT', 'SMFIP_NOBODY', 'SMFIP_NOHDRS', 'SMFIP_NOEOH'];
 
     bless($self,$class);
@@ -812,6 +812,8 @@ Allowable actions by the filter :
 =item SMFIF_DELRCPT - Delete recipients from the message.
 
 =item SMFIF_CHGHDRS - Change or delete message headers.
+
+=item SMFIF_CHGFROM - Change envelope sender(MAIL From).
 
 =back
 

@@ -60,6 +60,7 @@ use constant SMFIR_ACCEPT       => 'a';
 use constant SMFIR_REPLBODY     => 'b';
 use constant SMFIR_CONTINUE     => 'c';
 use constant SMFIR_DISCARD      => 'd';
+use constant SMFIR_CHGFROM      => 'e';
 use constant SMFIR_ADDHEADER    => 'h';
 use constant SMFIR_INSHEADER    => 'i';
 use constant SMFIR_CHGHEADER    => 'm';
@@ -94,6 +95,8 @@ use constant SMFIF_CHGHDRS      => 0x10;
 use constant SMFIF_MODBODY      => SMFIF_CHGBODY;
 use constant SMFIF_QUARANTINE   => 0x20;
 use constant SMFIF_SETSENDER    => 0x40;
+use constant SMFIF_CHGFROM      => 0x40;
+use constant SMFIF_ADDRCPT_PAR  => 0x80;
 
 use constant SMFI_V1_ACTS       => SMFIF_ADDHDRS|SMFIF_CHGBODY|SMFIF_ADDRCPT|SMFIF_DELRCPT;
 use constant SMFI_V2_ACTS       => SMFI_V1_ACTS|SMFIF_CHGHDRS;
@@ -133,6 +136,7 @@ our @EXPORT = qw(
     SMFIR_REPLBODY
     SMFIR_CONTINUE
     SMFIR_DISCARD
+    SMFIR_CHGFROM
     SMFIR_ADDHEADER
     SMFIR_INSHEADER
     SMFIR_CHGHEADER
@@ -164,6 +168,8 @@ our @EXPORT = qw(
     SMFIF_MODBODY
     SMFIF_QUARANTINE
     SMFIF_SETSENDER
+    SMFIF_CHGFROM
+    SMFIF_ADDRCPT_PAR
     SMFI_V1_ACTS
     SMFI_V2_ACTS
     SMFI_CURR_ACTS
