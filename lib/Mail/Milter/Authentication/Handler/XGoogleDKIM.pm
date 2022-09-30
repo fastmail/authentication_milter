@@ -79,7 +79,7 @@ sub eoh_callback {
 
     if ( $self->{'has_dkim'} == 0 ) {
         $self->metric_count( 'xgoogledkim_total', { 'result' => 'none' } );
-        $self->dbgout( 'XGoogleDKIMResult', 'No X-Google-DKIM headers', LOG_INFO );
+        $self->dbgout( 'XGoogleDKIMResult', 'No X-Google-DKIM headers', LOG_DEBUG );
         if ( !( $config->{'hide_none'} ) ) {
             my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'x-google-dkim' )->safe_set_value( 'none' );
             $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'no signatures found' ) );
@@ -180,7 +180,7 @@ sub eom_callback {
 
         $self->metric_count( 'xgoogledkim_total', { 'result' => $dkim_result } );
 
-        $self->dbgout( 'XGoogleDKIMResult', $dkim_result_detail, LOG_INFO );
+        $self->dbgout( 'XGoogleDKIMResult', $dkim_result_detail, LOG_DEBUG );
 
         if ( !$dkim->signatures() ) {
             if ( !( $config->{'hide_none'} && $dkim_result eq 'none' ) ) {

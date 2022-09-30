@@ -48,7 +48,7 @@ sub header_callback {
 
     if ( lc $header eq 'bimi-selector' ) {
         if ( exists $self->{'selector'} ) {
-            $self->dbgout( 'BIMIFail', 'Multiple BIMI-Selector fields', LOG_INFO );
+            $self->dbgout( 'BIMIFail', 'Multiple BIMI-Selector fields', LOG_DEBUG );
             my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'fail' );
             $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'multiple BIMI-Selector fields in message' ) );
             $self->add_auth_header( $header );
@@ -61,7 +61,7 @@ sub header_callback {
     }
     if ( lc $header eq 'from' ) {
         if ( exists $self->{'from_header'} ) {
-            $self->dbgout( 'BIMIFail', 'Multiple RFC5322 from fields', LOG_INFO );
+            $self->dbgout( 'BIMIFail', 'Multiple RFC5322 from fields', LOG_DEBUG );
             my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'fail' );
             $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'multiple RFC5322 from fields in message' ) );
             $self->add_auth_header( $header );
@@ -127,7 +127,7 @@ sub eom_callback {
         }
         else {
             if ( scalar @$DMARCResults != 1 ) {
-                $self->dbgout( 'BIMIFail', 'Multiple DMARC Results', LOG_INFO );
+                $self->dbgout( 'BIMIFail', 'Multiple DMARC Results', LOG_DEBUG );
                 my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'bimi' )->safe_set_value( 'fail' );
                 $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'multiple DMARC results for message' ) );
                 $self->add_auth_header( $header );
@@ -233,14 +233,14 @@ sub eom_callback {
                 if ( $config->{rbl_allowlist} ) {
                     my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
                     unless ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_allowlist'} ) ) {
-                        $self->dbgout( 'BIMISkip', 'Not on allowlist', LOG_INFO );
+                        $self->dbgout( 'BIMISkip', 'Not on allowlist', LOG_DEBUG );
                         $Skip = 'Local policy; not allowed';
                     }
                 }
                 elsif ( $config->{rbl_blocklist} ) {
                     my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
                     if ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_blocklist'} ) ) {
-                        $self->dbgout( 'BIMISkip', 'On blocklist', LOG_INFO );
+                        $self->dbgout( 'BIMISkip', 'On blocklist', LOG_DEBUG );
                         $Skip = 'Local policy; blocked';
                     }
                 }
@@ -289,7 +289,7 @@ sub eom_callback {
                 ) {
                     my $OrgDomain = $self->get_object('dmarc')->get_organizational_domain($Domain);
                     unless ( $self->rbl_check_domain( $OrgDomain, $config->{'rbl_no_evidence_allowlist'} ) ) {
-                        $self->dbgout( 'BIMISkip', 'Not on No Evidence Allowlist', LOG_INFO );
+                        $self->dbgout( 'BIMISkip', 'Not on No Evidence Allowlist', LOG_DEBUG );
                         $Skip = 'Local policy; not allowed without evidence';
                     }
                 }

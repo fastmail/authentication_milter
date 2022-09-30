@@ -407,7 +407,7 @@ sub eoh_callback {
 
     unless ($self->{'has_arc'}) {
         $self->metric_count( 'arc_total', { 'result' => 'none' } );
-        $self->dbgout( 'ARCResult', 'No ARC headers', LOG_INFO );
+        $self->dbgout( 'ARCResult', 'No ARC headers', LOG_DEBUG );
         unless ($config->{'hide_none'}) {
             my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( 'none' );
             $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'no signatures found' ) );
@@ -530,7 +530,7 @@ sub eom_callback {
 
         $self->metric_count( 'arc_total', { 'result' => $arc_result } );
 
-        $self->dbgout( 'ARCResult', $arc_result_detail, LOG_INFO );
+        $self->dbgout( 'ARCResult', $arc_result_detail, LOG_DEBUG );
 
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'arc' )->safe_set_value( $arc_result );
 
@@ -706,7 +706,7 @@ sub addheader_callback {
 
         $self->metric_count( 'arcseal_total', { 'result' => $arcseal_result } );
 
-        $self->dbgout( 'ARCSealResult', $arcseal_result_detail, LOG_INFO );
+        $self->dbgout( 'ARCSealResult', $arcseal_result_detail, LOG_DEBUG );
 
         # we need to extract the headers from ARCSeal and re-format them
         # back to the format that pre_headers expects
