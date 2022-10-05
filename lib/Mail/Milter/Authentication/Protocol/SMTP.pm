@@ -60,7 +60,7 @@ sub smtp_init {
     $handler->set_symbol( 'C', 'i', $self->smtp_queue_id() );
 
     $smtp->{'count'}++ ;
-    $handler->dbgout( 'SMTP Transaction count', $self->{'count'} . '.' . $smtp->{'count'} , LOG_INFO );
+    $handler->dbgout( 'SMTP Transaction count', $self->{'count'} . '.' . $smtp->{'count'} , LOG_DEBUG );
 
     $smtp->{'init_required'} = 0;
 }
