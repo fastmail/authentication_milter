@@ -1,7 +1,7 @@
 # Test configuration for auth milter hide_none smtp
 {
 
-    "debug"                           : 1,
+    "debug"                           : 0,
     "dryrun"                          : 0,
     "logtoerr"                        : 1,
     "error_log"                       : "tmp/smtp.err",

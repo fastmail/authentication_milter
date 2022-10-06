@@ -99,7 +99,7 @@ sub eoh_callback {
 
         my $result_code = $spf_result->code();
         $self->metric_count( 'senderid_total',  {'result' => $result_code } );
-        $self->dbgout( 'SenderIdCode', $result_code, LOG_INFO );
+        $self->dbgout( 'SenderIdCode', $result_code, LOG_DEBUG );
 
         if ( ! ( $config->{'hide_none'} && $result_code eq 'none' ) ) {
             my $auth_header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'senderid' )->safe_set_value( $result_code );

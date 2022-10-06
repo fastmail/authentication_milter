@@ -53,7 +53,7 @@ sub envfrom_callback {
     my $trusted = $self->get_symbol('{cert_issuer}') ? ', trusted' : '';
 
     if ($version) {
-        $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits$trusted", LOG_INFO );
+        $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits$trusted", LOG_DEBUG );
         $self->{'is_encrypted'} = 1;
 
         my $metric_data = {};
@@ -106,7 +106,7 @@ sub header_callback {
     my $bits    = $3;
 
     if ($version) {
-        $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits", LOG_INFO );
+        $self->dbgout( 'EncryptedAs', "$version, $cipher, $bits bits", LOG_DEBUG );
         $self->{'is_encrypted'} = 1;
 
         my $metric_data = {};

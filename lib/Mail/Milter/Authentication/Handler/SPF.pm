@@ -177,7 +177,7 @@ sub envfrom_callback {
         $self->{'dmarc_scope'}  = $scope;
         $self->{'dmarc_result'} = $result_code;
 
-        $self->dbgout( 'SPFCode', $result_code, LOG_INFO );
+        $self->dbgout( 'SPFCode', $result_code, LOG_DEBUG );
 
         if ( !( $config->{'hide_received-spf_header'} ) ) {
             if ( !( $config->{'hide_none'} && $result_code eq 'none' ) ) {

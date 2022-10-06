@@ -2367,7 +2367,7 @@ sub get_my_authserv_id {
     my ($self) = @_;
     my $config = $self->config();
     if ( exists( $config->{'authserv_id'} ) && $config->{'authserv_id'} ) {
-	return $config->{'authserv_id'};
+        return $config->{'authserv_id'};
     }
     return $self->get_my_hostname();
 }
@@ -2587,7 +2587,7 @@ sub add_headers {
     if ( exists( $top_handler->{'pre_headers'} ) ) {
         foreach my $header ( @{ $top_handler->{'pre_headers'} } ) {
             $self->dbgout( 'PreHeader',
-                $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
+                $header->{'field'} . ': ' . $header->{'value'}, LOG_DEBUG );
             $self->insert_header( 1, $header->{'field'}, $header->{'value'} );
         }
     }
@@ -2595,7 +2595,7 @@ sub add_headers {
     if ( exists( $top_handler->{'add_headers'} ) ) {
         foreach my $header ( @{ $top_handler->{'add_headers'} } ) {
             $self->dbgout( 'AddHeader',
-                $header->{'field'} . ': ' . $header->{'value'}, LOG_INFO );
+                $header->{'field'} . ': ' . $header->{'value'}, LOG_DEBUG );
             $self->add_header( $header->{'field'}, $header->{'value'} );
         }
     }
@@ -2640,6 +2640,7 @@ sub add_auth_headers_of_type($self,$type) {
             $header_text = $self->get_my_authserv_id();
             $header_text .= ";\n    ";
             $header_text .= join( ";\n    ", map { $self->_stringify_header( $_ ) } @auth_headers );
+            $self->dbgout( 'auth header added: $type: ',$header_text, LOG_INFO );
         }
         else {
             $header_obj->set_value( Mail::AuthenticationResults::Header::AuthServID->new()->safe_set_value( $self->get_my_authserv_id() ) );
@@ -2660,6 +2661,12 @@ sub add_auth_headers_of_type($self,$type) {
                 $header_obj->set_fold_at( $config->{'header_fold_at'} );
             }
             $header_text = $header_obj->as_string();
+
+            # Log a single line version of the added auth header
+            $header_obj->set_indent_style('none');
+            $header_obj->set_fold_at(9999);
+            my $header_log_text = $header_obj->as_string();
+            $self->dbgout( "A-R: $type",$header_log_text, LOG_INFO );
         }
 
         my ($header_type,$header_type_postfix) = split /:/, $type;

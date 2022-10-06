@@ -62,7 +62,7 @@ sub is_whitelisted {
                         if ( $got_spf_result eq 'pass' ) {
                             my $got_spf_domain = $spf->{'dmarc_domain'};
                             if ( $self->rbl_check_domain( $got_spf_domain, $rbl ) ) {
-                                $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                                $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_DEBUG );
                                 $whitelisted = 1;
                             }
                         }
@@ -74,14 +74,14 @@ sub is_whitelisted {
                 my $dkim_handler = $self->get_handler('DKIM');
                 foreach my $dkim_domain( sort keys %{ $dkim_handler->{'valid_domains'}} ) {
                     if ( $self->rbl_check_domain( $dkim_domain, $rbl ) ) {
-                        $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                        $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_DEBUG );
                         $whitelisted = 1;
                     }
                 }
             }
             elsif ( $type eq 'ip' ) {
                 if ( $self->rbl_check_ip( $ip_obj, $rbl ) ) {
-                    $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                    $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_DEBUG );
                     $whitelisted = 1;
                 }
             }
@@ -90,7 +90,7 @@ sub is_whitelisted {
             my ( $dummy, $dkim_domain ) = split( /:/, $entry, 2 );
             my $dkim_handler = $self->get_handler('DKIM');
             if ( exists( $dkim_handler->{'valid_domains'}->{ lc $dkim_domain } ) ) {
-                $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_DEBUG );
                 $whitelisted = 1;
             }
         }
@@ -103,7 +103,7 @@ sub is_whitelisted {
                     if ( $got_spf_result eq 'pass' ) {
                         my $got_spf_domain = $spf->{'dmarc_domain'};
                         if ( lc $got_spf_domain eq lc $spf_domain ) {
-                            $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                            $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_DEBUG );
                             $whitelisted = 1;
                         }
                     }
@@ -125,7 +125,7 @@ sub is_whitelisted {
                     || $is_overlap == $IP_IDENTICAL
                   )
                 {
-                    $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_INFO );
+                    $self->dbgout( 'DMARCReject', "Whitelist hit " . $entry, LOG_DEBUG );
                     $whitelisted = 1;
                 }
             }
@@ -443,7 +443,7 @@ sub _process_dmarc_for {
     $self->set_object('dmarc_results',$dmarc_results,1);
 
     my $dmarc_code   = $dmarc_result->result;
-    $self->dbgout( 'DMARCCode', $dmarc_code, LOG_INFO );
+    $self->dbgout( 'DMARCCode', $dmarc_code, LOG_DEBUG );
 
     my $dmarc_disposition = eval { $dmarc_result->disposition() };
     if ( my $error = $@ ) {
@@ -452,10 +452,10 @@ sub _process_dmarc_for {
             $self->log_error( 'DMARCPolicyError ' . $error );
         }
     }
-    $self->dbgout( 'DMARCDisposition', $dmarc_disposition, LOG_INFO );
+    $self->dbgout( 'DMARCDisposition', $dmarc_disposition, LOG_DEBUG );
     my $dmarc_disposition_evaluated = $dmarc_disposition;
 
-    $self->dbgout( 'DMARCSubdomain', $is_subdomain ? 'yes' : 'no', LOG_INFO );
+    $self->dbgout( 'DMARCSubdomain', $is_subdomain ? 'yes' : 'no', LOG_DEBUG );
 
     my $dmarc_policy = eval{ $dmarc_result->published()->p(); };
     $self->handle_exception( $@ );
@@ -465,7 +465,7 @@ sub _process_dmarc_for {
     $self->handle_exception( $@ );
     # If we didn't get a result, set to none.
     $dmarc_sub_policy = 'default' if ! $dmarc_sub_policy;
-    $self->dbgout( 'DMARCPolicy', "$dmarc_policy $dmarc_sub_policy", LOG_INFO );
+    $self->dbgout( 'DMARCPolicy', "$dmarc_policy $dmarc_sub_policy", LOG_DEBUG );
 
     my $policy_override;
 
@@ -520,11 +520,11 @@ sub _process_dmarc_for {
                 }
               }
             }
-            $self->dbgout( 'DMARCReject', "Policy overridden using ARC Chain: $comment", LOG_INFO );
+            $self->dbgout( 'DMARCReject', "Policy overridden using ARC Chain: $comment", LOG_DEBUG );
             $dmarc_result->reason( 'type' => 'local_policy', 'comment' => $comment );
         }
         elsif ( $is_whitelisted ) {
-            $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_INFO );
+            $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_DEBUG );
             $policy_override = 'trusted_forwarder';
             $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local white list' );
             $dmarc_result->disposition('none');
@@ -532,10 +532,10 @@ sub _process_dmarc_for {
         }
         elsif ( $config->{'no_list_reject'} && $self->{'is_list'} ) {
             if ( $config->{'arc_before_list'} && $have_arc && $self->get_handler('ARC')->get_trusted_arc_authentication_results ) {
-                $self->dbgout( 'DMARCReject', "Policy reject not overridden for list mail with trusted ARC chain", LOG_INFO );
+                $self->dbgout( 'DMARCReject', "Policy reject not overridden for list mail with trusted ARC chain", LOG_DEBUG );
             }
             else {
-                $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_INFO );
+                $self->dbgout( 'DMARCReject', "Policy reject overridden for list mail", LOG_DEBUG );
                 $policy_override = 'mailing_list';
                 $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to local mailing list policy' );
                 my $no_list_reject_disposition = $config->{ 'no_list_reject_disposition' } // 'none';
@@ -547,7 +547,7 @@ sub _process_dmarc_for {
         if ( $dmarc_disposition eq 'reject' ) {
             if ( $config->{'hard_reject'} ) {
                 $self->reject_mail( '550 5.7.0 DMARC policy violation' );
-                $self->dbgout( 'DMARCReject', "Policy reject", LOG_INFO );
+                $self->dbgout( 'DMARCReject', "Policy reject", LOG_DEBUG );
             }
             else {
                 $policy_override = 'local_policy';
@@ -788,7 +788,7 @@ sub header_callback {
 
     if ( lc $header eq 'from' ) {
         if ( exists $self->{'from_header'} ) {
-            $self->dbgout( 'DMARCFail', 'Multiple RFC5322 from fields', LOG_INFO );
+            $self->dbgout( 'DMARCFail', 'Multiple RFC5322 from fields', LOG_DEBUG );
         }
         $self->{'from_header'} = $value;
         push @{ $self->{ 'from_headers' } }, $value;
