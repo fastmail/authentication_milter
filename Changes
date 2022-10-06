@@ -1,6 +1,9 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Changed logging, Most log entries are now only sent in
+          debugging mode (LOG_DEBUG), logging of Authentication-Results
+          added has a new format.
 
 3.20220914 2022-09-14 00:33:40+00:00 UTC
   - Core: Allow the location of the Net::Server lock file to be specified
