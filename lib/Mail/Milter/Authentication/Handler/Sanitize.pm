@@ -131,7 +131,7 @@ sub header_callback {
             };
             if ( my $error = $@ ) {
                 $self->handle_exception($error);
-                $self->log_error("Error parsing existing Authentication-Results header: $error");
+                $self->log_error("Error parsing existing Authentication-Results header: $value");
             }
 
             my $remove = 0;
