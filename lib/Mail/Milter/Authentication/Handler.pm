@@ -2574,8 +2574,17 @@ sub add_headers {
     my @types;
     push @types, keys $top_handler->{'c_auth_headers'}->%* if exists $top_handler->{'c_auth_headers'};
     push @types, keys $top_handler->{'auth_headers'}->%*   if exists $top_handler->{'auth_headers'};
+
+    my $queue_id = $self->get_symbol('i') || q{--};
+    $self->{extended_log} = {ar => [], queue_id => $queue_id};
+
     for my $type (uniq sort @types) {
         $self->add_auth_headers_of_type($type);
+    }
+
+    if ($config->{extended_log}) {
+        my $j = JSON->new->canonical->utf8;
+        $self->dbgout( 'ARex',$j->encode($self->{extended_log}), LOG_INFO );
     }
 
     if ( my $reason = $self->get_quarantine_mail() ) {
@@ -2666,7 +2675,8 @@ sub add_auth_headers_of_type($self,$type) {
             $header_obj->set_indent_style('none');
             $header_obj->set_fold_at(9999);
             my $header_log_text = $header_obj->as_string();
-            $self->dbgout( "A-R: $type",$header_log_text, LOG_INFO );
+            $self->dbgout( "A-R: $type",$header_log_text, LOG_INFO ) unless $config->{extended_log} && ! $config->{legacy_log};
+            push $self->{extended_log}->{ar}->@*, {type => $type, payload =>$header_obj->_as_hashref} if $config->{extended_log};
         }
 
         my ($header_type,$header_type_postfix) = split /:/, $type;
