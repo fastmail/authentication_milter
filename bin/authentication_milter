@@ -212,6 +212,9 @@ __END__
     "logtoerr"  : 0,                                    | Also write logs to STDERR
     "error_log" : "/var/log/authentication_milter.err", | Capture STDERR to logfile
 
+    "extended_log" : 1,                                 | Log added Authentication-Results headers in JSON format
+    "legacy_log"   : 1,                                 | When logging extended Authentication-Results logs, also log in legacy format
+
     "errors_to"   : "John Smith <john@example.com>",    | If set, send exception emails when authmilter encounters
     "errors_from" : "AuthMilter <system@example.com>",  | an unexpected error or timeout
     "errors_headers" : {}                               | optional headers for error emails

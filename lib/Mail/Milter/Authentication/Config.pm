@@ -53,6 +53,8 @@ sub default_config {
         'dryrun'                          => 0,
         'logtoerr'                        => 0,
         'error_log'                       => '/var/log/authentication_milter.err',
+        'extended_log'                    => 1,
+        'legacy_log'                      => 0,
         'connection'                      => 'inet:12345@localhost',
         'umask'                           => '0000',
         'runas'                           => 'nobody',
