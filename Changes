@@ -4,6 +4,8 @@ Revision history for Mail-Milter-Authentication
   - Core: Added option to log all added Authentication-Results headers
           in JSON format for processing with Mail::AuthenticationResults
           including option to also log in legacy format to allow transition.
+  - Core: When we see parse errors for AR existing headers, log the header
+          not the exception
 
   [New config items]
     extended_log - Log added Authentication-Results headers in JSON format
