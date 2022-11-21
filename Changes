@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20221121 2022-11-21 04:08:15+00:00 UTC
   - Core: Added option to log all added Authentication-Results headers
           in JSON format for processing with Mail::AuthenticationResults
           including option to also log in legacy format to allow transition.
