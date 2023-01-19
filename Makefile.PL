@@ -114,6 +114,9 @@ my %WriteMakefileArgs = (
     "lib" => 0
   },
   "VERSION" => "3.20221121",
+  "clean" => {
+    "FILES" => "t/tmp"
+  },
   "test" => {
     "TESTS" => "t/*.t"
   }
