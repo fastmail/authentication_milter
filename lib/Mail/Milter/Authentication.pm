@@ -365,6 +365,10 @@ sub get_client_proto($self,@) {
         return $proto;
     }
 
+    if ($socket->isa("IO::Socket::IP")) {
+        return "TCP";
+    }
+
     if ($socket->isa("IO::Socket::INET")) {
         return "TCP";
     }
