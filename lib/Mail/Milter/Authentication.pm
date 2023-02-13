@@ -162,6 +162,7 @@ sub pre_loop_hook($self,@) {
 
     # Load handlers
     my $config = get_config();
+    $self->{'config'} = $config;
     foreach my $name ( @{$config->{'load_handlers'}} ) {
         $self->load_handler( $name );
 
@@ -209,6 +210,7 @@ Hook which runs in parent before it forks children.
 sub run_n_children_hook($self,@) {
     # Load handlers
     my $config = get_config();
+    $self->{'config'} = $config;
     $self->{metric}->re_register_metrics;
     foreach my $name ( @{$config->{'load_handlers'}} ) {
 

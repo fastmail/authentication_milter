@@ -139,9 +139,9 @@ sub pre_loop_setup {
     my ( $self ) = @_;
     $PSL_CHECKED_TIME = time;
     my $dmarc = Mail::DMARC::PurePerl->new();
-    my $config = $self->{'config'};
+    my $config = $self->handler_config();
     if ( exists ( $config->{ 'config_file' } ) ) {
-        $self->log_error( 'DMARC config file does not exist' ) if ! exists $config->{ 'config_file' };
+        $self->log_error( 'DMARC config file does not exist' ) if ! -e $config->{ 'config_file' };
         $dmarc->config( $config->{ 'config_file' } );
     }
     my $psl = eval { $dmarc->get_public_suffix_list(); };
@@ -158,9 +158,9 @@ sub pre_fork_setup {
     my ( $self ) = @_;
     my $now = time;
     my $dmarc = Mail::DMARC::PurePerl->new();
-    my $config = $self->{'config'};
+    my $config = $self->handler_config();
     if ( exists ( $config->{ 'config_file' } ) ) {
-        $self->log_error( 'DMARC config file does not exist' ) if ! exists $config->{ 'config_file' };
+        $self->log_error( 'DMARC config file does not exist' ) if ! -e $config->{ 'config_file' };
         $dmarc->config( $config->{ 'config_file' } );
     }
     my $check_time = 60*10; # Check no more often than every 10 minutes
@@ -669,20 +669,20 @@ sub get_dmarc_object {
 sub new_dmarc_object {
     my ( $self ) = @_;
 
-    my $config = $self->{'config'};
+    my $config = $self->handler_config();
     my $dmarc;
 
     eval {
         $dmarc = Mail::DMARC::PurePerl->new();
         if ( exists ( $config->{ 'config_file' } ) ) {
-            $self->log_error( 'DMARC config file does not exist' ) if ! exists $config->{ 'config_file' };
+            $self->log_error( 'DMARC config file does not exist' ) if ! -e $config->{ 'config_file' };
             $dmarc->config( $config->{ 'config_file' } );
         }
         if ( $dmarc->can('set_resolver') ) {
             my $resolver = $self->get_object('resolver');
             $dmarc->set_resolver($resolver);
         }
-        if ( $config->{'debug'} && $config->{'logtoerr'} ) {
+        if ( $self->config()->{'debug'} && $self->config()->{'logtoerr'} ) {
             $dmarc->verbose(1);
         }
         $self->set_object('dmarc', $dmarc,1 );
