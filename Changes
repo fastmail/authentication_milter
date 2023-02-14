@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20230214 2023-02-14 23:31:27+00:00 UTC
   - Core: Fix get_client_proto for Net::Server>=2.011
           Thanks to @J5lx
 
