@@ -1,6 +1,13 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Fix get_client_proto for Net::Server>=2.011
+          Thanks to @J5lx
+
+  - DMARC: Fix config file existence checks.
+    DMARC: Fix config lookups for config_file and verbosity.
+    Core: Set config property in parent hooks.
+          Thanks to @dev-aaront-org
 
 3.20221121 2022-11-21 04:08:15+00:00 UTC
   - Core: Added option to log all added Authentication-Results headers
