@@ -71,11 +71,11 @@ sub connect_callback {
     if ($packet) {
         foreach my $rr ( $packet->answer ) {
             if ( $rr->type eq "CNAME" ) {
-                push @cname_hosts, $rr->rdatastr;
+                push @cname_hosts, $rr->rdstring;
                 push @error_list, 'Found CNAME in PTR response';
             }
             if ( $rr->type eq "PTR" ) {
-                $ptr_list->{ $rr->rdatastr } = [];
+                $ptr_list->{ $rr->rdstring } = [];
             }
         }
     }
@@ -95,7 +95,7 @@ sub connect_callback {
                 # Because anything more is probably busted anyway
                 #}
                 if ( $rr->type eq "PTR" ) {
-                    $ptr_list->{ $rr->rdatastr } = [];
+                    $ptr_list->{ $rr->rdstring } = [];
                 }
             }
         }
@@ -246,12 +246,12 @@ sub _address_for_domain {
     if ($packet) {
         foreach my $rr ( $packet->answer ) {
             if (  lc $rr->type eq 'cname' ) {
-                $cname = $rr->rdatastr;
+                $cname = $rr->rdstring;
                 # Multiple CNAMES are broken, but we don't check for that
                 # We just take the last one we found
             }
             if ( lc $rr->type eq lc $type ) {
-                push @ip_list, $rr->rdatastr;
+                push @ip_list, $rr->rdstring;
             }
         }
     }
