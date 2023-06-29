@@ -252,19 +252,20 @@ sub eom_callback {
               )
             {
 
-                my $key_size = 0;
-                my $key_type = q{};
                 my $selector = eval{ $signature->selector } // q{};
-                eval {
-                    my $key = $signature->get_public_key();
-                    $key_size = $key->size();
-                    $key_type = $key->type();
-                };
+                my $key = eval {$signature->get_public_key()};
+                my $key_type = eval{ $key->type() } // 'unknown';
+                # Key size for ed25519 does not make sense
+                my $key_size = $key_type eq 'rsa' ? ( eval{ $key->size() } // 0 ) : 0;
 
-                my $hash_algorithm   = eval { $signature->hash_algorithm(); };
-                my $canonicalization = eval { $signature->canonicalization(); };
+                my $hash_algorithm   = eval { $signature->hash_algorithm(); } // '';
+                my $canonicalization = eval { $signature->canonicalization(); } // '';
 
-                my $key_data = $key_size . '-bit ' . $key_type . ' key ' . $hash_algorithm;
+                my @key_data_parts;
+                push @key_data_parts, $key_size . '-bit' if $key_size;
+                push @key_data_parts, "$key_type key";
+                push @key_data_parts, $hash_algorithm if $hash_algorithm;
+                my $key_data = join ' ', @key_data_parts;
 
                 $self->metric_count( 'dkim_signatures', {
                     'type'             => $type,
@@ -282,9 +283,9 @@ sub eom_callback {
                         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.d' )->safe_set_value( $signature->domain() ) );
                         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.b' )->safe_set_value( substr( $signature->data(), 0, 8 ) ) );
                         if ( $config->{'extra_properties'} ) {
-                            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-bits' )->safe_set_value( $key_size ) );
+                            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-bits' )->safe_set_value( $key_size ) ) if $key_size;
                             $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-keytype' )->safe_set_value( $key_type ) );
-                            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-algorithm' )->safe_set_value( $hash_algorithm ) );
+                            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-algorithm' )->safe_set_value( $hash_algorithm ) ) if $hash_algorithm;
                             $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-selector' )->safe_set_value( $selector ) );
                         }
                         $self->add_auth_header($header);
@@ -296,10 +297,10 @@ sub eom_callback {
                     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.d' )->safe_set_value( $signature->domain() ) );
                     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.i' )->safe_set_value( $signature->identity() ) );
                     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.b' )->safe_set_value( substr( $signature->data(), 0, 8 ) ) );
-                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.a' )->safe_set_value( $key_type . '-' . $hash_algorithm ) );
+                    $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.a' )->safe_set_value( $key_type . '-' . $hash_algorithm ) ) if ($key_type && $hash_algorithm);
                     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.s' )->safe_set_value( $selector ) );
                     if ( $config->{'extra_properties'} ) {
-                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-bits' )->safe_set_value( $key_size ) );
+                        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-bits' )->safe_set_value( $key_size ) ) if $key_size;
                     }
                     $self->add_auth_header($header);
                 }
