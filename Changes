@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20230629 2023-06-29 23:44:32+00:00 UTC
   - DKIM: Prepare for Ed25519 support in Mail::DKIM
           Ed25519 key types do not have a size method
           which can lead to confusing results.
