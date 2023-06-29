@@ -1,6 +1,9 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - DKIM: Prepare for Ed25519 support in Mail::DKIM
+          Ed25519 key types do not have a size method
+          which can lead to confusing results.
 
 3.20230214 2023-02-14 23:31:27+00:00 UTC
   - Core: Fix get_client_proto for Net::Server>=2.011
