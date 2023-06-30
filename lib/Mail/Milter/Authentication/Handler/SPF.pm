@@ -79,8 +79,10 @@ sub envfrom_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
 
-    $self->{'spfu_from_domain'} = '';
-    $self->{'spfu_chain'}       = [];
+    if ( $config->{'spfu_detection'} ) {
+        $self->{'spfu_from_domain'} = '';
+        $self->{'spfu_chain'}       = [];
+    }
     delete $self->{'spf_header'};
 
     my $spf_server = $self->get_object('spf_server');
@@ -367,7 +369,8 @@ Implements the SPF standard checks.
             "hide_received-spf_header" : 0,             | Do not add the "Received-SPF" header
             "hide_none"                : 0,             | Hide auth line if the result is 'none'
                                                         | if not hidden at all
-            "best_guess"               : 0              | Fallback to Org domain for SPF checks
+            "best_guess"               : 0,             | Fallback to Org domain for SPF checks
                                                         | if result is none.
+            "spfu_detection"           : 0              | Add some mitigation for SPF upgrade attacks
         },
 
