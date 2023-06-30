@@ -13,6 +13,7 @@ sub default_config {
         'hide_received-spf_header' => 0,
         'hide_none'                => 0,
         'best_guess'               => 0,
+        'spfu_detection'           => 0,
     };
 }
 
@@ -335,9 +336,15 @@ sub spfu_checks {
     }
 
     if ( $self->{'spfu_detected'} ) {
-        $self->{'dmarc_result'} = 'fail';
-        $self->{'spf_header'}->safe_set_value( 'fail' );
-        $self->{'spf_header'}->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'spf pass downgraded due to suspicious path' ) );
+        my $config = $self->handler_config();
+        if ( $config->{'spfu_detection'} == 1 ) {
+            $self->{'dmarc_result'} = 'fail';
+            $self->{'spf_header'}->safe_set_value( 'fail' );
+            $self->{'spf_header'}->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'spf pass downgraded due to suspicious path' ) );
+        }
+        else {
+            $self->{'spf_header'}->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'aligned spf fail in history' ) );
+        }
     }
 }
 
@@ -372,5 +379,8 @@ Implements the SPF standard checks.
             "best_guess"               : 0,             | Fallback to Org domain for SPF checks
                                                         | if result is none.
             "spfu_detection"           : 0              | Add some mitigation for SPF upgrade attacks
+                                                        | 0 = off (default)
+                                                        | 1 = mitigate
+                                                        | 2 = report only (any value other than 1)
         },
 
