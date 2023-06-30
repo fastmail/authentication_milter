@@ -85,11 +85,12 @@ sub envfrom_callback {
         $self->{'spfu_chain'}       = [];
     }
     delete $self->{'spf_header'};
+    delete $self->{'spf_metric'};
 
     my $spf_server = $self->get_object('spf_server');
     if ( ! $spf_server ) {
         $self->log_error( 'SPF Setup Error' );
-        $self->metric_count( 'spf_total', { 'result' => 'error' } );
+        $self->{ 'spf_metric' } = 'error';
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( 'temperror' );
         $self->{'spf_header'} = $header;
         return;
@@ -167,7 +168,7 @@ sub envfrom_callback {
             }
         }
 
-        $self->metric_count( 'spf_total', { 'result' => $result_code } );
+        $self->{ 'spf_metric' } = $result_code;
 
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( $result_code );
         if ( $auth_domain ) {
@@ -202,7 +203,7 @@ sub envfrom_callback {
         $self->{'failmode'} = 1;
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( 'temperror' );
         $self->{'spf_header'} = $header;
-        $self->metric_count( 'spf_total', { 'result' => 'error' } );
+        $self->{'spf_metric'} = 'error';
     }
 }
 
@@ -239,6 +240,7 @@ sub eoh_callback {
     };
     $self->handle_exception( $@ );
     $self->add_auth_header($self->{'spf_header'});
+    $self->metric_count( 'spf_total', { 'result' => $self->{'spf_metric'} } ) if $self->{'spf_metric'};
 }
 
 sub spfu_checks {
@@ -337,6 +339,7 @@ sub spfu_checks {
 
     if ( $self->{'spfu_detected'} ) {
         my $config = $self->handler_config();
+        $self->{'spf_metric'} = 'spf_upgrade';
         if ( $config->{'spfu_detection'} == 1 ) {
             $self->{'dmarc_result'} = 'fail';
             $self->{'spf_header'}->safe_set_value( 'fail' );
@@ -354,6 +357,7 @@ sub close_callback {
     delete $self->{'spfu_chain'};
     delete $self->{'spfu_detected'};
     delete $self->{'spf_header'};
+    delete $self->{'spf_metric'};
     delete $self->{'dmarc_domain'};
     delete $self->{'dmarc_scope'};
     delete $self->{'dmarc_result'};
