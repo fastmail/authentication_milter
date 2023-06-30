@@ -245,7 +245,11 @@ sub _process_arc_dmarc_for {
         my $spf = $self->get_handler('SPF');
         if ( $spf ) {
 
-            if ( $spf->{'dmarc_result'} eq 'pass' && lc $spf->{'dmarc_domain'} eq lc $header_domain ) {
+            if ( $spf->{'spfu_detected' } ) {
+                # We detected a possible SPF upgrade, do not trust any SPF results for re-evaluation
+                $dmarc->{'spf'} = [];
+            }
+            elsif ( $spf->{'dmarc_result'} eq 'pass' && lc $spf->{'dmarc_domain'} eq lc $header_domain ) {
                 # Have a matching local entry, use it.
                 ## TODO take org domains into consideration here
                 $dmarc->spf(
