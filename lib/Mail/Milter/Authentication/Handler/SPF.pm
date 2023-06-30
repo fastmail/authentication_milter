@@ -79,12 +79,16 @@ sub envfrom_callback {
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
 
+    $self->{'spfu_from_domain'} = '';
+    $self->{'spfu_chain'}       = [];
+    delete $self->{'spf_header'};
+
     my $spf_server = $self->get_object('spf_server');
     if ( ! $spf_server ) {
         $self->log_error( 'SPF Setup Error' );
         $self->metric_count( 'spf_total', { 'result' => 'error' } );
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( 'temperror' );
-        $self->add_auth_header($header);
+        $self->{'spf_header'} = $header;
         return;
     }
 
@@ -169,7 +173,7 @@ sub envfrom_callback {
         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->safe_set_value( $self->get_address_from( $env_from ) ) );
         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->safe_set_value( $self->{ 'helo_name' } ) );
         if ( !( $config->{'hide_none'} && $result_code eq 'none' ) ) {
-            $self->add_auth_header($header);
+            $self->{'spf_header'} = $header;
         }
 
         # Set for DMARC
@@ -194,13 +198,153 @@ sub envfrom_callback {
         $self->log_error( 'SPF Error ' . $error );
         $self->{'failmode'} = 1;
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( 'temperror' );
-        $self->add_auth_header($header);
+        $self->{'spf_header'} = $header;
         $self->metric_count( 'spf_total', { 'result' => 'error' } );
+    }
+}
+
+sub header_callback {
+    my ( $self, $header, $value ) = @_;
+
+    return unless exists $self->{'spfu_chain'};
+    return unless $self->{'dmarc_result'} eq 'pass';
+
+    my $lc_header = lc $header;
+
+    if ( $lc_header eq 'from') {
+        my $spfu_from_domain = lc $self->get_address_from($value);
+        $spfu_from_domain = $self->get_domain_from($spfu_from_domain) if $spfu_from_domain =~ /\@/;
+        $self->{'spfu_from_domain'} = $spfu_from_domain;
+
+        return;
+    }
+
+    if ( $lc_header eq 'received-spf' ||
+         $lc_header eq 'x-ms-exchange-authentication-results' ||
+         $lc_header eq 'arc-authentication-results' ||
+         $lc_header =~ 'authentication-results$'
+    ) {
+        push $self->{'spfu_chain'}->@*, { header => $header, value => $value };
+    }
+}
+
+sub eoh_callback {
+    my ($self) = @_;
+    return unless $self->{'spf_header'};
+    eval {
+        $self->spfu_checks();
+    };
+    $self->handle_exception( $@ );
+    $self->add_auth_header($self->{'spf_header'});
+}
+
+sub spfu_checks {
+    my ($self) = @_;
+
+    return unless exists $self->{'spfu_chain'};
+    return unless exists $self->{'spfu_from_domain'};
+    return unless $self->{'dmarc_result'} eq 'pass';
+    my $dmarc_object;
+    if ( $self->is_handler_loaded( 'DMARC' ) ) {
+        my $dmarc_handler = $self->get_handler('DMARC');
+        $dmarc_object = $dmarc_handler->get_dmarc_object();
+    }
+
+    my $spfu_from_domain = $self->{'spfu_from_domain'};
+    my $dmarc_domain = $self->{'dmarc_domain'};
+    if ($dmarc_object) {
+        # Work with org domain if possible
+        $dmarc_domain = $dmarc_object->get_organizational_domain( $dmarc_domain );
+        $spfu_from_domain = $dmarc_object->get_organizational_domain( $spfu_from_domain );
+    }
+
+    return unless lc $dmarc_domain eq $spfu_from_domain;
+
+    ENTRY:
+    for my $chain_entry ( reverse $self->{'spfu_chain'}->@* ) {
+        last ENTRY if $self->{'spfu_detected'};
+        my $header = lc $chain_entry->{'header'};
+        my $value  =    $chain_entry->{'value'};
+
+        # Check for a Received-SPF we can parse
+        if ( $header eq 'received-spf' ) {
+            # We can parse the domain from the comment in most cases
+            # Received-SPF: Fail (protection.outlook.com: domain of ups.com does not designate 23.26.253.8 as permitted sender) receiver=protection.outlook.com; client-ip=23.26.253.8; helo=fa83.windbound.org.uk;
+            my $lc_value = lc $value;
+            next ENTRY unless $lc_value =~ /^fail /;
+            my ($for_value) = $lc_value =~ /^.*: domain of (\S+) .*/;
+            next ENTRY unless $for_value;
+            my $failed_domain = lc $self->get_address_from($for_value);
+            $failed_domain = $self->get_domain_from($failed_domain) if $failed_domain =~ /\@/;
+            print "$for_value ***  $failed_domain";
+            $failed_domain = $dmarc_object->get_organizational_domain( $failed_domain ) if $dmarc_object;
+            print "$failed_domain ******** $spfu_from_domain\n\n\n";
+            if ( $failed_domain eq $spfu_from_domain ) {
+                $self->{'spfu_detected'} = 1; # suspicious...
+            }
+
+            next ENTRY;
+        }
+
+        # Check for Authentication-Results style headers
+        # NOTE, We look for ARC-Authentication-Results but do
+        # not verify ARC here, this is used as a negative signal
+        # so forgery will not be of benefit
+        my $ar_object;
+        if ( $header eq 'x-ms-exchange-authentication-results' ) {
+            # We can parse this slightly nonstandard format into an object
+            $ar_object = eval{ Mail::AuthenticationResults->parser()->parse( $value ) };
+            $self->handle_exception( $@ );
+            unless ( $ar_object ) {
+                # Try again with a synthesized authserv id (this is often missing)
+                $ar_object = eval{ Mail::AuthenticationResults->parser()->parse( "authserv.example.com; $value" ) };
+                $self->handle_exception( $@ );
+            }
+        } elsif ( $header eq 'arc-authentication-results' ) {
+            # We can parse this into an object, remove the instance
+            my ($null, $arc_value) = split ';', $value, 2;
+            $arc_value =~ s/^ +//;
+            $ar_object = eval{ Mail::AuthenticationResults->parser()->parse( $arc_value ) };
+            $self->handle_exception( $@ );
+        } elsif ( $header =~ 'authentication-results$' ) {
+            # We can parse this into an object, best effort with subtypes
+            $ar_object = eval{ Mail::AuthenticationResults->parser()->parse( $value ) };
+            $self->handle_exception( $@ );
+        }
+        next ENTRY unless $ar_object; # We didn't find one we could parse
+
+        eval {
+            my $spf_fail_entries = $ar_object->search({ 'isa' => 'entry', 'key' => 'spf', 'value' => 'fail' })->children();
+            for my $spf_fail_entry ($spf_fail_entries->@*) {
+                my $mailfrom_domain_entries = $spf_fail_entry->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom'})->children();
+                # should be only 1, but let's iterate anyway
+                for my $mailfrom_domain_entry ($mailfrom_domain_entries->@*) {
+                    my $mailfrom_domain = $mailfrom_domain_entry->value();
+                    $mailfrom_domain = $dmarc_object->get_organizational_domain( $mailfrom_domain ) if $dmarc_object;
+                    if ( lc $mailfrom_domain eq $spfu_from_domain ) {
+                        $self->{'spfu_detected'} = 1; # suspicious...
+                    }
+                }
+            }
+
+        };
+        $self->handle_exception( $@ );
+
+    }
+
+    if ( $self->{'spfu_detected'} ) {
+        $self->{'dmarc_result'} = 'fail';
+        $self->{'spf_header'}->safe_set_value( 'fail' );
+        $self->{'spf_header'}->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'spf pass downgraded due to suspicious path' ) );
     }
 }
 
 sub close_callback {
     my ( $self ) = @_;
+    delete $self->{'spfu_from_domain'};
+    delete $self->{'spfu_chain'};
+    delete $self->{'spfu_detected'};
+    delete $self->{'spf_header'};
     delete $self->{'dmarc_domain'};
     delete $self->{'dmarc_scope'};
     delete $self->{'dmarc_result'};
