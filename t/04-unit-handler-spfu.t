@@ -39,6 +39,18 @@ my $tester = Mail::Milter::Authentication::Tester::HandlerTester->new({
 });
 $tester->snapshot( 'new' );
 
+my $tester_report = Mail::Milter::Authentication::Tester::HandlerTester->new({
+    'protocol' => 'smtp',
+    'prefix'   => $basedir . 't/config/handler/etc',
+    'zonefile' => $basedir . 't/zonefile',
+    'handler_config' => {
+        'SPF' => { 'spfu_detection' => 2 },
+        'DMARC' => {},
+        'DKIM' => {},
+    },
+});
+$tester_report->snapshot( 'new' );
+
 my @headers = (
     'X-Received-Authentication-Results: mx.microsoft.com 1; spf=fail (sender ip is 23.26.253.8) smtp.rcpttodomain=gmail.com smtp.mailfrom=spfuvictim.com; dmarc=fail (p=reject sp=reject pct=100) action=oreject header.from=foobar.spfuvictim.com; dkim=none (message not signed); arc=none',
     'Authentication-Results: mx.microsoft.com 1; spf=fail (sender ip is 23.26.253.8) smtp.rcpttodomain=gmail.com smtp.mailfrom=spfuvictim.com; dmarc=fail (p=reject sp=reject pct=100) action=oreject header.from=foobar.spfuvictim.com; dkim=none (message not signed); arc=none',
@@ -69,6 +81,34 @@ Testing'),
     is( $tester_disabled->{authmilter}->{handler}->{SPF}->{'spfu_detected'}, undef, 'SPFU NOT detected');
     my $result = $tester_disabled->get_authresults_header()->search({ 'key' => 'spf' })->children()->[0]->value;
     is( $result, 'pass', 'spf=pass' );
+};
+
+subtest 'spfu detection report mode all headers' => sub {
+
+    $tester_report->switch( 'new' );
+    $tester_report->run({
+        'connect_ip' => '1.2.3.4',
+        'connect_name' => 'mx.example.com',
+        'helo' => 'mx.example.com',
+        'mailfrom' => 'test@foobar.spfuvictim.com',
+        'rcptto' => [ 'test@example.net' ],
+        'body' => join( "\n", @headers, 
+'From: Test <localpart@foobar.spfuvictim.com>
+Subject: Test
+To: email_address@example.com
+Date: Tue, 30 May 2023 22:52:38 +0200
+
+Test Content
+Testing'),
+    });
+
+    is( $tester_report->{authmilter}->{handler}->{SPF}->{'spfu_detected'}, 1, 'SPFU detected');
+    my $result = $tester_report->get_authresults_header()->search({ 'key' => 'spf' })->children()->[0]->value;
+    is( $result, 'pass', 'spf=pass' );
+    my $header = $tester_report->get_authresults_header()->search({ 'key' => 'spf' })->as_string;
+    my $expect = 'spf=pass smtp.mailfrom=test@foobar.spfuvictim.com smtp.helo=mx.example.com (warning: aligned spf fail in history)';
+    is( $header, $expect, 'SPF downgraded comment found in fail header' );
+
 };
 
 subtest 'spfu detection all headers' => sub {

@@ -234,12 +234,13 @@ sub header_callback {
 
 sub eoh_callback {
     my ($self) = @_;
-    return unless $self->{'spf_header'};
-    eval {
-        $self->spfu_checks();
-    };
-    $self->handle_exception( $@ );
-    $self->add_auth_header($self->{'spf_header'});
+    if ( $self->{'spf_header'} ) {
+        eval {
+            $self->spfu_checks();
+        };
+        $self->handle_exception( $@ );
+        $self->add_auth_header($self->{'spf_header'});
+    }
     $self->metric_count( 'spf_total', { 'result' => $self->{'spf_metric'} } ) if $self->{'spf_metric'};
 }
 
@@ -346,7 +347,7 @@ sub spfu_checks {
             $self->{'spf_header'}->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'spf pass downgraded due to suspicious path' ) );
         }
         else {
-            $self->{'spf_header'}->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'aligned spf fail in history' ) );
+            $self->{'spf_header'}->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'warning: aligned spf fail in history' ) );
         }
     }
 }
