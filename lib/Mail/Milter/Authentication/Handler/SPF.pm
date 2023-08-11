@@ -181,9 +181,10 @@ sub envfrom_callback {
         }
 
         # Set for DMARC
-        $self->{'dmarc_domain'} = $domain;
-        $self->{'dmarc_scope'}  = $scope;
-        $self->{'dmarc_result'} = $result_code;
+        $self->{'dmarc_domain'}         = $domain;
+        $self->{'dmarc_scope'}          = $scope;
+        $self->{'dmarc_result'}         = $result_code;
+        $self->{'dmarc_spfu_downgrade'} = 0;
 
         $self->dbgout( 'SPFCode', $result_code, LOG_DEBUG );
 
@@ -342,7 +343,7 @@ sub spfu_checks {
         my $config = $self->handler_config();
         $self->{'spf_metric'} = 'spf_upgrade';
         if ( $config->{'spfu_detection'} == 1 ) {
-            $self->{'dmarc_result'} = 'fail';
+            $self->{'dmarc_spfu_downgrade'} = 1;
             $self->{'spf_header'}->safe_set_value( 'fail' );
             $self->{'spf_header'}->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'spf pass downgraded due to suspicious path' ) );
         }
@@ -362,6 +363,7 @@ sub close_callback {
     delete $self->{'dmarc_domain'};
     delete $self->{'dmarc_scope'};
     delete $self->{'dmarc_result'};
+    delete $self->{'dmarc_spfu_downgrade'};
     delete $self->{'failmode'};
     delete $self->{'helo_name'};
     $self->destroy_object('spf_results');
