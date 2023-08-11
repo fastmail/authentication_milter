@@ -525,11 +525,10 @@ sub _process_dmarc_for {
             # spfu mitigation has changed the resulting disposition
             $self->dbgout( 'DMARCReject', "Policy downgraded by spfu mitigation", LOG_DEBUG );
             $dmarc_disposition = $spfu_result->disposition;
+            $policy_override = 'local_policy';
             $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy downgraded due to SPF upgrade mitigation' );
             $dmarc_result->disposition($dmarc_disposition);
             $spfu_mitigation_triggered = 1;
-            $policy_override = 'spf_upgrade_mitigation';
-
         }
         $self->set_object('dmarc', $original_dmarc,1 ); # Restore original saved DMARC object
     }

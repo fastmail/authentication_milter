@@ -81,6 +81,10 @@ Testing'),
     is( $tester_disabled->{authmilter}->{handler}->{SPF}->{'spfu_detected'}, undef, 'SPFU NOT detected');
     my $result = $tester_disabled->get_authresults_header()->search({ 'key' => 'spf' })->children()->[0]->value;
     is( $result, 'pass', 'spf=pass' );
+    is( $tester_disabled->get_authresults_header()->search({ 'key' => 'dmarc' })->children()->[0]->value, 'pass', 'dmarc=pass' );
+    is( $tester_disabled->get_authresults_header()->search({ 'key' => 'policy.applied-disposition' })->children()->[0]->value() , 'none', 'applied none' );
+    is( $tester_disabled->get_authresults_header()->search({ 'key' => 'policy.evaluated-disposition' })->children()->[0]->value(), 'none', 'evaluated none' );
+    is( scalar $tester_disabled->get_authresults_header()->search({ 'key' => 'policy.override-reason' })->children()->@*, 0, 'no override reason given' );
 };
 
 subtest 'spfu detection report mode all headers' => sub {
@@ -108,7 +112,10 @@ Testing'),
     my $header = $tester_report->get_authresults_header()->search({ 'key' => 'spf' })->as_string;
     my $expect = 'spf=pass smtp.mailfrom=test@foobar.spfuvictim.com smtp.helo=mx.example.com (warning: aligned spf fail in history)';
     is( $header, $expect, 'SPF downgraded comment found in fail header' );
-
+    is( $tester_report->get_authresults_header()->search({ 'key' => 'dmarc' })->children()->[0]->value, 'pass', 'dmarc=pass' );
+    is( $tester_report->get_authresults_header()->search({ 'key' => 'policy.applied-disposition' })->children()->[0]->value(), 'none', 'applied none' );
+    is( $tester_report->get_authresults_header()->search({ 'key' => 'policy.evaluated-disposition' })->children()->[0]->value(), 'none', 'evaluated none' );
+    is( scalar $tester_report->get_authresults_header()->search({ 'key' => 'policy.override-reason' })->children()->@*, 0, 'no override reason given' );
 };
 
 subtest 'spfu detection all headers' => sub {
@@ -136,7 +143,10 @@ Testing'),
     my $header = $tester->get_authresults_header()->search({ 'key' => 'spf' })->as_string;
     my $expect = 'spf=fail smtp.mailfrom=test@foobar.spfuvictim.com smtp.helo=mx.example.com (spf pass downgraded due to suspicious path)';
     is( $header, $expect, 'SPF downgraded comment found in fail header' );
-
+    is( $tester->get_authresults_header()->search({ 'key' => 'dmarc' })->children()->[0]->value, 'pass', 'dmarc=pass' );
+    is( $tester->get_authresults_header()->search({ 'key' => 'policy.applied-disposition' })->children()->[0]->value, 'reject', 'applied reject' );
+    is( $tester->get_authresults_header()->search({ 'key' => 'policy.evaluated-disposition' })->children()->[0]->value, 'none', 'evaluated none' );
+    is( $tester->get_authresults_header()->search({ 'key' => 'policy.override-reason' })->children()->[0]->value, 'local_policy', 'override reason given' );
 };
 
 for my $in_header (@headers) {
@@ -158,7 +168,7 @@ Date: Tue, 30 May 2023 22:52:38 +0200
 
 Test Content
 Testing'),
-    });
+        });
 
         is( $tester->{authmilter}->{handler}->{SPF}->{'spfu_detected'}, 1, 'SPFU detected');
         my $result = $tester->get_authresults_header()->search({ 'key' => 'spf' })->children()->[0]->value;
@@ -166,8 +176,11 @@ Testing'),
         my $header = $tester->get_authresults_header()->search({ 'key' => 'spf' })->as_string;
         my $expect = 'spf=fail smtp.mailfrom=test@foobar.spfuvictim.com smtp.helo=mx.example.com (spf pass downgraded due to suspicious path)';
         is( $header, $expect, 'SPF downgraded comment found in fail header' );
+        is( $tester->get_authresults_header()->search({ 'key' => 'dmarc' })->children()->[0]->value, 'pass', 'dmarc=pass' );
+        is( $tester->get_authresults_header()->search({ 'key' => 'policy.applied-disposition' })->children()->[0]->value, 'reject', 'applied reject' );
+        is( $tester->get_authresults_header()->search({ 'key' => 'policy.evaluated-disposition' })->children()->[0]->value, 'none', 'evaluated none' );
+        is( $tester->get_authresults_header()->search({ 'key' => 'policy.override-reason' })->children()->[0]->value, 'local_policy', 'override reason given' );
     };
-
 }
 
 subtest 'unrelated domain' => sub {
@@ -195,7 +208,10 @@ Testing',
     is( $tester->{authmilter}->{handler}->{SPF}->{'spfu_detected'}, undef, 'SPFU not detected');
     my $result = $tester->get_authresults_header()->search({ 'key' => 'spf' })->children()->[0]->value;
     is( $result, 'pass', 'spf=pass' );
-
+    is( $tester->get_authresults_header()->search({ 'key' => 'dmarc' })->children()->[0]->value, 'pass', 'dmarc=pass' );
+    is( $tester->get_authresults_header()->search({ 'key' => 'policy.applied-disposition' })->children()->[0]->value, 'none', 'applied none' );
+    is( $tester->get_authresults_header()->search({ 'key' => 'policy.evaluated-disposition' })->children()->[0]->value, 'none', 'evaluated none' );
+    is( $tester->get_authresults_header()->search({ 'key' => 'policy.override-reason' })->children()->[0]->value, 'local_policy', 'override reason given' );
 };
 
 done_testing;
