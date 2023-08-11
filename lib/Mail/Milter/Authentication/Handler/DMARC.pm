@@ -527,6 +527,8 @@ sub _process_dmarc_for {
             $dmarc_disposition = $spfu_result->disposition;
             $policy_override = 'local_policy';
             $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy downgraded due to SPF upgrade mitigation' );
+            # Note, this may be overridden further below, for example, local policy reject->quarantine
+            # Reporting of DMARC overrides is not rich enough to support all cases, so we do the best we can.
             $dmarc_result->disposition($dmarc_disposition);
             $spfu_mitigation_triggered = 1;
         }
