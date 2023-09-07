@@ -14,7 +14,7 @@ use Email::Simple::Creator;
 use Email::Simple;
 use ExtUtils::Installed;
 use Log::Dispatchouli;
-use Net::DNS::Resolver;
+use Net::DNS::Resolver 1.01;
 use Net::IP;
 use Proc::ProcessTable;
 use base 'Mail::Milter::Authentication::Net::ServerPatches';
