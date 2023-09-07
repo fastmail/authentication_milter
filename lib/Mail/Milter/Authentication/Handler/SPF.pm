@@ -7,6 +7,7 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
 use Mail::SPF;
+use Net::IP;
 
 sub default_config {
     return {
@@ -75,9 +76,40 @@ sub envfrom_callback {
     #...
     my ( $self, $env_from ) = @_;
     my $config = $self->handler_config();
+    $self->{'env_from'} = $env_from;
+    delete $self->{'ip_header'};
+
+    if ( ! $config->{'ip_from_header'} ) {
+        $self->_process_spf();
+    }
+}
+
+sub header_callback {
+    my ( $self, $header, $value, $original ) = @_;
+    my $config = $self->handler_config();
+    return if ! $config->{'ip_from_header'};
+    if ( lc $header eq $config->{'ip_from_header'} ) {
+        my $ip_obj = eval{ Net::IP->new( $value ) };
+        $self->{'ip_header'} = $ip_obj;
+    }
+}
+
+sub eoh_callback {
+    my ($self) = @_;
+    my $config = $self->handler_config();
+    return if ! $config->{'ip_from_header'};
+    $self->_process_spf();
+}
+
+sub _process_spf {
+    my ( $self ) = @_;
+
+    my $config = $self->handler_config();
     return if ( $self->is_local_ip_address() );
     return if ( $self->is_trusted_ip_address() );
     return if ( $self->is_authenticated() );
+
+    my $env_from = $self->{'env_from'};
 
     my $spf_server = $self->get_object('spf_server');
     if ( ! $spf_server ) {
@@ -111,11 +143,13 @@ sub envfrom_callback {
     }
 
     eval {
+        my $ip_address = $self->{'ip_header'} ? $self->{'ip_header'}->ip() : $self->ip_address();
+
         my $spf_request = Mail::SPF::Request->new(
             'versions'      => [1],
             'scope'         => $scope,
             'identity'      => $identity,
-            'ip_address'    => $self->ip_address(),
+            'ip_address'    => $ip_address,
             'helo_identity' => $self->{'helo_name'},
         );
 
@@ -145,7 +179,7 @@ sub envfrom_callback {
                                 'scope'            => $scope,
                                 'identity'         => $identity,
                                 'authority_domain' => $org_domain,
-                                'ip_address'       => $self->ip_address(),
+                                'ip_address'       => $ip_address,
                                 'helo_identity'    => $self->{'helo_name'},
                             );
                             $spf_result = $spf_server->process($spf_request);
@@ -206,6 +240,8 @@ sub close_callback {
     delete $self->{'dmarc_result'};
     delete $self->{'failmode'};
     delete $self->{'helo_name'};
+    delete $self->{'env_from'};
+    delete $self->{'ip_header'};
     $self->destroy_object('spf_results');
 }
 
