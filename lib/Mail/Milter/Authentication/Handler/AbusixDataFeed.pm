@@ -69,10 +69,10 @@ sub envfrom_callback {
         foreach my $rr ( $packet->answer ) {
             # We do not consider CNAMES here
             if ( $rr->type eq "PTR" ) {
-                my $rdatastr = $rr->rdatastr;
-                $rdatastr =~ s/\r//g;
-                $rdatastr =~ s/\n//g;
-                push @rdns, $rdatastr;
+                my $rdstring = $rr->rdatastr;
+                $rdstring =~ s/\r//g;
+                $rdstring =~ s/\n//g;
+                push @rdns, $rdstring;
             }
         }
     }
