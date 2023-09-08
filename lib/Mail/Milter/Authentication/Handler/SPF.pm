@@ -390,6 +390,6 @@ Implements the SPF standard checks.
             "spfu_detection"           : 0              | Add some mitigation for SPF upgrade attacks
                                                         | 0 = off (default)
                                                         | 1 = mitigate
-                                                        | 2 = report only (any value other than 1)
+                                                        | 2 = report only
         },
 
