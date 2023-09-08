@@ -33,6 +33,12 @@ sub opt_spec {
   );
 }
 
+sub bad_number($value) {
+  return 0 unless defined $value;
+  return 0 if $value =~ /^\d+$/;
+  return 1;
+}
+
 sub validate_args($self,$opt,$args) {
 
   if ($opt->{indent_style}) {
@@ -42,6 +48,10 @@ sub validate_args($self,$opt,$args) {
           || $opt->{indent_style} eq 'subentry'
           || $opt->{indent_style} eq 'full';
   }
+
+  $self->usage_error('indent_by must be numeric') if bad_number($opt->{indent_by});
+  $self->usage_error('space must be numeric') if bad_number($opt->{space});
+  $self->usage_error('fold_at must be numeric') if bad_number($opt->{fold_at});
 
   if (@$args) {
     for my $filename (@$args) {
