@@ -211,7 +211,7 @@ Testing',
     is( $tester->get_authresults_header()->search({ 'key' => 'dmarc' })->children()->[0]->value, 'pass', 'dmarc=pass' );
     is( $tester->get_authresults_header()->search({ 'key' => 'policy.applied-disposition' })->children()->[0]->value, 'none', 'applied none' );
     is( $tester->get_authresults_header()->search({ 'key' => 'policy.evaluated-disposition' })->children()->[0]->value, 'none', 'evaluated none' );
-    is( $tester->get_authresults_header()->search({ 'key' => 'policy.override-reason' })->children()->[0]->value, 'local_policy', 'override reason given' );
+    is( scalar $tester_report->get_authresults_header()->search({ 'key' => 'policy.override-reason' })->children()->@*, 0, 'no override reason given' );
 };
 
 done_testing;
