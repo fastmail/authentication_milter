@@ -6,6 +6,7 @@ Revision history for Mail-Milter-Authentication
           rather than the deprecated rdstring method
           This change bumps the minimum version of Net::DNS
           required to 1.01
+  - SPF: Add option to detect and optionally mitigate SPF upgrade problems.
 
 3.20230629 2023-06-29 23:44:32+00:00 UTC
   - DKIM: Prepare for Ed25519 support in Mail::DKIM

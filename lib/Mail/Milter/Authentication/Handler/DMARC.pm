@@ -245,7 +245,11 @@ sub _process_arc_dmarc_for {
         my $spf = $self->get_handler('SPF');
         if ( $spf ) {
 
-            if ( $spf->{'dmarc_result'} eq 'pass' && lc $spf->{'dmarc_domain'} eq lc $header_domain ) {
+            if ( $spf->{'spfu_detected' } ) {
+                # We detected a possible SPF upgrade, do not trust any SPF results for re-evaluation
+                $dmarc->{'spf'} = [];
+            }
+            elsif ( $spf->{'dmarc_result'} eq 'pass' && lc $spf->{'dmarc_domain'} eq lc $header_domain ) {
                 # Have a matching local entry, use it.
                 ## TODO take org domains into consideration here
                 $dmarc->spf(
@@ -476,6 +480,59 @@ sub _process_dmarc_for {
         $arc_aware_result = eval{$arc_result->result};
         $self->handle_exception( $@ );
         $arc_aware_result = '' if not defined $arc_aware_result;
+    }
+
+    # Re-evaluate in the case of detected SPF upgrade
+    my $spfu_mitigation_triggered = 0;
+    my $spfu_mitigation = 0;
+    eval {
+        my $spf = $self->get_handler('SPF');
+        if ( $spf ) {
+            $spfu_mitigation = $spf->{'dmarc_spfu_downgrade'};
+        }
+    };
+    $self->handle_exception( $@ );
+    if ( $dmarc_code eq 'pass' && $spfu_mitigation ) {
+        # We have a pass, and also detected a possible spfu attack
+        # and we are configured to mitigate such attacks.
+
+        # save the original dmarc object so we can reinstate it when done
+        my $original_dmarc = $self->get_object('dmarc');
+        my $spf_dmarc = $self->new_dmarc_object();
+        $spf_dmarc->source_ip( $self->ip_address() );
+        if ( $env_domain_from ne q{} ) {
+            eval { $spf_dmarc->envelope_from( $env_domain_from ) };
+            $self->handle_exception( $@ );
+        }
+        eval { $spf_dmarc->header_from( $header_domain ) };
+        $self->handle_exception( $@ );
+        $spf_dmarc->{'spf'} = [];
+        my $dkim_handler = $self->get_handler('DKIM');
+        if ( $dkim_handler->{'failmode'} ) {
+            $spf_dmarc->{'dkim'} = [];
+        } elsif ( $dkim_handler->{'has_dkim'} ) {
+            my $dkim_object = $self->get_object('dkim');
+            if ( $dkim_object ) {
+                $spf_dmarc->dkim( $dkim_object );
+            } else {
+                $spf_dmarc->{'dkim'} = [];
+            }
+        } else {
+            $spf_dmarc->{'dkim'} = [];
+        }
+        my $spfu_result = $spf_dmarc->validate;
+        if ( $spfu_result->result ne 'pass' && $dmarc_disposition ne $spfu_result->disposition ) {
+            # spfu mitigation has changed the resulting disposition
+            $self->dbgout( 'DMARCReject', "Policy downgraded by spfu mitigation", LOG_DEBUG );
+            $dmarc_disposition = $spfu_result->disposition;
+            $policy_override = 'local_policy';
+            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy downgraded due to SPF upgrade mitigation' );
+            # Note, this may be overridden further below, for example, local policy reject->quarantine
+            # Reporting of DMARC overrides is not rich enough to support all cases, so we do the best we can.
+            $dmarc_result->disposition($dmarc_disposition);
+            $spfu_mitigation_triggered = 1;
+        }
+        $self->set_object('dmarc', $original_dmarc,1 ); # Restore original saved DMARC object
     }
 
     my $is_whitelisted = $self->is_whitelisted();
