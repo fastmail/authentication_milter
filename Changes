@@ -7,6 +7,9 @@ Revision history for Mail-Milter-Authentication
           This change bumps the minimum version of Net::DNS
           required to 1.01
   - SPF: Add option to detect and optionally mitigate SPF upgrade problems.
+  - Core: Add authentication_milter_log command with arex subcommand
+          which can be used to process ARex JSON log format back into
+          standard Authentication-Results: header lines
 
 3.20230629 2023-06-29 23:44:32+00:00 UTC
   - DKIM: Prepare for Ed25519 support in Mail::DKIM
