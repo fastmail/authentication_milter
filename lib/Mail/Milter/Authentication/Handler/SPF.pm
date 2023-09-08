@@ -181,6 +181,8 @@ sub envfrom_callback {
         }
 
         # Set for DMARC
+        # Note, these are the SPF results to be processed
+        # BY the DMARC handler, they are not DMARC results.
         $self->{'dmarc_domain'}         = $domain;
         $self->{'dmarc_scope'}          = $scope;
         $self->{'dmarc_result'}         = $result_code;
@@ -212,7 +214,7 @@ sub header_callback {
     my ( $self, $header, $value ) = @_;
 
     return unless exists $self->{'spfu_chain'};
-    return unless $self->{'dmarc_result'} eq 'pass';
+    return unless $self->{'dmarc_result'} eq 'pass'; # Did we have an SPF pass for DMARC
 
     my $lc_header = lc $header;
 
@@ -250,7 +252,7 @@ sub spfu_checks {
 
     return unless exists $self->{'spfu_chain'};
     return unless exists $self->{'spfu_from_domain'};
-    return unless $self->{'dmarc_result'} eq 'pass';
+    return unless $self->{'dmarc_result'} eq 'pass'; # Did we have an SPF pass for DMARC
     my $dmarc_object;
     if ( $self->is_handler_loaded( 'DMARC' ) ) {
         my $dmarc_handler = $self->get_handler('DMARC');
