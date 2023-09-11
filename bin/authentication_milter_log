@@ -1,0 +1,11 @@
+#!/usr/bin/env perl
+use 5.20.0;
+use strict;
+use warnings;
+use Mail::Milter::Authentication::Pragmas;
+# ABSTRACT: Work with Authentication Milter logs
+# PODNAME: authentication_milter_log
+# VERSION
+use Mail::Milter::Authentication::App::ProcessLog::App;
+
+Mail::Milter::Authentication::App::ProcessLog::App->run;
