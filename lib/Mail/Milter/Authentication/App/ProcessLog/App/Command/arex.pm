@@ -96,7 +96,7 @@ sub parse_file($self, $file, $opt, $args) {
     AR: for my $ar ( $hashref->{ar}->@* ) {
       my $type = $ar->{type};
       {
-        no warnings;
+        no warnings; ## no critic
 
         unless ($opt->combine) {
           # If we are not combining entries, just output this one.
