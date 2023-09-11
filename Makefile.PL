@@ -23,7 +23,8 @@ my %WriteMakefileArgs = (
   "EXE_FILES" => [
     "bin/authentication_milter",
     "bin/authentication_milter_blocker",
-    "bin/authentication_milter_client"
+    "bin/authentication_milter_client",
+    "bin/authentication_milter_log"
   ],
   "LICENSE" => "perl",
   "MIN_PERL_VERSION" => "5.020000",
@@ -57,12 +58,13 @@ my %WriteMakefileArgs = (
     "Lock::File" => 0,
     "Log::Dispatchouli" => 0,
     "MIME::Base64" => 0,
-    "Mail::AuthenticationResults" => "1.20200108",
+    "Mail::AuthenticationResults" => "2.20230112",
     "Mail::AuthenticationResults::Header" => 0,
     "Mail::AuthenticationResults::Header::AuthServID" => 0,
     "Mail::AuthenticationResults::Header::Comment" => 0,
     "Mail::AuthenticationResults::Header::Entry" => 0,
     "Mail::AuthenticationResults::Header::SubEntry" => 0,
+    "Mail::AuthenticationResults::Parser" => 0,
     "Mail::BIMI" => 2,
     "Mail::DKIM" => "1.20200824",
     "Mail::DKIM::ARC::Signer" => 0,
@@ -76,7 +78,7 @@ my %WriteMakefileArgs = (
     "Mail::SPF" => 0,
     "Module::Load" => 0,
     "Module::Loaded" => 0,
-    "Net::DNS" => 0,
+    "Net::DNS" => "1.01",
     "Net::DNS::Resolver" => 0,
     "Net::DNS::Resolver::Mock" => "1.20171219",
     "Net::IP" => 0,
@@ -113,7 +115,7 @@ my %WriteMakefileArgs = (
     "Test::Perl::Critic" => 0,
     "lib" => 0
   },
-  "VERSION" => "3.20230629",
+  "VERSION" => "3.20230911",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -151,12 +153,13 @@ my %FallbackPrereqs = (
   "Lock::File" => 0,
   "Log::Dispatchouli" => 0,
   "MIME::Base64" => 0,
-  "Mail::AuthenticationResults" => "1.20200108",
+  "Mail::AuthenticationResults" => "2.20230112",
   "Mail::AuthenticationResults::Header" => 0,
   "Mail::AuthenticationResults::Header::AuthServID" => 0,
   "Mail::AuthenticationResults::Header::Comment" => 0,
   "Mail::AuthenticationResults::Header::Entry" => 0,
   "Mail::AuthenticationResults::Header::SubEntry" => 0,
+  "Mail::AuthenticationResults::Parser" => 0,
   "Mail::BIMI" => 2,
   "Mail::DKIM" => "1.20200824",
   "Mail::DKIM::ARC::Signer" => 0,
@@ -172,7 +175,7 @@ my %FallbackPrereqs = (
   "Mail::SPF" => 0,
   "Module::Load" => 0,
   "Module::Loaded" => 0,
-  "Net::DNS" => 0,
+  "Net::DNS" => "1.01",
   "Net::DNS::Resolver" => 0,
   "Net::DNS::Resolver::Mock" => "1.20171219",
   "Net::IP" => 0,
