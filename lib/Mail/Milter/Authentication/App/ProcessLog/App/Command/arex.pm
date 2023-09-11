@@ -83,7 +83,7 @@ sub execute($self, $opt, $args) {
 sub parse_file($self, $file, $opt, $args) {
   state $j = JSON::XS->new;
 
-  LINE: for my $line (<$file>) {
+  LINE: while (my $line = <$file>) {
     $line =~ s/^.* ARex: //;
     my $parser = Mail::AuthenticationResults::Parser->new;
     my $hashref = eval{ $j->decode($line) };
