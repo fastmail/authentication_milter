@@ -307,19 +307,20 @@ sub eom_callback {
                     $self->add_auth_header( $AuthResults );
                     $self->{ 'header_added' } = 1;
                     my $Record = $BIMI->record();
+                    my $is_experimental = 'none';
+                    my $mark_type = 'none';
                     if ( $Result->result() eq 'pass' ) {
                         my $Headers = $Result->headers;
                         if ( $Headers ) {
                             $self->prepend_header( 'BIMI-Location', $Headers->{'BIMI-Location'} ) if exists $Headers->{'BIMI-Location'} ;
                             $self->prepend_header( 'BIMI-Indicator', $Headers->{'BIMI-Indicator'} ) if exists $Headers->{'BIMI-Indicator'} ;
                         }
+                        $is_experimental = eval{ $AuthResults->search({ 'isa' => 'subentry', 'key' => 'policy.experimental' })->children()->[0]->value() } // 'no';
+                        $self->handle_exception($@);
+                        $mark_type = eval{ $AuthResults->search({ 'isa' => 'subentry', 'key' => 'policy.mark-type' })->children()->[0]->value() } // 'unknown';
+                        $self->handle_exception($@);
                     }
-
-                    my $is_experimental = eval{ $AuthResults->search({ 'isa' => 'subentry', 'key' => 'policy.experimental' })->children()->[0]->value() };
-                    $self->handle_exception($@);
-                    my $mark_type = eval{ $AuthResults->search({ 'isa' => 'subentry', 'key' => 'policy.mark-type' })->children()->[0]->value() };
-                    $self->handle_exception($@);
-                    $self->metric_count( 'bimi_total', { 'result' => $Result->result(), 'is_experimental' => $is_experimental // 'no', 'mark_type' => $mark_type // 'unknown' } );
+                    $self->metric_count( 'bimi_total', { 'result' => $Result->result(), 'is_experimental' => $is_experimental, 'mark_type' => $mark_type } );
                 }
                 $BIMI->finish;
             }
