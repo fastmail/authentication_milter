@@ -6,7 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Handler class for BIMI
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
-use Mail::BIMI 2;
+use Mail::BIMI 3.20230913;
 
 sub default_config {
     return {
@@ -315,7 +315,11 @@ sub eom_callback {
                         }
                     }
 
-                    $self->metric_count( 'bimi_total', { 'result' => $Result->result() } );
+                    my $is_experimental = eval{ $AuthResults->search({ 'isa' => 'subentry', 'key' => 'policy.experimental' })->children()->[0]->value() };
+                    $self->handle_exception($@);
+                    my $mark_type = eval{ $AuthResults->search({ 'isa' => 'subentry', 'key' => 'policy.mark-type' })->children()->[0]->value() };
+                    $self->handle_exception($@);
+                    $self->metric_count( 'bimi_total', { 'result' => $Result->result(), 'is_experimental' => $is_experimental // 'no', 'mark_type' => $mark_type // 'unknown' } );
                 }
                 $BIMI->finish;
             }
