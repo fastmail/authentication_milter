@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Add timing data to the extended logging
 
 3.20230911 2023-09-11 06:18:44+00:00 UTC
   - Core: Switch from deprecated method in Net::DNS
