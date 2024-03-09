@@ -51,11 +51,14 @@ Please see the output of 'authentication_milter --help' for usage help.
         my $MYARGS = {
             'ident' => $Mail::Milter::Authentication::Config::IDENT,
             'to_stderr' => 0, # handled elsewhere
+            'to_stdout' => 0, # handled elsewhere
             'log_pid' => 1,
             'facility' => LOG_MAIL,
         };
         if ( exists $config->{ 'log_dispatchouli' } ) {
-            $MYARGS = $config->{ 'log_dispatchouli' };
+            foreach my $k (keys %{$config->{ 'log_dispatchouli' }}) {
+                $MYARGS->{$k} = $config->{ 'log_dispatchouli' }->{$k};
+            }
         }
 
         $LOGGER = Log::Dispatchouli->new( $MYARGS );
