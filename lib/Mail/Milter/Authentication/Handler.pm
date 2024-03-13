@@ -240,6 +240,52 @@ sub register_metrics {
     };
 }
 
+=metric_method I<record_time_taken($callback, $handler, $microseconds)>
+
+Record the time taken in a particular callback/handler
+
+=cut
+
+sub record_time_taken($self, $callback, $handler, $microseconds) {
+  $self->metric_count('time_microseconds_total', { 'callback' => $callback, 'handler' => $handler }, $microseconds);
+
+  # For extended logging
+
+  # setup/dequeue stages are not relevant and abort/close occur post extended logging
+  return if $callback eq 'setup'
+         || $callback eq 'dequeue'
+         || $callback eq 'abort'
+         || $callback eq 'close';
+
+  my $label = join('.', $callback, $handler);
+
+  # connect and helo stages go into c_timing (connection persist)
+  if ($callback eq 'connect' || $callback eq 'helo') {
+    $self->{c_timing} = {} unless $self->{c_timing};
+    $self->{c_timing}->{$label} = 0 unless $self->{c_timing}->{$label};
+    $self->{c_timing}->{$label} = $self->{c_timing}->{$label} + $microseconds;
+  } else {
+  # remaining are envfrom rcptto header eoh body and eom addheader stages which are
+  # email specific and go into timing
+    $self->{timing} = {} unless $self->{timing};
+    $self->{timing}->{$label} = 0 unless $self->{timing}->{$label};
+    $self->{timing}->{$label} = $self->{timing}->{$label} + $microseconds;
+  }
+}
+
+=metric_method I<get_timing_data()>
+
+Return timing data for this transaction
+
+=cut
+
+sub get_timing_data($self) {
+  my $c_timing = $self->{c_timing} // {};
+  my $timing = $self->{timing}     // {};
+  my %data = ( %$c_timing, %$timing );
+  return \%data;
+}
+
 =callback_method I<top_dequeue_callback()>
 
 Top level handler for dequeue.
@@ -259,12 +305,15 @@ sub top_dequeue_callback {
             $self->set_alarm( $timeout );
         }
         my $callbacks = $self->get_callbacks( 'dequeue' );
+
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Dequeue ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
-            $self->get_handler($handler)->dequeue_callback();
+            eval{ $self->get_handler($handler)->dequeue_callback(); };
+            my $error = $@;
             $self->dbgoutwrite();
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'dequeue', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
+            $self->record_time_taken('dequeue', $handler, $self->get_microseconds_since($start_time));
+            die $error if $error;
         }
         $self->set_alarm(0);
     };
@@ -297,8 +346,10 @@ sub top_setup_callback {
     foreach my $handler ( @$callbacks ) {
         $self->dbgout( 'CALLBACK', 'Setup ' . $handler, LOG_DEBUG );
         my $start_time = $self->get_microseconds();
-        $self->get_handler($handler)->setup_callback();
-        $self->metric_count( 'time_microseconds_total', { 'callback' => 'setup', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
+        eval{ $self->get_handler($handler)->setup_callback(); };
+        my $error = $@;
+        $self->record_time_taken('setup', $handler, $self->get_microseconds_since($start_time));
+        die $error if $error;
     }
     $self->status('postsetup');
 }
@@ -630,13 +681,14 @@ sub top_connect_callback {
             $self->dbgout( 'CALLBACK', 'Connect ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->connect_callback( $hostname, $ip ); };
-            if ( my $error = $@ ) {
+            my $error = $@;
+            $self->record_time_taken('connect', $handler, $self->get_microseconds_since($start_time));
+            if ($error) {
+                $self->metric_count( 'callback_error_total', { 'stage' => 'connect', 'handler' => $handler } );
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'Connect callback error ' . $error );
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'connect', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'connect', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -713,13 +765,14 @@ sub top_helo_callback {
                 $self->dbgout( 'CALLBACK', 'Helo ' . $handler, LOG_DEBUG );
                 my $start_time = $self->get_microseconds();
                 eval{ $self->get_handler($handler)->helo_callback($helo_host); };
-                if ( my $error = $@ ) {
+                my $error = $@;
+                $self->record_time_taken('helo', $handler, $self->get_microseconds_since($start_time));
+                if ($error) {
+                    $self->metric_count( 'callback_error_total', { 'stage' => 'helo', 'handler' => $handler } );
                     $self->handle_exception( $error );
                     $self->exit_on_close( 'HELO callback error ' . $error );
                     $self->tempfail_on_error();
-                    $self->metric_count( 'callback_error_total', { 'stage' => 'helo', 'handler' => $handler } );
                 }
-                $self->metric_count( 'time_microseconds_total', { 'callback' => 'helo', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
                 $self->check_timeout();
             }
         }
@@ -771,19 +824,21 @@ sub top_envfrom_callback {
         delete $self->{'pre_headers'};
         delete $self->{'add_headers'};
         delete $self->{'suppress_error_emails'};
+        delete $self->{'timing'};
 
         my $callbacks = $self->get_callbacks( 'envfrom' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'EnvFrom ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval { $self->get_handler($handler)->envfrom_callback($env_from, @params); };
-            if ( my $error = $@ ) {
+            my $error = $@;
+            $self->record_time_taken('envfrom', $handler, $self->get_microseconds_since($start_time));
+            if ($error) {
+                $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom', 'handler' => $handler } );
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'Env From callback error ' . $error );
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'envfrom', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'envfrom', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -830,13 +885,14 @@ sub top_envrcpt_callback {
             $self->dbgout( 'CALLBACK', 'EnvRcpt ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->envrcpt_callback($env_to, @params); };
-            if ( my $error = $@ ) {
+            my $error = $@;
+            $self->record_time_taken('rcptto', $handler, $self->get_microseconds_since($start_time));
+            if ($error) {
+                $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto', 'handler' => $handler } );
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'Env Rcpt callback error ' . $error );
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'rcptto', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'rcptto', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -890,13 +946,14 @@ sub top_header_callback {
             $self->dbgout( 'CALLBACK', 'Header ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->header_callback( $header, $value, $original ); };
-            if ( my $error = $@ ) {
+            my $error = $@;
+            $self->record_time_taken('header', $handler, $self->get_microseconds_since($start_time));
+            if ($error) {
+                $self->metric_count( 'callback_error_total', { 'stage' => 'header', 'handler' => $handler } );
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'Header callback error ' . $error );
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'header', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'header', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -941,13 +998,14 @@ sub top_eoh_callback {
             $self->dbgout( 'CALLBACK', 'EOH ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->eoh_callback(); };
-            if ( my $error = $@ ) {
+            my $error = $@;
+            $self->record_time_taken('eoh', $handler, $self->get_microseconds_since($start_time));
+            if ($error) {
+                $self->metric_count( 'callback_error_total', { 'stage' => 'eoh', 'handler' => $handler } );
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'EOH callback error ' . $error );
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'eoh', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'eoh', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -993,13 +1051,14 @@ sub top_body_callback {
             $self->dbgout( 'CALLBACK', 'Body ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->body_callback( $body_chunk ); };
-            if ( my $error = $@ ) {
+            my $error = $@;
+            $self->record_time_taken('body', $handler, $self->get_microseconds_since($start_time));
+            if ($error) {
+                $self->metric_count( 'callback_error_total', { 'stage' => 'body', 'handler' => $handler } );
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'Body callback error ' . $error );
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'body', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'body', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -1045,13 +1104,14 @@ sub top_eom_callback {
             $self->dbgout( 'CALLBACK', 'EOM ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->eom_callback(); };
-            if ( my $error = $@ ) {
+            my $error = $@;
+            $self->record_time_taken('eom', $handler, $self->get_microseconds_since($start_time));
+            if ($error) {
+                $self->metric_count( 'callback_error_total', { 'stage' => 'eom', 'handler' => $handler } );
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'EOM callback error ' . $error );
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'eom', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'eom', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -1123,13 +1183,14 @@ sub top_abort_callback {
             $self->dbgout( 'CALLBACK', 'Abort ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->abort_callback(); };
-            if ( my $error = $@ ) {
+            $self->record_time_taken('abort', $handler, $self->get_microseconds_since($start_time));
+            my $error = $@;
+            if ($error) {
+                $self->metric_count( 'callback_error_total', { 'stage' => 'abort', 'handler' => $handler } );
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'Abort callback error ' . $error );
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'abort', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'abort', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -1177,13 +1238,14 @@ sub top_close_callback {
             $self->dbgout( 'CALLBACK', 'Close ' . $handler, LOG_DEBUG );
             my $start_time = $self->get_microseconds();
             eval{ $self->get_handler($handler)->close_callback(); };
-            if ( my $error = $@ ) {
+            my $error = $@;
+            $self->record_time_taken('close', $handler, $self->get_microseconds_since($start_time));
+            if ($error) {
+                $self->metric_count( 'callback_error_total', { 'stage' => 'close', 'handler' => $handler } );
                 $self->handle_exception( $error );
                 $self->exit_on_close( 'Close callback error ' . $error );
                 $self->tempfail_on_error();
-                $self->metric_count( 'callback_error_total', { 'stage' => 'close', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'close', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
             $self->check_timeout();
 
             my $handler_object = $self->get_handler($handler);
@@ -1210,6 +1272,8 @@ sub top_close_callback {
     delete $self->{'raw_helo_name'};
     delete $self->{'c_auth_headers'};
     delete $self->{'auth_headers'};
+    delete $self->{'c_timing'};
+    delete $self->{'timing'};
     delete $self->{'pre_headers'};
     delete $self->{'add_headers'};
     delete $self->{'ip_object'};
@@ -1241,8 +1305,10 @@ sub top_addheader_callback {
         my $callbacks = $self->get_callbacks( 'addheader' );
         foreach my $handler ( @$callbacks ) {
             my $start_time = $self->get_microseconds();
-            $self->get_handler($handler)->addheader_callback($self);
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'addheader', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
+            eval{ $self->get_handler($handler)->addheader_callback($self); };
+            my $error = $@;
+            $self->record_time_taken('addheader', $handler, $self->get_microseconds_since($start_time));
+            die $error if $error;
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -2582,16 +2648,17 @@ sub add_headers {
         $self->add_auth_headers_of_type($type);
     }
 
-    if ($config->{extended_log}) {
-        my $j = JSON->new->canonical->utf8;
-        $self->dbgout( 'ARex',$j->encode($self->{extended_log}), LOG_INFO );
-    }
-
     if ( my $reason = $self->get_quarantine_mail() ) {
         $self->prepend_header( 'X-Disposition-Quarantine', $reason );
     }
 
     $top_handler->top_addheader_callback();
+
+    $self->{extended_log}->{timing} = $self->get_timing_data;
+    if ($config->{extended_log}) {
+        my $j = JSON->new->canonical->utf8;
+        $self->dbgout( 'ARex',$j->encode($self->{extended_log}), LOG_INFO );
+    }
 
     if ( exists( $top_handler->{'pre_headers'} ) ) {
         foreach my $header ( @{ $top_handler->{'pre_headers'} } ) {
