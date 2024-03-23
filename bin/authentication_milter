@@ -243,7 +243,7 @@ __END__
                                                         | N.B. This path will need to be setup with all required
                                                         | files or the server WILL segfault.
     "listen_backlog"         : 20,                      | socket listen backlog limit (default 20)
-    "min_children"           : 20,                      | Max number of children to pre fork
+    "min_children"           : 20,                      | Min number of children to pre fork
     "max_children"           : 200,                     | Max number of children to pre fork
     "min_spare_children"     : 10,                      | Min number of spare children to maintain
     "max_spare_children"     : 20,                      | Max number of spare children to maintain
