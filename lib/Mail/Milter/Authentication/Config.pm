@@ -128,8 +128,8 @@ sub setup_config {
             die $type.'_dir is not a writable' if ! -w $dir;
         }
         else {
-            if ( $EUID == 0 ) {
-                # We are root, create in global space
+            if ( $EUID == 0 && -d "/var/$type" && -w "/var/$type" ) {
+                # We are root, create in global space if it exists and is writable
                 $dir = '/var/'.$type.'/authentication_milter';
                 mkdir $dir if ! -e $dir;
                 # Create the subdir for this IDENT
@@ -143,7 +143,7 @@ sub setup_config {
                 }
             }
             else {
-                # We are a user! Create something in a temporary space
+                # We are a user, or have no writable global space, Create something in a temporary space
                 $dir = join( '_',
                   '/tmp/authentication_milter',
                   $type,
@@ -153,6 +153,7 @@ sub setup_config {
                 mkdir $dir if ! -e $dir;
             }
         }
+        die "Generated ${type}_dir ($dir) could not be created, set or check ${type}_dir in config" unless -e $dir && -d $dir && -w $dir;
         $config->{$type.'_dir'} = $dir;
     }
 }

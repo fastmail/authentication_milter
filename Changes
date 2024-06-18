@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Config: Fix generation of some directories when they are not supplied and
+            also do not exist. This should fix issues with OpenBSD
 
 3.20240205 2024-02-05 02:47:38+00:00 UTC
   - BIMI: Add metrics for new BIMI certificate types
