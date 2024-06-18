@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20240618 2024-06-18 17:18:47+10:00 Australia/Melbourne
   - Config: Fix generation of some directories when they are not supplied and
             also do not exist. This should fix issues with OpenBSD
 
