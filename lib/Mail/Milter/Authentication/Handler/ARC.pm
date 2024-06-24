@@ -145,7 +145,40 @@ sub get_trusted_dkim_results {
                 #my $result_domain = $self->get_domain_from( $smtp_mailfrom );
                 push @trusted_results, {
                     'domain'       => $entry_domain,
-                    'selector'     => $entry_selector,,
+                    'selector'     => $entry_selector,
+                    'result'       => $result->value(),
+                    'human_result' => 'Trusted ARC entry',
+                };
+            }
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'ARC Inherit Error ' . $error );
+        }
+    }
+    return \@trusted_results;
+}
+
+sub get_trusted_dmarc_results {
+    my ( $self ) = @_;
+
+    my $aar = $self->get_trusted_arc_authentication_results();
+    return if ! $aar;
+
+    my @trusted_results;
+
+    foreach my $instance ( sort keys %$aar ) {
+        eval {
+            my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dmarc' })->children();
+            RESULT:
+            foreach my $result ( @$results ) {
+                my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.from' })->children()->[0]->value() };
+                $self->handle_exception( $@ );
+                next RESULT if ! $entry_domain;
+                $entry_domain = lc $entry_domain;
+
+                push @trusted_results, {
+                    'domain'       => $entry_domain,
                     'result'       => $result->value(),
                     'human_result' => 'Trusted ARC entry',
                 };
@@ -238,6 +271,47 @@ sub inherit_trusted_dkim_results {
                 $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
                 $result->orphan();
                 $result->set_key( 'x-arc-dkim' );
+                $self->add_auth_header( $result );
+
+            }
+        };
+        if ( my $error = $@ ) {
+            $self->handle_exception( $error );
+            $self->log_error( 'ARC Inherit Error ' . $error );
+        }
+    }
+}
+
+sub inherit_trusted_dmarc_results {
+    my ( $self ) = @_;
+
+    return if ( ! $self->is_handler_loaded( 'DMARC' ) );
+
+    my $aar = $self->get_trusted_arc_authentication_results();
+    return if ! $aar;
+
+    foreach my $instance ( sort keys %$aar ) {
+        eval {
+            # Find all ARC DMARC results which passed
+            my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dmarc', 'value' => 'pass' })->children();
+            RESULT:
+            foreach my $result ( @$results ) {
+
+                # Does the entry have an x-arc-domain entry? if do then leave it alone.
+                next RESULT if ( scalar @{ $result->search({ 'isa' => 'subentry', 'key' => 'x-arc-domain' })->children() }> 0 );
+
+                # Does the entry have a domain identifier we can match on?
+                my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.from' })->children()->[0]->value() };
+                $self->handle_exception( $@ );
+                next RESULT if ! $entry_domain;
+                $entry_domain = lc $entry_domain;
+
+                # And add the new one
+                $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-instance' )->safe_set_value( $instance ) );
+                $result->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-arc-domain' )->safe_set_value( $self->{ 'arc_domain'}->{ $instance } ) );
+                $result->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'Trusted from aar.' . $instance . '.' . $self->{ 'arc_domain' }->{ $instance } ) );
+                $result->orphan();
+                $result->set_key( 'x-arc-dmarc' );
                 $self->add_auth_header( $result );
 
             }
@@ -580,6 +654,7 @@ sub eom_callback {
     $self->inherit_trusted_spf_results();
     $self->inherit_trusted_dkim_results();
     $self->inherit_trusted_ip_results();
+    $self->inherit_trusted_dmarc_results();
 }
 
 sub close_callback {
