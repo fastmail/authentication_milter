@@ -1,6 +1,14 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - DMARC: New option to enable strict processing of rfc5322 from domains.
+           Adds the strict_multifrom config item to DMARC (default false).
+           If set, the handler will reject/quarantine messages where
+           multiple rfc5322 from domains are present.
+           DMARC processing/reporting will continue as usual as defined by
+           the *_on_multifrom settings, however any dispositions will
+           be overridden to reject or quarantine depending on the value set
+           for hard_reject.
 
 3.20240618 2024-06-18 17:18:47+10:00 Australia/Melbourne
   - Config: Fix generation of some directories when they are not supplied and
