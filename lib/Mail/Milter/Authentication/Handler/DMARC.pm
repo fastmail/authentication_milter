@@ -32,6 +32,7 @@ sub default_config {
         'reject_on_multifrom' => 30,
         'quarantine_on_multifrom' => 20,
         'skip_on_multifrom' => 10,
+        'strict_multifrom' => 0,
     };
 }
 
@@ -616,6 +617,14 @@ sub _process_dmarc_for {
         }
     }
 
+    if ($self->{strict_multifrom_disposition}) {
+        $self->dbgout( 'DMARCReject', "Policy downgraded by strict rfc5322 from checks", LOG_DEBUG );
+        $dmarc_disposition = $self->{strict_multifrom_disposition};
+        $policy_override = 'local_policy';
+        $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy downgraded due to multiple rfc5322 from entries' );
+        $dmarc_result->disposition($dmarc_disposition);
+    }
+
     if ( $dmarc_disposition eq 'quarantine' ) {
         $self->quarantine_mail( 'Quarantined due to DMARC policy' );
     }
@@ -778,6 +787,7 @@ sub envfrom_callback {
     $self->{'is_list'}      = 0;
     $self->{'skip_report'}  = 0;
     $self->{'failmode'}     = 0;
+    $self->{'strict_multifrom_disposition'} = '';
 
     $env_from = q{} if $env_from eq '<>';
 
@@ -902,6 +912,17 @@ sub eom_callback {
     foreach my $from_header ( @$from_headers ) {
         my $from_header_header_domains = $self->get_domains_from( $from_header );
         foreach my $header_domain ( @$from_header_header_domains ) {
+            if ($config->{strict_multifrom} && @header_domains) {
+                # We already have a domain in strict mode?
+                # Don't allow anything to have a passing disposition
+                if ( $config->{'hard_reject'} ) {
+                    $self->{strict_multifrom_disposition} = 'reject';
+                    $self->reject_mail( '550 5.7.0 DMARC policy violation' );
+                    $self->dbgout( 'DMARCReject', "Strict Multifrom reject", LOG_DEBUG );
+                } else {
+                    $self->{strict_multifrom_disposition} = 'quarantine';
+                }
+            }
             push @header_domains, $header_domain;
         }
     }
@@ -1117,6 +1138,7 @@ sub close_callback {
     delete $self->{'from_headers'};
     delete $self->{'report_queue'};
     delete $self->{'processed'};
+    delete $self->{'strict_multifrom_disposition'};
     $self->destroy_object('dmarc');
     $self->destroy_object('dmarc_result');
     $self->destroy_object('dmarc_results');
@@ -1143,6 +1165,9 @@ This handler requires the SPF and DKIM handlers to be installed and active.
             "no_list_reject_disposition" : "none",         | Disposition to use for mail detected as mailing list (defaults none)
             "reject_on_multifrom"     : 20,                | Reject mail if we detect more than X DMARC entities to process
             "quarantine_on_multifrom" : 15,                | Quarantine mail if we detect more than X DMARC entities to process
+            "strict_multifrom"        : 1,                 | If set, reject/quarantine (based on hard_reject) when there are multiple
+                                                           | rfc5322 domains present. DMARC processing/reporting will continue as usual
+                                                           | as defined by *_on_multifrom settings above.
             "skip_on_multifrom"       : 10,                | Skip further processing if we detect more than X DMARC entities to process
             "whitelisted"           : [                    | A list of ip addresses or CIDR ranges, or dkim domains
                 "10.20.30.40",                             | for which we do not want to hard reject mail on fail p=reject
