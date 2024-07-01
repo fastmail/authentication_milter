@@ -9,6 +9,13 @@ Revision history for Mail-Milter-Authentication
            the *_on_multifrom settings, however any dispositions will
            be overridden to reject or quarantine depending on the value set
            for hard_reject.
+  - ARC/DMARC: Override DMARC enforcement when the trusted ARC chain has
+               a passing DMARC entry.
+               This improves the case where an ARC trusted forwarder has broken
+               authentication without leaving enough SPF/DKIM indicators in the
+               AAR for us to process, OR has modified the RFC5322 From domain as
+               is the case with certain privacy focussed bi-directional
+               forwarding services
 
 3.20240618 2024-06-18 17:18:47+10:00 Australia/Melbourne
   - Config: Fix generation of some directories when they are not supplied and

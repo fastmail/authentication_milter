@@ -483,6 +483,16 @@ sub _process_dmarc_for {
         $arc_aware_result = '' if not defined $arc_aware_result;
     }
 
+    my $have_arc_dmarc_pass = 0;
+    if ( $have_arc && $dmarc_code eq 'fail' ) {
+        if (my $arc_dmarc_results = $self->get_handler('ARC')->get_trusted_dmarc_results() ) {
+            for my $arc_dmarc_result ($arc_dmarc_results->@*) {
+                next unless $arc_dmarc_result->{result} eq 'pass';
+                $have_arc_dmarc_pass = 1;
+            }
+        }
+    }
+
     # Re-evaluate in the case of detected SPF upgrade
     my $spfu_mitigation_triggered = 0;
     my $spfu_mitigation = 0;
@@ -580,6 +590,13 @@ sub _process_dmarc_for {
             }
             $self->dbgout( 'DMARCReject', "Policy overridden using ARC Chain: $comment", LOG_DEBUG );
             $dmarc_result->reason( 'type' => 'local_policy', 'comment' => $comment );
+        }
+        elsif ( $have_arc_dmarc_pass ) {
+            $self->dbgout( 'DMARCReject', "Policy reject overridden by DMARC pass in trusted ARC chain", LOG_DEBUG );
+            $policy_override = 'trusted_forwarder';
+            $dmarc_result->reason( 'type' => $policy_override, 'comment' => 'Policy ignored due to DMARC pass in trusted ARC chain' );
+            $dmarc_result->disposition('none');
+            $dmarc_disposition = 'none';
         }
         elsif ( $is_whitelisted ) {
             $self->dbgout( 'DMARCReject', "Policy reject overridden by whitelist", LOG_DEBUG );
