@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Add timing data to the extended logging
 
 3.20240701 2024-07-01 14:10:31+10:00 Australia/Melbourne
   - DMARC: New option to enable strict processing of rfc5322 from domains.
