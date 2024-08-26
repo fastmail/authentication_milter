@@ -2156,6 +2156,7 @@ sub get_domains_from {
         }
         next if ! defined $domain;
         $domain =~ s/\s//g;
+        next if $domain =~ /\@/;
         push @$domains, lc $domain;
     }
     return $domains;
@@ -2328,11 +2329,16 @@ sub get_addresses_from {
         $Address =~ s/\s+\@/\@/;
         $Address =~ s/\@\s+/\@/;
 
+        # Don't allow a multiple @ as this is clearly bogus
+        next if $Address =~ /\@.*\@/;
+
         push @TidyAddresses, $Address;
     }
 
     if ( ! @TidyAddresses ) {
         # We really couldn't parse, so just run with it and hope for the best
+        # But don't return any address with more than one @ as these are clearly bogus
+        return [] if $Str =~ /\@.*\@/;
         push @TidyAddresses, $Str;
     }
 
