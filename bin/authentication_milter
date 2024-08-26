@@ -327,6 +327,7 @@ __END__
     ],
     "dns_timeout"           : 10,                       | Timeout in seconds for DNS lookups
     "dns_retry"             : 2,                        | Number of times a lookup will retry per call
+    "cache_dns_timeouts"    : 1,                        | By default org domains, that result in a DNS timeout are cached
     "dns_servfail_timeout"  : 1000000,                  | How long microseconds a SERVFAIL can take before being considered a timeout
                                                         |     by the internal resolver
 

@@ -26,6 +26,7 @@ to Net::DNS::Resolver
         weaken($args{_handler});
         $self->{ _handler } = $args{_handler};
         $self->{ _timedout } = {};
+        $self->{cache_dns_timeouts} = $args{cache_dns_timeouts} // 1;
         return $self;
     }
 }
@@ -84,8 +85,10 @@ sub _do { ## no critic
             if ( $handler->get_time_remaining() > 0 ) {
                 # We have time left, but the lookup timed out
                 # Log this and move on!
-                $handler->log_error( "DNS Lookup $query $domain error, hold set on $org_domain : Timeout calling Net::DNS::Resolver" );
-                $self->{ _timedout }->{ $org_domain } = 1;
+                if ($self->{cache_dns_timeouts}) {
+                    $handler->log_error( "DNS Lookup $query $domain error, hold set on $org_domain : Timeout calling Net::DNS::Resolver" );
+                    $self->{ _timedout }->{ $org_domain } = 1;
+                }
                 $self->errorstring('query timed out');
                 return;
             }
@@ -98,7 +101,7 @@ sub _do { ## no critic
 
     # Timeouts or SERVFAIL are unlikely to recover within the lifetime of this transaction,
     # when we encounter them, don't lookup this org domain again.
-    if ( ( $self->errorstring =~ /timeout/i ) || ( $self->errorstring eq 'query timed out' ) || ( $self->errorstring eq 'SERVFAIL' && $time_taken > $servfail_timeout ) ) {
+    if ( $self->{cache_dns_timeouts} && (( $self->errorstring =~ /timeout/i ) || ( $self->errorstring eq 'query timed out' ) || ( $self->errorstring eq 'SERVFAIL' && $time_taken > $servfail_timeout )) ) {
         $self->{ _timedout }->{ $org_domain } = 1;
         $handler->log_error( "DNS Lookup $query $domain error, hold set on $org_domain : ".$self->errorstring );
       }

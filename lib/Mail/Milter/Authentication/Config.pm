@@ -74,6 +74,7 @@ sub default_config {
         'addheader_timeout'               => 30,
         'dns_timeout'                     => 10,
         'dns_retry'                       => 2,
+        'cache_dns_timeouts'              => 1,
         'tempfail_on_error'               => '1',
         'tempfail_on_error_authenticated' => '0',
         'tempfail_on_error_local'         => '0',

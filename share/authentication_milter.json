@@ -22,6 +22,7 @@
     "content_timeout"       : 300,
     "dns_timeout"           : 10,
     "dns_retry"             : 2,
+    "cache_dns_timeouts"    : 1,
 
     "tempfail_on_error"               : "1",
     "tempfail_on_error_authenticated" : "0",
