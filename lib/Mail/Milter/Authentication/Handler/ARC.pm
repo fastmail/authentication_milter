@@ -256,7 +256,7 @@ sub inherit_trusted_dkim_results {
                 $self->handle_exception( $@ );
                 if ( ! $entry_domain ) {
                     # No domain, check for an identifier instead
-                    my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
+                    $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
                     $self->handle_exception( $@ );
                     if ( $entry_domain ) {
                         $entry_domain =~ s/^.*\@//;
