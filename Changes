@@ -1,6 +1,17 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Make the DNS Timeouts caching configurable
+          Thanks to Jedrzej Jajor (@jedrzejj)
+          Adds a config option (cache_dns_timeouts) to allow disabling the
+          caching of domains which timed out during a DNS query. By default
+          the option is enabled to preserve the current behaviour. Setting
+          the option to 0 disables the cache and the query will be sent to the
+          DNS resolver each time regardless of previous timeouts.
+  - ARC: Fix bug in ARC use of DKIM identity where no DKIM domain exists
+  - Core: Skip addresses with more than 1 @ as bogus
+  - Core: Don't override log_dispatchouli's configuration default values
+          Thanks to: Norikatsu Shigemura (@nanorkyo)
 
 3.20240701 2024-07-01 14:10:31+10:00 Australia/Melbourne
   - DMARC: New option to enable strict processing of rfc5322 from domains.
