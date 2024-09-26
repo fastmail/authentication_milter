@@ -24,6 +24,7 @@ sub default_config {
         'detect_list_id' => 1,
         'report_skip_to' => [ 'my_report_from_address@example.com' ],
         'report_suppression_list' => 'rbl.example.com',
+        'report_suppression_email_list' => 'rbl.example.com',
         'no_report'      => 0,
         'hide_report_to' => 0,
         'config_file'    => '/etc/mail-dmarc.ini',
@@ -1075,6 +1076,22 @@ sub dequeue_callback {
                         next REPORT;
                     }
                 }
+
+                if ( exists ( $config->{ 'report_suppression_email_list' } ) ) {
+                    RUA: for my $rua_entry (split /,/, lc $rua) {
+                        $rua_entry =~ s/ //g;
+                        next RUA unless $rua_entry =~ /^mailto:/;
+                        $rua_entry =~ s/^mailto://;
+                        if ( $self->rbl_check_email_address( $rua_entry, $config->{ 'report_suppression_email_list' } ) ) {
+                            $self->dbgout( 'Queued DMARC Report suppressed for', "$domain, $rua :: $rua_entry listed", LOG_INFO );
+                            $self->delete_dequeue($id);
+                            $self->reset_alarm();
+                            next REPORT;
+                        }
+                    }
+
+                }
+
                 $report->save_aggregate();
                 $self->dbgout( 'Queued DMARC Report saved for', "$domain, $rua", LOG_INFO );
                 $self->delete_dequeue($id);
@@ -1211,7 +1228,8 @@ This handler requires the SPF and DKIM handlers to be installed and active.
                 "dmarc@yourdomain.com",                    | This can be used to avoid report loops for email sent to
                 "dmarc@example.com"                        | your report from addresses.
             ],
-            "report_suppression_list" : "rbl.example.com", | RBL used to look Org domains for which we want to suppress reporting
+            "report_suppression_list" : "rbl.example.com", | RBL used to look up Org domains for which we want to suppress reporting
+            "report_suppression_email_list" : "rbl.examp", | RBL used to look up hashed email addresses for which we want to suppress reporting
             "no_report"          : "1",                    | If set then we will not attempt to store DMARC reports.
             "hide_report_to"     : "1",                    | If set, remove envelope_to from DMARC reports
             "config_file"        : "/etc/mail-dmarc.ini"   | Optional path to dmarc config file

@@ -19,6 +19,7 @@ use Proc::ProcessTable;
 use Sereal qw{encode_sereal decode_sereal};
 use Sys::Hostname;
 use Time::HiRes qw{ ualarm gettimeofday };
+use Digest::SHA qw(sha1_hex);
 
 =head1 DESCRIPTION
 
@@ -186,6 +187,37 @@ sub rbl_check_domain {
     my ( $self, $domain, $list ) = @_;
     my $resolver = $self->get_object( 'resolver' );
     my $lookup = join( '.', $domain, $list );
+    my $packet = $resolver->query( $lookup, 'A' );
+
+    if ($packet) {
+        foreach my $rr ( $packet->answer ) {
+            if (  lc $rr->type eq 'a' ) {
+                return $rr->address();
+            }
+        }
+    }
+    return 0;
+}
+
+=rbl_method I<rbl_check_email_address( $email_address, $list )>
+
+Check the given email address against an hash rbl list.
+
+Returns true is listed.
+
+=cut
+
+sub rbl_check_email_address {
+    my ( $self, $email_address, $list ) = @_;
+
+    # This matches the SA HBL hash. Although the documentation says sha256-base32, they also
+    #  list all entries as sha1-hex, so we'll just use that as well
+    $email_address = lc $email_address;
+    $email_address =~ s/\+.*@/@/; # No plus addressing
+    my $entry_hash = sha1_hex($email_address);
+
+    my $resolver = $self->get_object( 'resolver' );
+    my $lookup = join( '.', $entry_hash, $list );
     my $packet = $resolver->query( $lookup, 'A' );
 
     if ($packet) {
