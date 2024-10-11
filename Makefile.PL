@@ -38,6 +38,7 @@ my %WriteMakefileArgs = (
     "Date::Format" => 0,
     "Date::Manip::Date" => 0,
     "Digest::MD5" => 0,
+    "Digest::SHA" => 0,
     "Email::Date::Format" => 0,
     "Email::Sender::Simple" => 0,
     "Email::Simple" => 0,
@@ -115,7 +116,7 @@ my %WriteMakefileArgs = (
     "Test::Perl::Critic" => 0,
     "lib" => 0
   },
-  "VERSION" => "3.20240827",
+  "VERSION" => "3.20241011",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -132,6 +133,7 @@ my %FallbackPrereqs = (
   "Date::Format" => 0,
   "Date::Manip::Date" => 0,
   "Digest::MD5" => 0,
+  "Digest::SHA" => 0,
   "Email::Date::Format" => 0,
   "Email::Sender::Simple" => 0,
   "Email::Simple" => 0,
