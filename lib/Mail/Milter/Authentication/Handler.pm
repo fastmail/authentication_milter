@@ -1788,15 +1788,12 @@ Return a value from the symbol store, searches all codes for the given key.
 
 sub get_symbol {
     my ( $self, $searchkey ) = @_;
-    my $top_handler = $self->get_top_handler();
-    my $symbols = $top_handler->{'symbols'} || {};
-    foreach my $code ( keys %{$symbols} ) {
-        my $subsymbols = $symbols->{$code};
-        foreach my $key ( keys %{$subsymbols} ) {
-            if ( $searchkey eq $key ) {
-                return $subsymbols->{$key};
-            }
-        }
+    # Micro-optimise, get_symbol is called a lot
+    # my $top_handler = $self->get_top_handler();
+    # my $symbols = $top_handler->{'symbols'} || {};
+    my $symbols = $self->{'thischild'}->{'handler'}->{'_Handler'}->{'symbols'} || {};
+    foreach my $subsymbols (values %{$symbols}) {
+        return $subsymbols->{$searchkey} if exists $subsymbols->{$searchkey};
     }
 }
 
