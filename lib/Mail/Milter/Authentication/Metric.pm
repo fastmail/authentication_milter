@@ -45,6 +45,38 @@ sub new {
                      : defined( $config->{metric_connection} ) ? 1
                      : 0;
 
+    my $metric_tempfile;
+    if ( defined( $config->{metric_tempfile} ) ) {
+       $metric_tempfile = $config->{metric_tempfile};
+    }
+    if ( ! $metric_tempfile ) {
+       $metric_tempfile = $config->{lib_dir}.'/metrics';
+    }
+
+    # If metric_tempfile is a regular file then we need to re-init with a directory
+    # this is likely a restart after upgrade.
+    if ( -f $metric_tempfile ) {
+       unlink $metric_tempfile;
+    }
+    if ( ! -d $metric_tempfile ) {
+       mkdir $metric_tempfile, 0700;
+    }
+
+    $self->dbgout( 'Metrics', "Setup new metrics file $metric_tempfile", LOG_DEBUG );
+    my $prom = eval{ Prometheus::Tiny::Shared->new(filename => $metric_tempfile.'/authmilter_metrics', init_file => 1) };
+    $self->handle_exception($@);
+    if ( $prom ) {
+       $self->{prom} = $prom;
+       $self->{metric_tempfile} = $metric_tempfile;
+       $prom->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
+       $prom->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
+       $prom->declare( 'authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
+       $prom->declare( 'authmilter_version', help => 'Running versions', type => 'gauge' );
+    }
+    else {
+       $self->dbgout( 'Metrics', "Failed to setup new metrics file $metric_tempfile", LOG_ERR );
+    }
+
     return $self;
 }
 
@@ -103,57 +135,7 @@ Return the prom object if available
 
 sub prom {
     my ( $self ) = @_;
-    my $config = get_config();
-
-    my $metric_tempfile;
-    if ( exists( $self->{metric_tempfile} ) ) {
-        $metric_tempfile = $self->{metric_tempfile};
-    }
-    else {
-        if ( defined( $config->{metric_tempfile} ) ) {
-            $metric_tempfile = $config->{metric_tempfile};
-        }
-        if ( ! $metric_tempfile ) {
-            $metric_tempfile = $config->{lib_dir}.'/metrics';
-        }
-        $self->{metric_tempfile} = $metric_tempfile;
-    }
-
-    my $prom = $self->{prom};
-    # Invalidate if the file does not exist!
-    if ( ! -e $metric_tempfile ) {
-        $prom = undef;
-    }
-    if ( ! -d $metric_tempfile ) {
-        # If metric_tempfile is a regular file then we need to re-init with a directory
-        # this is likely a restart after upgrade.
-        $prom = undef;
-    }
-
-    if ( ! $prom ) {
-        if ( -f $metric_tempfile ) {
-            unlink $metric_tempfile;
-        }
-        if ( ! -d $metric_tempfile ) {
-            mkdir $metric_tempfile, 0700;
-        }
-        $self->dbgout( 'Metrics', "Setup new metrics file $metric_tempfile", LOG_DEBUG );
-        $prom = eval{ Prometheus::Tiny::Shared->new(filename => $metric_tempfile.'/authmilter_metrics', init_file => 1) };
-        $self->handle_exception($@);
-        if ( $prom ) {
-            $self->{metric_tempfile} = $metric_tempfile;
-            $prom->declare( 'authmilter_uptime_seconds_total', help => 'Number of seconds since server startup', type => 'counter' );
-            $prom->declare( 'authmilter_processes_waiting', help => 'The number of authentication milter processes in a waiting state', type => 'gauge' );
-            $prom->declare( 'authmilter_processes_processing', help => 'The number of authentication milter processes currently processing data', type => 'gauge' );
-            $prom->declare( 'authmilter_version', help => 'Running versions', type => 'gauge' );
-        }
-        else {
-            $self->dbgout( 'Metrics', "Failed to setup new metrics file $metric_tempfile", LOG_ERR );
-        }
-    }
-    $self->{prom} = $prom;
-
-    return $prom;
+    return $self->{prom};
 }
 
 =method I<set_versions( $server )>
