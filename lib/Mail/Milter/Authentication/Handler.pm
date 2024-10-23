@@ -916,6 +916,9 @@ sub top_header_callback {
             $self->dbgout( 'inline error $error', '', LOG_DEBUG );
         }
 
+        # Local cache these metrics for performance, actually process in top_eoh_callback
+        $self->{'header_metrics'} ||= {};
+
         my $callbacks = $self->get_callbacks( 'header' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Header ' . $handler, LOG_DEBUG );
@@ -927,7 +930,7 @@ sub top_header_callback {
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'header', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'header', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
+            $self->{'header_metrics'}->{$handler} += $self->get_microseconds_since( $start_time );
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -966,6 +969,12 @@ sub top_eoh_callback {
         if ( my $timeout = $self->get_type_timeout( 'content' ) ) {
             $self->set_alarm( $timeout );
         }
+
+        # Process accumulated header metrics from top_header_callback
+        foreach my $handler (keys %{$self->{'header_metrics'}}) {
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'header', 'handler' => $handler }, $self->{'header_metrics'}->{$handler} );
+        }
+        delete $self->{'header_metrics'};
 
         my $callbacks = $self->get_callbacks( 'eoh' );
         foreach my $handler ( @$callbacks ) {
@@ -1245,6 +1254,7 @@ sub top_close_callback {
     delete $self->{'add_headers'};
     delete $self->{'ip_object'};
     delete $self->{'raw_ip_object'};
+    delete $self->{'header_metrics'};
     $self->dbgoutwrite();
     $self->clear_all_symbols();
     $self->status('postclose');
