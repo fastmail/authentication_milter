@@ -236,9 +236,11 @@ Return the current time in microseconds
 =cut
 
 sub get_microseconds {
-    my ( $self ) = @_;
-    my ($seconds, $microseconds) = gettimeofday;
-    return ( ( $seconds * 1000000 ) + $microseconds );
+    # Micro-optimise, get_microseconds is called a lot
+    #my ( $self ) = @_;
+    #my ($seconds, $microseconds) = gettimeofday;
+    #return ( ( $seconds * 1000000 ) + $microseconds );
+    return int(Time::HiRes::time * 1000000);
 }
 
 =timeout_method I<get_microseconds_since( $time )>
