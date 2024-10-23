@@ -18,6 +18,7 @@ use Net::DNS 1.01;
 use Net::DNS::Resolver;
 use Net::IP;
 use Proc::ProcessTable;
+use Date::Format qw{ time2str };
 use base 'Mail::Milter::Authentication::Net::ServerPatches';
 use vars qw(@ISA);
 
@@ -557,7 +558,7 @@ sub send_exception_email {
     $email .= "Child PID: $PID\n\n";
 
     $email .= "Log:\n";
-    $email .= join( "\n", $self->{'tracelog'}->@* );
+    $email .= join( "\n", map { time2str('%Y:%m:%d %X %z', $_->[0]) . " " . $_->[1] } $self->{'tracelog'}->@* );
     $email .= "\n\n";
 
     $email .= "Processes Running\n";
