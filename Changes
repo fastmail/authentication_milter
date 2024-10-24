@@ -1,6 +1,9 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Optimizations and efficiency improvements
+
+3.20241011 2024-10-11 15:06:59+11:00 Australia/Melbourne
   - DMARC: Add HBL address style report suppression
            New config item: report_suppression_email_list
 
