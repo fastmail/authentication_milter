@@ -118,7 +118,7 @@ sub new {
 
     # Setup a new authentication milter object
     my $authmilter = Mail::Milter::Authentication->new();
-    $authmilter->{'metric'} = Mail::Milter::Authentication::Metric->new();
+    $authmilter->{'metric'} = Mail::Milter::Authentication::Metric->new($authmilter);
     $authmilter->{'config'} = $config;
 
     # if ( $protocol eq 'smtp' ) {

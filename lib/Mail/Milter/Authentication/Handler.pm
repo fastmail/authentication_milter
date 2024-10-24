@@ -7,7 +7,6 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use Mail::Milter::Authentication::Exception;
 use Mail::Milter::Authentication::Resolver;
-use Date::Format qw{ time2str };
 use Digest::MD5 qw{ md5_hex };
 use List::MoreUtils qw{ uniq };
 use Lock::File;
@@ -237,9 +236,11 @@ Return the current time in microseconds
 =cut
 
 sub get_microseconds {
-    my ( $self ) = @_;
-    my ($seconds, $microseconds) = gettimeofday;
-    return ( ( $seconds * 1000000 ) + $microseconds );
+    # Micro-optimise, get_microseconds is called a lot
+    #my ( $self ) = @_;
+    #my ($seconds, $microseconds) = gettimeofday;
+    #return ( ( $seconds * 1000000 ) + $microseconds );
+    return int(Time::HiRes::time * 1000000);
 }
 
 =timeout_method I<get_microseconds_since( $time )>
@@ -917,6 +918,9 @@ sub top_header_callback {
             $self->dbgout( 'inline error $error', '', LOG_DEBUG );
         }
 
+        # Local cache these metrics for performance, actually process in top_eoh_callback
+        $self->{'header_metrics'} ||= {};
+
         my $callbacks = $self->get_callbacks( 'header' );
         foreach my $handler ( @$callbacks ) {
             $self->dbgout( 'CALLBACK', 'Header ' . $handler, LOG_DEBUG );
@@ -928,7 +932,7 @@ sub top_header_callback {
                 $self->tempfail_on_error();
                 $self->metric_count( 'callback_error_total', { 'stage' => 'header', 'handler' => $handler } );
             }
-            $self->metric_count( 'time_microseconds_total', { 'callback' => 'header', 'handler' => $handler }, $self->get_microseconds_since( $start_time ) );
+            $self->{'header_metrics'}->{$handler} += $self->get_microseconds_since( $start_time );
             $self->check_timeout();
         }
         $self->set_alarm(0);
@@ -967,6 +971,12 @@ sub top_eoh_callback {
         if ( my $timeout = $self->get_type_timeout( 'content' ) ) {
             $self->set_alarm( $timeout );
         }
+
+        # Process accumulated header metrics from top_header_callback
+        foreach my $handler (keys %{$self->{'header_metrics'}}) {
+            $self->metric_count( 'time_microseconds_total', { 'callback' => 'header', 'handler' => $handler }, $self->{'header_metrics'}->{$handler} );
+        }
+        delete $self->{'header_metrics'};
 
         my $callbacks = $self->get_callbacks( 'eoh' );
         foreach my $handler ( @$callbacks ) {
@@ -1246,6 +1256,7 @@ sub top_close_callback {
     delete $self->{'add_headers'};
     delete $self->{'ip_object'};
     delete $self->{'raw_ip_object'};
+    delete $self->{'header_metrics'};
     $self->dbgoutwrite();
     $self->clear_all_symbols();
     $self->status('postclose');
@@ -1789,15 +1800,12 @@ Return a value from the symbol store, searches all codes for the given key.
 
 sub get_symbol {
     my ( $self, $searchkey ) = @_;
-    my $top_handler = $self->get_top_handler();
-    my $symbols = $top_handler->{'symbols'} || {};
-    foreach my $code ( keys %{$symbols} ) {
-        my $subsymbols = $symbols->{$code};
-        foreach my $key ( keys %{$subsymbols} ) {
-            if ( $searchkey eq $key ) {
-                return $subsymbols->{$key};
-            }
-        }
+    # Micro-optimise, get_symbol is called a lot
+    # my $top_handler = $self->get_top_handler();
+    # my $symbols = $top_handler->{'symbols'} || {};
+    my $symbols = $self->{'thischild'}->{'handler'}->{'_Handler'}->{'symbols'} || {};
+    foreach my $subsymbols (values %{$symbols}) {
+        return $subsymbols->{$searchkey} if exists $subsymbols->{$searchkey};
     }
 }
 
@@ -2431,7 +2439,7 @@ sub dbgout {
 
     my $thischild = $self->{'thischild'};
     if ( exists $thischild->{'tracelog'} ) {
-        push $thischild->{'tracelog'}->@*, time2str('%Y:%m:%d %X %z',time) . " $queue_id: $key: $value";
+        push $thischild->{'tracelog'}->@*, [ time, "$queue_id: $key: $value" ];
     }
 
     my $config = $self->config();
