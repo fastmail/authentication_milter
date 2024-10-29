@@ -1052,78 +1052,76 @@ sub dequeue_callback {
     my ($self) = @_;
     my $dequeue_list = $self->get_dequeue_list('dmarc_report');
     REPORT:
-    foreach my $id ( $dequeue_list->@* ) {
+    for my $id ( $dequeue_list->@* ) {
         my $report = $self->get_dequeue($id);
-        if ( $report ) {
 
-            eval {
-                $self->set_handler_alarm( 5 * 1000000 ); # Allow no longer than 5 seconds for this!
-                if ( $report->can('set_resolver') ) {
-                    my $resolver = $self->get_object('resolver');
-                    $report->set_resolver($resolver);
-                }
-
-                my $domain = $report->{ 'header_from' };
-                my $org_domain = eval{ $report->get_organizational_domain( $domain ) };
-                my $rua = $report->result()->published()->rua();
-
-                my $config = $self->handler_config();
-                if ( exists ( $config->{ 'report_suppression_list' } ) ) {
-                    if ( $self->rbl_check_domain( $org_domain, $config->{ 'report_suppression_list' } ) ) {
-                        $self->dbgout( 'Queued DMARC Report suppressed for', "$domain, $rua", LOG_INFO );
-                        $self->delete_dequeue($id);
-                        $self->reset_alarm();
-                        next REPORT;
-                    }
-                }
-
-                if ( exists ( $config->{ 'report_suppression_email_list' } ) ) {
-                    RUA:
-                    for my $rua_entry (split /,/ , $rua) {
-                        $rua_entry = lc $rua_entry;
-                        $rua_entry =~ s/ //g;
-                        next RUA unless $rua_entry =~ /^mailto:/;
-                        $rua_entry =~ s/^mailto://;
-                        if ( $self->rbl_check_email_address( $rua_entry, $config->{ 'report_suppression_email_list' } ) ) {
-                            $self->dbgout( 'Queued DMARC Report suppressed for', "$domain, $rua :: $rua_entry listed", LOG_INFO );
-                            $self->delete_dequeue($id);
-                            $self->reset_alarm();
-                            next REPORT;
-                        }
-                    }
-
-                }
-
-                $report->save_aggregate();
-                $self->dbgout( 'Queued DMARC Report saved for', "$domain, $rua", LOG_INFO );
-                $self->delete_dequeue($id);
-                $self->reset_alarm();
-            };
-            if ( my $Error = $@ ) {
-                $self->reset_alarm();
-                my $Type = $self->is_exception_type( $Error );
-                if ( $Type ) {
-                    if ( $Type eq 'Timeout' ) {
-                        # We have a timeout, is it global or is it ours?
-                        if ( $self->get_time_remaining() > 0 ) {
-                            # We have time left, but this aggregate save timed out
-                            # Log this and move on!
-                            $self->log_error("DMARC timeout saving reports for $id");
-                        }
-                        else {
-                            $self->handle_exception( $Error );
-                        }
-                    }
-                }
-                $self->log_error("DMARC Report save failed for $id: $Error");
-                $self->error_dequeue($id);
-            }
-
-        }
-        else {
+        unless ($report) {
             $self->log_error("DMARC Report dequeue failed for $id");
             $self->error_dequeue($id);
+            next REPORT;
         }
+
+        my $save_report = 1;
+        eval {
+            $self->set_handler_alarm( 5 * 1000000 ); # Allow no longer than 5 seconds for this!
+            if ( $report->can('set_resolver') ) {
+                my $resolver = $self->get_object('resolver');
+                $report->set_resolver($resolver);
+            }
+
+            my $domain = $report->{ 'header_from' };
+            my $org_domain = eval{ $report->get_organizational_domain( $domain ) };
+            my $rua = $report->result()->published()->rua();
+
+            my $config = $self->handler_config();
+            if ( exists ( $config->{ 'report_suppression_list' } ) ) {
+                if ( $self->rbl_check_domain( $org_domain, $config->{ 'report_suppression_list' } ) ) {
+                    $self->dbgout( 'Queued DMARC Report suppressed for', "$domain, $rua", LOG_INFO );
+                    $save_report = 0;
+                }
+            }
+
+            if ( exists ( $config->{ 'report_suppression_email_list' } ) ) {
+                RUA:
+                for my $rua_entry (split /,/ , $rua) {
+                    $rua_entry = lc $rua_entry;
+                    $rua_entry =~ s/ //g;
+                    next RUA unless $rua_entry =~ /^mailto:/;
+                    $rua_entry =~ s/^mailto://;
+                    if ( $self->rbl_check_email_address( $rua_entry, $config->{ 'report_suppression_email_list' } ) ) {
+                        $self->dbgout( 'Queued DMARC Report suppressed for', "$domain, $rua :: $rua_entry listed", LOG_INFO );
+                        $save_report = 0;
+                    }
+                }
+            }
+
+            if ($save_report) {
+                $report->save_aggregate();
+                $self->dbgout( 'Queued DMARC Report saved for', "$domain, $rua", LOG_INFO );
+            }
+            $self->delete_dequeue($id);
+            $self->reset_alarm();
+        };
+        if ( my $Error = $@ ) {
+            $self->reset_alarm();
+            my $Type = $self->is_exception_type( $Error );
+            if ( $Type ) {
+                if ( $Type eq 'Timeout' ) {
+                    # We have a timeout, is it global or is it ours?
+                    if ( $self->get_time_remaining() > 0 ) {
+                        # We have time left, but this aggregate save timed out
+                        # Log this and move on!
+                        $self->log_error("DMARC timeout saving reports for $id");
+                    }
+                    else {
+                        $self->handle_exception( $Error );
+                    }
+                }
+            }
+            $self->log_error("DMARC Report save failed for $id: $Error");
+            $self->error_dequeue($id);
+        }
+
     }
 }
 
