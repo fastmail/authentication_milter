@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - DMARC: Fix an error in logs when suppressing DMARC reports
 
 3.20241024 2024-10-24 20:54:14+11:00 Australia/Melbourne
   - Optimizations and efficiency improvements
