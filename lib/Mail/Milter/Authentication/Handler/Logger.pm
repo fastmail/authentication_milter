@@ -28,7 +28,7 @@ sub connect_callback {
     my $config = $self->handler_config();
     return if ! $config->{connect};
     $self->dbgout( 'Logger', 'Connection host: ' . $hostname, LOG_INFO );
-    $self->dbgout( 'Logger', 'Connection IP: ' . $ip->ip(), LOG_INFO );
+    $self->dbgout( 'Logger', 'Connection IP: ' . $ip->short(), LOG_INFO );
     return;
 }
 

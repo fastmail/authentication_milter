@@ -607,7 +607,7 @@ sub remap_connect_callback {
         }
         else {
             $ip = $ip_remap->{ip};
-            $self->dbgout( 'RemappedConnect', $self->{'raw_ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
+            $self->dbgout( 'RemappedConnect', $self->{'raw_ip_object'}->short() . ' > ' . $ip->short(), LOG_DEBUG );
        }
     }
     $self->{'ip_object'} = $ip;
@@ -656,7 +656,7 @@ sub top_connect_callback {
             $self->set_alarm( $timeout );
         }
 
-        $self->dbgout( 'ConnectFrom', $ip->ip(), LOG_DEBUG );
+        $self->dbgout( 'ConnectFrom', $ip->short(), LOG_DEBUG );
 
         my $callbacks = $self->get_callbacks( 'connect' );
         foreach my $handler ( @$callbacks ) {
@@ -706,7 +706,7 @@ sub remap_helo_callback {
             if ( $self->{'ip_object'}->ip() ne $ip_remap->{ip}->ip() ) {
                 # The mapped IP has been changed based on the HELO host received
                 $self->{'ip_object'} = $ip;
-                $self->dbgout( 'RemappedConnectHELO', $self->{'ip_object'}->ip() . ' > ' . $ip->ip(), LOG_DEBUG );
+                $self->dbgout( 'RemappedConnectHELO', $self->{'ip_object'}->short() . ' > ' . $ip->short(), LOG_DEBUG );
             }
             $helo_host = $ip_remap->{helo};
             $self->dbgout( 'RemappedHELO', $self->{'raw_helo_name'} . ' > ' . $helo_host, LOG_DEBUG );
@@ -2081,7 +2081,7 @@ Return the ip address of the current connection.
 sub ip_address {
     my ($self) = @_;
     my $top_handler = $self->get_top_handler();
-    return $top_handler->{'ip_object'}->ip();
+    return $top_handler->{'ip_object'}->short();
 }
 
 

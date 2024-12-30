@@ -449,7 +449,7 @@ sub smtp_command_mailfrom {
     $handler->remap_connect_callback( $host, Net::IP->new( $ip ) );
     $handler->remap_helo_callback( $helo );
 
-    $self->logdebug( "Inbound IP Address " . $handler->{'ip_object'}->ip() );
+    $self->logdebug( "Inbound IP Address " . $handler->{'ip_object'}->short() );
     $returncode = $handler->top_connect_callback( $host, $handler->{'ip_object'} );
     if ( $returncode == SMFIS_CONTINUE ) {
         $returncode = $handler->top_helo_callback( $handler->{'helo_name'} );
