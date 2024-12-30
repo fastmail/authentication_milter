@@ -20,7 +20,7 @@ sub grafana_rows {
 
 sub is_local_ip_address {
     my ( $self, $ip ) = @_;
-    my $ip_address = $ip->ip();
+    my $ip_address = $ip->short();
     my $ip_type  = $ip->iptype();
     my $type_map = {
         'PRIVATE'              => 1,
