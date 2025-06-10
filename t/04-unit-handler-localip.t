@@ -21,13 +21,18 @@ my $tester = Mail::Milter::Authentication::Tester::HandlerTester->new({
     'prefix'   => $basedir . 't/config/handler/etc',
     'zonedata' => '',
     'handler_config' => {
-        'LocalIP' => {},
+        'LocalIP' => {
+            'ignore_local_ip_list' => [
+                '10.0.0.0/24',
+                '10.1.0.5'
+            ],
+        },
     },
 });
 
 subtest 'config' => sub {
     my $config = $tester->{ 'authmilter' }->{ 'handler' }->{ 'LocalIP' }->default_config();
-    is_deeply( $config, {}, 'Returns correct config' );
+    is_deeply( $config, { 'ignore_local_ip_list' => [] }, 'Returns correct config' );
 };
 
 subtest 'metrics' => sub {
@@ -61,6 +66,12 @@ subtest 'Private IPv6 Ranges' => sub {
 
 subtest 'Global IPv6 Ranges' => sub {
     test( $tester, { 'name' => 'Global', 'result' => '', 'ip' => '2400:8900::f03c:91ff:fe6e:84c7' });
+};
+
+subtest 'Ignore Local IP' => sub {
+    test( $tester, { 'name' => '10.0.0.5', 'result' => '', 'ip' => '10.0.0.5' });
+    test( $tester, { 'name' => '10.1.0.5', 'result' => '', 'ip' => '10.1.0.5' });
+    test( $tester, { 'name' => '10.1.0.6', 'result' => 'pass', 'ip' => '10.1.0.6' });
 };
 
 #test( $tester, { 'name' => '', 'result' => 'pass', 'ip' => '' });
