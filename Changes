@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20250611 2025-06-11 12:11:09+10:00 Australia/Melbourne
   - DMARC: Fix an error in logs when suppressing DMARC reports
   - LocalIP: Add option to ignore list of IPs or CIDR ranges
   - Use canonical string representation for IPv6 addresses
