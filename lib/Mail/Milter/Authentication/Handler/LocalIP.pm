@@ -49,7 +49,7 @@ sub is_local_ip_address {
     };
     my $config = $self->handler_config();
     if ( exists $config->{'ignore_local_ip_list'} ) {
-        foreach my $ignore_ip ( @{ $config->{'ignore_local_ip_list'}  } ) {
+        foreach my $ignore_ip ( @{ $config->{'ignore_local_ip_list'} } ) {
             my $ignore_ip_obj = Net::IP->new($ignore_ip);
             if ( !$ignore_ip_obj ) {
                 $self->log_error( 'LocalIP: Could not parse ignore IP '.$ignore_ip );
@@ -102,10 +102,6 @@ __END__
 =head1 DESCRIPTION
 
 Detect a Local IP address and act accordingly.
-
-=head1 CONFIGURATION
-
-No configuration options exist for this handler.
 
 =head1 CONFIGURATION
 
