@@ -1,6 +1,7 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Remove the last instance of Net::DNS calling rdatastr
 
 3.20250611 2025-06-11 12:11:09+10:00 Australia/Melbourne
   - DMARC: Fix an error in logs when suppressing DMARC reports
@@ -55,7 +56,7 @@ Revision history for Mail-Milter-Authentication
 3.20230911 2023-09-11 06:18:44+00:00 UTC
   - Core: Switch from deprecated method in Net::DNS
           In Net::DNS::Resolver, call the rdstring method
-          rather than the deprecated rdstring method
+          rather than the deprecated rdatastr method
           This change bumps the minimum version of Net::DNS
           required to 1.01
   - SPF: Add option to detect and optionally mitigate SPF upgrade problems.
