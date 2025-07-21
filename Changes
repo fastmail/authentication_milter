@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+3.20250721 2025-07-21 15:20:17+10:00 Australia/Melbourne
   - Core: Remove the last instance of Net::DNS calling rdatastr
 
 3.20250611 2025-06-11 12:11:09+10:00 Australia/Melbourne
