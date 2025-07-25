@@ -33,7 +33,7 @@ my $AddressTests = {
  
  
  ",
-        <noreply@example.com>'                  => [ 'noreply@example.com', 'example.com' ],
+        <noreply@example.com>'                  => [ '', '' ],
     'Dear Customer
 
 this is a very long long email address
@@ -45,8 +45,8 @@ this is a very long long email address
     'test@example.com (With comment)'           => [ 'test@example.com', 'example.com' ],
     'test@example.com'                          => [ 'test@example.com', 'example.com' ],
     'test@goestheweasel.com'                    => [ 'test@goestheweasel.com', 'goestheweasel.com' ],
-    'nothing in here is an address'             => [ 'nothing in here is an address', 'localhost.localdomain' ],
-    ''                                          => [ '', 'localhost.localdomain' ],
+    'nothing in here is an address'             => [ '', '' ],
+    ''                                          => [ '', '' ],
 };
 
 my $AddressesTests = {
