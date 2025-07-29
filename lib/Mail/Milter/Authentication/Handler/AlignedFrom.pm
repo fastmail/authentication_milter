@@ -100,28 +100,28 @@ sub eom_callback {
     my $comment;
 
     if ( $self->{ 'from_header_count' } > 1 ) {
-        $result = 'error';
-        $comment = 'Multiple addresses in header';
+        $result = 'permerror';
+        $comment = 'No valid header domain';
     }
 
     elsif ( $self->{ 'envfrom_count' } > 1 ) {
-        $result = 'error';
-        $comment = 'Multiple addresses in envelope';
+        $result = 'permerror';
+        $comment = 'No valid envelope domain';
     }
 
     elsif ( ( ! $self->{ 'smtp_domain' } ) && ( ! $self->{ 'header_domain' } ) ) {
-        $result = 'null';
-        $comment = 'No domains found';
+        $result = 'permerror';
+        $comment = 'No valid domains found';
     }
 
     elsif ( ! $self->{ 'smtp_domain' } ) {
-        $result = 'null_smtp';
-        $comment = 'No envelope domain';
+        $result = 'permerror';
+        $comment = 'No valid envelope domain';
     }
 
     elsif ( ! $self->{ 'header_domain' } ) {
-        $result = 'null_header';
-        $comment = 'No header domain';
+        $result = 'permerror';
+        $comment = 'No valid header domain';
     }
 
     elsif ( $self->{ 'smtp_address' } eq $self->{ 'header_address' } ) {
