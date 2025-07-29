@@ -11,11 +11,14 @@
    "authmilter_callback_error_total{ident=\"test_authentication_milter_test\",stage=\"rcptto\",type=\"timeout\"}" : "1",
    "authmilter_callback_error_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_connect_total{ident=\"test_authentication_milter_test\"}" : "1",
+   "authmilter_dequeue_files_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_forked_children_total{ident=\"test_authentication_milter_test\"}" : 123456,
    "authmilter_mail_processed_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_processes_processing{ident=\"test_authentication_milter_test\"}" : 123456,
    "authmilter_processes_waiting{ident=\"test_authentication_milter_test\"}" : 123456,
    "authmilter_reaped_children_total{ident=\"test_authentication_milter_test\"}" : "0",
    "authmilter_time_microseconds_total{ident=\"test_authentication_milter_test\"}" : "0",
-   "authmilter_uptime_seconds_total{ident=\"test_authentication_milter_test\"}" : 123456
+   "authmilter_uptime_seconds_total{ident=\"test_authentication_milter_test\"}" : 123456,
+   "authmilter_version{ident=\"test_authentication_milter_test\",module=\"TestTimeout\",version=\"3.20250729\"}" : "1",
+   "authmilter_version{ident=\"test_authentication_milter_test\",module=\"core\",version=\"3.20250729\"}" : "1"
 }

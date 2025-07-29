@@ -1,4 +1,6 @@
 Authentication-Results: mx.example.net;
+    dmarc=permerror;
+    senderid=permerror;
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com
 Received-SPF: pass
     (marcbradshaw.net: Sender is authorized to use 'marc@marcbradshaw.net' in 'mfrom' identity (mechanism 'include:_spf.google.com' matched))
