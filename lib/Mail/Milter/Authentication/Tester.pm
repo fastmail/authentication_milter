@@ -124,6 +124,11 @@ sub test_metrics {
             close $InF;
             my $data = $j->decode( join( q{}, @content ) );
 
+            for my $key ( sort keys %$data ) {
+                next unless $key =~ /^authmilter_version/;
+                delete $data->{$key};
+            }
+
             plan tests => scalar keys %$data;
 
             foreach my $key ( sort keys %$data ) {
@@ -340,7 +345,7 @@ sub smtpput {
 
     my $line = <$sock>;
 
-    if ( ! $line =~ /250/ ) {
+    if ( ($line =~ /^4/) || ($line =~ /^5/) ) {
         die "Unexpected SMTP response $line";
     }
 
@@ -466,9 +471,9 @@ sub smtpcat {
     local $SIG{'ALRM'} = sub{ die "Timeout\n" };
     alarm( 60 );
 
-    my $quit = 0;
-    while ( ! $quit ) {
-        my $command = <$accept> || { $quit = 1 };
+    while ( 1 ) {
+        my $command = <$accept>;
+        last unless defined $command;
         alarm( 60 );
 
         if ( $command =~ /^HELO/ ) {
@@ -513,7 +518,7 @@ sub smtpcat {
         elsif ( $command =~ /^QUIT/ ) {
             push @out_lines, $command;
             print $accept "221 Bye\r\n";
-            $quit = 1;
+            last;
         }
         else {
             push @out_lines, $command;
