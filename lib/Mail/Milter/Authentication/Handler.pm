@@ -2182,14 +2182,15 @@ sub get_address_xs_from ($self, $string, $args={}) {
     return;
   }
 
-  my @is_invalid = grep {$_ == 0} map {$_->is_valid} @address_objects;
-  if (@is_invalid) {
+  for my $address_object (@address_objects) {
+    next if $address_object->is_valid;
     $self->dbgout( 'Address Parse Error', 'address was invalid', LOG_INFO );
     return;
   }
 
-  my @is_invalid_domain = grep {$_ !~ /^[a-z0-9_\-]+(?:\.[a-z0-9_\-]+)*$/} map {lc $_->host} @address_objects;
-  if (@is_invalid_domain) {
+  for my $address_object (@address_objects) {
+    my $host = lc $address_object->host;
+    next if $host =~ /^[a-z0-9_\-]+(?:\.[a-z0-9_\-]+)*$/;
     $self->dbgout( 'Address Parse Error', 'domain failed check', LOG_INFO );
     return;
   }
