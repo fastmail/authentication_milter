@@ -1,6 +1,26 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Switch out our own email address parser and use
+          Email::Address::XS.
+          NOTE: This is much stricter and will return an
+          undef if there were any issues parsing the string.
+          This is intentional, as there have been some DMARC
+          bypass issues resulting from poorly formed and poorly
+          parsed bogus address strings.
+          Users with their own custom handlers are strongly
+          advised to test them with the new parser before
+          deploying this update.
+          In particular, get_domain(s)_from will now fail if
+          the thing passed in is not an email address, whereas
+          the previous parser would return a bare domain which
+          was passed to it.
+  - Core/SMTP: Fix check for remote welcome message
+  - Tests: Never test version metrics, fix some SMTP conditions
+
+  We consider the address parser switch to be significant, and as this
+  may result in a change of behavior we have increased the major version
+  number for this release.
 
 3.20250721 2025-07-21 15:20:17+10:00 Australia/Melbourne
   - Core: Remove the last instance of Net::DNS calling rdatastr

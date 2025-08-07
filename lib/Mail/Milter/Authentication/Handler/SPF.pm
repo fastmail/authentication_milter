@@ -283,11 +283,9 @@ sub spfu_checks {
             next ENTRY unless $lc_value =~ /^fail /;
             my ($for_value) = $lc_value =~ /^.*: domain of (\S+) .*/;
             next ENTRY unless $for_value;
-            my $failed_domain = lc $self->get_address_from($for_value);
+            my $failed_domain = lc $for_value;
             $failed_domain = $self->get_domain_from($failed_domain) if $failed_domain =~ /\@/;
-            print "$for_value ***  $failed_domain";
             $failed_domain = $dmarc_object->get_organizational_domain( $failed_domain ) if $dmarc_object;
-            print "$failed_domain ******** $spfu_from_domain\n\n\n";
             if ( $failed_domain eq $spfu_from_domain ) {
                 $self->{'spfu_detected'} = 1; # suspicious...
             }

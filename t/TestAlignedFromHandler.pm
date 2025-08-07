@@ -50,28 +50,28 @@ sub test_dmarc_or_not {
 
     # No domains at all
     subtest 'No domains' => sub{
-        test($tester,{ 'name' => 'no domains', 'mailfrom' => '', 'from' => 'X-Null: Nothing', 'result' => 'null', 'comment' => 'No domains found'  });
+        test($tester,{ 'name' => 'no domains', 'mailfrom' => '', 'from' => 'X-Null: Nothing', 'result' => 'permerror', 'comment' => 'No valid domains found'  });
     };
 
     # Envelope variations
     subtest 'Variations on envelope' => sub{
         test($tester,{ 'name' => '<> in envelope', 'mailfrom' => '<test@example.com>', 'from' => 'From: test@example.com', 'result' => 'pass', 'comment' => 'Address match' });
-        test($tester,{ 'name' => 'null envelope', 'mailfrom' => '', 'from' => 'From: test@example.com', 'result' => 'null_smtp', 'comment' => 'No envelope domain' });
-        test($tester,{ 'name' => 'null <> envelope', 'mailfrom' => '<>', 'from' => 'From: test@example.com', 'result' => 'null_smtp', 'comment' => 'No envelope domain' });
-        test($tester,{ 'name' => 'multiple envelope address in <>', 'mailfrom' => '<test@example.com> <test2@example.com>', 'from' => 'From: test@example.com', 'result' => 'error', 'comment' => 'Multiple addresses in envelope' });
-        test($tester,{ 'name' => 'multiple envelope address', 'mailfrom' => 'test@example.com test2@example.com', 'from' => 'From: test@example.com', 'result' => 'error', 'comment' => 'Multiple addresses in envelope' });
-        test($tester,{ 'name' => 'multiple envelope domain', 'mailfrom' => 'test@example.com test@example.net', 'from' => 'From: test@example.com', 'result' => 'error', 'comment' => 'Multiple addresses in envelope' });
+        test($tester,{ 'name' => 'null envelope', 'mailfrom' => '', 'from' => 'From: test@example.com', 'result' => 'permerror', 'comment' => 'No valid envelope domain' });
+        test($tester,{ 'name' => 'null <> envelope', 'mailfrom' => '<>', 'from' => 'From: test@example.com', 'result' => 'permerror', 'comment' => 'No valid envelope domain' });
+        test($tester,{ 'name' => 'multiple envelope address in <>', 'mailfrom' => '<test@example.com> <test2@example.com>', 'from' => 'From: test@example.com', 'result' => 'permerror', 'comment' => 'No valid envelope domain' });
+        test($tester,{ 'name' => 'multiple envelope address', 'mailfrom' => 'test@example.com test2@example.com', 'from' => 'From: test@example.com', 'result' => 'permerror', 'comment' => 'No valid envelope domain' });
+        test($tester,{ 'name' => 'multiple envelope domain', 'mailfrom' => 'test@example.com test@example.net', 'from' => 'From: test@example.com', 'result' => 'permerror', 'comment' => 'No valid envelope domain' });
     };
 
     # Header variations
     subtest 'Variations on header' => sub {
-        test($tester,{ 'name' => 'no from headers', 'mailfrom' => 'test@example.com', 'from' => 'X-Null: Nothing', 'result' => 'null_header', 'comment' => 'No header domain' });
-        test($tester,{ 'name' => 'null from header', 'mailfrom' => 'test@example.com', 'from' => "From: ", 'result' => 'null_header', 'comment' => 'No header domain' });
-        test($tester,{ 'name' => 'multiple from headers', 'mailfrom' => 'test@example.com', 'from' => "From: test\@example.com\nFrom: test\@example.com", 'result' => 'error', 'comment' => 'Multiple addresses in header' });
-        test($tester,{ 'name' => 'multiple from headers domains', 'mailfrom' => 'test@example.com', 'from' => "From: test\@example.com\nFrom: test\@example.net", 'result' => 'error', 'comment' => 'Multiple addresses in header' });
-        test($tester,{ 'name' => 'multiple from addresses match last', 'mailfrom' => 'test@example.com', 'from' => "From: test2\@example.com test\@example.com", 'result' => 'pass', 'comment' => 'Address match' });
-        test($tester,{ 'name' => 'multiple from addresses match first', 'mailfrom' => 'test@example.com', 'from' => "From: test\@example.com test2\@example.com", 'result' => 'domain_pass', 'comment' => 'Domain match' });
-        test($tester,{ 'name' => 'multiple from addresses domains', 'mailfrom' => 'test@example.com', 'from' => "From: test\@example.com test\@example.net", 'result' => 'error', 'comment' => 'Multiple addresses in header' });
+        test($tester,{ 'name' => 'no from headers', 'mailfrom' => 'test@example.com', 'from' => 'X-Null: Nothing', 'result' => 'permerror', 'comment' => 'No valid header domain' });
+        test($tester,{ 'name' => 'null from header', 'mailfrom' => 'test@example.com', 'from' => "From: ", 'result' => 'permerror', 'comment' => 'No valid header domain' });
+        test($tester,{ 'name' => 'multiple from headers', 'mailfrom' => 'test@example.com', 'from' => "From: test\@example.com\nFrom: test\@example.com", 'result' => 'permerror', 'comment' => 'No valid header domain' });
+        test($tester,{ 'name' => 'multiple from headers domains', 'mailfrom' => 'test@example.com', 'from' => "From: test\@example.com\nFrom: test\@example.net", 'result' => 'permerror', 'comment' => 'No valid header domain' });
+        test($tester,{ 'name' => 'multiple from addresses no match last', 'mailfrom' => 'test@example.com', 'from' => "From: test2\@example.com test\@example.com", 'result' => 'permerror', 'comment' => 'No valid header domain' });
+        test($tester,{ 'name' => 'multiple from addresses no match first', 'mailfrom' => 'test@example.com', 'from' => "From: test\@example.com test2\@example.com", 'result' => 'permerror', 'comment' => 'No valid header domain' });
+        test($tester,{ 'name' => 'multiple from addresses domains', 'mailfrom' => 'test@example.com', 'from' => "From: test\@example.com test\@example.net", 'result' => 'permerror', 'comment' => 'No valid header domain' });
     };
 
 }

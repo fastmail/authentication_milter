@@ -915,7 +915,7 @@ sub smtp_forward_to_destination {
         }
         alarm( 0 );
 
-        if ( ! $line =~ /250/ ) {
+        unless ( $line =~ /^220/ ) {
             $self->logerror( "Unexpected SMTP response $line" );
             return 0;
         }
