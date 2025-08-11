@@ -19,7 +19,7 @@ use Sereal qw{encode_sereal decode_sereal};
 use Sys::Hostname;
 use Time::HiRes qw{ ualarm gettimeofday };
 use Digest::SHA qw(sha1_hex);
-use Email::Address::XS;
+use Email::Address::XS 1.05;
 
 =head1 DESCRIPTION
 
