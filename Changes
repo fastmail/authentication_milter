@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+4.20250811 2025-08-11 11:02:07+10:00 Australia/Melbourne
   - Core: Switch out our own email address parser and use
           Email::Address::XS.
           NOTE: This is much stricter and will return an
