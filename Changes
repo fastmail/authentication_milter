@@ -1,5 +1,10 @@
 Revision history for Mail-Milter-Authentication
 
+  - RBLDNS: Config structure change is now mandatory
+
+  [UPDATED Config Items for RBLDNS]
+    RBLDNS config items MUST be moved under a new rbls key
+
 {{$NEXT}}
 
 4.20250811 2025-08-11 11:02:07+10:00 Australia/Melbourne
