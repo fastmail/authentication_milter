@@ -14,6 +14,7 @@ sub default_config {
         'hide_none'                => 0,
         'best_guess'               => 0,
         'spfu_detection'           => 0,
+        'helo_check'               => 0,
     };
 }
 
@@ -85,7 +86,9 @@ sub envfrom_callback {
         $self->{'spfu_chain'}       = [];
     }
     delete $self->{'spf_header'};
+    delete $self->{'spf_helo_header'};
     delete $self->{'spf_metric'};
+    delete $self->{'spf_helo_metric'};
 
     my $spf_server = $self->get_object('spf_server');
     if ( ! $spf_server ) {
@@ -174,8 +177,12 @@ sub envfrom_callback {
         if ( $auth_domain ) {
             $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.authdomain' )->safe_set_value( $auth_domain ) );
         }
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->safe_set_value( $self->get_address_from( $env_from ) ) );
-        $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->safe_set_value( $self->{ 'helo_name' } ) );
+        if ( $scope eq 'mfrom' ) {
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->safe_set_value( $self->get_address_from( $env_from ) ) );
+        }
+        else {
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->safe_set_value( $self->{ 'helo_name' } ) );
+        }
         if ( !( $config->{'hide_none'} && $result_code eq 'none' ) ) {
             $self->{'spf_header'} = $header;
         }
@@ -197,6 +204,32 @@ sub envfrom_callback {
                 $value = $self->wrap_header( $value );
                 $self->prepend_header( $header, $value );
                 $self->dbgout( 'SPFHeader', $result_header, LOG_DEBUG );
+            }
+        }
+
+        # Separate HELO SPF check (only when the primary check was mfrom)
+        if ( $config->{'helo_check'} && $scope eq 'mfrom' ) {
+            eval {
+                my $helo_spf_request = Mail::SPF::Request->new(
+                    'versions'      => [1],
+                    'scope'         => 'helo',
+                    'identity'      => $self->{'helo_name'},
+                    'ip_address'    => $self->ip_address(),
+                    'helo_identity' => $self->{'helo_name'},
+                );
+                my $helo_spf_result = $spf_server->process($helo_spf_request);
+                my $helo_result_code = $helo_spf_result->code();
+                $self->{'spf_helo_metric'} = $helo_result_code;
+                my $helo_header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'spf' )->safe_set_value( $helo_result_code );
+                $helo_header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->safe_set_value( $self->{'helo_name'} ) );
+                if ( !( $config->{'hide_none'} && $helo_result_code eq 'none' ) ) {
+                    $self->{'spf_helo_header'} = $helo_header;
+                }
+                $self->dbgout( 'SPFHeloCode', $helo_result_code, LOG_DEBUG );
+            };
+            if ( my $helo_error = $@ ) {
+                $self->handle_exception( $helo_error );
+                $self->log_error( 'SPF HELO Error ' . $helo_error );
             }
         }
     };
@@ -244,7 +277,11 @@ sub eoh_callback {
         $self->handle_exception( $@ );
         $self->add_auth_header($self->{'spf_header'});
     }
+    if ( $self->{'spf_helo_header'} ) {
+        $self->add_auth_header($self->{'spf_helo_header'});
+    }
     $self->metric_count( 'spf_total', { 'result' => $self->{'spf_metric'} } ) if $self->{'spf_metric'};
+    $self->metric_count( 'spf_total', { 'result' => $self->{'spf_helo_metric'} } ) if $self->{'spf_helo_metric'};
 }
 
 sub spfu_checks {
@@ -359,7 +396,9 @@ sub close_callback {
     delete $self->{'spfu_chain'};
     delete $self->{'spfu_detected'};
     delete $self->{'spf_header'};
+    delete $self->{'spf_helo_header'};
     delete $self->{'spf_metric'};
+    delete $self->{'spf_helo_metric'};
     delete $self->{'dmarc_domain'};
     delete $self->{'dmarc_scope'};
     delete $self->{'dmarc_result'};
@@ -385,9 +424,13 @@ Implements the SPF standard checks.
                                                         | if not hidden at all
             "best_guess"               : 0,             | Fallback to Org domain for SPF checks
                                                         | if result is none.
-            "spfu_detection"           : 0              | Add some mitigation for SPF upgrade attacks
+            "spfu_detection"           : 0,             | Add some mitigation for SPF upgrade attacks
                                                         | 0 = off (default)
                                                         | 1 = mitigate
                                                         | 2 = report only
+            "helo_check"               : 0              | Perform a separate HELO SPF check in
+                                                        | addition to the mfrom check
+                                                        | 0 = off (default)
+                                                        | 1 = on
         },
 
