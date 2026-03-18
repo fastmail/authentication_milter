@@ -390,6 +390,7 @@ sub _process_dmarc_for {
         $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'from header invalid' ) );
         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
         $self->_add_dmarc_header( $header );
+        $self->quarantine_mail( 'Quarantined due to DMARC permerror' );
         return;
     }
 
@@ -960,6 +961,7 @@ sub eom_callback {
                     my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
                     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
                     $self->_add_dmarc_header( $header );
+                    $self->quarantine_mail( 'Quarantined due to DMARC permerror' );
                 }
                 else {
                     $self->log_error( 'DMARC Error ' . $error );
@@ -982,6 +984,7 @@ sub eom_callback {
     else {
         # We got no headers at all? That's bogus!
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
+        $self->quarantine_mail( 'Quarantined due to DMARC permerror' );
         $self->add_auth_header( $header );
     }
 
