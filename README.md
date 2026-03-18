@@ -138,7 +138,7 @@ Please see the output of 'authentication_milter --help'
 Credits and License
 -------------------
 
-Copyright (c) 2018 Marc Bradshaw. <marc@marcbradshaw.net>
+Copyright (c) 2026 Jemma Bradshaw. <jemma@nothingbutstatic.dev>
 
 This is free software; you can redistribute it and/or modify it under the
 same terms as the Perl 5 programming language system itself.
