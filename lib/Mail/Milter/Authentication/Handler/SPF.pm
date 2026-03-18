@@ -177,13 +177,17 @@ sub envfrom_callback {
         if ( $auth_domain ) {
             $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.authdomain' )->safe_set_value( $auth_domain ) );
         }
-        if ( $scope eq 'mfrom' ) {
-            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->safe_set_value( $self->get_address_from( $env_from ) ) );
-            if ( ! $config->{'helo_check'} ) {
+        if ( $config->{'helo_check'} ) {
+            # Add single property for this scope
+            if ( $scope eq 'mfrom' ) {
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->safe_set_value( $self->get_address_from( $env_from ) ) );
+            }
+            else {
                 $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->safe_set_value( $self->{ 'helo_name' } ) );
             }
-        }
-        else {
+        } else {
+            # Add properties for both scopes
+            $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->safe_set_value( $self->get_address_from( $env_from ) ) );
             $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->safe_set_value( $self->{ 'helo_name' } ) );
         }
         if ( !( $config->{'hide_none'} && $result_code eq 'none' ) ) {
