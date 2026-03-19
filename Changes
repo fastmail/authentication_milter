@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+4.20260319 2026-03-19 11:58:26+11:00 Australia/Melbourne
   - SPF: Add separate HELO SPF check with helo_check config option
       Thanks to Kent Oyer @fkoyer
 
