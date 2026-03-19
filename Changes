@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - SPF: Add separate HELO SPF check with helo_check config option
+      Thanks to Kent Oyer @fkoyer
 
 4.20250811 2025-08-11 11:02:07+10:00 Australia/Melbourne
   - Core: Switch out our own email address parser and use
