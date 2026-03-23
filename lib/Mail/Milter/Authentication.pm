@@ -253,7 +253,7 @@ sub child_init_hook {
 
     $arg = '' if !defined $arg;
     if ( $arg eq 'dequeue' ) {
-        $self->loginfo( "Dequeue process $PID starting up" );
+        $self->logdebug( "Dequeue process $PID starting up" );
         $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':dequeue';
     }
     else {
@@ -323,7 +323,7 @@ sub child_finish_hook {
     $PROGRAM_NAME = $Mail::Milter::Authentication::Config::IDENT . ':exiting';
     $arg = '' if !defined $arg;
     if ( $arg eq 'dequeue' ) {
-        $self->loginfo( "Dequeue process $PID shutting down" );
+        $self->logdebug( "Dequeue process $PID shutting down" );
     }
     else {
         $self->loginfo( "Child process $PID shutting down" );
