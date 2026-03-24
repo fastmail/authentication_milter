@@ -3,6 +3,8 @@ Revision history for Mail-Milter-Authentication
 {{$NEXT}}
   - Core: Move Dequeue log messages to debug level
       Thanks to @premeau
+  - DMARC: Return permerror for domains with multiple DMARC records
+      Thanks to Kent Oyer @fkoyer
 
 4.20260319 2026-03-19 11:58:26+11:00 Australia/Melbourne
   - SPF: Add separate HELO SPF check with helo_check config option
