@@ -451,6 +451,22 @@ sub _process_dmarc_for {
     my $dmarc_code   = $dmarc_result->result;
     $self->dbgout( 'DMARCCode', $dmarc_code, LOG_DEBUG );
 
+    # Work around Mail::DMARC::PurePerl returning 'none' instead of 'permerror'
+    # when multiple DMARC records are found (RFC 7489 Section 6.6.3)
+    if ( my $reasons = $dmarc_result->reason ) {
+        for my $reason ( @$reasons ) {
+            if ( ( $reason->comment // '' ) eq 'too many policies' ) {
+                $self->log_error( 'DMARC permerror: multiple DMARC records found for ' . $header_domain );
+                $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
+                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
+                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'multiple DMARC records' ) );
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
+                $self->_add_dmarc_header( $header );
+                return;
+            }
+        }
+    }
+
     my $dmarc_disposition = eval { $dmarc_result->disposition() };
     if ( my $error = $@ ) {
         $self->handle_exception( $error );
