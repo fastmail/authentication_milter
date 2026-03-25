@@ -775,6 +775,7 @@ sub new_dmarc_object {
         $self->handle_exception( $error );
         $self->log_error( 'DMARC IP Error ' . $error );
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'DMARC IP error' ) );
         $self->add_auth_header( $header );
         $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
         $self->{'failmode'} = 1;
@@ -982,6 +983,7 @@ sub eom_callback {
     else {
         # We got no headers at all? That's bogus!
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'no parseable from domain' ) );
         $self->add_auth_header( $header );
     }
 
