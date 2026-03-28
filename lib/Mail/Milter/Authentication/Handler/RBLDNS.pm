@@ -50,8 +50,8 @@ sub register_metrics {
 
 sub setup_callback {
     my ($self) = @_;
-    my $config = $self->handler_config();
-    $config = $config->{rbls} if exists $config->{rbls};
+    my $handler_config = $self->handler_config();
+    $config = $handler_config->{rbls} // {};
     foreach my $rbl ( sort keys $config->%* ) {
         my $sanitize_header = $config->{$rbl}->{sanitize_header} // 'yes';
         $self->add_header_to_sanitize_list(lc $config->{$rbl}->{add_header}, $sanitize_header eq 'silent') if $config->{$rbl}->{add_header} && $sanitize_header ne 'no';
@@ -61,8 +61,8 @@ sub setup_callback {
 
 sub connect_callback {
     my ( $self, $hostname, $ip ) = @_;
-    my $config = $self->handler_config();
-    $config = $config->{rbls} if exists $config->{rbls};
+    my $handler_config = $self->handler_config();
+    $config = $handler_config->{rbls} // {};
 
     my @states;
 
