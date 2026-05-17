@@ -1066,6 +1066,37 @@ sub addheader_callback {
     my $handler = shift;
 }
 
+# Split a DMARC rua tag value into deliverable and malformed entries,
+# returning ( \@kept, \@bad ). Mail::DMARC::Policy and ::URI accept any
+# "mailto:..." string regardless of address shape, so junk like
+# "rua=mailto:0" from a publisher's _dmarc record would otherwise wedge
+# the sender queue: Sender::email croaks on a falsy $to ("0" is falsy in
+# Perl), the croak is uncaught, the row stays, and no report_error is
+# written.
+sub _filter_rua {
+    my ( $self, $rua ) = @_;
+    my @kept;
+    my @bad;
+    for my $rua_entry ( split /,/, $rua // '' ) {
+        $rua_entry =~ s/\s+//g;
+        # RFC 7489 6.2: Remove the suffix before matching
+        # e.g. "mailto:foo@bar.com!10m"
+        my ($uri) = split /!/, $rua_entry, 2;
+        if ( $uri =~ /^mailto:(.+)$/i ) {
+            if ( $self->get_address_from($1) ) {
+                push @kept, $rua_entry;
+            }
+            else {
+                push @bad, $rua_entry;
+            }
+        }
+        elsif ( $uri =~ m{^https?:}i ) {
+            push @kept, $rua_entry;
+        }
+    }
+    return ( \@kept, \@bad );
+}
+
 sub dequeue_callback {
     my ($self) = @_;
     my $dequeue_list = $self->get_dequeue_list('dmarc_report');
@@ -1090,6 +1121,20 @@ sub dequeue_callback {
             my $domain = $report->{ 'header_from' };
             my $org_domain = eval{ $report->get_organizational_domain( $domain ) };
             my $rua = $report->result()->published()->rua();
+
+            my ( $kept_rua, $bad_rua ) = $self->_filter_rua($rua);
+            if ( @$bad_rua ) {
+                $self->dbgout( 'DMARC Report rua has malformed entries', "$domain, $rua, bad: @$bad_rua", LOG_INFO );
+            }
+            if ( ! @$kept_rua ) {
+                $self->dbgout( 'DMARC Report skipped, no valid rua', "$domain, $rua", LOG_INFO );
+                $save_report = 0;
+            }
+            elsif ( @$bad_rua ) {
+                my $cleaned_rua = join ',', @$kept_rua;
+                $report->result()->published()->rua($cleaned_rua);
+                $self->dbgout( 'DMARC Report rua rewritten', "$domain, $rua -> $cleaned_rua", LOG_INFO );
+            }
 
             my $config = $self->handler_config();
             if ( exists ( $config->{ 'report_suppression_list' } ) ) {
