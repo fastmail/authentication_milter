@@ -10,7 +10,7 @@ Received: from test.module (localhost [127.0.0.1])
 ############
 ############
 Authentication-Results: mx.example.net;
-    dmarc=permerror;
+    dmarc=permerror (no parseable from domain);
     senderid=permerror;
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com
 Received-SPF: pass
