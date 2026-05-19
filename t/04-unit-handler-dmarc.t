@@ -121,6 +121,44 @@ subtest 'metrics' => sub {
     lives_ok( sub{ JSON::XS->new()->decode( $grafana_rows->[0] ); }, 'Metrics returns valid JSON' );
 };
 
+# Rua-shape validation that keeps junk like "rua=mailto:0" out of the
+# dmarc DB and out of the sender queue.
+my $dmarc_handler = $testers->{ 'defaults' }->{ 'authmilter' }->{ 'handler' }->{ 'DMARC' };
+
+subtest 'filter_rua keeps valid mailto' => sub {
+    my ( $kept, $bad ) = $dmarc_handler->_filter_rua('mailto:reports@example.com');
+    is_deeply( $kept, ['mailto:reports@example.com'], 'valid mailto kept' );
+    is_deeply( $bad, [], 'no bad entries' );
+};
+
+subtest 'filter_rua rejects falsy local part' => sub {
+    my ( $kept, $bad ) = $dmarc_handler->_filter_rua('mailto:0');
+    is_deeply( $kept, [], 'mailto:0 not kept' );
+    is_deeply( $bad, ['mailto:0'], 'mailto:0 reported as bad' );
+};
+
+subtest 'filter_rua partitions mixed rua' => sub {
+    my ( $kept, $bad ) = $dmarc_handler->_filter_rua('mailto:reports@example.com,mailto:0');
+    is_deeply( $kept, ['mailto:reports@example.com'], 'good entry kept' );
+    is_deeply( $bad, ['mailto:0'], 'bad entry tracked separately' );
+};
+
+subtest 'filter_rua preserves RFC 7489 size suffix' => sub {
+    my ( $kept, $bad ) = $dmarc_handler->_filter_rua('mailto:reports@example.com!10m');
+    is_deeply(
+        $kept,
+        ['mailto:reports@example.com!10m'],
+        'RFC 7489 6.2 "!size" suffix preserved verbatim',
+    );
+    is_deeply( $bad, [], 'no bad entries' );
+};
+
+subtest 'filter_rua keeps https targets' => sub {
+    my ( $kept, $bad ) = $dmarc_handler->_filter_rua('https://reports.example.com/dmarc');
+    is_deeply( $kept, ['https://reports.example.com/dmarc'], 'https kept' );
+    is_deeply( $bad, [], 'no bad entries' );
+};
+
 subtest 'none shown' => sub {
     my $tester = $testers->{ 'defaults' };
     $tester->run( $test_params->{ 'none' } );
