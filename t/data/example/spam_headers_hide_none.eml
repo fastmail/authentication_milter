@@ -1,5 +1,5 @@
 Authentication-Results: mx.example.net;
-    dmarc=permerror;
+    dmarc=permerror (no parseable from domain);
     senderid=permerror
 Received: from mailer.example.com (mailer.example.com [1.2.3.4])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))

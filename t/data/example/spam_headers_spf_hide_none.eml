@@ -1,5 +1,5 @@
 Authentication-Results: mx.example.net;
-    dmarc=permerror;
+    dmarc=permerror (no parseable from domain);
     senderid=permerror;
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com
 Received-SPF: pass
