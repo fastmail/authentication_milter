@@ -1078,7 +1078,7 @@ sub change_header {
         $header_i ++;
     }
 
-    if ( $result_i ) {
+    if ( defined $result_i ) {
         if ( $value eq q{} ) {
             splice @{ $smtp->{'headers'} }, $result_i, 1;
         }

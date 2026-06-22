@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Fix issue where the first header in an email could be
+          missed when manipulating headers in SMTP mode.
 
 4.20260521 2026-05-21 10:40:54+10:00 Australia/Melbourne
   - DMARC: Validate mailto in rua before saving reports
