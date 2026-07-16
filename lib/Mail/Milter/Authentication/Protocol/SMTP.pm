@@ -82,7 +82,6 @@ sub protocol_process_request {
         'fwd_ident'        => undef,
         'helo_host'        => q{},
         'mail_from'        => q{},
-        'rcpt_to'          => [],
         'has_mail_from'    => 0,
         'has_data'         => 0,
         'connect_ip'       => $self->{'server'}->{'peeraddr'},
@@ -379,7 +378,6 @@ sub smtp_command_rset {
     my $socket = $self->{'socket'};
     $self->smtp_status('smtp.i.rset');
     $smtp->{'mail_from'}        = q{};
-    $smtp->{'rcpt_to'}          = [];
     $smtp->{'headers'}          = [];
     $smtp->{'body'}             = q{};
     $smtp->{'has_data'}         = 0;
@@ -517,7 +515,6 @@ sub smtp_command_rcptto {
         return;
     }
     my $envrcpt = command_param( $command,8 );
-    push @{ $smtp->{'rcpt_to'} }, $envrcpt;
     my $returncode = $handler->top_envrcpt_callback( split_command_params( $envrcpt ) );
     if ( $returncode == SMFIS_CONTINUE ) {
         push @{ $smtp->{'lmtp_rcpt'} }, $envrcpt;
@@ -550,6 +547,12 @@ sub smtp_command_data {
     my $fail    = 0;
     my @header_split;
     my $returncode;
+
+    if ( ! scalar @{ $smtp->{'lmtp_rcpt'} }) {
+        $self->logerror( "No valid recipients" );
+        print $socket "554 No valid recipients\r\n";
+        return;
+    }
 
     if ( $smtp->{'has_data'} ) {
         $self->logerror( "Repeated SMTP DATA command: $command" );
@@ -946,7 +949,7 @@ sub smtp_forward_to_destination {
     }
 
     $self->send_smtp_packet( $sock, 'MAIL FROM:' . $smtp->{'mail_from'},   '250' ) || return;
-    foreach my $rcpt_to ( @{ $smtp->{'rcpt_to'} } ) {
+    foreach my $rcpt_to ( @{ $smtp->{'lmtp_rcpt'} } ) {
         $self->send_smtp_packet( $sock, 'RCPT TO:' .   $rcpt_to, '250' ) || return;
     }
 
