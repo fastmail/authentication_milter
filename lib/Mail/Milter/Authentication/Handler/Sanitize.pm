@@ -66,6 +66,15 @@ sub remove_auth_header {
     push @{ $self->{'remove_auth_headers'}->{$type} }, $index;
 }
 
+# Which headers of $type have been marked for removal, as 1-based occurrence
+# numbers within that type. Exposed so the ARC handler can exclude them from
+# the seal rather than attesting to results we have just stripped.
+sub get_removed_auth_header_indexes {
+    my ( $self, $type ) = @_;
+    return [] if ref $self->{'remove_auth_headers'} ne 'HASH';
+    return $self->{'remove_auth_headers'}->{$type} // [];
+}
+
 {
     my $headers_to_remove = {
         'x-disposition-quarantine' => { silent => 1 },
