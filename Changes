@@ -5,6 +5,8 @@ Revision history for Mail-Milter-Authentication
           missed when manipulating headers in SMTP mode.
   - Core: Fix bug where blocked RCPT TO addresses would be
           passed to the upstream SMTP/LMTP server in error.
+  - ARC: Don't seal Authentication-Results headers that Sanitize removed
+      Thanks to Tom Johnson
 
 4.20260521 2026-05-21 10:40:54+10:00 Australia/Melbourne
   - DMARC: Validate mailto in rua before saving reports

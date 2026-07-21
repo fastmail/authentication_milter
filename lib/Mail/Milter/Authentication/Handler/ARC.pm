@@ -438,6 +438,8 @@ sub envfrom_callback {
     $self->{'arc_auth_results'} = {};
     $self->{'arc_domain'}       = {};
     $self->{'arc_result'}       = '';
+    $self->{'ar_header_count'}  = 0;
+    $self->{'ar_chunk_index'}   = {};
     $self->destroy_object('arc');
 }
 
@@ -447,6 +449,16 @@ sub header_callback {
     my $arc_chunk = $original . $EOL;
     $arc_chunk =~ s/\015?\012/$EOL/g;
     push @{$self->{'headers'}} , $arc_chunk;
+
+    # Remember where each Authentication-Results header landed in the cache,
+    # keyed by its occurrence number. Sanitize records its removals by the same
+    # occurrence numbering, so the sealer can map them back to cache entries
+    # and exclude them. See addheader_callback.
+    if ( lc($header) eq 'authentication-results' ) {
+        $self->{'ar_header_count'}++;
+        $self->{'ar_chunk_index'}->{ $self->{'ar_header_count'} }
+            = scalar( @{$self->{'headers'}} ) - 1;
+    }
 
     if ( lc($header) eq 'arc-authentication-results' ) {
         $self->{'has_arc'} = 1;
@@ -669,6 +681,8 @@ sub close_callback {
     delete $self->{'arc_domain'};
     delete $self->{'arc_result'};
     delete $self->{'arc_auth_results'};
+    delete $self->{'ar_header_count'};
+    delete $self->{'ar_chunk_index'};
     $self->destroy_object('arc');
 }
 
@@ -706,6 +720,33 @@ sub _check_error {
         # and tempfail/exit
         $self->tempfail_on_error();
     }
+}
+
+# Map Sanitize's Authentication-Results removals onto positions in our own
+# header cache, returning a hashref of { chunk_index => 1 }.
+#
+# Sanitize numbers the A-R headers it removes by occurrence (1-based, in
+# received order) and header_callback records the same numbering against cache
+# positions, so the two line up directly.
+#
+# Returns an empty set when Sanitize is not loaded, or has removed nothing, so
+# behaviour is unchanged for anyone not running that handler.
+sub _sanitize_removed_ar_chunks {
+    my ( $self ) = @_;
+    my $removals = {};
+
+    return $removals if ! $self->is_handler_loaded('Sanitize');
+
+    my $occurrences = $self->get_handler('Sanitize')
+        ->get_removed_auth_header_indexes('Authentication-Results');
+
+    foreach my $occurrence ( @{ $occurrences } ) {
+        my $chunk_index = $self->{'ar_chunk_index'}->{ $occurrence };
+        next if ! defined $chunk_index;
+        $removals->{ $chunk_index } = 1;
+    }
+
+    return $removals;
 }
 
 sub _fmtheader {
@@ -749,12 +790,41 @@ sub addheader_callback {
             $arcseal->PRINT(_fmtheader($header));
         }
 
-        # then all the original headers: XXX - this doesn't deal with
-        # the change_header command,  but only sanitize uses that.
-        # It would be a massive pain to make that work consistently,
-        # as it would need to modify the already cached headers in
-        # each handler with the current architecture
+        # Then all the original headers, EXCEPT any Authentication-Results
+        # headers Sanitize has removed from the outgoing message.
+        #
+        # Mail::DKIM::ARC::Signer builds the AAR by concatenating every
+        # Authentication-Results header in this stream whose authserv-id equals
+        # SrvId. Inbound headers claiming our own authserv-id therefore end up
+        # inside an AAR we sign, and sealing one we have just stripped attests
+        # to results we deliberately rejected. On an untrusted connection those
+        # values are attacker chosen, and
+        # get_trusted_arc_authentication_results() feeds AAR entries from
+        # trusted chains back into DMARC enforcement.
+        #
+        # Scope, deliberately narrow:
+        #  - Only the A-R headers Sanitize tracks. That is sufficient for the
+        #    AAR because the Signer matches /^Authentication-Results:/, so
+        #    extra_auth_results_types (X-Authentication-Results and friends)
+        #    can never reach it.
+        #  - Sanitize removes a superset of what the Signer matches:
+        #    is_hostname_mine() also matches subdomains, every hosts_to_remove
+        #    entry and the local hostname's parent domain, and it removes
+        #    unparseable headers outright, whereas SrvId matching is exact.
+        #    Excluding the superset is safe -- those headers are not delivered.
+        #  - The general change_header case remains unreflected in this cache.
+        #  - Nothing changes when Sanitize is absent, disabled, or on a trusted
+        #    connection, where the inbound header is delivered AND sealed as
+        #    before.
+        #
+        # If the forged header were the ONLY SrvId match, the Signer would find
+        # no results and skip sealing rather than seal attacker data. That
+        # cannot happen here since our own A-R is in pre_headers.
+        my $sealed_removals = $self->_sanitize_removed_ar_chunks();
+        my $chunk_index     = -1;
         foreach my $chunk (@{$self->{headers} || []}) {
+            $chunk_index++;
+            next if $sealed_removals->{$chunk_index};
             $arcseal->PRINT($chunk);
         }
 
