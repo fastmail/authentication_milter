@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+4.20260722 2026-07-22 11:33:36+10:00 Australia/Melbourne
   - Core: Fix issue where the first header in an email could be
           missed when manipulating headers in SMTP mode.
   - Core: Fix bug where blocked RCPT TO addresses would be
