@@ -6,6 +6,7 @@ use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: DNS Recolver methods
 # VERSION
 use base 'Net::DNS::Resolver';
+use Domain::PublicSuffix;
 use Scalar::Util qw{ weaken };
 use Time::HiRes qw{ ualarm gettimeofday };
 
@@ -42,6 +43,21 @@ sub _get_microseconds {
     return ( ( $seconds * 1000000 ) + $microseconds );
 }
 
+sub _get_public_suffix_object {
+    my ( $self ) = @_;
+    # Parsing the suffix list is expensive, build it once per resolver.
+    return $self->{ _public_suffix } //= do {
+        my $handler = $self->{_handler};
+        my $config = $handler ? $handler->config() : {};
+        # Prefer a locally maintained suffix list when one is configured,
+        # otherwise fall back to the copy bundled with Domain::PublicSuffix.
+        my $data_file = $config->{'public_suffix_list'};
+        Domain::PublicSuffix->new(
+            $data_file && -r $data_file ? { data_file => $data_file } : ()
+        );
+    };
+}
+
 sub _do { ## no critic
     my $self = shift;
     my $what = shift;
@@ -54,11 +70,17 @@ sub _do { ## no critic
     my $domain = $_[0];
     my $org_domain = $_[0];
     my $query = $_[1];
-    if ( $handler->is_handler_loaded( 'DMARC' ) ) {
-        my $dmarc_object = $handler->get_handler('DMARC')->get_dmarc_object();
-        $org_domain = eval{ $dmarc_object->get_organizational_domain( $org_domain ) };
-        $handler->handle_exception( $@ );
-    }
+    # The timeout cache is keyed on the organizational domain so that one
+    # timeout suppresses lookups for every name beneath it. Resolve that from
+    # the public suffix list rather than via Mail::DMARC: 2.x resolves the
+    # organizational domain with a DNS tree walk (RFC 9989), and since this
+    # method wraps every DNS query, that call recursed into itself without
+    # bound. A public suffix lookup is pure computation and cannot recurse.
+    $org_domain = eval{ $self->_get_public_suffix_object->get_root_domain( $domain ) };
+    $handler->handle_exception( $@ );
+    # get_root_domain returns undef for bare TLDs and unlisted suffixes; fall
+    # back to the queried domain so the cache below is not keyed on undef.
+    $org_domain //= $domain;
 
     # If we have a 'cached' timeout for this org domain then return
     if ( $self->{ _timedout }->{ $org_domain } ) {
