@@ -1,6 +1,9 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Fix DNS timeout cache recursion with Mail::DMARC 2.x, which could
+          OOM the process
+      Thanks to Kent Oyer @fkoyer
 
 4.20260722 2026-07-22 11:33:36+10:00 Australia/Melbourne
   - Core: Fix issue where the first header in an email could be
