@@ -720,6 +720,24 @@ sub _process_dmarc_for {
     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'policy.policy-from' )->safe_set_value( $policy_used ) );
 
     $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
+    if ( $config->{'log_dns_record'} ) {
+        eval {
+            my $dmarc_dns_name = '_dmarc.' . $header_domain;
+            my $resolver = $self->get_object('resolver');
+            my $reply = $resolver->query( $dmarc_dns_name, 'TXT' );
+            if ( $reply ) {
+                my @txt_parts;
+                for my $rr ( $reply->answer ) {
+                    next unless $rr->type eq 'TXT';
+                    push @txt_parts, join( '', $rr->txtdata );
+                }
+                if ( @txt_parts ) {
+                    $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'x-dns-record=' . join( ' ', @txt_parts ) ) );
+                }
+            }
+        };
+        $self->handle_exception( $@ );
+    }
     $self->_add_dmarc_header( $header );
 
     # Write Metrics

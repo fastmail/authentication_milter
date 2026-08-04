@@ -302,6 +302,24 @@ sub eom_callback {
                     if ( $config->{'extra_properties'} ) {
                         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'x-bits' )->safe_set_value( $key_size ) ) if $key_size;
                     }
+                    if ( $config->{'log_dns_record'} ) {
+                        eval {
+                            my $dkim_dns_name = $selector . '._domainkey.' . $signature->domain();
+                            my $resolver = $self->get_object('resolver');
+                            my $reply = $resolver->query( $dkim_dns_name, 'TXT' );
+                            if ( $reply ) {
+                                my @txt_parts;
+                                for my $rr ( $reply->answer ) {
+                                    next unless $rr->type eq 'TXT';
+                                    push @txt_parts, join( '', $rr->txtdata );
+                                }
+                                if ( @txt_parts ) {
+                                    $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'x-dns-record=' . join( ' ', @txt_parts ) ) );
+                                }
+                            }
+                        };
+                        $self->handle_exception( $@ );
+                    }
                     $self->add_auth_header($header);
                 }
             }

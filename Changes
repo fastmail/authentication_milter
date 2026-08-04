@@ -2,6 +2,17 @@ Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
 
+  - Added log_dns_record option to SPF, DKIM and DMARC handlers.
+      When enabled, each handler performs an additional DNS TXT lookup
+      for the relevant record (SPF domain, DKIM selector key, DMARC
+      _dmarc.<domain>) and appends the raw record content as an
+      RFC 8601 comment node to the Authentication-Results entry, e.g.:
+        spf=softfail smtp.mailfrom=sender@example.com
+              (x-dns-record=v=spf1 redirect=_spf.google.com)
+      The option defaults to 0 (off). Enabling it adds one extra DNS
+      lookup per handler per message; DNS failures are caught and logged
+      without affecting the authentication result.
+
 4.20260730 2026-07-30 11:07:04+10:00 Australia/Melbourne
   - Core: Fix DNS timeout cache recursion with Mail::DMARC 2.x, which could
           OOM the process
