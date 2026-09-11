@@ -582,7 +582,7 @@ sub _process_dmarc_for {
                 # If it wasn't a pass then we wouldn't be in here.
                 $comment = 'arc=pass';
                 my $arc_auth_results = $arc_handler->{'arc_auth_results'};
-                foreach my $instance ( reverse sort keys %$arc_auth_results ) {
+                foreach my $instance ( reverse sort { $a <=> $b } keys %$arc_auth_results ) {
                   my $domain = '';
                   my $selector = '';
                   my $remote_ip = '';
