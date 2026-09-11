@@ -77,7 +77,7 @@ sub get_trusted_spf_results {
 
     my @trusted_results;
 
-    foreach my $instance ( sort keys %$aar ) {
+    foreach my $instance ( sort { $a <=> $b } keys %$aar ) {
         eval {
             my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'spf' })->children();
             RESULT:
@@ -109,7 +109,7 @@ sub get_trusted_dkim_results {
 
     my @trusted_results;
 
-    foreach my $instance ( sort keys %$aar ) {
+    foreach my $instance ( sort { $a <=> $b } keys %$aar ) {
         eval {
             my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dkim' })->children();
             RESULT:
@@ -167,7 +167,7 @@ sub get_trusted_dmarc_results {
 
     my @trusted_results;
 
-    foreach my $instance ( sort keys %$aar ) {
+    foreach my $instance ( sort { $a <=> $b } keys %$aar ) {
         eval {
             my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dmarc' })->children();
             RESULT:
@@ -200,7 +200,7 @@ sub inherit_trusted_spf_results {
     my $aar = $self->get_trusted_arc_authentication_results();
     return if ! $aar;
 
-    foreach my $instance ( sort keys %$aar ) {
+    foreach my $instance ( sort { $a <=> $b } keys %$aar ) {
         eval {
             # Find all ARC SPF results which passed
             my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'spf', 'value' => 'pass' })->children();
@@ -241,7 +241,7 @@ sub inherit_trusted_dkim_results {
     my $aar = $self->get_trusted_arc_authentication_results();
     return if ! $aar;
 
-    foreach my $instance ( sort keys %$aar ) {
+    foreach my $instance ( sort { $a <=> $b } keys %$aar ) {
         eval {
             # Find all ARC DKIM results which passed
             my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dkim', 'value' => 'pass' })->children();
@@ -290,7 +290,7 @@ sub inherit_trusted_dmarc_results {
     my $aar = $self->get_trusted_arc_authentication_results();
     return if ! $aar;
 
-    foreach my $instance ( sort keys %$aar ) {
+    foreach my $instance ( sort { $a <=> $b } keys %$aar ) {
         eval {
             # Find all ARC DMARC results which passed
             my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => 'dmarc', 'value' => 'pass' })->children();
@@ -330,7 +330,7 @@ sub inherit_trusted_ip_results {
     return if ! $aar;
 
     # Add result from first trusted ingress hop
-    my ( $instance ) = sort keys %$aar;
+    my ( $instance ) = sort { $a <=> $b } keys %$aar;
     foreach my $thing ( sort qw { iprev x-ptr } ) {
         eval {
             my $results = $aar->{$instance}->search({ 'isa' => 'entry', 'key' => $thing })->children();
@@ -360,7 +360,7 @@ sub get_trusted_arc_authentication_results {
 
     my $trusted_aar = {};
     INSTANCE:
-    foreach my $instance ( reverse sort keys %{$self->{ 'arc_auth_results' } } ) {
+    foreach my $instance ( reverse sort { $a <=> $b } keys %{$self->{ 'arc_auth_results' } } ) {
         my $signature_domain = $self->{'arc_domain'}->{ $instance } // q{};
         if ( $self->is_domain_trusted( $signature_domain ) ) {
             # Clone this, so we can safely modify entries later
@@ -382,7 +382,7 @@ sub get_trusted_arc_authentication_results {
 sub is_chain_trusted {
     my ( $self ) = @_;
     return 0 if $self->{ 'arc_result' } ne 'pass';
-    foreach my $instance ( reverse sort keys %{$self->{ 'arc_auth_results' } } ) {
+    foreach my $instance ( reverse sort { $a <=> $b } keys %{$self->{ 'arc_auth_results' } } ) {
         my $signature_domain = $self->{'arc_domain'}->{ $instance } // q{};
         return 0 if ! $self->is_domain_trusted( $signature_domain );
     }
@@ -394,7 +394,7 @@ sub get_arc_trusted_ingress_ip {
     my ( $self ) = @_;
     my $aar = $self->get_trusted_arc_authentication_results();
     return if ! $aar;
-    my ( $first_instance ) = sort keys %$aar;
+    my ( $first_instance ) = sort { $a <=> $b } keys %$aar;
     return if ! $first_instance;
 
     my $ip;
@@ -419,7 +419,7 @@ sub search_trusted_aar {
     my ( $self, $search ) = @_;
     my $trusted_aar = $self->get_trusted_arc_authentication_results();
     return if ! $trusted_aar;
-    foreach my $instance ( sort keys %{$trusted_aar} ) {
+    foreach my $instance ( sort { $a <=> $b } keys %{$trusted_aar} ) {
         my $found = $trusted_aar->{ $instance }->search( $search );
         if ( scalar @{ $found->children() } ) {
             return $found;
