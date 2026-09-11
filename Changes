@@ -1,6 +1,9 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - ARC/DMARC: ARC instance numbers should be sorted numerically
+               to avoid a security issue where instances over 10
+               are placed in the chain in the wrong place.
 
 4.20260730 2026-07-30 11:07:04+10:00 Australia/Melbourne
   - Core: Fix DNS timeout cache recursion with Mail::DMARC 2.x, which could
