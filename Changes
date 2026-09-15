@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+4.20260915 2026-09-15 10:48:48+10:00 Australia/Melbourne
   - ARC/DMARC: ARC instance numbers should be sorted numerically
                to avoid a security issue where instances over 10
                are placed in the chain in the wrong place.
