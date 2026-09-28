@@ -1,6 +1,10 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - ARC: new arcseal_strip_aar_comments option seals our Authentication-Results
+    without RFC 8601 comments (delivered A-R unchanged). Works around Microsoft 365
+    returning arc=fail (35) when an AAR result ends with a comment after a property
+    value, e.g. iprev=pass smtp.remote-ip=192.0.2.1 (host.example.net)
 
 4.20260915 2026-09-15 10:48:48+10:00 Australia/Melbourne
   - ARC/DMARC: ARC instance numbers should be sorted numerically
