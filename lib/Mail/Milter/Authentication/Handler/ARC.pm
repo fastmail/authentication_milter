@@ -797,8 +797,9 @@ sub _aar_seal_copy {
         $value =~ s/\015?\012/\015\012/g;
         "Authentication-Results: $value\015\012";
     };
-    if ( ! defined $stripped ) {
-        $self->dbgout( 'ARCSealAARComments', 'unparseable A-R passed through unchanged', LOG_DEBUG );
+    if ( my $error = $@ ) {
+        $self->handle_exception( $error );
+        $self->log_error( 'ARCSeal AAR comment strip Error ' . $error );
         return $text;
     }
     return $stripped;

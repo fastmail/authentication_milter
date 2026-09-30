@@ -140,4 +140,24 @@ subtest 'default seal also verifies (control for the verifier helper)' => sub {
     $tester->close();
 };
 
+subtest 'strip on: parse errors pass through, timeouts are re-thrown' => sub {
+    my $tester = make_tester( 'strip' => 1 );
+    run_message( $tester );
+    my $arc    = $tester->handler()->get_handler( 'ARC' );
+    my $config = $arc->handler_config();
+    my $text   = "Authentication-Results: example.com; iprev=pass (host.example.net)\015\012";
+
+    no warnings 'redefine';
+    local *Mail::AuthenticationResults::Parser::parse = sub { die "parse failed\n" };
+    my $got = eval { $arc->_aar_seal_copy( $config, $text ) };
+    is( $@, q{}, 'ordinary parse error is not re-thrown' );
+    is( $got, $text, 'unparseable A-R is passed through unchanged' );
+
+    my $timeout = Mail::Milter::Authentication::Exception->new({ 'Type' => 'Timeout', 'Text' => 'test timeout' });
+    local *Mail::AuthenticationResults::Parser::parse = sub { die $timeout };
+    eval { $arc->_aar_seal_copy( $config, $text ) };
+    is( $@, $timeout, 'timeout raised inside the strip reaches the caller' );
+    $tester->close();
+};
+
 done_testing();
