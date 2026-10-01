@@ -15,6 +15,7 @@ sub default_config {
         'best_guess'               => 0,
         'spfu_detection'           => 0,
         'helo_check'               => 0,
+        'log_dns_record'           => 0,
     };
 }
 
@@ -189,6 +190,23 @@ sub envfrom_callback {
             # Add properties for both scopes
             $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.mailfrom' )->safe_set_value( $self->get_address_from( $env_from ) ) );
             $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.helo' )->safe_set_value( $self->{ 'helo_name' } ) );
+        }
+        if ( $config->{'log_dns_record'} ) {
+            eval {
+                my $resolver = $self->get_object('resolver');
+                my $reply = $resolver->query( $domain, 'TXT' );
+                if ( $reply ) {
+                    for my $rr ( $reply->answer ) {
+                        next unless $rr->type eq 'TXT';
+                        my $txt = join( '', $rr->txtdata );
+                        if ( $txt =~ /^v=spf1/i ) {
+                            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'x-dns-record=' . $txt ) );
+                            last;
+                        }
+                    }
+                }
+            };
+            $self->handle_exception( $@ );
         }
         if ( !( $config->{'hide_none'} && $result_code eq 'none' ) ) {
             $self->{'spf_header'} = $header;
