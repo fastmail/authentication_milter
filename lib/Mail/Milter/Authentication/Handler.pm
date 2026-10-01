@@ -2216,6 +2216,14 @@ Extract a single domain from an email address.
 
 =cut
 
+# Escapes non-printable ASCII and backslash as \xHH.
+sub escape_non_printable_ascii ($self, $text) {
+  utf8::encode($text) if utf8::is_utf8($text);
+  $text =~ s/([^\x20-\x5B\x5D-\x7E])/sprintf('\\x%02X', ord($1))/ge;
+  return $text;
+}
+
+
 sub get_domain_from ($self, $string) {
   my @address_objects = $self->get_address_xs_from($string, {single=>1});
   return '' unless @address_objects;

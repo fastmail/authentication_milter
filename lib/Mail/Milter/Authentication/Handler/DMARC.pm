@@ -732,7 +732,7 @@ sub _process_dmarc_for {
                     push @txt_parts, join( '', $rr->txtdata );
                 }
                 if ( @txt_parts ) {
-                    $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'x-dns-record=' . join( ' ', @txt_parts ) ) );
+                    $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'x-dns-record=' . $self->escape_non_printable_ascii( join( ' ', @txt_parts ) ) ) );
                 }
             }
         };
