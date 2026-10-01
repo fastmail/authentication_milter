@@ -6,12 +6,6 @@ Revision history for Mail-Milter-Authentication
     returning arc=fail (35) when an AAR result ends with a comment after a property
     value, e.g. iprev=pass smtp.remote-ip=192.0.2.1 (host.example.net)
       Thanks to Tom Johnson @mailroute
-
-4.20260915 2026-09-15 10:48:48+10:00 Australia/Melbourne
-  - ARC/DMARC: ARC instance numbers should be sorted numerically
-               to avoid a security issue where instances over 10
-               are placed in the chain in the wrong place.
-
   - Added log_dns_record option to SPF, DKIM and DMARC handlers.
       When enabled, each handler performs an additional DNS TXT lookup
       for the relevant record (SPF domain, DKIM selector key, DMARC
@@ -22,6 +16,11 @@ Revision history for Mail-Milter-Authentication
       The option defaults to 0 (off). Enabling it adds one extra DNS
       lookup per handler per message; DNS failures are caught and logged
       without affecting the authentication result.
+
+4.20260915 2026-09-15 10:48:48+10:00 Australia/Melbourne
+  - ARC/DMARC: ARC instance numbers should be sorted numerically
+               to avoid a security issue where instances over 10
+               are placed in the chain in the wrong place.
 
 4.20260730 2026-07-30 11:07:04+10:00 Australia/Melbourne
   - Core: Fix DNS timeout cache recursion with Mail::DMARC 2.x, which could
