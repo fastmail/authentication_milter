@@ -11,6 +11,7 @@ use Mail::DKIM::ARC::Signer;
 use Mail::DKIM::ARC::Verifier;
 use Mail::DKIM::DNS;
 use Mail::DKIM::TextWrap;
+use Mail::AuthenticationResults::Parser;
 
 sub default_config {
     return {
@@ -21,6 +22,7 @@ sub default_config {
         'arcseal_key'       => undef,
         'arcseal_keyfile'   => undef,
         'arcseal_headers'   => undef,
+        'arcseal_strip_aar_comments' => 0,
         'trusted_domains'   => [],
         'rbl_whitelist'     => '',
         'no_strict'         => 0,
@@ -756,6 +758,53 @@ sub _fmtheader {
     return "$header->{field}: $value\015\012";
 }
 
+# Is Authentication-Results in the configured arcseal_headers list? If so the
+# AMS signs the A-R headers themselves, and a stripped copy would no longer
+# match what is delivered.
+sub _ar_is_ams_signed {
+    my ( $config ) = @_;
+    my $extra = $config->{'arcseal_headers'} // q{};
+    return scalar grep { lc $_ eq 'authentication-results' } split /\s*:\s*/, $extra;
+}
+
+# Mail::DKIM::ARC::Signer copies our Authentication-Results header text
+# verbatim into the ARC-Authentication-Results header it seals. With
+# arcseal_strip_aar_comments set, hand it a copy of each Authentication-Results
+# header with the RFC 8601 comments removed; the delivered Authentication-Results
+# header is not touched.
+#
+# Why: Microsoft 365 returns arc=fail (35) for an otherwise valid chain when an
+# AAR result ends with a comment after a property value, for example
+# "iprev=pass smtp.remote-ip=192.0.2.1 (host.example.net)" or
+# "x-return-mx=pass ... policy.is_org=yes (MX Records found: ...)". Comments
+# are permitted there, so this is a receiver bug, but the iprev form appears on
+# almost every message this milter seals.
+#
+# Anything that does not parse is passed through unchanged, as are all
+# non Authentication-Results headers.
+sub _aar_seal_copy {
+    my ( $self, $config, $text ) = @_;
+    return $text if ! $config->{'arcseal_strip_aar_comments'};
+    return $text if $text !~ /^Authentication-Results\s*:/i;
+    return $text if _ar_is_ams_signed( $config );
+
+    my $stripped = eval {
+        my $parsed = Mail::AuthenticationResults::Parser->new()->parse( $text );
+        foreach my $comment ( @{ $parsed->search({ 'isa' => 'comment' })->children() } ) {
+            $comment->parent()->remove_child( $comment );
+        }
+        my $value = $parsed->as_string();
+        $value =~ s/\015?\012/\015\012/g;
+        "Authentication-Results: $value\015\012";
+    };
+    if ( my $error = $@ ) {
+        $self->handle_exception( $error );
+        $self->log_error( 'ARCSeal AAR comment strip Error ' . $error );
+        return $text;
+    }
+    return $stripped;
+}
+
 sub addheader_callback {
     my $self = shift;
     my $handler = shift;
@@ -787,7 +836,7 @@ sub addheader_callback {
 
         # pre-headers from handler (reversed as they will add in reverse)
         foreach my $header (reverse @{$handler->{pre_headers} || []}) {
-            $arcseal->PRINT(_fmtheader($header));
+            $arcseal->PRINT($self->_aar_seal_copy($config, _fmtheader($header)));
         }
 
         # Then all the original headers, EXCEPT any Authentication-Results
@@ -825,12 +874,12 @@ sub addheader_callback {
         foreach my $chunk (@{$self->{headers} || []}) {
             $chunk_index++;
             next if $sealed_removals->{$chunk_index};
-            $arcseal->PRINT($chunk);
+            $arcseal->PRINT($self->_aar_seal_copy($config, $chunk));
         }
 
         # post-headers from handler (these are in order)
         foreach my $header (@{$handler->{add_headers} || []}) {
-            $arcseal->PRINT(_fmtheader($header));
+            $arcseal->PRINT($self->_aar_seal_copy($config, _fmtheader($header)));
             $self->check_timeout();
         }
 
@@ -913,6 +962,9 @@ Module for validation of ARC signatures
             "arcseal_key"       : undef,               | Key (base64) string to sign ARC Seal with; or
             "arcseal_keyfile"   : undef,               | File containing ARC Seal key
             "arcseal_headers"   : undef,               | Additional headers to cover in ARC-Message-Signature
+            "arcseal_strip_aar_comments" : 0,          | Seal our A-R results without RFC 8601 comments (works around
+                                                       | Microsoft 365 arc=fail (35)); ignored when arcseal_headers
+                                                       | includes Authentication-Results
             "trusted_domains"   : [],                  | Trust these domains when traversing ARC chains
             "rbl_whitelist"     : undef,               | rhs list for looking up trusted signing domains
             "no_strict"         : 0,                   | Ignore rfc 8301 security considerations (not recommended)
