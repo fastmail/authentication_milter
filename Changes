@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+4.20261001 2026-10-01 13:31:25+10:00 Australia/Melbourne
   - ARC: new arcseal_strip_aar_comments option seals our Authentication-Results
     without RFC 8601 comments (delivered A-R unchanged). Works around Microsoft 365
     returning arc=fail (35) when an AAR result ends with a comment after a property
