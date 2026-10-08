@@ -1,6 +1,10 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - SECURITY: SMTP mode change_header now matches header names the same way the
+    DATA parser does. Previously a header with whitespace before the colon
+    (e.g. "Authentication-Results : ...") was counted by Sanitize but never
+    removed, and shifted removal of later occurrences onto the wrong header.
 
 4.20261001 2026-10-01 13:31:25+10:00 Australia/Melbourne
   - ARC: new arcseal_strip_aar_comments option seals our Authentication-Results

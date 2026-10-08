@@ -1071,7 +1071,13 @@ sub change_header {
 
     HEADER:
     foreach my $header_v ( @{ $smtp->{'headers'} } ) {
-        if ( substr( lc $header_v, 0, length($header) + 1 ) eq lc "$header:" ) {
+        # Derive the field name exactly as smtp_command_data does before the
+        # header callbacks, so that handler occurrence indexes line up with
+        # ours (e.g. "Authentication-Results : ..." is counted by handlers)
+        my ( $hkey ) = split( ':', $header_v, 2 );
+        $hkey =~ s/^\s+//;
+        $hkey =~ s/\s+$//;
+        if ( lc $hkey eq lc $header ) {
             $search_i ++;
             if ( $search_i == $index ) {
                 $result_i = $header_i;
