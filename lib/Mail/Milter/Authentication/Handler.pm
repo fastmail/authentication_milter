@@ -8,6 +8,7 @@ use Mail::Milter::Authentication::Pragmas;
 use Mail::Milter::Authentication::Exception;
 use Mail::Milter::Authentication::Resolver;
 use Digest::MD5 qw{ md5_hex };
+use Fcntl qw{ O_RDONLY O_NOFOLLOW S_ISREG };
 use List::MoreUtils qw{ uniq };
 use Lock::File;
 use MIME::Base64;
@@ -1854,7 +1855,14 @@ sub tempfail_on_error {
 sub _dequeue_dir($self) {
     my $config = $self->config();
     my $dir = $config->{spool_dir}.'/dequeue';
-    mkdir $dir if ! -d $dir;
+    mkdir $dir, 0700 if ! -e $dir;
+    my $tightened = eval { Mail::Milter::Authentication::Config::secure_private_dir( $dir ) };
+    if ( my $error = $@ ) {
+        chomp $error;
+        $self->log_error( "Dequeue directory not usable: $error" );
+        return;
+    }
+    $self->log_error( "Dequeue directory $dir was accessible to other users, mode set to 0700" ) if $tightened;
     return $dir;
 }
 
@@ -1862,18 +1870,21 @@ sub _dequeue_dir($self) {
 
 Write serialized $data into the queue for later dequeueing
 
+$data must be plain data, blessed objects are refused.
+
 =cut
 
 {
     my $queue_index = 1;
     sub add_dequeue($self,$key,$data) {
         my $dir = $self->_dequeue_dir;
+        return if ! $dir;
         my $fullpath;
         my $timestamp = join( '.',gettimeofday);
         my $filename = join( '.',$key,$PID,$timestamp,$queue_index++,'dequeue');
         $fullpath = "$dir/$filename";
-        my $serialised_data = encode_sereal($data);
-        write_file($fullpath,{atomic=>1},$serialised_data);
+        my $serialised_data = encode_sereal($data,{croak_on_bless=>1});
+        write_file($fullpath,{atomic=>1,perms=>0600},$serialised_data);
     }
 }
 
@@ -1891,6 +1902,7 @@ Used in get_dequeue_object and delete_dequeue_object
 
 sub get_dequeue_list($self,$key) {
     my $dir = $self->_dequeue_dir;
+    return [] if ! $dir;
     my $dequeue_index_file = $dir.'/dequeue.index';
     my $dequeue_lock_file = $dir.'/dequeue.lock';
 
@@ -1961,15 +1973,30 @@ sub get_dequeue_list($self,$key) {
 
 Return a previously queued item
 
+Returns undef if the item is missing, was not written by this user, or
+cannot be decoded.
+
 =cut
 
 sub get_dequeue($self,$id) {
     my $dir = $self->_dequeue_dir;
+    return if ! $dir;
     my $filepath = join('/',$dir,$id);
-    return if ! -e $filepath;
-    return if ! -f $filepath;
-    my $serialized = scalar read_file($filepath);
-    my $data = decode_sereal($serialized);
+    sysopen( my $fh, $filepath, O_RDONLY | O_NOFOLLOW ) or return;
+    my @stat = stat $fh;
+    if ( ! S_ISREG( $stat[2] ) || $stat[4] != $EUID ) {
+        $self->log_error( "Dequeue file $filepath is not a regular file owned by uid $EUID, ignoring" );
+        return;
+    }
+    my $data = eval {
+        my $serialized = scalar read_file( $fh, binmode => ':raw' );
+        decode_sereal( $serialized, { refuse_objects => 1 } );
+    };
+    if ( my $error = $@ ) {
+        chomp $error;
+        $self->log_error( "Dequeue file $filepath could not be decoded: $error" );
+        return;
+    }
     return $data;
 }
 
@@ -1981,6 +2008,7 @@ Delete a previously queued item
 
 sub delete_dequeue($self,$id) {
     my $dir = $self->_dequeue_dir;
+    return if ! $dir;
     my $filepath = join('/',$dir,$id);
     return if ! -e $filepath;
     return if ! -f $filepath;
@@ -1995,6 +2023,7 @@ Mark a previously queued item as errored
 
 sub error_dequeue($self,$id) {
     my $dir = $self->_dequeue_dir;
+    return if ! $dir;
     my $filepath = join('/',$dir,$id);
     return if ! -e $filepath;
     return if ! -f $filepath;

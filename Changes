@@ -1,6 +1,11 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Harden permissions of the dequeue and generated /tmp
+          directories, and only read queue files owned by the milter user.
+  - Core: Refuse objects in dequeue items.
+          NOTE: Custom handlers which pass objects to add_dequeue must
+          convert them to plain data.
   - DMARC: Queue aggregate reports as plain data. Reports queued by
            an earlier version will not be sent.
 
