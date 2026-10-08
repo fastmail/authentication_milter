@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - DMARC: Queue aggregate reports as plain data. Reports queued by
+           an earlier version will not be sent.
 
 4.20261001 2026-10-01 13:31:25+10:00 Australia/Melbourne
   - ARC: new arcseal_strip_aar_comments option seals our Authentication-Results
