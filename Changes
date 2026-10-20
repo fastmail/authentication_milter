@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+4.20261020 2026-10-20 11:45:32+11:00 Australia/Melbourne
   - SECURITY: SMTP mode change_header now matches header names the same way the
     DATA parser does. Previously a header with whitespace before the colon
     (e.g. "Authentication-Results : ...") was counted by Sanitize but never
