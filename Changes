@@ -5,6 +5,16 @@ Revision history for Mail-Milter-Authentication
     DATA parser does. Previously a header with whitespace before the colon
     (e.g. "Authentication-Results : ...") was counted by Sanitize but never
     removed, and shifted removal of later occurrences onto the wrong header.
+  - DMARC: Fix a security issue where a domain could escape DMARC evaluation
+           silently when a message has more From domains than skip_on_multifrom.
+           Multifrom limits are now applied up front based on the total number
+           of DMARC entities. Entities over the limit are reported as
+           dmarc=permerror (too many from domains) and the mail is quarantined.
+           Limits now trigger when the count is more than the configured
+           value, as documented.
+  - DMARC: strict_multifrom now quarantines directly rather than relying on
+           a later DMARC evaluation succeeding.
+  - DMARC: Limit early DMARC DNS lookups for From domains to skip_on_multifrom
 
 4.20261001 2026-10-01 13:31:25+10:00 Australia/Melbourne
   - ARC: new arcseal_strip_aar_comments option seals our Authentication-Results

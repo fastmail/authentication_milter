@@ -7,6 +7,7 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
 use List::MoreUtils qw{ uniq };
+use List::Util qw{ min };
 use Mail::DMARC::PurePerl 1.20160612;
 use Net::IP;
 
@@ -321,37 +322,6 @@ sub _process_dmarc_for {
         return;
     }
     $self->{'processed'}->{ "$env_domain_from $header_domain" } = 1;
-
-    if ( $config->{'reject_on_multifrom'} ) {
-        if ( scalar keys $self->{'processed'}->%* == $config->{'reject_on_multifrom'} ) {
-            $self->log_error( 'DMARC limit reached, rejecting' );
-            $self->reject_mail( '550 5.7.0 DMARC policy violation' );
-            $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
-            return;
-        }
-        elsif ( scalar keys $self->{'processed'}->%* > $config->{'reject_on_multifrom'} ) {
-            $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
-            return;
-        }
-    }
-    if ( $config->{'quarantine_on_multifrom'} ) {
-        if ( scalar keys $self->{'processed'}->%* == $config->{'quarantine_on_multifrom'} ) {
-            $self->log_error( 'DMARC limit reached, quarantining' );
-            $self->quarantine_mail( 'Quarantined due to DMARC policy' );
-            $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
-            return;
-        }
-        elsif ( scalar keys $self->{'processed'}->%* > $config->{'quarantine_on_multifrom'} ) {
-            $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
-            return;
-        }
-    }
-    if ( $config->{'skip_on_multifrom'} ) {
-        if ( scalar keys $self->{'processed'}->%* >= $config->{'skip_on_multifrom'} ) {
-            $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
-            return;
-        }
-    }
 
     # Get a fresh DMARC object each time.
     $self->destroy_object('dmarc');
@@ -837,6 +807,7 @@ sub envfrom_callback {
     return if ( $self->is_authenticated() );
     delete $self->{'from_header'};
     $self->{'processed'}    = {};
+    $self->{'from_lookup_count'} = 0;
     $self->{'is_list'}      = 0;
     $self->{'skip_report'}  = 0;
     $self->{'failmode'}     = 0;
@@ -913,7 +884,9 @@ sub header_callback {
         $self->{'from_header'} = $value;
         push @{ $self->{ 'from_headers' } }, $value;
         my $domain = lc $self->get_domain_from( $value );
-        if ( $domain ) {
+        my $config = $self->handler_config();
+        my $lookup_limit = $config->{'skip_on_multifrom'} || 10;
+        if ( $domain && $self->{'from_lookup_count'}++ < $lookup_limit ) {
             my $lookup = '_dmarc.'.$domain;
             my $resolver = $self->get_object('resolver');
             eval{ $resolver->bgsend( $lookup, 'TXT' ) };
@@ -974,6 +947,7 @@ sub eom_callback {
                     $self->dbgout( 'DMARCReject', "Strict Multifrom reject", LOG_DEBUG );
                 } else {
                     $self->{strict_multifrom_disposition} = 'quarantine';
+                    $self->quarantine_mail( 'Quarantined due to DMARC policy' );
                 }
             }
             push @header_domains, $header_domain;
@@ -981,10 +955,28 @@ sub eom_callback {
     }
 
     $self->{ 'dmarc_ar_headers' } = [];
+
+    my @unique_env_domains_from = uniq sort @$env_domains_from;
+    my @unique_header_domains   = uniq sort @header_domains;
+    my $pair_count = scalar @unique_env_domains_from * scalar @unique_header_domains;
+    my $process_limit = $self->_check_multifrom_limits( $pair_count );
+    my $process_count = 0;
+
     # There will usually be only one, however this could be a source route
     # so we consider multiples just incase
-    foreach my $env_domain_from ( uniq sort @$env_domains_from ) {
-        foreach my $header_domain ( uniq sort @header_domains ) {
+    foreach my $env_domain_from ( @unique_env_domains_from ) {
+        foreach my $header_domain ( @unique_header_domains ) {
+            if ( defined $process_limit && $process_count >= $process_limit ) {
+                # Never skip silently, a skipped domain must still be visible in the results
+                $self->log_error( "DMARC limit reached, skipping processing for $env_domain_from $header_domain" );
+                $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
+                my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
+                $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'too many from domains' ) );
+                $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'header.from' )->safe_set_value( $header_domain ) );
+                $self->_add_dmarc_header( $header );
+                next;
+            }
+            $process_count++;
             eval {
                 $self->_process_dmarc_for( $env_domain_from, $header_domain );
             };
@@ -1022,6 +1014,31 @@ sub eom_callback {
     }
 
     delete $self->{ 'dmarc_ar_headers' };
+}
+
+# Apply the multifrom limits based on the total number of DMARC entities in the
+# message, before any are processed, so that the outcome can not depend on which
+# domains sort into the processed set.
+# Returns the maximum number of entities to process, or undef for no limit.
+sub _check_multifrom_limits {
+    my ( $self, $pair_count ) = @_;
+    my $config = $self->handler_config();
+
+    my @limits = grep { $_ } map { $config->{ $_ } } qw{ skip_on_multifrom quarantine_on_multifrom reject_on_multifrom };
+    return undef unless @limits;
+    my $process_limit = min @limits;
+
+    if ( $config->{'reject_on_multifrom'} && $pair_count > $config->{'reject_on_multifrom'} ) {
+        $self->log_error( "DMARC limit reached ($pair_count entities), rejecting" );
+        $self->reject_mail( '550 5.7.0 DMARC policy violation' );
+    }
+    elsif ( $pair_count > $process_limit ) {
+        # We can not evaluate every entity, so we can not let this mail through unscathed
+        $self->log_error( "DMARC limit reached ($pair_count entities), quarantining" );
+        $self->quarantine_mail( 'Quarantined due to DMARC policy' );
+    }
+
+    return $process_limit;
 }
 
 sub can_sort_header {
@@ -1253,6 +1270,7 @@ sub close_callback {
     delete $self->{'from_headers'};
     delete $self->{'report_queue'};
     delete $self->{'processed'};
+    delete $self->{'from_lookup_count'};
     delete $self->{'strict_multifrom_disposition'};
     $self->destroy_object('dmarc');
     $self->destroy_object('dmarc_result');
@@ -1278,12 +1296,14 @@ This handler requires the SPF and DKIM handlers to be installed and active.
             "no_list_reject"        : 0,                   | Do not reject mail detected as mailing list
             "arc_before_list"       : 0,                   | Don't apply above list detection if we have trusted arc
             "no_list_reject_disposition" : "none",         | Disposition to use for mail detected as mailing list (defaults none)
-            "reject_on_multifrom"     : 20,                | Reject mail if we detect more than X DMARC entities to process
-            "quarantine_on_multifrom" : 15,                | Quarantine mail if we detect more than X DMARC entities to process
+            "reject_on_multifrom"     : 30,                | Reject mail if we detect more than X DMARC entities to process
+            "quarantine_on_multifrom" : 20,                | Quarantine mail if we detect more than X DMARC entities to process
             "strict_multifrom"        : 1,                 | If set, reject/quarantine (based on hard_reject) when there are multiple
                                                            | rfc5322 domains present. DMARC processing/reporting will continue as usual
                                                            | as defined by *_on_multifrom settings above.
-            "skip_on_multifrom"       : 10,                | Skip further processing if we detect more than X DMARC entities to process
+            "skip_on_multifrom"       : 10,                | Process at most X DMARC entities. If there are more then the
+                                                           | remainder are reported as dmarc=permerror and the mail is
+                                                           | quarantined (or rejected as per reject_on_multifrom)
             "whitelisted"           : [                    | A list of ip addresses or CIDR ranges, or dkim domains
                 "10.20.30.40",                             | for which we do not want to hard reject mail on fail p=reject
                 "dkim:bad.forwarder.com",                  | (valid) DKIM signing domains can also be whitelisted by
