@@ -1025,7 +1025,7 @@ sub _check_multifrom_limits {
     my $config = $self->handler_config();
 
     my @limits = grep { $_ } map { $config->{ $_ } } qw{ skip_on_multifrom quarantine_on_multifrom reject_on_multifrom };
-    return undef unless @limits;
+    return undef unless @limits; ## no critic
     my $process_limit = min @limits;
 
     if ( $config->{'reject_on_multifrom'} && $pair_count > $config->{'reject_on_multifrom'} ) {
