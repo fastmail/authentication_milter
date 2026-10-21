@@ -1,6 +1,9 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - IPRev: Fix forward lookup errors being double prefixed in the comment, and
+           report the errors for each host which did not verify. Forward
+           lookups stop once the lookup limit is reached.
 
 4.20261020 2026-10-20 11:45:32+11:00 Australia/Melbourne
   - SECURITY: SMTP mode change_header now matches header names the same way the
