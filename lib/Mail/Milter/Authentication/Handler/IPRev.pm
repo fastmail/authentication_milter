@@ -44,6 +44,16 @@ sub _dns_error {
     }
 }
 
+sub _is_transient_dns_error {
+    my ( $self, $error ) = @_;
+    return 0 if ! $error;
+    return 0 if $error eq 'NOERROR';
+    return 0 if $error eq 'NXDOMAIN';
+    return 0 if $error eq 'unknown error or no error';
+    # SERVFAIL, query timed out, REFUSED, socket errors etc
+    return 1;
+}
+
 sub connect_requires {
     my ($self) = @_;
     my @requires = qw{ LocalIP TrustedIP };
@@ -61,6 +71,7 @@ sub connect_callback {
     my $lookup_limit = 10;
     # Make this a config item
 
+    $self->{'iprev_temperror'} = 0;
     $self->{'iprev_lookup_limit_reached'} = 0;
 
     my $ptr_list = {};
@@ -84,6 +95,7 @@ sub connect_callback {
 
     if ( $resolver->errorstring() ) {
         $self->_dns_error( 'PTR', $ip_address, $resolver->errorstring );
+        $self->{'iprev_temperror'} = 1 if $self->_is_transient_dns_error( $resolver->errorstring );
         push @error_list, 'Error ' . $resolver->errorstring() . " looking up $ip_address PTR" if ( $resolver->errorstring() ne 'unknown error or no error' );
     }
 
@@ -103,6 +115,7 @@ sub connect_callback {
         }
         if ( $resolver->errorstring() ) {
             $self->_dns_error( 'PTR', $cname_host, $resolver->errorstring );
+            $self->{'iprev_temperror'} = 1 if $self->_is_transient_dns_error( $resolver->errorstring );
             push @error_list, 'Error ' . $resolver->errorstring() . " looking up $cname_host PTR" if ( $resolver->errorstring() ne 'unknown error or no error' );
         }
         last; # Because multiple CNAMES for a given record is also busted
@@ -124,9 +137,11 @@ sub connect_callback {
         my $lookup = sub {
             my ( $type, $name ) = @_;
             return ( [] ) if $self->{'iprev_lookup_limit_reached'};
-            my ( $ips, $errors, $cname );
-            ( $lookup_limit, $ips, $errors, $cname ) = $self->_address_for_domain( $type, $name, $lookup_limit );
+            my ( $ips, $errors, $cname, $transient );
+            ( $lookup_limit, $ips, $errors, $cname, $transient ) = $self->_address_for_domain( $type, $name, $lookup_limit );
             push @domain_errors, @$errors;
+            # Only a lookup for the address family of the connecting IP could have produced a match
+            $self->{'iprev_temperror'} = 1 if $transient && $type eq $first_type;
             return ( $ips, $cname );
         };
 
@@ -173,13 +188,18 @@ sub connect_callback {
 
     if ( ! @match_list ) {
         # Failed to match IP against looked up domains
+        # RFC 8601 2.7.3
+        my $result = $self->{'iprev_temperror'}            ? 'temperror' # A lookup failed in a way which may succeed later
+                   : $self->{'iprev_lookup_limit_reached'} ? 'permerror' # We could not complete the evaluation
+                   : ( ! keys %$ptr_list )                 ? 'permerror' # No PTR data for this IP
+                   :                                         'fail';
         my $comment = join( ',', @error_list );
-        $self->dbgout( 'IPRevCheck', "fail - $comment", LOG_DEBUG );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'iprev' )->safe_set_value( 'fail' );
+        $self->dbgout( 'IPRevCheck', "$result - $comment", LOG_DEBUG );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'iprev' )->safe_set_value( $result );
         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.remote-ip' )->safe_set_value( $ip_address ) );
         $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( $comment ) );
         $self->add_c_auth_header($header);
-        $self->metric_count( 'iprev_total', { 'result' => 'fail'} );
+        $self->metric_count( 'iprev_total', { 'result' => $result } );
     }
     else {
         # We have a pass
@@ -200,6 +220,7 @@ sub _address_for_domain {
     my @fwd_errors;
     my @ip_list;
     my $cname;
+    my $transient = 0;
 
     my $resolver = $self->get_object('resolver');
 
@@ -226,14 +247,16 @@ sub _address_for_domain {
     if ( $resolver->errorstring() ) {
         $self->_dns_error( $type, $domain, $resolver->errorstring );
         push @fwd_errors, 'Error ' . $resolver->errorstring() . " looking up $domain $type" if ( $resolver->errorstring() ne 'unknown error or no error' );
+        $transient = $self->_is_transient_dns_error( $resolver->errorstring );
     }
 
-    return ( $lookup_limit, \@ip_list, \@fwd_errors, $cname );
+    return ( $lookup_limit, \@ip_list, \@fwd_errors, $cname, $transient );
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'verified_ptr'};
+    delete $self->{'iprev_temperror'};
     delete $self->{'iprev_lookup_limit_reached'};
 }
 
@@ -244,6 +267,28 @@ __END__
 =head1 DESCRIPTION
 
 Check reverse IP lookups.
+
+Results are as described in RFC 8601 section 2.7.3
+
+=over
+
+=item pass
+
+A PTR name for the connecting IP resolves back to that IP.
+
+=item fail
+
+The PTR and forward lookups completed, but no name resolves back to the connecting IP.
+
+=item temperror
+
+A PTR lookup, or a forward lookup for the address family of the connecting IP, failed with a transient error such as SERVFAIL or a timeout.
+
+=item permerror
+
+There is no PTR data for the connecting IP, or the lookup limit was reached.
+
+=back
 
 =head1 CONFIGURATION
 

@@ -111,7 +111,7 @@ subtest 'strip on: AAR has no comments, delivered A-R keeps them' => sub {
     ok( defined $aar, 'AAR generated' );
     ok( defined $ar,  'A-R generated' );
     unlike( $aar, qr/\(/, 'no comment of any kind in the sealed AAR' );
-    like( $aar, qr/iprev=fail smtp\.remote-ip=1\.2\.3\.4\s*$/m,
+    like( $aar, qr/iprev=permerror smtp\.remote-ip=1\.2\.3\.4\s*$/m,
         'iprev result and its property survive, only the trailing comment is gone' );
     like( $aar, qr/arc=none/, 'arc result survives' );
     like( $ar, qr/\(NOT FOUND\)/, 'delivered A-R still carries the iprev comment' );
