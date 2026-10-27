@@ -8,6 +8,20 @@ Revision history for Mail-Milter-Authentication
           convert them to plain data.
   - DMARC: Queue aggregate reports as plain data. Reports queued by
            an earlier version will not be sent.
+  - IPRev: Results now follow RFC 8601 section 2.7.3. Previously every
+           unverified connection was reported as iprev=fail.
+           - Transient DNS errors (SERVFAIL, timeout etc) on the PTR lookup,
+             or on the forward lookup for the connecting IP address family,
+             now give iprev=temperror.
+           - No PTR data for the IP (NXDOMAIN or no records) now gives
+             iprev=permerror.
+           - Reaching the lookup limit now gives iprev=permerror.
+           - iprev=fail is now only used when the forward and reverse lookups
+             completed but did not match.
+           Policy keyed on iprev=fail may need to consider these results.
+  - IPRev: Fix forward lookup errors being double prefixed in the comment, and
+           report the errors for each host which did not verify. Forward
+           lookups stop once the lookup limit is reached.
 
 4.20261020 2026-10-20 11:45:32+11:00 Australia/Melbourne
   - SECURITY: SMTP mode change_header now matches header names the same way the

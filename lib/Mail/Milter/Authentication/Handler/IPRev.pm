@@ -44,6 +44,16 @@ sub _dns_error {
     }
 }
 
+sub _is_transient_dns_error {
+    my ( $self, $error ) = @_;
+    return 0 if ! $error;
+    return 0 if $error eq 'NOERROR';
+    return 0 if $error eq 'NXDOMAIN';
+    return 0 if $error eq 'unknown error or no error';
+    # SERVFAIL, query timed out, REFUSED, socket errors etc
+    return 1;
+}
+
 sub connect_requires {
     my ($self) = @_;
     my @requires = qw{ LocalIP TrustedIP };
@@ -60,6 +70,9 @@ sub connect_callback {
 
     my $lookup_limit = 10;
     # Make this a config item
+
+    $self->{'iprev_temperror'} = 0;
+    $self->{'iprev_lookup_limit_reached'} = 0;
 
     my $ptr_list = {};
     my @error_list;
@@ -82,6 +95,7 @@ sub connect_callback {
 
     if ( $resolver->errorstring() ) {
         $self->_dns_error( 'PTR', $ip_address, $resolver->errorstring );
+        $self->{'iprev_temperror'} = 1 if $self->_is_transient_dns_error( $resolver->errorstring );
         push @error_list, 'Error ' . $resolver->errorstring() . " looking up $ip_address PTR" if ( $resolver->errorstring() ne 'unknown error or no error' );
     }
 
@@ -101,6 +115,7 @@ sub connect_callback {
         }
         if ( $resolver->errorstring() ) {
             $self->_dns_error( 'PTR', $cname_host, $resolver->errorstring );
+            $self->{'iprev_temperror'} = 1 if $self->_is_transient_dns_error( $resolver->errorstring );
             push @error_list, 'Error ' . $resolver->errorstring() . " looking up $cname_host PTR" if ( $resolver->errorstring() ne 'unknown error or no error' );
         }
         last; # Because multiple CNAMES for a given record is also busted
@@ -110,86 +125,50 @@ sub connect_callback {
         push @error_list, "NOT FOUND";
     }
 
+    # Forward lookups use the record type for the connecting IP version first
+    my ( $first_type, $second_type ) = ( $ip_address =~ /:/ ) ? ( 'AAAA', 'A' ) : ( 'A', 'AAAA' );
+
+    my $fwd_errors = {};
     my @lookup_list = sort keys %$ptr_list;
-    DOMAINLOOKUP:
     foreach my $domain ( @lookup_list ) {
         my $ip_list = [];
-        my $cname;
+        my @domain_errors;
 
-        if ( $ip_address =~ /:/ ) {
-            # We are living in the future!
+        my $lookup = sub {
+            my ( $type, $name ) = @_;
+            return ( [] ) if $self->{'iprev_lookup_limit_reached'};
+            my ( $ips, $errors, $cname, $transient );
+            ( $lookup_limit, $ips, $errors, $cname, $transient ) = $self->_address_for_domain( $type, $name, $lookup_limit );
+            push @domain_errors, @$errors;
+            # Only a lookup for the address family of the connecting IP could have produced a match
+            $self->{'iprev_temperror'} = 1 if $transient && $type eq $first_type;
+            return ( $ips, $cname );
+        };
 
-            my $errors6;
-            my $errors4;
-            ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $domain, $lookup_limit );
+        TYPE:
+        foreach my $type ( $first_type, $second_type ) {
+            my ( $ips, $cname ) = $lookup->( $type, $domain );
             if ( $cname ) {
-                push @error_list, 'Found CNAME in AAAA response';
-                ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $cname, $lookup_limit );
-                if ( ! @$ip_list ) {
-                    ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'A', $cname, $lookup_limit );
+                push @error_list, "Found CNAME in $type response";
+                foreach my $cname_type ( $first_type, $second_type ) {
+                    ( $ips ) = $lookup->( $cname_type, $cname );
+                    last if @$ips;
                 }
             }
-            if ( ! @$ip_list ) {
-                # We got nothing, try ip4
-                ( $lookup_limit, $ip_list, $errors4, $cname ) = $self->_address_for_domain( 'A', $domain, $lookup_limit );
-                if ( $cname ) {
-                    push @error_list, 'Found CNAME in A response';
-                    ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $cname, $lookup_limit );
-                    if ( ! @$ip_list ) {
-                        ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'A', $cname, $lookup_limit );
-                    }
-                }
-            }
-            if ( ! @$ip_list ) {
-                foreach my $error ( @$errors4 ) {
-                    push @error_list, "Error $error looking up $domain A";
-                }
-                foreach my $error ( @$errors6 ) {
-                    push @error_list, "Error $error looking up $domain AAAA";
-                }
-            }
-
-        }
-        else {
-
-            my $errors6;
-            my $errors4;
-            ( $lookup_limit, $ip_list, $errors4, $cname ) = $self->_address_for_domain( 'A', $domain, $lookup_limit );
-            if ( $cname ) {
-                push @error_list, 'Found CNAME in A response';
-                ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'A', $cname, $lookup_limit );
-                if ( ! @$ip_list ) {
-                    ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $cname, $lookup_limit );
-                }
-            }
-            if ( ! @$ip_list ) {
-                # We got nothing, try ip6
-                ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $domain, $lookup_limit );
-                if ( $cname ) {
-                    push @error_list, 'Found CNAME in AAAA response';
-                    ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'A', $cname, $lookup_limit );
-                    if ( ! @$ip_list ) {
-                        ( $lookup_limit, $ip_list, $errors6, $cname ) = $self->_address_for_domain( 'AAAA', $cname, $lookup_limit );
-                    }
-                }
-            }
-            if ( ! @$ip_list ) {
-                foreach my $error ( @$errors4 ) {
-                    push @error_list, "Error $error looking up $domain A" if ( $resolver->errorstring() ne 'unknown error or no error' );
-                }
-                foreach my $error ( @$errors6 ) {
-                    push @error_list, "Error $error looking up $domain AAAA" if ( $resolver->errorstring() ne 'unknown error or no error' );
-                }
-            }
-
+            $ip_list = $ips;
+            last TYPE if @$ip_list;
         }
 
+        $fwd_errors->{ $domain } = \@domain_errors;
         $ptr_list->{ $domain } = $ip_list;
 
+        # Any further lookups would also hit the limit
+        last if $self->{'iprev_lookup_limit_reached'};
     }
 
     my @match_list;
     foreach my $domain ( sort keys %$ptr_list ) {
+        my $domain_matched = 0;
         foreach my $address ( sort @{ $ptr_list->{ $domain } } ) {
             my $i2 = Net::IP->new($address);
             if ( !$i2 ) {
@@ -198,22 +177,29 @@ sub connect_callback {
             else {
                 my $is_overlap = $i1->overlaps($i2) || 0;
                 if ( $is_overlap == $IP_IDENTICAL ) {
-                    $domain =~ s/\.$//;
-                    push @match_list, $domain;
+                    $domain_matched = 1;
+                    push @match_list, $domain =~ s/\.$//r;
                 }
             }
         }
+        # Note why this host did not verify
+        push @error_list, @{ $fwd_errors->{ $domain } // [] } if ! $domain_matched;
     }
 
     if ( ! @match_list ) {
         # Failed to match IP against looked up domains
+        # RFC 8601 2.7.3
+        my $result = $self->{'iprev_temperror'}            ? 'temperror' # A lookup failed in a way which may succeed later
+                   : $self->{'iprev_lookup_limit_reached'} ? 'permerror' # We could not complete the evaluation
+                   : ( ! keys %$ptr_list )                 ? 'permerror' # No PTR data for this IP
+                   :                                         'fail';
         my $comment = join( ',', @error_list );
-        $self->dbgout( 'IPRevCheck', "fail - $comment", LOG_DEBUG );
-        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'iprev' )->safe_set_value( 'fail' );
+        $self->dbgout( 'IPRevCheck', "$result - $comment", LOG_DEBUG );
+        my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'iprev' )->safe_set_value( $result );
         $header->add_child( Mail::AuthenticationResults::Header::SubEntry->new()->set_key( 'smtp.remote-ip' )->safe_set_value( $ip_address ) );
         $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( $comment ) );
         $self->add_c_auth_header($header);
-        $self->metric_count( 'iprev_total', { 'result' => 'fail'} );
+        $self->metric_count( 'iprev_total', { 'result' => $result } );
     }
     else {
         # We have a pass
@@ -234,11 +220,13 @@ sub _address_for_domain {
     my @fwd_errors;
     my @ip_list;
     my $cname;
+    my $transient = 0;
 
     my $resolver = $self->get_object('resolver');
 
     $lookup_limit--;
     if ( $lookup_limit <= 0 ) {
+        $self->{'iprev_lookup_limit_reached'} = 1;
         return ( 0, \@ip_list, [ 'Lookup limit reached' ] );
     }
     my $packet = $resolver->query( $domain, $type );
@@ -258,15 +246,18 @@ sub _address_for_domain {
 
     if ( $resolver->errorstring() ) {
         $self->_dns_error( $type, $domain, $resolver->errorstring );
-        push @fwd_errors, 'Error ' . $resolver->errorstring() . " looking up $domain $type";
+        push @fwd_errors, 'Error ' . $resolver->errorstring() . " looking up $domain $type" if ( $resolver->errorstring() ne 'unknown error or no error' );
+        $transient = $self->_is_transient_dns_error( $resolver->errorstring );
     }
 
-    return ( $lookup_limit, \@ip_list, \@fwd_errors, $cname );
+    return ( $lookup_limit, \@ip_list, \@fwd_errors, $cname, $transient );
 }
 
 sub close_callback {
     my ( $self ) = @_;
     delete $self->{'verified_ptr'};
+    delete $self->{'iprev_temperror'};
+    delete $self->{'iprev_lookup_limit_reached'};
 }
 
 1;
@@ -276,6 +267,28 @@ __END__
 =head1 DESCRIPTION
 
 Check reverse IP lookups.
+
+Results are as described in RFC 8601 section 2.7.3
+
+=over
+
+=item pass
+
+A PTR name for the connecting IP resolves back to that IP.
+
+=item fail
+
+The PTR and forward lookups completed, but no name resolves back to the connecting IP.
+
+=item temperror
+
+A PTR lookup, or a forward lookup for the address family of the connecting IP, failed with a transient error such as SERVFAIL or a timeout.
+
+=item permerror
+
+There is no PTR data for the connecting IP, or the lookup limit was reached.
+
+=back
 
 =head1 CONFIGURATION
 
