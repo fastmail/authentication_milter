@@ -364,7 +364,7 @@ sub get_trusted_arc_authentication_results {
     INSTANCE:
     foreach my $instance ( reverse sort { $a <=> $b } keys %{$self->{ 'arc_auth_results' } } ) {
         my $signature_domain = $self->{'arc_domain'}->{ $instance } // q{};
-        if ( $self->is_domain_trusted( $signature_domain ) ) {
+        if ( ! $self->{'arc_aar_duplicate'}->{ $instance } && $self->is_domain_trusted( $signature_domain ) ) {
             # Clone this, so we can safely modify entries later
             $trusted_aar->{ $instance } = clone $self->{ 'arc_auth_results' }->{ $instance };
         }
@@ -384,6 +384,7 @@ sub get_trusted_arc_authentication_results {
 sub is_chain_trusted {
     my ( $self ) = @_;
     return 0 if $self->{ 'arc_result' } ne 'pass';
+    return 0 if keys %{ $self->{ 'arc_aar_duplicate' } // {} };
     foreach my $instance ( reverse sort { $a <=> $b } keys %{$self->{ 'arc_auth_results' } } ) {
         my $signature_domain = $self->{'arc_domain'}->{ $instance } // q{};
         return 0 if ! $self->is_domain_trusted( $signature_domain );
@@ -438,6 +439,7 @@ sub envfrom_callback {
     $self->{'valid_domains'}    = {};
     $self->{'carry'}            = q{};
     $self->{'arc_auth_results'} = {};
+    $self->{'arc_aar_duplicate'} = {};
     $self->{'arc_domain'}       = {};
     $self->{'arc_result'}       = '';
     $self->{'ar_header_count'}  = 0;
@@ -465,10 +467,23 @@ sub header_callback {
     if ( lc($header) eq 'arc-authentication-results' ) {
         $self->{'has_arc'} = 1;
         my ( $instance, $aar ) = split( ';', $value, 2 );
-        $instance =~ s/.*i=(\d+).*$/$1/;
-        my $parsed = eval{ Mail::AuthenticationResults->parser()->parse( $aar ) };
-        $self->handle_exception( $@ );
-        $self->{'arc_auth_results'}->{ $instance } = $parsed;
+        # The instance tag must be the entire first tag, matching how Mail::DKIM
+        # identifies the AAR for an instance. A looser match lets a header which
+        # Mail::DKIM does not consider to be part of the chain be cached as one
+        # that is, and have its results trusted on behalf of the sealer.
+        if ( $instance =~ /^\s*i=(\d+)\s*$/i ) {
+            $instance = $1;
+            if ( exists $self->{'arc_auth_results'}->{ $instance } ) {
+                # Never replace an AAR we have already seen, and never trust an
+                # instance which has more than one.
+                $self->{'arc_aar_duplicate'}->{ $instance } = 1;
+            }
+            else {
+                my $parsed = eval{ Mail::AuthenticationResults->parser()->parse( $aar ) };
+                $self->handle_exception( $@ );
+                $self->{'arc_auth_results'}->{ $instance } = $parsed;
+            }
+        }
     }
 
     if ( lc($header) eq 'arc-seal' ) {
