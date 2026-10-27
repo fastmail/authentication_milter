@@ -1855,7 +1855,7 @@ sub tempfail_on_error {
 sub _dequeue_dir($self) {
     my $config = $self->config();
     my $dir = $config->{spool_dir}.'/dequeue';
-    mkdir $dir, 0700 if ! -e $dir;
+    mkdir $dir, 0700 if ! -e $dir; ## no critic
     my $tightened = eval { Mail::Milter::Authentication::Config::secure_private_dir( $dir ) };
     if ( my $error = $@ ) {
         chomp $error;
@@ -1884,7 +1884,7 @@ $data must be plain data, blessed objects are refused.
         my $filename = join( '.',$key,$PID,$timestamp,$queue_index++,'dequeue');
         $fullpath = "$dir/$filename";
         my $serialised_data = encode_sereal($data,{croak_on_bless=>1});
-        write_file($fullpath,{atomic=>1,perms=>0600},$serialised_data);
+        write_file($fullpath,{atomic=>1,perms=>0600},$serialised_data); ## no critic
     }
 }
 
