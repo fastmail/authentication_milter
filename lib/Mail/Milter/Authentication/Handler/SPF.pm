@@ -200,7 +200,7 @@ sub envfrom_callback {
                         next unless $rr->type eq 'TXT';
                         my $txt = join( '', $rr->txtdata );
                         if ( $txt =~ /^v=spf1/i ) {
-                            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'x-dns-record=' . $txt ) );
+                            $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'x-dns-record=' . $self->escape_non_printable_ascii( $txt ) ) );
                             last;
                         }
                     }

@@ -166,4 +166,27 @@ subtest 'DKIM: log_dns_record disabled' => sub {
     is( get_dns_record_comment($t, 'dkim'), q{}, 'no x-dns-record comment in dkim when disabled' );
 };
 
+# Non-ASCII TXT data: the record ends up in an Authentication-Results comment that is
+# written to the milter socket, so it must be printable ASCII with the rest escaped as \xHH.
+my $non_ascii_zone = join( "\n",
+    qq{$dkim_selector._domainkey.$dkim_domain. 3600 IN TXT "$dkim_txt_record; n=caf\\195\\169"},
+    qq{_dmarc.$dkim_domain. 3600 IN TXT "v=DMARC1; p=none; rua=mailto:caf\\195\\169\@$dkim_domain"},
+    qq{$dkim_domain. 3600 IN TXT "v=spf1 ip4:1.2.3.4 -all \\226\\128\\156note\\226\\128\\157 a\\\\\\\\b"},
+) . "\n";
+
+subtest 'non-ASCII TXT data is escaped' => sub {
+    my $t = Mail::Milter::Authentication::Tester::HandlerTester->new({
+        'protocol'       => 'milter',
+        'prefix'         => $basedir . 't/config/handler/etc',
+        'zonedata'       => $non_ascii_zone,
+        'handler_config' => { map { $_ => { 'log_dns_record' => 1 } } qw{ SPF DKIM DMARC } },
+    });
+    $t->run($dkim_params);
+    my $text = $t->get_authresults_header()->as_string();
+    like( $text, qr/\A[\x20-\x7E\n]*\z/, 'Authentication-Results is printable ASCII' );
+    is( get_dns_record_comment( $t, 'dmarc' ), 'v=DMARC1; p=none; rua=mailto:caf\xC3\xA9@example.com', 'DMARC' );
+    is( get_dns_record_comment( $t, 'spf' ), 'v=spf1 ip4:1.2.3.4 -all \xE2\x80\x9Cnote\xE2\x80\x9D a\x5C\x5Cb', 'SPF, backslash escaped' );
+    like( get_dns_record_comment( $t, 'dkim' ), qr/; n=caf\\xC3\\xA9\z/, 'DKIM' );
+};
+
 done_testing();
