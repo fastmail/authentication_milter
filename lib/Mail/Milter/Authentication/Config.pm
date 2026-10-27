@@ -7,6 +7,7 @@ use warnings;
 # ABSTRACT: Common configuration handling
 # VERSION
 use English;
+use Fcntl qw{ S_ISDIR };
 use JSON::XS;
 use TOML;
 use Module::Load;
@@ -18,6 +19,7 @@ our @EXPORT_OK = qw{
   set_config
   default_config
   setup_config
+  secure_private_dir
 };
 
 =head1 DESCRIPTION
@@ -151,12 +153,37 @@ sub setup_config {
                   $EUID,
                   $safe_ident,
                 );
-                mkdir $dir if ! -e $dir;
+                mkdir $dir, 0700 if ! -e $dir;
+                # The name is predictable, so anyone could have created it first
+                my $tightened = eval { secure_private_dir( $dir ) };
+                if ( my $error = $@ ) {
+                    die "Generated ${type}_dir ($dir) is not safe to use, set ${type}_dir in config: $error";
+                }
+                warn "Generated ${type}_dir ($dir) was accessible to other users, mode set to 0700\n" if $tightened;
             }
         }
         die "Generated ${type}_dir ($dir) could not be created, set or check ${type}_dir in config" unless -e $dir && -d $dir && -w $dir;
         $config->{$type.'_dir'} = $dir;
     }
+}
+
+=func I<secure_private_dir( $dir )>
+
+Check that $dir is a directory (not a symlink) owned by the effective uid. If
+group or other have any access to it, its mode is set to 0700.
+
+Dies if the directory cannot be trusted. Returns true if the mode was changed.
+
+=cut
+
+sub secure_private_dir {
+    my ( $dir ) = @_;
+    my @stat = lstat $dir or die "Could not stat $dir: $!\n";
+    die "$dir is not a directory\n" if ! S_ISDIR( $stat[2] );
+    die "$dir is owned by uid $stat[4], not $EUID\n" if $stat[4] != $EUID;
+    return 0 if ! ( $stat[2] & 077 );
+    chmod 0700, $dir or die "Could not set mode 0700 on $dir: $!\n";
+    return 1;
 }
 
 =func I<set_config( $config )>

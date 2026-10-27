@@ -754,25 +754,32 @@ sub get_dmarc_object {
     return $dmarc;
 }
 
-sub new_dmarc_object {
+sub _build_dmarc_object {
     my ( $self ) = @_;
 
     my $config = $self->handler_config();
+    my $dmarc = Mail::DMARC::PurePerl->new();
+    if ( exists ( $config->{ 'config_file' } ) ) {
+        $self->log_error( 'DMARC config file does not exist' ) if ! -e $config->{ 'config_file' };
+        $dmarc->config( $config->{ 'config_file' } );
+    }
+    if ( $dmarc->can('set_resolver') ) {
+        my $resolver = $self->get_object('resolver');
+        $dmarc->set_resolver($resolver);
+    }
+    if ( $self->config()->{'debug'} && $self->config()->{'logtoerr'} ) {
+        $dmarc->verbose(1);
+    }
+    return $dmarc;
+}
+
+sub new_dmarc_object {
+    my ( $self ) = @_;
+
     my $dmarc;
 
     eval {
-        $dmarc = Mail::DMARC::PurePerl->new();
-        if ( exists ( $config->{ 'config_file' } ) ) {
-            $self->log_error( 'DMARC config file does not exist' ) if ! -e $config->{ 'config_file' };
-            $dmarc->config( $config->{ 'config_file' } );
-        }
-        if ( $dmarc->can('set_resolver') ) {
-            my $resolver = $self->get_object('resolver');
-            $dmarc->set_resolver($resolver);
-        }
-        if ( $self->config()->{'debug'} && $self->config()->{'logtoerr'} ) {
-            $dmarc->verbose(1);
-        }
+        $dmarc = $self->_build_dmarc_object();
         $self->set_object('dmarc', $dmarc,1 );
     };
     if ( my $error = $@ ) {
@@ -1132,15 +1139,53 @@ sub _filter_rua {
     return ( \@kept, \@bad );
 }
 
+# Reports are queued as plain data holding only what save_aggregate needs
+my @queued_report_fields = qw{ source_ip envelope_to envelope_from header_from is_subdomain };
+my @queued_result_fields = qw{ result disposition dkim dkim_align spf spf_align };
+
+sub _dmarc_report_to_queue {
+    my ( $self, $report ) = @_;
+    my $result = $report->result();
+    return {
+        ( map { $_ => $report->{$_} } grep { defined $report->{$_} } @queued_report_fields ),
+        'dkim'      => [ map { +{ %$_ } } @{ $report->dkim() // [] } ],
+        'spf'       => [ map { +{ %$_ } } @{ $report->spf() // [] } ],
+        'result'    => { map { $_ => $result->{$_} } grep { defined $result->{$_} } @queued_result_fields },
+        'reason'    => [ map { +{ %$_ } } @{ $result->reason() // [] } ],
+        'published' => { %{ $result->published() } },
+    };
+}
+
+sub _dmarc_report_from_queue {
+    my ( $self, $data ) = @_;
+    return if ! $data;
+    my $report = $self->_build_dmarc_object();
+    for my $field ( @queued_report_fields ) {
+        $report->$field( $data->{$field} ) if defined $data->{$field};
+    }
+    # Plain hashes, as the handler supplies them, are converted on save
+    $report->{'dkim'} = $data->{'dkim'};
+    $report->{'spf'}  = $data->{'spf'};
+    my $result = $report->result();
+    for my $field ( @queued_result_fields ) {
+        $result->$field( $data->{'result'}->{$field} ) if defined $data->{'result'}->{$field};
+    }
+    $result->reason( %$_ ) for @{ $data->{'reason'} };
+    # As Mail::DMARC::Policy->parse builds it, without the stricter validation of new()
+    $result->published( bless { %{ $data->{'published'} } }, 'Mail::DMARC::Policy' );
+    return $report;
+}
+
 sub dequeue_callback {
     my ($self) = @_;
     my $dequeue_list = $self->get_dequeue_list('dmarc_report');
     REPORT:
     for my $id ( $dequeue_list->@* ) {
-        my $report = $self->get_dequeue($id);
+        my $report = eval { $self->_dmarc_report_from_queue( $self->get_dequeue($id) ) };
 
         unless ($report) {
-            $self->log_error("DMARC Report dequeue failed for $id");
+            my $error = $@ ? ": $@" : q{};
+            $self->log_error("DMARC Report dequeue failed for $id$error");
             $self->error_dequeue($id);
             next REPORT;
         }
@@ -1148,10 +1193,6 @@ sub dequeue_callback {
         my $save_report = 1;
         eval {
             $self->set_handler_alarm( 5 * 1000000 ); # Allow no longer than 5 seconds for this!
-            if ( $report->can('set_resolver') ) {
-                my $resolver = $self->get_object('resolver');
-                $report->set_resolver($resolver);
-            }
 
             my $domain = $report->{ 'header_from' };
             my $org_domain = eval{ $report->get_organizational_domain( $domain ) };
@@ -1230,10 +1271,7 @@ sub _save_aggregate_reports {
     eval {
         $self->set_handler_alarm( 2 * 1000000 ); # Allow no longer than 2 seconds for this!
         while ( my $report = shift @{ $self->{'report_queue'} } ) {
-            if ( $report->can('set_resolver') ) {
-                $report->set_resolver(undef);
-            }
-            $self->add_dequeue('dmarc_report',$report);
+            $self->add_dequeue('dmarc_report',$self->_dmarc_report_to_queue($report));
             $self->dbgout( 'DMARC Report queued for', $report->result()->published()->rua(), LOG_INFO );
         }
         $self->reset_alarm();
