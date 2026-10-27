@@ -2170,6 +2170,10 @@ sub get_address_xs_from ($self, $string, $args={}) {
     return;
   }
 
+  # Milter header values arrive with bare-LF folding, which Email::Address::XS rejects inside quoted
+  # strings. Restore the RFC 5322 CRLF folding (sections 3.2.2, 3.2.4), as DKIM.pm and ARC.pm do.
+  $string =~ s/\015?\012/\015\012/g;
+
   my @address_objects = Email::Address::XS->parse($string);
 
   unless (@address_objects) {
