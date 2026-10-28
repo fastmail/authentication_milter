@@ -35,21 +35,28 @@ sub is_hostname_mine {
 
     return 0 if ! defined $check_hostname;
 
+    # A fully qualified name with trailing dot(s) is the same host, compare
+    # without them so "host.example.com." is not treated as foreign.
+    $check_hostname =~ s/\.+$//;
+
     if ( exists( $config->{'hosts_to_remove'} ) ) {
         foreach my $remove_hostname ( @{ $config->{'hosts_to_remove'} } ) {
-            if ( $check_hostname =~ m/^(.*\.)?\Q${remove_hostname}\E$/i ) {
+            ( my $remove_for = $remove_hostname ) =~ s/\.+$//;
+            if ( $check_hostname =~ m/^(.*\.)?\Q${remove_for}\E$/i ) {
                 return 1;
             }
         }
     }
 
     my $hostname = $self->get_my_hostname();
+    $hostname =~ s/\.+$//;
     my ($check_for) = $hostname =~ /^[^\.]+\.(.*)/;
-    if ( $check_hostname =~ m/^(.*\.)?\Q${check_for}\E$/i ) {
+    if ( defined $check_for && $check_hostname =~ m/^(.*\.)?\Q${check_for}\E$/i ) {
         return 1;
     }
 
     my $authserv_id = $self->get_my_authserv_id();
+    $authserv_id =~ s/\.+$//;
     if ( fc( $check_hostname ) eq fc( $authserv_id ) ) {
         return 1;
     }
