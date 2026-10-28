@@ -181,7 +181,7 @@ sub secure_private_dir {
     my @stat = lstat $dir or die "Could not stat $dir: $!\n";
     die "$dir is not a directory\n" if ! S_ISDIR( $stat[2] );
     die "$dir is owned by uid $stat[4], not $EUID\n" if $stat[4] != $EUID;
-    return 0 if ! ( $stat[2] & 077 );
+    return 0 if ! ( $stat[2] & 077 ); ## no critic
     chmod 0700, $dir or die "Could not set mode 0700 on $dir: $!\n";
     return 1;
 }
