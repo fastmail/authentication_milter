@@ -22,6 +22,10 @@ Revision history for Mail-Milter-Authentication
   - IPRev: Fix forward lookup errors being double prefixed in the comment, and
            report the errors for each host which did not verify. Forward
            lookups stop once the lookup limit is reached.
+  - Sanitize: Ignore trailing dots when matching the authserv-id of received
+              Authentication-Results headers, so a header claiming to be from
+              a local host in fully qualified form (host.example.com.) is
+              removed.
 
 4.20261020 2026-10-20 11:45:32+11:00 Australia/Melbourne
   - SECURITY: SMTP mode change_header now matches header names the same way the
