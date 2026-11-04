@@ -2252,6 +2252,14 @@ sub escape_non_printable_ascii ($self, $text) {
   return $text;
 }
 
+# Unfolds header continuation lines and escapes remaining control characters
+# as \xHH, so a logged value cannot start a new log line.
+sub escape_for_log ($self, $text) {
+  $text =~ s/\r?\n[ \t]+/ /g;
+  $text =~ s/([\x00-\x1F\x7F])/sprintf('\\x%02X', ord($1))/ge;
+  return $text;
+}
+
 
 sub get_domain_from ($self, $string) {
   my @address_objects = $self->get_address_xs_from($string, {single=>1});
@@ -2335,6 +2343,10 @@ sub dbgout {
     my $queue_id = $self->get_symbol('i') || q{--};
     $key   = q{--} if ! defined $key;
     $value = q{--} if ! defined $value;
+
+    # Keep each entry on one line, values may be folded headers or DNS data
+    $key   = $self->escape_for_log( $key );
+    $value = $self->escape_for_log( $value );
 
     my $thischild = $self->{'thischild'};
     if ( exists $thischild->{'tracelog'} ) {

@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: Unfold folded header values and escape control characters
+          when logging, so each entry stays on a single line.
   - Core: Harden permissions of the dequeue and generated /tmp
           directories, and only read queue files owned by the milter user.
   - Core: Refuse objects in dequeue items.
