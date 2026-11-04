@@ -8,6 +8,14 @@ Revision history for Mail-Milter-Authentication
           convert them to plain data.
   - DMARC: Queue aggregate reports as plain data. Reports queued by
            an earlier version will not be sent.
+  - DMARC: Fix a security issue where a domain could escape DMARC evaluation
+           when a From header did not fully parse, for example due to an
+           empty list member. Empty list members are now accepted, domains are
+           evaluated from every mailbox which has one, and a From header which
+           can not be fully parsed is reported as dmarc=permerror and the mail
+           quarantined. Mail with no parseable From domain is also quarantined.
+  - DMARC: strict_multifrom now also applies to multiple From headers, not
+           only multiple From domains.
   - IPRev: Results now follow RFC 8601 section 2.7.3. Previously every
            unverified connection was reported as iprev=fail.
            - Transient DNS errors (SERVFAIL, timeout etc) on the PTR lookup,

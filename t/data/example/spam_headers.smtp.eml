@@ -9,9 +9,11 @@ Received: from test.module (localhost [127.0.0.1])
     by server.example.com (Authentication Milter) with ESMTP
 ############
 ############
+X-Disposition-Quarantine: Quarantined due to DMARC policy
 Authentication-Results: server.example.com;
     dkim=none (no signatures found);
-    dmarc=permerror (no parseable from domain);
+    dmarc=none policy.published-domain-policy=none policy.applied-disposition=none policy.evaluated-disposition=none (p=none,d=none,d.eval=none) policy.policy-from=p header.from=example.com;
+    dmarc=permerror (unparseable from header);
     iprev=permerror smtp.remote-ip=1.2.3.4 (NOT FOUND);
     senderid=permerror;
     spf=fail smtp.mailfrom=test@example.com smtp.helo=test.example.com;
