@@ -87,7 +87,11 @@ sub get_trusted_spf_results {
                 my $smtp_mailfrom = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'smtp.mailfrom' })->children()->[0]->value() };
                 $self->handle_exception( $@ );
                 next RESULT if ! $smtp_mailfrom;
-                my $result_domain = $self->get_domain_from( $smtp_mailfrom );
+                # smtp.mailfrom may be a bare domain (RFC 8601 Appendix B.3)
+                my $result_domain = $smtp_mailfrom =~ /\@/
+                  ? $self->get_domain_from( $smtp_mailfrom )
+                  : lc $smtp_mailfrom;
+                next RESULT if ! $result_domain;
                 push @trusted_results, {
                     'domain' => $result_domain,
                     'scope'  => 'mfrom',
@@ -120,7 +124,7 @@ sub get_trusted_dkim_results {
                 $self->handle_exception( $@ );
                 if ( ! $entry_domain ) {
                     # No domain, check for an identifier instead
-                    my $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
+                    $entry_domain = eval{ $result->search({ 'isa' => 'subentry', 'key' => 'header.i' })->children()->[0]->value() };
                     $self->handle_exception( $@ );
                     if ( $entry_domain ) {
                         $entry_domain =~ s/^.*\@//;
