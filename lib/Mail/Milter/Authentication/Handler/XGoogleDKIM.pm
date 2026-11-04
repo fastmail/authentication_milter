@@ -13,6 +13,7 @@ use Mail::DKIM::Verifier;
 sub default_config {
     return {
         'hide_none'         => 0,
+        'early_lookup_limit' => 10,
     };
 }
 
@@ -34,6 +35,7 @@ sub envfrom_callback {
     $self->{'failmode'}     = 0;
     $self->{'headers'}      = [];
     $self->{'has_dkim'}     = 0;
+    $self->{'early_lookups'} = {};
     $self->{'carry'}        = q{};
     $self->destroy_object('xgdkim');
 }
@@ -64,10 +66,15 @@ sub header_callback {
         my ($selector) = $value =~ /s=([^;]*);/;
         my $resolver = $self->get_object('resolver');
         if ( defined $selector && defined $domain ) {
+            my $config = $self->handler_config();
+            my $lookup_limit = $config->{'early_lookup_limit'} // 10;
             my $lookup = $selector.'._domainkey.'.$domain;
-            eval{ $resolver->bgsend( $lookup, 'TXT' ) };
-            $self->handle_exception( $@ );
-            $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
+            if ( ! $self->{'early_lookups'}->{ lc $lookup } && scalar keys $self->{'early_lookups'}->%* < $lookup_limit ) {
+                $self->{'early_lookups'}->{ lc $lookup } = 1;
+                eval{ $resolver->bgsend( $lookup, 'TXT' ) };
+                $self->handle_exception( $@ );
+                $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
+            }
         }
     }
 }
@@ -259,6 +266,7 @@ sub close_callback {
     delete $self->{'body'};
     delete $self->{'carry'};
     delete $self->{'has_dkim'};
+    delete $self->{'early_lookups'};
     $self->destroy_object('xgdkim');
 }
 
@@ -304,5 +312,7 @@ Module for validation of X-Google-DKIM signatures.
 
         "XGoogleDKIM" : {                               | Config for the X-Google-DKIM Module
             "hide_none"         : 0,                    | Hide auth line if the result is 'none'
+            "early_lookup_limit" : 10,                  | Maximum DNS lookups to start early, while headers are
+                                                        | received, per message. 0 to disable early lookups
         },
 

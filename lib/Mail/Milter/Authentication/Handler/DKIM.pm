@@ -20,6 +20,7 @@ sub default_config {
         'adsp_hide_none'    => 0,
         'extra_properties'  => 0,
         'no_strict'         => 0,
+        'early_lookup_limit' => 10,
     };
 }
 
@@ -43,6 +44,7 @@ sub envfrom_callback {
     $self->{'headers'}       = [];
     $self->{'has_dkim'}      = 0;
     $self->{'valid_domains'} = {};
+    $self->{'early_lookups'} = {};
     $self->{'carry'}         = q{};
     $self->destroy_object('dkim');
 }
@@ -72,15 +74,20 @@ sub header_callback {
             my $domain = $parsed->get_tag('d');
             my $selector = $parsed->get_tag('s');
             if ( defined $selector && defined $domain ) {
+                my $config = $self->handler_config();
+                my $lookup_limit = $config->{'early_lookup_limit'} // 10;
+                my @lookups = ( $selector.'._domainkey.'.$domain );
+                push @lookups, '_adsp._domainkey.'.$domain if $config->{'check_adsp'};
                 my $resolver = $self->get_object('resolver');
-                my $lookup = $selector.'._domainkey.'.$domain;
-                eval{ $resolver->bgsend( $lookup, 'TXT' ) };
-                $self->handle_exception( $@ );
-                $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
-                $lookup = '_adsp._domainkey.'.$domain;
-                eval{ $resolver->bgsend( $lookup, 'TXT' ) };
-                $self->handle_exception( $@ );
-                $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
+                LOOKUP:
+                foreach my $lookup ( @lookups ) {
+                    next LOOKUP if $self->{'early_lookups'}->{ lc $lookup };
+                    last LOOKUP if scalar keys $self->{'early_lookups'}->%* >= $lookup_limit;
+                    $self->{'early_lookups'}->{ lc $lookup } = 1;
+                    eval{ $resolver->bgsend( $lookup, 'TXT' ) };
+                    $self->handle_exception( $@ );
+                    $self->dbgout( 'DNSEarlyLookup', "$lookup TXT", LOG_DEBUG );
+                }
             }
         }
     }
@@ -397,6 +404,7 @@ sub close_callback {
     delete $self->{'carry'};
     delete $self->{'has_dkim'};
     delete $self->{'valid_domains'};
+    delete $self->{'early_lookups'};
     $self->destroy_object('dkim');
 }
 
@@ -454,5 +462,8 @@ Module for validation of DKIM and DomainKeys signatures, and application of ADSP
             "adsp_hide_none"    : 0,                    | Hide auth ADSP if the result is 'none'
             "extra_properties"  : 0                     | Add extra properties (not to rfc) relating to key and selector
             "no_strict"         : 0,                    | Ignore rfc 8301 security considerations (not recommended
+            "early_lookup_limit" : 10,                  | Maximum DNS lookups to start early, while headers are
+                                                        | received, per message. 0 to disable early lookups
+                                                        | (DMARC bounds its early lookups by skip_on_multifrom)
         },
 

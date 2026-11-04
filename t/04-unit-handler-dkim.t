@@ -83,7 +83,7 @@ my $testers = {
 subtest 'config' => sub {
     my $tester = $testers->{ 'basic' };
     my $config = $tester->{ 'authmilter' }->{ 'handler' }->{ 'DKIM' }->default_config();
-    is_deeply( $config, { 'hide_none' => 0, 'hide_domainkeys' => 0, 'check_adsp' => 1, 'show_default_adsp' => 0, 'adsp_hide_none' => 0, 'extra_properties' => 0, 'no_strict' => 0 }, 'Returns correct config' );
+    is_deeply( $config, { 'hide_none' => 0, 'hide_domainkeys' => 0, 'check_adsp' => 1, 'show_default_adsp' => 0, 'adsp_hide_none' => 0, 'extra_properties' => 0, 'no_strict' => 0, 'early_lookup_limit' => 10 }, 'Returns correct config' );
 };
 
 subtest 'metrics' => sub {

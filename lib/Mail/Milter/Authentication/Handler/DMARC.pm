@@ -892,6 +892,12 @@ sub header_callback {
         push @{ $self->{ 'from_headers' } }, $value;
         my $domain = lc $self->get_domain_from( $value );
         my $config = $self->handler_config();
+        # Unlike DKIM and XGoogleDKIM there is no separate early_lookup_limit
+        # here. skip_on_multifrom already bounds how many From domains are
+        # evaluated, and a message with more is quarantined or rejected, so
+        # early lookups are only started for domains we will go on to look up
+        # anyway, at most two (domain and org domain) per From header.
+        # Duplicates are not skipped, they count towards the same bound.
         my $lookup_limit = $config->{'skip_on_multifrom'} || 10;
         if ( $domain && $self->{'from_lookup_count'}++ < $lookup_limit ) {
             my $lookup = '_dmarc.'.$domain;
