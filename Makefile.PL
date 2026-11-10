@@ -48,6 +48,7 @@ my %WriteMakefileArgs = (
     "English" => 0,
     "Exporter" => 0,
     "ExtUtils::Installed" => 0,
+    "Fcntl" => 0,
     "File::Slurp" => 0,
     "File::Temp" => 0,
     "Getopt::Long" => 0,
@@ -119,7 +120,7 @@ my %WriteMakefileArgs = (
     "Test::Perl::Critic" => 0,
     "lib" => 0
   },
-  "VERSION" => "4.20261020",
+  "VERSION" => "4.20261111",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -146,6 +147,7 @@ my %FallbackPrereqs = (
   "English" => 0,
   "Exporter" => 0,
   "ExtUtils::Installed" => 0,
+  "Fcntl" => 0,
   "File::Slurp" => 0,
   "File::Spec" => 0,
   "File::Temp" => 0,
