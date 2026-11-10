@@ -40,6 +40,12 @@ Revision history for Mail-Milter-Authentication
           to early_lookup_limit (default 10) per message, and skip
           duplicates. Only look up ADSP early when check_adsp is enabled.
   - XGoogleDKIM: Limit early DNS lookups as for DKIM.
+  - ARC: Accept a bare domain in smtp.mailfrom of trusted SPF results, as
+         used by Microsoft and AOL. Skip results whose smtp.mailfrom does
+         not yield a domain, rather than passing them to DMARC with an
+         empty domain.
+  - ARC: Fix trusted DKIM results with header.i but no header.d being
+         ignored.
 
 4.20261020 2026-10-20 11:45:32+11:00 Australia/Melbourne
   - SECURITY: SMTP mode change_header now matches header names the same way the
