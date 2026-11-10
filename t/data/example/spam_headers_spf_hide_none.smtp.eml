@@ -9,8 +9,9 @@ Received: from test.module (localhost [127.0.0.1])
     by server.example.com (Authentication Milter) with ESMTP
 ############
 ############
+X-Disposition-Quarantine: Quarantined due to DMARC policy
 Authentication-Results: mx.example.net;
-    dmarc=permerror (no parseable from domain);
+    dmarc=permerror (unparseable from header);
     senderid=permerror;
     spf=pass smtp.mailfrom=marc@marcbradshaw.net smtp.helo=mail-we0-f171.google.com
 Received-SPF: pass

@@ -8,6 +8,7 @@ use Mail::Milter::Authentication::Pragmas;
 use base 'Mail::Milter::Authentication::Handler';
 use List::MoreUtils qw{ uniq };
 use List::Util qw{ min };
+use Email::Address::XS;
 use Mail::DMARC::PurePerl 1.20160612;
 use Net::IP;
 
@@ -938,26 +939,27 @@ sub eom_callback {
     my $env_domains_from = $self->get_domains_from($env_from);
     $env_domains_from = [''] if ! @$env_domains_from;
 
-    my $from_headers = $self->{ 'from_headers' };
+    my $from_headers = $self->{ 'from_headers' } // [];
 
     # Build a list of all from header domains used
     my @header_domains;
+    my $from_incomplete = 0;
     foreach my $from_header ( @$from_headers ) {
-        my $from_header_header_domains = $self->get_domains_from( $from_header );
-        foreach my $header_domain ( @$from_header_header_domains ) {
-            if ($config->{strict_multifrom} && @header_domains) {
-                # We already have a domain in strict mode?
-                # Don't allow anything to have a passing disposition
-                if ( $config->{'hard_reject'} ) {
-                    $self->{strict_multifrom_disposition} = 'reject';
-                    $self->reject_mail( '550 5.7.0 DMARC policy violation' );
-                    $self->dbgout( 'DMARCReject', "Strict Multifrom reject", LOG_DEBUG );
-                } else {
-                    $self->{strict_multifrom_disposition} = 'quarantine';
-                    $self->quarantine_mail( 'Quarantined due to DMARC policy' );
-                }
-            }
-            push @header_domains, $header_domain;
+        my ( $from_header_header_domains, $complete ) = $self->_get_from_header_domains( $from_header );
+        $from_incomplete = 1 if ! $complete;
+        push @header_domains, @$from_header_header_domains;
+    }
+
+    if ( $config->{strict_multifrom} && ( scalar @$from_headers > 1 || scalar @header_domains > 1 ) ) {
+        # Multiple from headers, or domains, in strict mode?
+        # Don't allow anything to have a passing disposition
+        if ( $config->{'hard_reject'} ) {
+            $self->{strict_multifrom_disposition} = 'reject';
+            $self->reject_mail( '550 5.7.0 DMARC policy violation' );
+            $self->dbgout( 'DMARCReject', "Strict Multifrom reject", LOG_DEBUG );
+        } else {
+            $self->{strict_multifrom_disposition} = 'quarantine';
+            $self->quarantine_mail( 'Quarantined due to DMARC policy' );
         }
     }
 
@@ -1006,18 +1008,22 @@ sub eom_callback {
         }
     }
 
-    if ( @{ $self->{ 'dmarc_ar_headers' } } ) {
-        foreach my $dmarc_header ( @{ $self->_get_unique_dmarc_headers() } ) {
-            if ( !( $config->{'hide_none'} && $dmarc_header->value() eq 'none' ) ) {
-                $self->add_auth_header( $dmarc_header );
-            }
-        }
-    }
-    else {
-        # We got no headers at all? That's bogus!
+    if ( $from_incomplete || ! @unique_header_domains ) {
+        # A from header we could not fully parse may hide a domain which would
+        # otherwise have been evaluated, so we can not let this mail through unscathed
+        my $comment = @unique_header_domains ? 'unparseable from header' : 'no parseable from domain';
+        $self->log_error( "DMARC $comment, quarantining" );
+        $self->metric_count( 'dmarc_total', { 'result' => 'permerror' } );
         my $header = Mail::AuthenticationResults::Header::Entry->new()->set_key( 'dmarc' )->safe_set_value( 'permerror' );
-        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( 'no parseable from domain' ) );
-        $self->add_auth_header( $header );
+        $header->add_child( Mail::AuthenticationResults::Header::Comment->new()->safe_set_value( $comment ) );
+        $self->_add_dmarc_header( $header );
+        $self->quarantine_mail( 'Quarantined due to DMARC policy' );
+    }
+
+    foreach my $dmarc_header ( @{ $self->_get_unique_dmarc_headers() } ) {
+        if ( !( $config->{'hide_none'} && $dmarc_header->value() eq 'none' ) ) {
+            $self->add_auth_header( $dmarc_header );
+        }
     }
 
     delete $self->{ 'dmarc_ar_headers' };
@@ -1101,6 +1107,45 @@ sub _get_unique_dmarc_headers {
 sub _add_dmarc_header {
     my ( $self, $header ) = @_;
     push @{ $self->{ 'dmarc_ar_headers' } }, $header;
+}
+
+# Extract the domains from a from header for DMARC evaluation, returning
+# ( \@domains, $complete ).
+#
+# get_domains_from returns nothing if any part of the header fails to parse,
+# which would let a sender hide a domain from evaluation. Here we keep every
+# domain we can find, including from mailboxes the parser flags as invalid,
+# and report whether the whole header was accounted for so the caller can
+# act on the remainder. Empty list members (RFC 5322 obs-mbox-list) are
+# skipped, they must be accepted and carry no mailbox.
+sub _get_from_header_domains {
+    my ( $self, $from_header ) = @_;
+    return ( [], 0 ) if ! defined $from_header;
+
+    # Restore the RFC 5322 CRLF folding which milter header values lose
+    $from_header =~ s/\015?\012/\015\012/g;
+
+    my @domains;
+    my $complete = 1;
+    foreach my $address_object ( Email::Address::XS->parse( $from_header ) ) {
+        my $host = $address_object->host;
+        if ( ! defined $host ) {
+            next if ! defined $address_object->user && ( $address_object->original // q{} ) =~ /^\s*$/;
+            $complete = 0;
+            next;
+        }
+        $host = lc $host;
+        # As per get_address_xs_from
+        if ( $host !~ /^[a-z0-9_\-]+(?:\.[a-z0-9_\-]+)*$/ ) {
+            $complete = 0;
+            next;
+        }
+        $complete = 0 if ! $address_object->is_valid;
+        push @domains, $host;
+    }
+    $complete = 0 if ! @domains;
+
+    return ( \@domains, $complete );
 }
 
 sub addheader_callback {
@@ -1337,8 +1382,11 @@ This handler requires the SPF and DKIM handlers to be installed and active.
             "reject_on_multifrom"     : 30,                | Reject mail if we detect more than X DMARC entities to process
             "quarantine_on_multifrom" : 20,                | Quarantine mail if we detect more than X DMARC entities to process
             "strict_multifrom"        : 1,                 | If set, reject/quarantine (based on hard_reject) when there are multiple
-                                                           | rfc5322 domains present. DMARC processing/reporting will continue as usual
-                                                           | as defined by *_on_multifrom settings above.
+                                                           | rfc5322 from headers or domains present. DMARC processing/reporting will
+                                                           | continue as usual as defined by *_on_multifrom settings above.
+                                                           | A from header which can not be fully parsed is reported as
+                                                           | dmarc=permerror and the mail is quarantined, any domains which
+                                                           | could be found in it are still evaluated.
             "skip_on_multifrom"       : 10,                | Process at most X DMARC entities. If there are more then the
                                                            | remainder are reported as dmarc=permerror and the mail is
                                                            | quarantined (or rejected as per reject_on_multifrom)
