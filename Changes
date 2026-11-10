@@ -36,6 +36,10 @@ Revision history for Mail-Milter-Authentication
               Authentication-Results headers, so a header claiming to be from
               a local host in fully qualified form (host.example.com.) is
               removed.
+  - DKIM: Limit the DNS lookups started early while headers are received
+          to early_lookup_limit (default 10) per message, and skip
+          duplicates. Only look up ADSP early when check_adsp is enabled.
+  - XGoogleDKIM: Limit early DNS lookups as for DKIM.
 
 4.20261020 2026-10-20 11:45:32+11:00 Australia/Melbourne
   - SECURITY: SMTP mode change_header now matches header names the same way the
