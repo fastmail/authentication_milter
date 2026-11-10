@@ -46,6 +46,10 @@ this is a very long long email address
     'test@example.com'                          => [ 'test@example.com', 'example.com' ],
     'test@goestheweasel.com'                    => [ 'test@goestheweasel.com', 'goestheweasel.com' ],
     'nothing in here is an address'             => [ '', '' ],
+    "\"Folded\n Display Name\" <test\@example.com>"                => [ 'test@example.com', 'example.com' ],
+    "\"Folded\r\n Display Name\" <test\@example.com>"              => [ 'test@example.com', 'example.com' ],
+    "\"Example Notifications   example.org automated\n notifications billing\@example.org information\n example.org \" <noreply\@example.net>"
+                                                => [ 'noreply@example.net', 'example.net' ],
     ''                                          => [ '', '' ],
 };
 
