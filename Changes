@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+4.20261112 2026-11-11 15:42:52+11:00 Australia/Melbourne
   - ARC: Clean up duplicate AAR tracking in the close callback, which
          caused the child to exit after every message.
 
