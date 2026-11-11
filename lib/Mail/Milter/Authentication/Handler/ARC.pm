@@ -702,6 +702,7 @@ sub close_callback {
     delete $self->{'arc_domain'};
     delete $self->{'arc_result'};
     delete $self->{'arc_auth_results'};
+    delete $self->{'arc_aar_duplicate'};
     delete $self->{'ar_header_count'};
     delete $self->{'ar_chunk_index'};
     $self->destroy_object('arc');
