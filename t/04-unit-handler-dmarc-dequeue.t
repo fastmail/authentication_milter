@@ -14,6 +14,10 @@ use Mail::Milter::Authentication::Tester::HandlerTester;
 
 my $basedir = q{};
 
+# save_aggregate stores via a new Mail::DMARC::Report which does not inherit
+# config_file, without this it writes dmarc_reports.sqlite to the current directory
+$ENV{'MAIL_DMARC_CONFIG_FILE'} = $basedir . 't/config/handler/etc/mail-dmarc.ini';
+
 mkdir 't/tmp';
 open( STDERR, '>>', $basedir . 't/tmp/misc.err' ) || die "Cannot open errlog [$!]";
 
