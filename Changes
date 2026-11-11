@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+4.20261111 2026-11-11 11:45:24+11:00 Australia/Melbourne
   - Core: Unfold folded header values and escape control characters
           when logging, so each entry stays on a single line.
   - Core: Harden permissions of the dequeue and generated /tmp
