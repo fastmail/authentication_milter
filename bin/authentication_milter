@@ -253,6 +253,8 @@ __END__
     "metric_timeout"    : 10,                           | Timeout for metrics IPC (default 5)
     "metric_tempfile"   : "/tmpfs/authmilter_metrics",  | Path to shared metrics data, defaults to <lib_path>/metrics
     "metric_basic_http" : 1,                            | Disable extended http services such as config and grafana json pages
+    "metric_config_http" : 0,                           | Serve the effective config, which may contain secrets, at /config (default 0)
+                                                        | Has no effect if metric_basic_http is set
 
     "cache_dir"        : "/var/cache/auth_milter",      | Path to the shared cache directory
     "spool_dir"        : "/var/spool/auth_milter",      | Path to the shared spool directory
