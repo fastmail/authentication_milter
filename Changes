@@ -1,6 +1,21 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: The umask and metric_umask settings now only set the mode of
+          unix sockets. Previously they changed the process umask, which
+          applied to every file created afterwards, and the last unix
+          connection's umask applied to all unix sockets. Connections and
+          metrics without their own umask use the top level umask, so
+          socket modes are unchanged for most configs.
+          NOTE: Files are now created with the umask the milter is started
+          with, so with a umask of 0000 files such as the DMARC report
+          database are no longer world writable. Anything which writes to
+          them as a different user, for example sending DMARC reports, may
+          need its permissions adjusting.
+  - Core: The example config now uses a umask of 0007, so unix sockets are
+          only accessible to the milter user and rungroup, rather than 0000
+          which allowed any local user to connect. The MTA must be in
+          rungroup to connect to a unix socket.
 
 4.20261112 2026-11-11 15:42:52+11:00 Australia/Melbourne
   - ARC: Clean up duplicate AAR tracking in the close callback, which

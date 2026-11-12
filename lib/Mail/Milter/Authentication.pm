@@ -153,6 +153,52 @@ sub idle_loop_hook($self,@) {
     $self->{'metric'}->parent_metric_update( $self );
 }
 
+=method I<post_bind_hook()>
+
+Hook which runs in the parent after binding, before privileges are dropped.
+
+Sets the mode of each unix socket from the umask configured for its connection.
+The process umask is not changed, so it does not apply to other files we create.
+
+=cut
+
+sub post_bind_hook($self,@) {
+    my $umasks = unix_socket_umasks( get_config() );
+    foreach my $sock ( @{ $self->{'server'}->{'sock'} // [] } ) {
+        next if $sock->NS_proto !~ /^UNIX/;
+        my $path = $sock->NS_port;
+        my $umask = $umasks->{ $path };
+        next if ! defined $umask;
+        my $mode = oct( '0777' ) & ~oct( $umask );
+        chmod( $mode, $path ) || die "Could not set mode on socket $path: $!\n";
+        _warn( sprintf( 'set mode %04o on socket %s (umask %s)', $mode, $path, $umask ) );
+    }
+}
+
+=func I<unix_socket_umasks( $config )>
+
+Returns a hashref of unix socket paths to the umask configured for each.
+
+Connections without their own umask, including metrics without metric_umask,
+use the top level umask. This matches the earlier behaviour, where the top
+level umask was applied to the process and so to every socket.
+
+=cut
+
+sub unix_socket_umasks($config) {
+    my @connections = values %{ $config->{'connections'} // {} };
+    push @connections, { 'connection' => $config->{'connection'}, 'umask' => $config->{'umask'} };
+    push @connections, { 'connection' => $config->{'metric_connection'}, 'umask' => $config->{'metric_umask'} };
+    my %umasks;
+    foreach my $connection ( @connections ) {
+        my $umask = $connection->{'umask'} || $config->{'umask'};
+        next if ! $umask;
+        next if ( $connection->{'connection'} // q{} ) !~ /^unix:([^:@]+)/;
+        $umasks{ $1 } = $umask;
+    }
+    return \%umasks;
+}
+
 =method I<pre_loop_hook()>
 
 Hook which runs in the parent before looping.
@@ -881,7 +927,6 @@ sub start($args) {
     my @ports;
     foreach my $key ( keys %$connections ) {
         my $connection = $connections->{$key}->{'connection'};
-        my $umask      = $connections->{$key}->{'umask'};
 
         $connection =~ /^([^:]+):([^:@]+)(?:@([^:@]+|\[[0-9a-f:\.]+\]))?$/;
         my $type = $1;
@@ -915,12 +960,6 @@ sub start($args) {
                 'port'  => $path,
                 'proto' => 'unix',
             };
-
-            if ($umask) {
-                umask ( oct( $umask ) );
-                _warn( 'setting umask to ' . $umask );
-            }
-
         }
         else {
             die 'Invalid connection';
@@ -929,7 +968,6 @@ sub start($args) {
 
     if ( defined( $config->{'metric_connection'} ) ) {
         my $connection = $config->{'metric_connection'};
-        my $umask      = $config->{'metric_umask'};
 
         $connection =~ /^([^:]+):([^:@]+)(?:@([^:@]+|\[[0-9a-f:\.]+\]))?$/;
         my $type = $1;
@@ -963,12 +1001,6 @@ sub start($args) {
                 'port'  => $path,
                 'proto' => 'unix',
             };
-
-            if ($umask) {
-                umask ( oct( $umask ) );
-                _warn( 'setting umask to ' . $umask );
-            }
-
         }
         else {
             die 'Invalid metrics connection';

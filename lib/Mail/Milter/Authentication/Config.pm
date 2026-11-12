@@ -58,7 +58,7 @@ sub default_config {
         'extended_log'                    => 1,
         'legacy_log'                      => 0,
         'connection'                      => 'inet:12345@localhost',
-        'umask'                           => '0000',
+        'umask'                           => '0007',
         'runas'                           => 'nobody',
         'rungroup'                        => 'nogroup',
         'listen_backlog'                  => 20,

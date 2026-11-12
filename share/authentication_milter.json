@@ -5,7 +5,7 @@
     "error_log" : "/var/log/authentication_milter.err",
 
     "connection"             : "inet:12345@localhost",
-    "umask"                  : "0000",
+    "umask"                  : "0007",
     "runas"                  : "nobody",
     "rungroup"               : "nogroup",
     "chroot"                 : "",
