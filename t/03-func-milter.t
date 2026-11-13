@@ -21,9 +21,7 @@ chdir 't';
 plan tests => 39;
 
 {
-#    system 'rm -rf tmp';
-    mkdir 'tmp';
-    mkdir 'tmp/result';
+    AuthMilterTest::setup_work_dir( 'milter' );
 
     AuthMilterTest::run_milter_processing();
 
