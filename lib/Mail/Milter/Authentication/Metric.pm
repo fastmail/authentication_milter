@@ -5,6 +5,7 @@ use warnings;
 use Mail::Milter::Authentication::Pragmas;
 # ABSTRACT: Class for metrics generation
 # VERSION
+use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::HTDocs;
 use Mail::Milter::Authentication::Metric::Grafana;
 use File::Temp;
