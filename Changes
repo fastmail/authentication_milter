@@ -6,6 +6,11 @@ Revision history for Mail-Milter-Authentication
           NOTE: Set metric_config_http to 1 to restore the /config pages.
   - Core: Fix the metrics index page adding a default entry to the
           connections config.
+  - SMTP: Refuse RCPT TO and DATA without a successful MAIL FROM.
+          Previously the message was processed without the connect, helo,
+          and envfrom callbacks, and forwarded with an empty sender.
+  - SMTP: End the transaction after DATA, so a following MAIL FROM is
+          accepted without RSET, and a following RCPT TO is refused.
 
 4.20261112 2026-11-11 15:42:52+11:00 Australia/Melbourne
   - ARC: Clean up duplicate AAR tracking in the close callback, which

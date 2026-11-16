@@ -514,6 +514,12 @@ sub smtp_command_rcptto {
         print $socket "503 5.5.2 Out of Order\r\n";
         return;
     }
+    # The connect, helo, and envfrom callbacks are only run from MAIL FROM
+    if ( ! $smtp->{'has_mail_from'} ) {
+        $self->logerror( "Out of Order SMTP command: $command" );
+        print $socket "503 5.5.1 Need MAIL command\r\n";
+        return;
+    }
     my $envrcpt = command_param( $command,8 );
     my $returncode = $handler->top_envrcpt_callback( split_command_params( $envrcpt ) );
     if ( $returncode == SMFIS_CONTINUE ) {
@@ -547,6 +553,12 @@ sub smtp_command_data {
     my $fail    = 0;
     my @header_split;
     my $returncode;
+
+    if ( ! $smtp->{'has_mail_from'} ) {
+        $self->logerror( "Out of Order SMTP command: $command" );
+        print $socket "503 5.5.1 Need MAIL command\r\n";
+        return;
+    }
 
     if ( ! scalar @{ $smtp->{'lmtp_rcpt'} }) {
         $self->logerror( "No valid recipients" );
@@ -808,6 +820,7 @@ sub smtp_command_data {
 
     # Reset
     $smtp->{'mail_from'}        = q{};
+    $smtp->{'has_mail_from'}    = 0;
     $smtp->{'rcpt_to'}          = [];
     $smtp->{'headers'}          = [];
     $smtp->{'body'}             = q{};
