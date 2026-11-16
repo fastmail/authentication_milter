@@ -1,6 +1,11 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Core: The effective config is no longer served by the metrics http
+          interface unless the new metric_config_http option is enabled.
+          NOTE: Set metric_config_http to 1 to restore the /config pages.
+  - Core: Fix the metrics index page adding a default entry to the
+          connections config.
 
 4.20261112 2026-11-11 15:42:52+11:00 Australia/Melbourne
   - ARC: Clean up duplicate AAR tracking in the close callback, which

@@ -358,6 +358,22 @@ sub parent_metric_update {
     };
 }
 
+=method I<is_config_http_enabled()>
+
+Returns true if the effective config may be served over http.
+
+The config may contain secrets, so this must be enabled with metric_config_http,
+and is always disabled by metric_basic_http.
+
+=cut
+
+sub is_config_http_enabled {
+    my ( $self ) = @_;
+    my $config = get_config();
+    return 0 if $config->{'metric_basic_http'};
+    return $config->{'metric_config_http'} ? 1 : 0;
+}
+
 =method I<child_handler( $server )>
 
 Handle a metrics or http request in the child process.
@@ -468,12 +484,13 @@ sub child_handler {
     <h2>Details</h2>
     <ul>};
     print $socket '<li>Protocol: ' . $config->{protocol} . '</li>';
-    my $connections = $config->{connections};
-    $connections->{default} = { connection => $config->{connection} };
-    foreach my $connection ( sort keys %$connections ) {
-        print $socket '<li>' . $connection . ': ' . $connections->{ $connection }->{connection} . '</li>'
+    # Copy, so the default connection is not added to the shared config
+    my %connections = %{ $config->{connections} // {} };
+    $connections{default} = { connection => $config->{connection} };
+    foreach my $connection ( sort keys %connections ) {
+        print $socket '<li>' . $connection . ': ' . $connections{ $connection }->{connection} . '</li>'
     }
-    print $socket qq{<li>Effective config (<a href="/config/toml">toml</a>/<a href="/config/json">json</a>)</li>} if !$config->{'metric_basic_http'};
+    print $socket qq{<li>Effective config (<a href="/config/toml">toml</a>/<a href="/config/json">json</a>)</li>} if $self->is_config_http_enabled();
     print $socket qq{
     </ul>
 
@@ -492,7 +509,7 @@ sub child_handler {
     };
         }
         elsif ( $request_uri eq '/config/json' || $request_uri eq '/config' ) {
-            if ( $config->{'metric_basic_http'} ) {
+            if ( ! $self->is_config_http_enabled() ) {
                 print $socket "HTTP/1.0 403 Denied\n";
                 print $socket "Content-Type: text/plain\n\nDenied by config\n\n";
             }
@@ -507,7 +524,7 @@ sub child_handler {
             }
         }
         elsif ( $request_uri eq '/config/toml' ) {
-            if ( $config->{'metric_basic_http'} ) {
+            if ( ! $self->is_config_http_enabled() ) {
                 print $socket "HTTP/1.0 403 Denied\n";
                 print $socket "Content-Type: text/plain\n\nDenied by config\n\n";
             }
