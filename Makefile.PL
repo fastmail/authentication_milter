@@ -114,13 +114,14 @@ my %WriteMakefileArgs = (
   "TEST_REQUIRES" => {
     "Crypt::OpenSSL::RSA" => 0,
     "File::Spec" => 0,
+    "IO::Handle" => 0,
     "Mail::DKIM::PrivateKey" => 0,
     "Mail::DKIM::Signer" => 0,
     "Test::Exception" => 0,
     "Test::Perl::Critic" => 0,
     "lib" => 0
   },
-  "VERSION" => "4.20261112",
+  "VERSION" => "4.20261116",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -152,6 +153,7 @@ my %FallbackPrereqs = (
   "File::Spec" => 0,
   "File::Temp" => 0,
   "Getopt::Long" => 0,
+  "IO::Handle" => 0,
   "IO::Select" => 0,
   "IO::Socket" => 0,
   "IO::Socket::INET" => 0,
