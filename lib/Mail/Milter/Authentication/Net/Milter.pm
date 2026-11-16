@@ -666,12 +666,10 @@ sub _io_send {
     my $did_send = 0;
     while ($did_send < $must_send) {
         my $len = $self->{socket}->send(substr($data, $did_send));
-        if (defined($len)) {
-            $did_send += $len;
-        }
-        else {
-            carp "Error while writing to the socket: $!";
-        }
+        # An error or no progress would otherwise retry forever
+        croak "Error while writing to the socket: $!" if ! defined $len;
+        croak "Unable to write to the socket" if $len == 0;
+        $did_send += $len;
     }
 
     return 1;
@@ -687,12 +685,10 @@ sub _io_recv {
     my $data = "";
     while ($did_recv < $must_recv) {
         my $len = $self->{socket}->sysread($data, $must_recv-$did_recv, $did_recv);
-        if (defined($len)) {
-            $did_recv += $len;
-        }
-        else {
-            carp "Error while reading from the socket: $!";
-        }
+        # An error or EOF would otherwise retry forever, and a short read is not a valid packet
+        croak "Error while reading from the socket: $!" if ! defined $len;
+        croak "Unexpected EOF while reading from the socket" if $len == 0;
+        $did_recv += $len;
     }
 
     return $data;
