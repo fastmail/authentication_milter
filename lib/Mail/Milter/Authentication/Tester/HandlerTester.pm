@@ -8,6 +8,7 @@ use Mail::Milter::Authentication::Pragmas;
 use Mail::Milter::Authentication;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
+use File::Temp qw{ tempdir };
 use Net::DNS::Resolver::Mock;
 use Net::IP;
 
@@ -107,9 +108,17 @@ sub new {
     }
 
     $Mail::Milter::Authentication::Config::PREFIX = $self->{ 'prefix' };
-    Mail::Milter::Authentication::Config::setup_config;
 
     my $config = get_config();
+
+    # Give each tester its own working directories unless the config sets
+    # them, so tests can run in parallel without sharing state such as the
+    # metrics store.
+    foreach my $type ( qw{ cache lib spool } ) {
+        $config->{ $type . '_dir' } //= tempdir( "authmilter-test-$type-XXXXXX", TMPDIR => 1, CLEANUP => 1 );
+    }
+
+    Mail::Milter::Authentication::Config::setup_config;
 
     my $Resolver = Net::DNS::Resolver::Mock->new();
     $Resolver->zonefile_read( $self->{ 'zonefile' } ) if exists $self->{ 'zonefile' };
