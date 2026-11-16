@@ -16,6 +16,11 @@ Revision history for Mail-Milter-Authentication
   - Core: Clear the metrics http request timeout on every exit path.
           A malformed or non GET request left it pending, which later
           caused the child to exit.
+  - SMTP: Do not process or forward a message when the connection closes
+          before the end of DATA. Previously the partial message was
+          forwarded as though it were complete.
+  - SMTP: Only accept CRLF.CRLF as the end of DATA while reading headers,
+          matching the body. A bare LF dot is no longer treated as the end.
 
 4.20261112 2026-11-11 15:42:52+11:00 Australia/Melbourne
   - ARC: Clean up duplicate AAR tracking in the close callback, which

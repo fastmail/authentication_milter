@@ -551,6 +551,7 @@ sub smtp_command_data {
     my $body    = q{};
     my $done    = 0;
     my $fail    = 0;
+    my $saw_terminator = 0;
     my @header_split;
     my $returncode;
 
@@ -580,11 +581,13 @@ sub smtp_command_data {
         while ( my $dataline = <$socket> ) {
             $self->extra_debugging( "RAW DEBUG: ". $dataline );
             alarm( 0 );
-            $dataline =~ s/\r?\n$//;
-            if ( $dataline eq '.' ) {
+            # Only CRLF.CRLF ends DATA, a bare LF form could be read differently upstream
+            if ( $dataline eq ".\r\n" ) {
                 $done = 1;
+                $saw_terminator = 1;
                 last HEADERS;
             }
+            $dataline =~ s/\r?\n$//;
             # Handle transparency
             if ( $dataline =~ /^\./ ) {
                 $dataline = substr( $dataline, 1 );
@@ -670,7 +673,10 @@ sub smtp_command_data {
             while ( my $dataline = <$socket> ) {
                 $self->extra_debugging( "RAW DEBUG: ". $dataline );
                 alarm( 0 );
-                last DATA if $dataline =~  /^\.\r\n/;
+                if ( $dataline eq ".\r\n" ) {
+                    $saw_terminator = 1;
+                    last DATA;
+                }
                 # Handle transparency
                 if ( $dataline =~ /^\./ ) {
                     $dataline = substr( $dataline, 1 );
@@ -694,6 +700,10 @@ sub smtp_command_data {
                 $body_chunk .= $dataline;
 
                 alarm( $smtp->{'smtp_timeout_in'} );
+            }
+            # The connection closed before the end of data marker, the message is incomplete
+            if ( ! $saw_terminator ) {
+                die "Connection closed during DATA\n";
             }
             if ( ! $fail ) {
                 $returncode = $handler->top_body_callback( $body_chunk );
