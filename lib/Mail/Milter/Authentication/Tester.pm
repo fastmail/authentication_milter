@@ -10,11 +10,13 @@ use Mail::Milter::Authentication::Client;
 use Mail::Milter::Authentication::Protocol::Milter;
 use Mail::Milter::Authentication::Protocol::SMTP;
 use Cwd qw{ cwd };
+use File::Spec;
 use IO::Socket::INET;
 use IO::Socket::UNIX;
 use Net::DNS::Resolver::Mock 1.20171219;
 use Test::File::Contents;
 use Test::More;
+use Time::HiRes qw{ sleep time };
 
 our @ISA = qw{ Exporter }; ## no critic
 our @EXPORT = qw{ start_milter stop_milter get_metrics test_metrics smtp_process smtp_process_multi milter_process smtpput send_smtp_packet smtpcat }; ## no critic
@@ -38,11 +40,23 @@ our $MASTER_PROCESS_PID = $$;
 
         system "cp $prefix/mail-dmarc.ini .";
 
+        # Remove anything left from a previous run, so we can tell when this one is listening
+        my @sockets = _unix_socket_paths( $prefix );
+        unlink 'tmp/authentication_milter.pid', @sockets;
+
         $milter_pid = fork();
         die "unable to fork: $!" unless defined($milter_pid);
         if (!$milter_pid) {
             $Mail::Milter::Authentication::Config::PREFIX = $prefix;
             $Mail::Milter::Authentication::Config::IDENT  = 'test_authentication_milter_test';
+            # Keep runtime files, including metrics, with this run rather than in a
+            # directory shared by every run, so test files can run in parallel
+            my $config = Mail::Milter::Authentication::Config::get_config();
+            foreach my $type ( qw{ cache lib spool } ) {
+                my $dir = File::Spec->rel2abs( "tmp/$type" );
+                mkdir $dir;
+                $config->{ $type . '_dir' } //= $dir;
+            }
             my $Resolver = Net::DNS::Resolver::Mock->new();
             $Resolver->zonefile_read( 'zonefile' );
             $Mail::Milter::Authentication::Handler::TestResolver = $Resolver;
@@ -53,7 +67,9 @@ our $MASTER_PROCESS_PID = $$;
             die;
         }
 
-        sleep 5;
+        _wait_for( 'milter to start', sub { -s 'tmp/authentication_milter.pid' && ! grep { ! -S $_ } @sockets } );
+        # The socket file is created when bound, just before it starts listening
+        sleep 0.1;
         open my $pid_file, '<', 'tmp/authentication_milter.pid';
         $milter_pid = <$pid_file>;
         close $pid_file;
@@ -76,6 +92,26 @@ our $MASTER_PROCESS_PID = $$;
         return if $MASTER_PROCESS_PID != $$;
         stop_milter();
     }
+}
+
+# The unix socket paths the milter with this config will listen on
+sub _unix_socket_paths {
+    my ( $prefix ) = @_;
+    my $config = Mail::Milter::Authentication::Config::load_file( $prefix . '/authentication_milter.json' );
+    my @connections = ( $config->{'connection'}, $config->{'metric_connection'} );
+    push @connections, map { $_->{'connection'} } values %{ $config->{'connections'} // {} };
+    return map { /^unix:(.+)$/ ? $1 : () } grep { defined } @connections;
+}
+
+# Wait for a condition to become true, polling rather than sleeping for a fixed time
+sub _wait_for {
+    my ( $what, $check, $timeout ) = @_;
+    my $deadline = time + ( $timeout // 30 );
+    while ( ! $check->() ) {
+        die "Timed out waiting for $what\n" if time > $deadline;
+        sleep 0.05;
+    }
+    return;
 }
 
 sub get_metrics {
@@ -106,47 +142,62 @@ sub get_metrics {
     return $data;
 }
 
+# Some metrics vary between runs, so are compared by whether they are set
+sub _metric_value {
+    my ( $key, $value ) = @_;
+    return ( $value // 0 ) > 0  if $key =~ /seconds_total/;
+    return ( $value // 0 ) > 0  if $key =~ /microseconds_sum/;
+    return ( $value // 0 ) > 0  if $key =~ /authmilter_forked_children_total/;
+    return ( $value // 0 ) > -1 if $key =~ /authmilter_processes_/;
+    return $value;
+}
+
+sub _metrics_match {
+    my ( $metrics, $data ) = @_;
+    foreach my $key ( keys %$data ) {
+        my $got  = _metric_value( $key, $metrics->{ $key } );
+        my $want = _metric_value( $key, $data->{ $key } );
+        return 0 if ( $got // q{} ) ne ( $want // q{} );
+    }
+    return 1;
+}
+
 sub test_metrics {
     my ( $expected ) = @_;
 
-    # Sleep for 5 to allow server to catch up on metrics
-    sleep 5;
+    my $j = JSON::XS->new();
+
+    my $data;
+    if ( -e $expected ) {
+        open my $InF, '<', $expected;
+        my @content = <$InF>;
+        close $InF;
+        $data = $j->decode( join( q{}, @content ) );
+        for my $key ( sort keys %$data ) {
+            next unless $key =~ /^authmilter_version/;
+            delete $data->{$key};
+        }
+    }
+
+    # The server updates metrics after replying, so wait for it to catch up,
+    # but not for long if they never match, the test will then report the differences
+    my $metrics = get_metrics( 'tmp/authentication_milter_test_metrics.sock' );
+    if ( $data ) {
+        my $deadline = time + 10;
+        while ( ! _metrics_match( $metrics, $data ) && time < $deadline ) {
+            sleep 0.1;
+            $metrics = get_metrics( 'tmp/authentication_milter_test_metrics.sock' );
+        }
+    }
 
     subtest $expected => sub {
 
-        my $metrics =  get_metrics( 'tmp/authentication_milter_test_metrics.sock' );
-        my $j = JSON::XS->new();
-
-        if ( -e $expected ) {
-
-            open my $InF, '<', $expected;
-            my @content = <$InF>;
-            close $InF;
-            my $data = $j->decode( join( q{}, @content ) );
-
-            for my $key ( sort keys %$data ) {
-                next unless $key =~ /^authmilter_version/;
-                delete $data->{$key};
-            }
+        if ( $data ) {
 
             plan tests => scalar keys %$data;
 
             foreach my $key ( sort keys %$data ) {
-                if ( $key =~ /seconds_total/ ) {
-                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $expected $key" );
-                }
-                elsif ( $key =~ /microseconds_sum/ ) {
-                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $expected $key" );
-                }
-                elsif ( $key =~ /authmilter_forked_children_total/ ) {
-                    is( $metrics->{ $key } > 0, $data->{ $key } > 0, "Metrics $expected $key" );
-                }
-                elsif ( $key =~ /authmilter_processes_/) {
-                    is( $metrics->{ $key } > -1, $data->{ $key } > -1, "Metrics $expected $key" );
-                }
-                else {
-                    is( $metrics->{ $key }, $data->{ $key }, "Metrics $expected $key" );
-                }
+                is( _metric_value( $key, $metrics->{ $key } ), _metric_value( $key, $data->{ $key } ), "Metrics $expected $key" );
             }
 
         }
@@ -199,7 +250,6 @@ sub smtp_process {
     my $cat_pid;
     if ( ! $args->{'no_cat'} ) {
         $cat_pid = smtpcat( $catargs );
-        sleep 2;
     }
 
     my $return = smtpput({
@@ -244,7 +294,6 @@ sub smtp_process_multi {
     };
     unlink 'tmp/authentication_milter_smtp_out.sock';
     my $cat_pid = smtpcat( $catargs );
-    sleep 2;
 
     my $putargs = {
         'sock_type'    => 'unix',
@@ -434,10 +483,6 @@ sub send_smtp_packet {
 sub smtpcat {
     my ( $args ) = @_;
 
-    my $cat_pid = fork();
-    die "unable to fork: $!" unless defined($cat_pid);
-    return $cat_pid if $cat_pid;
-
     my $sock_type = $args->{'sock_type'};
     my $sock_path = $args->{'sock_path'};
     my $sock_host = $args->{'sock_host'};
@@ -458,10 +503,27 @@ sub smtpcat {
         ) || die "could not open socket: $!";
     }
     elsif ( $sock_type eq 'unix' ) {
-       $sock = IO::Socket::UNIX->new(
-            'Listen'    => 5,
-            'Local' => $sock_path,
-        ) || die "could not open socket: $!";
+        # Some filesystems briefly refuse to bind a path whose previous socket
+        # is still closing, so retry for a short while
+        my $deadline = time + 10;
+        until ( $sock ) {
+            unlink $sock_path;
+            $sock = IO::Socket::UNIX->new(
+                'Listen'    => 5,
+                'Local' => $sock_path,
+            );
+            last if $sock;
+            die "could not open socket $sock_path: $!" if time > $deadline;
+            sleep 0.05;
+        }
+    }
+
+    # Listen before forking, so the socket is ready when we return
+    my $cat_pid = fork();
+    die "unable to fork: $!" unless defined($cat_pid);
+    if ( $cat_pid ) {
+        $sock->close();
+        return $cat_pid;
     }
 
     my $accept = $sock->accept();

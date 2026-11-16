@@ -7,12 +7,45 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use Mail::Milter::Authentication::Tester;
 use Cwd qw{ cwd };
+use File::Path qw{ make_path };
+use File::Temp qw{ tempdir };
+use File::Spec;
 use Test::File::Contents;
 use Test::More;
 
 my $base_dir = cwd();
 
 our $MASTER_PROCESS_PID = $$;
+
+=func I<setup_work_dir( $name )>
+
+Change to a fresh working directory for this test file, with its own tmp
+directory, sockets, and results, so test files can run in parallel.
+
+The directory is created in the system temporary directory, as some shared
+filesystems (e.g. Docker Desktop bind mounts) do not reliably support unix
+sockets. Set AUTHMILTER_KEEP_TEST_DIR to keep it after the test.
+
+Call from the t directory. Config, source data, and expected results are
+linked from there.
+
+=cut
+
+sub setup_work_dir {
+    my ( $name ) = @_;
+
+    # Modules are loaded later, after the working directory has changed
+    @INC = map { ( ! ref $_ && -d $_ ) ? File::Spec->rel2abs( $_ ) : $_ } @INC;
+
+    my $dir = tempdir( "authmilter-test-$name-XXXXXX", TMPDIR => 1, CLEANUP => ! $ENV{'AUTHMILTER_KEEP_TEST_DIR'} );
+    make_path( "$dir/tmp/result" );
+    foreach my $link ( qw{ config data zonefile } ) {
+        symlink( File::Spec->rel2abs( $link ), "$dir/$link" ) || die "Could not link $link: $!";
+    }
+    chdir $dir or die "Could not change to $dir: $!";
+    note( "Working directory $dir" );
+    return;
+}
 
 sub tools_test {
 
@@ -24,7 +57,6 @@ sub tools_test {
     };
     unlink 'tmp/tools_test.sock';
     my $cat_pid = smtpcat( $catargs );
-    sleep 2;
 
     smtpput({
         'sock_type'    => 'unix',
@@ -55,7 +87,6 @@ sub tools_pipeline_test {
     };
     unlink 'tmp/tools_test.sock';
     my $cat_pid = smtpcat( $catargs );
-    sleep 2;
 
     my $putargs = {
         'sock_type'    => 'unix',
@@ -93,8 +124,6 @@ sub tools_pipeline_test {
     smtpput( $putargs );
 
     waitpid( $cat_pid,0 );
-
-    sleep 1;
 
     files_eq_or_diff( 'data/example/tools_pipeline_test.eml', 'tmp/result/tools_pipeline_test.eml', 'tools pipeline test');
 

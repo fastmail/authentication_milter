@@ -11,6 +11,7 @@ use Test::More;
 
 my $basedir = q{};
 
+mkdir 't/tmp';
 open( STDERR, '>>', $basedir . 't/tmp/misc.err' ) || die "Cannot open errlog [$!]";
 
 # Multiple from domains must never allow a domain to escape DMARC evaluation

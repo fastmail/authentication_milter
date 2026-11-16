@@ -7,8 +7,8 @@ use Mail::Milter::Authentication::Pragmas;
 # VERSION
 use base 'Mail::Milter::Authentication::Handler';
 
+# Sleep longer than any test timeout, so the configured callback timeout fires
 sub _timeout {
-    alarm ( 1 );
     sleep 10;
     return;
 }

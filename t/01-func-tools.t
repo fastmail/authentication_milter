@@ -17,9 +17,7 @@ chdir 't';
 plan tests => 1;
 
 {
-    #system 'rm -rf tmp';
-    mkdir 'tmp';
-    mkdir 'tmp/result';
+    AuthMilterTest::setup_work_dir( 'tools' );
 
     AuthMilterTest::tools_test();
 
