@@ -564,9 +564,9 @@ sub child_handler {
                 print $socket "Not Found\n";
             }
         }
-
-        alarm( 0 );
     };
+    # Outside the eval, so a return or error within it does not leave the alarm pending
+    alarm( 0 );
 }
 
 1;

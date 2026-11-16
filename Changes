@@ -13,6 +13,9 @@ Revision history for Mail-Milter-Authentication
           accepted without RSET, and a following RCPT TO is refused.
   - Client: Fail when the milter closes the connection or the socket
             errors, rather than retrying forever.
+  - Core: Clear the metrics http request timeout on every exit path.
+          A malformed or non GET request left it pending, which later
+          caused the child to exit.
 
 4.20261112 2026-11-11 15:42:52+11:00 Australia/Melbourne
   - ARC: Clean up duplicate AAR tracking in the close callback, which
