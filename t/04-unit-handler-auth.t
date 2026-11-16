@@ -13,6 +13,7 @@ use JSON::XS;
 
 my $basedir = q{};
 
+mkdir 't/tmp';
 open( STDERR, '>>', $basedir . 't/tmp/misc.err' ) || die "Cannot open errlog [$!]";
 #open( STDOUT, '>>', $basedir . 't/tmp/misc.err' ) || die "Cannot open errlog [$!]";
 
