@@ -1,6 +1,17 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+  - Tests: Replace fixed sleeps in the functional tests with waits for
+           the milter, sockets, and metrics to be ready. The suite takes
+           around 45 seconds rather than 240.
+  - Tests: Run each functional test file in its own temporary directory,
+           and give each HandlerTester its own cache, lib, and spool
+           directories, so test files can run in parallel. Set
+           AUTHMILTER_KEEP_TEST_DIR to keep the functional test directory.
+  - Tests: dzil test and release run tests in parallel.
+  - Tests: TestTimeout no longer sets its own alarm, so the configured
+           callback timeouts are exercised.
+  - Tests: Create t/tmp in every unit test that writes to it.
 
 4.20261116 2026-11-16 13:30:38+11:00 Australia/Melbourne
   - Core: The effective config is no longer served by the metrics http
