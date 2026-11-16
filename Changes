@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+4.20261116 2026-11-16 13:30:38+11:00 Australia/Melbourne
   - Core: The effective config is no longer served by the metrics http
           interface unless the new metric_config_http option is enabled.
           NOTE: Set metric_config_http to 1 to restore the /config pages.
