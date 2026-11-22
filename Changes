@@ -1,6 +1,8 @@
 Revision history for Mail-Milter-Authentication
 
 {{$NEXT}}
+
+4.20261122 2026-11-23 10:56:43+11:00 Australia/Melbourne
   - Tests: Replace fixed sleeps in the functional tests with waits for
            the milter, sockets, and metrics to be ready. The suite takes
            around 45 seconds rather than 240.
