@@ -12,6 +12,21 @@ Revision history for Mail-Milter-Authentication
   - Tests: TestTimeout no longer sets its own alarm, so the configured
            callback timeouts are exercised.
   - Tests: Create t/tmp in every unit test that writes to it.
+  - Core: The umask and metric_umask settings now only set the mode of
+          unix sockets. Previously they changed the process umask, which
+          applied to every file created afterwards, and the last unix
+          connection's umask applied to all unix sockets. Connections and
+          metrics without their own umask use the top level umask, so
+          socket modes are unchanged for most configs.
+          NOTE: Files are now created with the umask the milter is started
+          with, so with a umask of 0000 files such as the DMARC report
+          database are no longer world writable. Anything which writes to
+          them as a different user, for example sending DMARC reports, may
+          need its permissions adjusting.
+  - Core: The example config now uses a umask of 0007, so unix sockets are
+          only accessible to the milter user and rungroup, rather than 0000
+          which allowed any local user to connect. The MTA must be in
+          rungroup to connect to a unix socket.
 
 4.20261116 2026-11-16 13:30:38+11:00 Australia/Melbourne
   - Core: The effective config is no longer served by the metrics http
