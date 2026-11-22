@@ -9,16 +9,26 @@ This milter verifies using the following standards.
 - BIMI
 - Check HELO matches it's IP address
 - DKIM (including ADSP)
+- DomainKeys (deprecated)
 - DMARC
 - IPRev
 - SPF
-- SenderID
+- SenderID (deprecated)
 
-Includes 3 additional modules.
+Includes additional modules.
 
 - AddID - add a header to all email (example)
 - ReturnOK - Checks that return addresses have properly configured MX records
 - TLS (milter protocol only) - identifies TLS protected connections
+- Check alignment of RFC5322 From and Mail From addresses
+- Send aggregate data to the abusix service
+- Check for SMTP Authentication
+- Block mail based on simple rules
+- Check IP against a trusted list and/or local IP space
+- Extended logging
+- Reverse loopup checking
+- Check against a list of RBLDNS services
+- Generate metrics about message header and body sizes
 
 Badges
 ------
