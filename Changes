@@ -1,5 +1,10 @@
 Revision history for Mail-Milter-Authentication
 
+  - RBLDNS: Config structure change is now mandatory
+
+  [UPDATED Config Items for RBLDNS]
+    RBLDNS config items MUST be moved under a new rbls key
+
 {{$NEXT}}
   - Tests: Replace fixed sleeps in the functional tests with waits for
            the milter, sockets, and metrics to be ready. The suite takes
